@@ -7,7 +7,7 @@ import { Pipeline } from '../src/render/Pipeline.js';
 import { prepareUniforms, setLight, boxOf, frameBox, disposeObject } from './scene.js';
 
 const SIZE = 256;
-const VERSION = 1; // à changer si le cadrage ou le rendu des vignettes change
+const VERSION = 2; // à changer si le cadrage ou le rendu des vignettes change
 const DB = 'archipel-catalogue';
 const STORE = 'vignettes';
 

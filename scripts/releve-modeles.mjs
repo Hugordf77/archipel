@@ -21,7 +21,7 @@ for (const m of MODELS) {
   box.makeEmpty();
   object3d.traverse((o) => {
     if (!o.geometry) return;
-    o.geometry.computeBoundingBox();
+    if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
     box.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld));
   });
   const s = box.getSize(new THREE.Vector3());

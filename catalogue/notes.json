@@ -1,10 +1,143 @@
 {
   "version": 1,
   "notes": {
+    "ANI-003": {
+      "status": "a-retravailler",
+      "note": "Pattes bleutées dont une décalée, museau trop rose : reprendre les pattes.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "ANI-008": {
+      "status": "a-retravailler",
+      "note": "Trois boules sans pattes ni visage : illisible.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "ANI-013": {
+      "status": "a-retravailler",
+      "note": "Patte en croix : une patte droite et une patte repliée.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "ANI-016": {
+      "status": "a-retravailler",
+      "note": "Simple ovale orange : ajouter nageoire caudale et œil.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "ANI-019": {
+      "note": "Halo seul, voulu : la luciole est un point lumineux de nuit.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "ARB-004": {
+      "status": "a-retravailler",
+      "note": "Silhouette ronde : les touffes en billboard effacent la forme conique. Étager 3 ou 4 couronnes décroissantes.",
+      "updatedAt": "2026-10-17T20:53:39.259Z"
+    },
+    "ARB-005": {
+      "status": "a-retravailler",
+      "note": "Silhouette ronde : les touffes en billboard effacent la forme conique. Étager 3 ou 4 couronnes décroissantes. Le givre, trop pâle, se lit comme un nuage.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "ARB-006": {
+      "status": "a-retravailler",
+      "note": "Silhouette ronde : les touffes en billboard effacent la forme conique. Étager 3 ou 4 couronnes décroissantes. Neige à poser sur le dessus des couronnes.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "ARB-011": {
+      "status": "a-retravailler",
+      "note": "Feuillage en boule détaché des cannes : des touffes allongées le long des tiges.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "BAT-005": {
+      "status": "a-retravailler",
+      "note": "Le toit flotte au-dessus des murs (pans trop hauts, pas de pignon) : le reposer sur les murs.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "BAT-009": {
+      "status": "a-retravailler",
+      "note": "Toit détaché et de travers au-dessus de la cabane : le poser sur les murs, ajouter un auvent.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "BAT-010": {
+      "status": "a-retravailler",
+      "note": "Portes en triangles sombres, coupole sans fente d'observation ni socle : à redessiner.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "BAT-012": {
+      "status": "a-retravailler",
+      "note": "Auvent en ruban vrillé, enseigne qui flotte : reprendre l'auvent rayé de l'étal (BAT-011).",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "DEC-008": {
+      "status": "a-retravailler",
+      "note": "Le mât de droite est penché et la guirlande ne relie pas les deux mâts.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "DEC-009": {
+      "status": "a-retravailler",
+      "note": "Toile en rubans vrillés : tendre une toile continue entre les poteaux.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "DEC-011": {
+      "status": "a-retravailler",
+      "note": "Ailes en plan vertical qui traversent le toit : reprendre les ailes de BAT-004 en miniature.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "DEC-017": {
+      "status": "a-retravailler",
+      "note": "Établi générique avec une planche bleue et un cône : ajouter une coque en construction.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "MON-003": {
+      "status": "a-retravailler",
+      "note": "Entrée presque invisible sous les rochers : creuser une ouverture lisible.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "MON-005": {
+      "status": "a-retravailler",
+      "note": "Bonhomme de blocs sans caractère ; c'est un repère d'île, il mérite une vraie sculpture.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "NAV-005": {
+      "status": "a-retravailler",
+      "note": "Coque plate sans bordage ni bancs, différente de la barque du joueur : unifier sur NAV-002.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "NAV-006": {
+      "status": "a-retravailler",
+      "note": "Même coque plate que NAV-005 : unifier sur NAV-002, retournée et ensablée.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "NAV-009": {
+      "status": "a-retravailler",
+      "note": "Ancre peu lisible (tige courbée) : marquer le jas, la verge et les pattes.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "OBJ-019": {
+      "status": "a-retravailler",
+      "note": "Tiges droites et raides : onduler les frondes.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "PLA-008": {
+      "status": "a-retravailler",
+      "note": "Tige trop épaisse pour la fleur, cœur brun en disque plat : affiner la tige, bomber le capitule.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "PLA-009": {
+      "status": "a-retravailler",
+      "note": "Épis en cônes isolés, se lit mal : grouper en gerbe, épis plus fournis.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "PLA-016": {
+      "note": "Vignette peu parlante : le matériau d'herbe prend sa teinte du terrain. À juger en jeu.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
     "STR-018": {
       "status": "a-retravailler",
       "note": "Même modèle que STR-017 (banc) : prévoir une variante « vue » (banc plus bas, longue-vue ou panneau d'orientation).",
       "updatedAt": "2026-10-17T20:49:31.295Z"
+    },
+    "STR-027": {
+      "status": "brouillon",
+      "note": "Seuls les galets du bassin : l'eau vient du système des rivières. Prévoir un aperçu avec la chute.",
+      "updatedAt": "2026-10-17T20:53:39.260Z"
     }
   }
 }

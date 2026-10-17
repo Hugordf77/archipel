@@ -22,7 +22,7 @@ function measure(object3d) {
     const pos = o.geometry.attributes.position;
     verts += pos.count;
     for (let i = 0; i < pos.array.length; i++) if (!Number.isFinite(pos.array[i])) nan = true;
-    o.geometry.computeBoundingBox();
+    if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
     box.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld));
   });
   return { verts, nan, size: box.getSize(new THREE.Vector3()).toArray() };

@@ -74,6 +74,15 @@ export function buildClumpGeometry(clumps, seed = 1, opts = {}) {
   g.computeBoundingSphere();
   // les billboards débordent de leur centre : on agrandit la sphère englobante
   g.boundingSphere.radius += 3;
+  // boîte englobante réelle : chaque billboard s'étend de sa taille autour de son centre
+  const box = new THREE.Box3();
+  const p = new THREE.Vector3();
+  for (let i = 0; i < pos.length; i += 12) {
+    const s = data[(i / 3) * 4];
+    box.expandByPoint(p.set(pos[i] - s, pos[i + 1] - s, pos[i + 2] - s));
+    box.expandByPoint(p.set(pos[i] + s, pos[i + 1] + s, pos[i + 2] + s));
+  }
+  g.boundingBox = box;
   return g;
 }
 

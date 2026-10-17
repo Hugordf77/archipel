@@ -1,6 +1,6 @@
 # Archipel
 
-Un jeu d'exploration 3D en Three.js où l'on découvre un archipel d'îles procédurales, récolte des
+Un jeu d'exploration 3D en Three.js où l'on découvre un archipel de neuf îles, récolte des
 ressources, aménage son île et navigue entre des paysages peints. Le rendu pastel et les formes
 douces gardent une ambiance chaleureuse et contemplative.
 
@@ -14,6 +14,8 @@ npm run dev
 Puis ouvrir http://localhost:5173 (Chrome, Safari ou Firefox récents, WebGL2 requis).
 
 Version de production : `npm run build` puis `npm run preview`.
+
+Catalogue des modèles 3D : `npm run catalogue` (ouvre http://localhost:5173/catalogue.html).
 
 ## Commandes
 
@@ -70,7 +72,7 @@ son élan et l'effort qu'il fait.
   alternée gauche / droite. Les deux croissent avec la vitesse et se coupent dans les réglages.
 
 **Architecture** :
-- `src/game/locomotion/` :
+- `src/entities/locomotion/` :
   - `tuning.js` : tous les réglages, en unités SI, avec un profil « Élan réaliste » et un profil
     « Réactif » ;
   - `motor.js` : physique pure, déterministe, au pas fixe de 1/120 s ;
@@ -87,31 +89,75 @@ son élan et l'effort qu'il fait.
 
 Tests : `tests/locomotion.test.js` (moteur et poses) et `tests/gamepad.test.js`.
 
-## Génération des îles
+## Archipel
 
-Les îles sont calculées de façon déterministe à partir de la graine de l'archipel. Une même graine
-recrée les mêmes régions, reliefs, lieux et ressources. La génération est exécutée dans un Web
-Worker afin de laisser le fil principal disponible pour le rendu et les contrôles.
+Le monde est un archipel fini : un carré de 2,4 × 2,4 km, l'île de départ au centre et neuf îles
+fixes, une par archétype. `src/world/archipel.js` est la seule source de vérité : nom, position,
+rayon, biome, graine et retouches de chaque île, ainsi que les éléments de la mer.
 
-- **Régions** : îles de tailles et biomes variés, voisinage espacé, archétypes distribués pour éviter
-  les silhouettes répétitives et présence garantie d'îles remarquables près du départ.
-- **Relief et eau** : champs de terrain procéduraux, reliefs par archétype, érosion thermique et
-  hydraulique, cuvettes, lacs, rivières et cascades lorsque les conditions le permettent.
-- **Zones et lieux** : micro-zones écologiques colorent le terrain ; des points d'intérêt adaptés
-  au relief sont reliés par un réseau de chemins praticables.
-- **Végétation et faune** : placement déterministe selon le biome, l'altitude et la proximité de
-  l'eau ou des lieux. La faune proche est animée, puis simplifiée ou masquée à distance.
-- **Détails progressifs** : un niveau de détail lointain donne la silhouette et les repères ; les
-  détails proches et les tuiles de terrain sont chargés progressivement autour du joueur.
-- **Persistance** : la sauvegarde conserve la graine et les changements du joueur. `GEN_VERSION`
-  versionne la génération ; les migrations préservent les découvertes compatibles et réassocient
-  les données persistantes aux îles générées par la nouvelle version.
+| Île | Identifiant | Archétype · biome | Centre (x, z) | Rayon |
+| --- | --- | --- | --- | --- |
+| Village de Pommeraie | `village-pommeraie` | village au moulin · prairie | (−170, 400) | 80 m |
+| Île aux Mille Fleurs | `ile-aux-mille-fleurs` | champs de fleurs · prairie | (250, 430) | 66 m |
+| Rocher Percé | `rocher-perce` | îlot-curiosité · glace | (−320, −330) | 42 m |
+| Falaises de Nacre | `falaises-de-nacre` | falaises au phare · tropical | (760, −160) | 74 m |
+| Mont des Aigles | `mont-des-aigles` | montagne · pins | (−700, −480) | 135 m |
+| Bois des Lanternes | `bois-des-lanternes` | forêt profonde · champignons | (−820, 160) | 100 m |
+| Cratère de Braise | `cratere-de-braise` | cratère · volcan | (180, −820) | 95 m |
+| Dunes du Mirage | `dunes-du-mirage` | dunes · dunes | (820, 330) | 88 m |
+| Lagon Turquoise | `lagon-turquoise` | lagon · atoll | (640, 700) | 72 m |
 
-Les temps mesurés par le Worker sont inclus dans ses résultats de génération. La suite Vitest
-`tests/world.test.js` couvre notamment le déterminisme, l'intégrité des rivières et des lacs, les
-lieux et chemins, la migration, les statistiques de 1 000 îles et les budgets de génération. Les
-temps et statistiques sont des mesures de test local, pas une garantie de performance sur chaque
-appareil.
+- **Génération** : relief, eau, végétation, lieux et chemins restent produits par la chaîne de
+  `src/world/islands/gen/` (dans un Web Worker), mais pour cette liste fixe. Les retouches à la main
+  passent par `overrides` : `pois` (lieux imposés), `removePois` (lieux interdits), `name`, `traits`
+  (nom du village, couleur du moulin, curiosité…).
+- **Niveaux de détail** : toutes les silhouettes sont chargées au démarrage, puis l'île entière à 4 m
+  (moins de 600 m) et les tuiles au mètre (moins de 220 m).
+- **Mer** : 48 éléments à positions fixes (bouées, bouteilles, caisses, algues, récifs, bancs de
+  poissons).
+- **Limite du monde** : dès 1,1 km du centre, la brume du large referme la vue ; au-delà de 1,2 km,
+  un courant doux ramène le bateau (et l'albatros) vers l'archipel ; au-delà de 1,4 km, demi-tour
+  automatique. Le radeau va jusqu'à 600 m, la barque jusqu'à 1 050 m, voilier et goélette jusqu'à la
+  limite.
+- **Carte et journal** : la carte est bornée à l'archipel (« Tout l'archipel » le montre en entier),
+  les îles inconnues y sont en pointillés ; le journal compte « X / 9 îles » et la part de
+  l'archipel découverte.
+- **Migration** (`GEN_VERSION` 3) : une sauvegarde du monde infini rattache chaque île de son journal
+  à l'île de l'archipel du même archétype ; récoltes, terrassements, éléments marins ramassés,
+  épingles et brouillard sont ramenés à l'archipel.
+
+Tests : `tests/world.test.js` (archipel, limite du large avec le vrai bateau, migration, et la chaîne
+de génération sur les 9 îles et 45 variantes), `tests/marine.test.js`.
+
+## Catalogue des modèles
+
+`npm run catalogue` ouvre le catalogue numéroté de tous les modèles 3D du jeu (196 aujourd'hui), pour
+les voir, les comparer et les retravailler.
+
+- **Registre** : `src/models/registry.js`. Chaque modèle a un identifiant stable (préfixe de
+  catégorie et trois chiffres, jamais réattribué ; un modèle retiré passe au statut « retiré »), son
+  constructeur, ses variantes et paramètres, sa taille mesurée, les îles qui l'emploient et un
+  statut. Préfixes : ARB arbres, PLA plantes, ROC rochers et minerais, BAT bâtiments, STR ouvrages,
+  MON ruines et monuments, NAV bateaux et épaves, DEC décor achetable, OBJ objets, ANI animaux,
+  PER personnage.
+- **Règle** : tout constructeur de modèle vit dans `src/models/` (par catégorie) ; le jeu et le
+  catalogue l'importent depuis le même endroit, avec les mêmes réglages de matériaux
+  (`src/models/materials.js`).
+- **Site** : barre latérale (catégories, recherche, filtres de statut), grille de vignettes peintes
+  (un seul renderer partagé, rendu paresseux, cache IndexedDB par empreinte du code source).
+- **Fiche** : vue 3D en orbite, grille au mètre, silhouette de 1,4 m, lumière jour / soir / nuit,
+  rendu du jeu ou rendu brut, fil de fer, boîte cotée, statistiques (triangles, sommets, matériaux,
+  appels de dessin), variantes, paramètres et animations. « Copier l'id », « Ouvrir la source »
+  (VS Code, à la ligne du constructeur).
+- **Travail** : statut et notes de chaque modèle, enregistrés dans `catalogue/notes.json`
+  (versionné) par le serveur de dev ; comparaison de 2 à 4 modèles à la même échelle ; exports CSV
+  et JSON de l'inventaire, planche contact PNG d'une catégorie (rangée aussi dans `captures/`).
+  Modifier un constructeur met la fiche et les vignettes à jour sans recharger la page.
+- **Relevés** : après un changement voulu d'un modèle, `npm run modeles:releve` remesure les tailles
+  et recense l'usage de chaque modèle sur les neuf îles.
+
+Tests : `tests/models.test.js` (identifiants, constructions, tailles à ±25 %, recensement de tout
+ce que le jeu construit) et `tests/catalogue-notes.test.js`.
 
 ## Rendu (shaders GLSL sur mesure)
 
@@ -135,21 +181,31 @@ Qualités **Bas / Moyen / Haut** dans les réglages, avec une résolution adapta
 
 ```
 src/
-  main.js, setup.js
-  scene/    monde, terrain, eau, ciel, feuillage, herbe, faune, météo, pipeline de rendu
-  world/    régions, biomes, noms, modèles, streaming et génération procédurale
-    gen/    terrain, érosion, hydrologie, zones, lieux, chemins, végétation et apparitions
-  shaders/  morceaux GLSL, matériaux toon/feuillage/herbe, post-process peinture
-  game/     jeu, joueur, navigation, récolte, interactions et sauvegarde
-  ui/       interface du jeu et panneaux
-  audio/    moteur audio procédural
+  app/        point d'entrée, réglages de départ, Game (orchestration), caméra
+  core/       globales et uniforms, aléatoire, bruit, sauvegarde, clavier, manette
+  world/      archipel.js, navigation, mer, brouillard de la carte
+    home/     île de départ : relief, aménagements, détails, fleurs
+    env/      eau, ciel, météo, journée, saisons, rivières
+    islands/  îles de l'archipel : descriptions, LOD, Worker
+      gen/    relief, érosion, hydrologie, zones, lieux, chemins, végétation, faune
+  entities/   joueur, personnage, locomotion, faune, bateau, hibou, vol
+  gameplay/   récolte, interactions, inventaire, trésors, décor posé
+  models/     registre et constructeurs 3D par catégorie : vegetation, buildings, structures,
+              animals, boats, decor, props, character ; matériaux, palette, assemblage
+  render/     pipeline de peinture, builder, feuillage, herbe, textures, shaders
+  ui/         interface du jeu et panneaux
+  audio/      moteur audio procédural
+  data/       objets, recettes
+catalogue/    site du catalogue des modèles (catalogue.html à la racine), notes.json
+scripts/      relevé des modèles (tailles, usage)
+tests/        Vitest
 ```
 
 ## Sauvegarde
 
-La progression est enregistrée automatiquement dans le navigateur. La sauvegarde contient la
-graine du monde et les différences persistantes du joueur, plutôt que la géométrie complète des
-îles. Les données de génération sont versionnées pour appliquer les migrations nécessaires au
+La progression est enregistrée automatiquement dans le navigateur. La sauvegarde contient les
+différences persistantes du joueur (récoltes, terrassements, découvertes), rangées par identifiant
+d'île, plutôt que la géométrie des îles. Les données de génération sont versionnées pour appliquer les migrations nécessaires au
 chargement d'une ancienne sauvegarde.
 
 Three.js est épinglé en version 0.170.0, Vite en 5.4.11, polices Fredoka et Nunito embarquées.
