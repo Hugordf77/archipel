@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Builder, G } from '../render/builder.js';
 import { toonMaterial, glowMaterial } from '../render/shaders/materials.js';
 import { LAYER_SHADOW, U, ORIGIN } from '../core/globals.js';
-import { PAL } from '../world/home/props.js';
+import { PAL } from '../models/palette.js';
 import { groundAt, blockedByObstacle, waterDepth, addObstacle, removeObstacle, pickGround } from '../world/navigation.js';
 import { uid } from '../core/state.js';
 import { ITEMS } from '../data/items.js';
