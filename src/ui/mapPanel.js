@@ -7,7 +7,7 @@ import { islandContext, islandHeight } from '../world/islands/islandgen.js';
 import { BIOMES } from '../world/islands/biomes.js';
 import { isRevealed, FOG_CELL } from '../world/fog.js';
 import { heightAt } from '../world/home/terrain.js';
-import { BOATS } from '../entities/boats.js';
+import { BOATS } from '../models/boats/bateaux.js';
 
 const shapeCache = new Map();
 // silhouette peinte d'une île (petit canevas mis en cache)

@@ -10,7 +10,7 @@ import { mulberry32 } from '../core/random.js';
 import { MarineManager } from '../world/marine.js';
 import { Sailing } from '../entities/Sailing.js';
 import { AirRide } from '../entities/AirRide.js';
-import { BOATS } from '../entities/boats.js';
+import { BOATS } from '../models/boats/bateaux.js';
 import { reveal } from '../world/fog.js';
 import { BIOMES } from '../world/islands/biomes.js';
 import { toonMaterial } from '../render/shaders/materials.js';

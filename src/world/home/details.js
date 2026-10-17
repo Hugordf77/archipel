@@ -4,6 +4,7 @@ import { toonMaterial, foliageMaterial, glowMaterial, grassMaterial } from '../.
 import { nextId, LAYER_SHADOW } from '../../core/globals.js';
 import { LAYOUT, heightAt, pathMask, vnoise, coastRadius, distToPolyline } from './terrain.js';
 import { PAL } from '../../models/palette.js';
+import { parasolPlage, transat } from '../../models/buildings/ileDepart.js';
 import { buildClumpGeometry } from '../../render/foliage.js';
 import { cloudAtlas } from '../../render/textures.js';
 import { tuftGeometry } from '../../render/grass.js';
@@ -249,24 +250,9 @@ export function buildDetails(spots, obstacles, terrainId) {
   {
     const px = 14.6;
     const pz = 20.0;
-    const py = heightAt(px, pz);
-    stat.add(G.cyl(0.035, 0.04, 2.1, 6), PAL.white, { p: [px, py + 1.05, pz] });
-    stat.add(G.cone(1.15, 0.45, 16), PAL.white, {
-      p: [px, py + 2.05, pz],
-      colorFn: (c, vx, vy, vz) => {
-        const a = Math.atan2(vz - pz, vx - px);
-        if (Math.floor(((a + Math.PI) / (Math.PI * 2)) * 8) % 2 === 0) c.set(PAL.coral);
-      },
-    });
-    stat.add(G.sphere(0.06, 6, 4), PAL.butter, { p: [px, py + 2.3, pz] });
+    parasolPlage(stat, px, heightAt(px, pz), pz);
     for (const [tx, tz] of [[13.4, 20.8], [15.8, 20.6]]) {
-      const ty = heightAt(tx, tz);
-      stat.add(G.box(0.62, 0.06, 1.3, 0.03), tx < 14 ? PAL.mint : PAL.sky, { p: [tx, ty + 0.32, tz], r: [-0.12, 0, 0] });
-      stat.add(G.box(0.62, 0.06, 0.62, 0.03), tx < 14 ? PAL.mint : PAL.sky, { p: [tx, ty + 0.55, tz - 0.78], r: [0.9, 0, 0] });
-      for (const sx of [-0.27, 0.27]) {
-        stat.add(G.cyl(0.025, 0.025, 0.4, 5), PAL.woodLight, { p: [tx + sx, ty + 0.17, tz + 0.4] });
-        stat.add(G.cyl(0.025, 0.025, 0.55, 5), PAL.woodLight, { p: [tx + sx, ty + 0.25, tz - 0.55] });
-      }
+      transat(stat, tx, heightAt(tx, tz), tz, tx < 14 ? PAL.mint : PAL.sky);
       extraObstacles.push({ x: tx, z: tz - 0.2, r: 0.6 });
     }
     extraObstacles.push({ x: px, z: pz, r: 0.15 });

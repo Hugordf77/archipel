@@ -1,8 +1,9 @@
 import * as THREE from 'three';
-import { Builder, G } from '../../render/builder.js';
 import { toonMaterial, glowMaterial } from '../../render/shaders/materials.js';
 import { nextId, LAYER_SHADOW, U } from '../../core/globals.js';
 import { coastRadius, heightAt, LAYOUT } from '../../world/home/terrain.js';
+import { MAT } from '../../models/materials.js';
+import { butterflyGeometry, crabGeometry, gullGeometry, GULL_PIVOTS, BUTTERFLY_PIVOTS, CRAB_LEG_PIVOTS } from '../../models/animals/ileDepart.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
 const rand = (a, b) => a + Math.random() * (b - a);
@@ -57,25 +58,9 @@ function skeleton(pivots) {
 // ---------------------------------------------------------------------------
 // Mouettes : planent en cercles au-dessus de la mer
 // ---------------------------------------------------------------------------
-function gullGeometry(id) {
-  const b = new Builder(id);
-  b.add(G.sphere(0.22, 14, 10), '#fbf7f2', { s: [0.8, 0.75, 1.5] });
-  b.add(G.sphere(0.15, 12, 10), '#fbf7f2', { p: [0, 0.1, 0.28] });
-  b.add(G.cone(0.05, 0.16, 8), '#f6b45e', { p: [0, 0.08, 0.46], r: [Math.PI / 2, 0, 0] });
-  b.add(G.sphere(0.03, 6, 6), '#3d3049', { p: [0.07, 0.14, 0.37] });
-  b.add(G.sphere(0.03, 6, 6), '#3d3049', { p: [-0.07, 0.14, 0.37] });
-  b.add(G.cone(0.12, 0.25, 8), '#d8dce8', { p: [0, 0, -0.38], r: [-Math.PI / 2, 0, 0], s: [1, 1, 0.4] });
-  const wings = [-1, 1].map((sx) => {
-    const w = new Builder(id);
-    w.add(G.sphere(0.5, 12, 8), '#f4f4f8', { p: [sx * 0.42, 0, 0], s: [1, 0.08, 0.32] });
-    w.add(G.sphere(0.2, 10, 6), '#9aa0b8', { p: [sx * 0.82, 0, -0.02], s: [1, 0.09, 0.3] });
-    return w.build();
-  });
-  return [b.build(), ...wings];
-}
 
 function makeGull() {
-  const { g, list } = skeleton([[-0.12, 0.05, 0], [0.12, 0.05, 0]]);
+  const { g, list } = skeleton(GULL_PIVOTS);
   g.userData.wings = list;
   g.userData.anchors = [g, ...list];
   return g;
@@ -84,30 +69,9 @@ function makeGull() {
 // ---------------------------------------------------------------------------
 // Crabes : se promènent sur le sable mouillé, filent quand on approche
 // ---------------------------------------------------------------------------
-function crabGeometry(id) {
-  const b = new Builder(id);
-  const shell = '#f08a72';
-  b.add(G.sphere(0.2, 14, 10), shell, { p: [0, 0.14, 0], s: [1.25, 0.62, 1] });
-  for (const sx of [-1, 1]) {
-    b.add(G.cyl(0.018, 0.018, 0.12, 6), shell, { p: [sx * 0.07, 0.25, 0.1] });
-    b.add(G.sphere(0.04, 8, 6), '#fffaf0', { p: [sx * 0.07, 0.32, 0.1] });
-    b.add(G.sphere(0.022, 6, 6), '#3d3049', { p: [sx * 0.07, 0.33, 0.13] });
-    // pinces
-    b.add(G.sphere(0.09, 10, 8), '#f49d86', { p: [sx * 0.3, 0.15, 0.14], s: [1, 0.7, 1.2] });
-    b.add(G.sphere(0.05, 8, 6), '#f49d86', { p: [sx * 0.34, 0.18, 0.22], s: [0.8, 0.6, 1] });
-  }
-  const legs = [-1, 1].map((sx) => {
-    const lb = new Builder(id);
-    lb.add(G.cyl(0.018, 0.014, 0.18, 5), '#e07a64', { p: [sx * 0.07, -0.05, 0], r: [0, 0, sx * 1.0] });
-    return lb.build();
-  });
-  return [b.build(), ...legs];
-}
 
 function makeCrab() {
-  const pivots = [];
-  for (const sx of [-1, 1]) for (let k = 0; k < 3; k++) pivots.push([sx * 0.18, 0.12, -0.08 + k * 0.08]);
-  const { g, list } = skeleton(pivots);
+  const { g, list } = skeleton(CRAB_LEG_PIVOTS);
   g.userData.legs = list;
   g.scale.setScalar(0.85);
   return g;
@@ -116,22 +80,9 @@ function makeCrab() {
 // ---------------------------------------------------------------------------
 // Papillons : deux ailes qui battent, vol erratique près des fleurs
 // ---------------------------------------------------------------------------
-function butterflyGeometry(id) {
-  const body = new Builder(id);
-  body.add(G.capsule(0.022, 0.12, 4, 6), '#6b5a72', { r: [Math.PI / 2, 0, 0], tint: 0 });
-  // ailes blanches teintées par instance, tache claire non teintée
-  const wings = [-1, 1].map((sx) => {
-    const w = new Builder(id);
-    w.add(G.sphere(0.12, 10, 6), '#ffffff', { p: [sx * 0.11, 0, 0.04], s: [1, 0.05, 0.85] });
-    w.add(G.sphere(0.08, 8, 6), '#ffffff', { p: [sx * 0.08, 0, -0.08], s: [1, 0.05, 0.8] });
-    w.add(G.sphere(0.035, 6, 6), '#fffaf0', { p: [sx * 0.13, 0.008, 0.06], s: [1, 0.2, 1], tint: 0 });
-    return w.build();
-  });
-  return [body.build(), ...wings];
-}
 
 function makeButterfly() {
-  const { g, list } = skeleton([[0, 0, 0], [0, 0, 0]]);
+  const { g, list } = skeleton(BUTTERFLY_PIVOTS);
   g.userData.wings = list;
   g.userData.anchors = [g, ...list];
   return g;
@@ -144,7 +95,7 @@ export class Fauna {
 
     // mouettes
     const gid = nextId();
-    this.gullParts = new Parts(scene, gullGeometry(gid), toonMaterial({ vertexColors: true, id: gid, rim: 1, pigment: 0.4 }), 4);
+    this.gullParts = new Parts(scene, gullGeometry(gid), toonMaterial({ ...MAT.gull, id: gid }), 4);
     this.gulls = [];
     for (let i = 0; i < 4; i++) {
       const m = makeGull();
@@ -158,7 +109,7 @@ export class Fauna {
 
     // crabes : corps, pattes gauches, pattes droites
     const cid = nextId();
-    const crabMat = toonMaterial({ vertexColors: true, id: cid, rim: 1, pigment: 0.5 });
+    const crabMat = toonMaterial({ ...MAT.crab, id: cid });
     const [crabBody, legL, legR] = crabGeometry(cid);
     this.crabParts = new Parts(scene, [crabBody], crabMat, 4);
     this.legParts = new Parts(scene, [legL, legR], crabMat, 12);
@@ -175,7 +126,7 @@ export class Fauna {
     this.spots = [];
     const colors = ['#f7b6c8', '#f6d27a', '#c7b2e6', '#9cc8ec', '#fffaf0', '#f4a28c', '#bfe8de', '#f9c2a0'];
     const bid = nextId();
-    this.butterflyParts = new Parts(scene, butterflyGeometry(bid), toonMaterial({ vertexColors: true, id: bid, rim: 0.6, pigment: 0.2, side: THREE.DoubleSide, outline: 0.5, tintMask: true }), 8, false);
+    this.butterflyParts = new Parts(scene, butterflyGeometry(bid), toonMaterial({ ...MAT.butterfly, id: bid }), 8, false);
     const wingColor = new THREE.Color();
     for (let i = 0; i < 8; i++) {
       const b = makeButterfly();

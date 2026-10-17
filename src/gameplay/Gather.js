@@ -3,14 +3,15 @@
 // Les outils n'ont pas d'usure ; hache et pioche servent automatiquement (le meilleur
 // du sac), pelle, canne, filet et pousses se choisissent dans la barre rapide.
 import * as THREE from 'three';
-import { Builder, G } from '../render/builder.js';
 import { toonMaterial } from '../render/shaders/materials.js';
 import { ITEMS } from '../data/items.js';
 import { HARVEST, TOOL_NAMES, TIER_NAMES, strikeTime, rollDrops, flowerItemFor, rollFish, rollBug } from '../data/harvest.js';
 import { BIOMES } from '../world/islands/biomes.js';
 import { groundAt, waterDepth, blockedByObstacle, isHome, projectCurved } from '../world/navigation.js';
 import { h, replay } from '../ui/dom.js';
-import { kindModel } from '../models/kindModels.js';
+import { kindModel } from '../models/vegetation/especes.js';
+import { outilGeometry, flotteurGeometry } from '../models/props/outils.js';
+import { MAT } from '../models/materials.js';
 import { STRIDE } from '../world/islands/islandgen.js';
 import { BLOOM_IDS } from '../world/islands/gen/zones.js';
 
@@ -24,29 +25,8 @@ function toolMesh(id) {
   const it = ITEMS[id];
   if (!it?.tool) return null;
   if (toolCache.has(id)) return toolCache.get(id);
-  toolMat ||= toonMaterial({ vertexColors: true, aId: true, rim: 0.8 });
-  const b = new Builder();
-  const head = it.color;
-  const wood = '#b98a64';
-  if (it.tool === 'hache') {
-    b.add(G.cyl(0.018, 0.02, 0.5, 6), wood, { p: [0, -0.2, 0] });
-    b.add(G.box(0.03, 0.12, 0.14, 0.02), head, { p: [0, -0.42, 0.07] });
-  } else if (it.tool === 'pioche') {
-    b.add(G.cyl(0.018, 0.02, 0.5, 6), wood, { p: [0, -0.2, 0] });
-    b.add(G.cone(0.03, 0.18, 6), head, { p: [0, -0.43, 0.09], r: [Math.PI / 2, 0, 0] });
-    b.add(G.cone(0.03, 0.18, 6), head, { p: [0, -0.43, -0.09], r: [-Math.PI / 2, 0, 0] });
-  } else if (it.tool === 'pelle') {
-    b.add(G.cyl(0.018, 0.02, 0.55, 6), wood, { p: [0, -0.22, 0] });
-    b.add(G.box(0.14, 0.18, 0.02, 0.02), head, { p: [0, -0.56, 0] });
-  } else if (it.tool === 'canne') {
-    b.add(G.cyl(0.01, 0.018, 1.1, 6), wood, { p: [0, -0.5, 0] });
-    b.add(G.sphere(0.04, 8, 6), head, { p: [0, -0.05, 0.03] });
-  } else {
-    b.add(G.cyl(0.015, 0.018, 0.6, 6), wood, { p: [0, -0.28, 0] });
-    b.add(G.torus(0.12, 0.012, 5, 16), head, { p: [0, -0.68, 0], r: [0, Math.PI / 2, 0] });
-    b.add(G.sphere(0.12, 10, 6), '#fffaf0', { p: [0, -0.7, 0], s: [0.3, 1, 1] });
-  }
-  const m = new THREE.Mesh(b.build(), toolMat);
+  toolMat ||= toonMaterial({ ...MAT.tool });
+  const m = new THREE.Mesh(outilGeometry(it.tool, it.color), toolMat);
   m.rotation.set(-1.3, 0, 0);
   m.position.set(0, -0.02, 0.02);
   toolCache.set(id, m);
@@ -449,11 +429,7 @@ export class Gather {
   }
 
   makeBobber() {
-    const b = new Builder();
-    b.add(G.sphere(0.09, 10, 8), '#f4a28c', { p: [0, 0.04, 0] });
-    b.add(new THREE.SphereGeometry(0.092, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), '#fffaf0', { p: [0, 0.05, 0] });
-    b.add(G.cyl(0.01, 0.01, 0.12, 5), '#5b4a63', { p: [0, 0.16, 0] });
-    const m = new THREE.Mesh(b.build(), toonMaterial({ vertexColors: true, aId: true, rim: 0.5 }));
+    const m = new THREE.Mesh(flotteurGeometry(), toonMaterial({ ...MAT.bobber }));
     this.game.scene.add(m);
     return m;
   }

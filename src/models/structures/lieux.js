@@ -3,9 +3,9 @@
 //   { solid: Builder, glow?: Builder, anim?: [{ geo, pivot, axis, speed }],
 //     obstacles: [[x, z, r]], decks: [{ x0, z0, x1, z1, w, y0, y1, sag }] }
 import * as THREE from 'three';
-import { Builder, G } from '../render/builder.js';
-import { STRUCTURES } from './kindModels.js';
-import { mulberry32 } from '../core/random.js';
+import { Builder, G } from '../../render/builder.js';
+import { STRUCTURES } from '../buildings/gabarits.js';
+import { mulberry32 } from '../../core/random.js';
 
 const WOOD = '#c98f5f';
 const WOOD_L = '#e0b07e';
@@ -711,5 +711,24 @@ export function partModel(p) {
     case 'cabane': return STRUCTURES.cabane(rng);
     default:
       return MICRO[t] ? MICRO[t](p) : null;
+  }
+}
+
+// maisons et moulins sont partagés en blanc : toit (marqueur de teinte 1) et murs (0,5)
+// prennent ici la couleur de l'élément, sommets [i0, i1) des tampons color / aTint
+const RECOLOR = new Set(['maison', 'moulin']);
+const _cr = new THREE.Color();
+const _cw = new THREE.Color();
+export function recolorPart(p, C, T, i0, i1) {
+  if (!RECOLOR.has(p.t)) return;
+  const roof = p.t === 'maison' ? p.roof : p.color;
+  _cr.set(roof || '#ffffff');
+  _cw.set(p.wall || '#ffffff');
+  for (let i = i0; i < i1; i++) {
+    const c = T[i] > 0.75 ? _cr : T[i] > 0.25 ? _cw : null;
+    if (!c) continue;
+    C[i * 3] *= c.r;
+    C[i * 3 + 1] *= c.g;
+    C[i * 3 + 2] *= c.b;
   }
 }

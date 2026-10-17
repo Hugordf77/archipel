@@ -11,8 +11,9 @@ import { KINDS, KIND_RADIUS, STRIDE, TREES } from './gen/kinds.js';
 import { Surface, TILE } from './gen/surface.js';
 import { bloomColorOf } from './gen/zones.js';
 import { BIOMES } from './biomes.js';
-import { kindModel } from '../../models/kindModels.js';
-import { partModel, rotY } from '../../models/poiModels.js';
+import { kindModel, CAP_COLORS, ROCKY } from '../../models/vegetation/especes.js';
+import { partModel, rotY, recolorPart } from '../../models/structures/lieux.js';
+import { MAT } from '../../models/materials.js';
 import { buildRivers, buildLake, buildFallFoam } from '../env/rivers.js';
 import { setGroundProvider, addObstacles, removeObstacles } from '../navigation.js';
 
@@ -24,8 +25,6 @@ const DEPTH_RES = 512;
 const SMALL_DIST = 90; // petite végétation visible jusqu'à cette distance du centre des tuiles
 const BUDGET_MS = 4;
 
-const CAP_COLORS = ['#e9a3c4', '#f2b8a0', '#c7b2e6', '#9fdcc8', '#f6d27a'].map((c) => new THREE.Color(c));
-const ROCKY = new Set(['rocher', 'rocher_mousse', 'filon_cuivre', 'filon_fer', 'obsidienne']);
 const SHADOW_KINDS = new Set([...TREES, 'rocher', 'rocher_mousse', 'filon_cuivre', 'filon_fer', 'obsidienne', 'souche']);
 const GRASSY = new Set(['herbe']);
 // obstacles bas : on peut trébucher dessus en courant trop vite (les arbres, eux, arrêtent)
@@ -88,10 +87,6 @@ const ACC_ATTRS = [['position', 3], ['normal', 3], ['color', 3], ['aId', 1], ['a
 const _nm = new THREE.Matrix3();
 const _bc = new THREE.Vector3();
 const _bp = new THREE.Vector3();
-// maisons et moulins sont partagés en blanc : toit (marqueur 1) et murs (0,5) prennent leur couleur ici
-const RECOLOR = new Set(['maison', 'moulin']);
-const _cr = new THREE.Color();
-const _cw = new THREE.Color();
 class GeoAcc {
   constructor() {
     this.n = 0;
@@ -153,20 +148,7 @@ class GeoAcc {
       if (src) this.a[name].set(src, o * size);
       else this.a[name].fill(name === 'color' ? 1 : 0, o * size, (o + n) * size);
     }
-    if (p && RECOLOR.has(p.t)) {
-      const roof = p.t === 'maison' ? p.roof : p.color;
-      _cr.set(roof || '#ffffff');
-      _cw.set(p.wall || '#ffffff');
-      const C = this.a.color;
-      const T = this.a.aTint;
-      for (let i = o; i < o + n; i++) {
-        const c = T[i] > 0.75 ? _cr : T[i] > 0.25 ? _cw : null;
-        if (!c) continue;
-        C[i * 3] *= c.r;
-        C[i * 3 + 1] *= c.g;
-        C[i * 3 + 2] *= c.b;
-      }
-    }
+    if (p) recolorPart(p, this.a.color, this.a.aTint, o, o + n);
     this.n += n;
   }
 
@@ -209,15 +191,15 @@ export class IslandManager {
     this.terrainId = nextId();
     this.mats = {
       tile: toonMaterial({ vertexColors: true, terrain: true, paths: false, id: this.terrainId, rim: 0.6 }),
-      solid: toonMaterial({ vertexColors: true, aId: true, tintMask: true, wind: 0.06, sway: true, rim: 0.9 }),
-      glow: toonMaterial({ vertexColors: true, aId: true, tintMask: true, emissiveVColor: 0.4, emissiveNight: true }),
-      foliage: foliageMaterial({ leafTex, color: 0xffffff, color2: 0xf2f7d8, vertexColors: true, wind: 0.11 }),
+      solid: toonMaterial({ ...MAT.solid }),
+      glow: toonMaterial({ ...MAT.glow }),
+      foliage: foliageMaterial({ leafTex, ...MAT.foliage }),
       grass: grassMaterial({ id: this.terrainId, tipColor: 0xe4f0bc }),
-      flower: toonMaterial({ vertexColors: true, aId: true, tintMask: true, wind: 0.12, sway: true, outline: 0.5, rim: 0.5 }),
+      flower: toonMaterial({ ...MAT.flower }),
       far: toonMaterial({ vertexColors: true, rim: 0.4, outline: 0.6 }),
       silhouette: toonMaterial({ vertexColors: true, terrain: true, paths: false, id: this.terrainId, rim: 0.4 }),
-      struct: toonMaterial({ vertexColors: true, aId: true, rim: 0.8, wind: 0.05, sway: true }),
-      structGlow: toonMaterial({ vertexColors: true, aId: true, emissiveVColor: 0.9, emissiveNight: true }),
+      struct: toonMaterial({ ...MAT.struct }),
+      structGlow: toonMaterial({ ...MAT.structGlow }),
       proxy: new THREE.MeshBasicMaterial(),
     };
     this.proxyGeo = new THREE.IcosahedronGeometry(1, 1);

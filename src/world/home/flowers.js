@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { Builder, G } from '../../render/builder.js';
 import { toonMaterial } from '../../render/shaders/materials.js';
+import { lavandeGeante, archeGlycine } from '../../models/buildings/ileDepart.js';
+import { MAT } from '../../models/materials.js';
 import { LAYOUT, heightAt, pathMask, vnoise, distToPolyline } from './terrain.js';
 
 // ---------------------------------------------------------------------------
@@ -218,43 +220,18 @@ export class Flowers {
     const r = rng(31);
     const obstacles = [];
     for (const [cx, cz] of spots) {
-      const y = heightAt(cx, cz);
-      for (let k = 0; k < 26; k++) {
-        const a = r() * Math.PI * 2;
-        const d = Math.sqrt(r()) * 0.55;
-        const h = 0.75 + r() * 0.45;
-        const x = cx + Math.cos(a) * d;
-        const z = cz + Math.sin(a) * d;
-        lav.add(G.cyl(0.012, 0.016, h, 4), '#8fb88c', { p: [x, y + h / 2, z], r: [(r() - 0.5) * 0.4, 0, (r() - 0.5) * 0.4], tint: 0 });
-        for (let j = 0; j < 7; j++) lav.add(G.sphere(0.035 - j * 0.002, 6, 4), j % 2 ? '#b49be8' : '#a58ae0', { p: [x, y + h * (0.62 + j * 0.06), z], tint: 0 });
-      }
-      lav.add(G.sphere(0.6, 10, 7), '#94bf93', { p: [cx, y + 0.12, cz], s: [1.1, 0.35, 1.1], tint: 0 });
+      lavandeGeante(lav, cx, heightAt(cx, cz), cz, r);
       obstacles.push({ x: cx, z: cz, r: 0.6, low: true });
     }
-    const lavMesh = new THREE.Mesh(lav.build(), toonMaterial({ vertexColors: true, wind: 0.9, rim: 1 }));
+    const lavMesh = new THREE.Mesh(lav.build(), toonMaterial({ ...MAT.lavender }));
     lavMesh.name = 'lavandes-geantes';
     this.rares.push({ id: 'lavande', hours: 10, mesh: lavMesh, obstacles, label: 'Des lavandes géantes ont fleuri sur l\'île !' });
     // arche de glycine au-dessus du chemin de la maison (25 h)
     const gl = new Builder();
     const ax = 4.4;
     const az = 3.3;
-    const y0 = heightAt(ax, az);
-    for (const dz of [-1.25, 1.25]) {
-      gl.add(G.cyl(0.08, 0.1, 2.2, 8), '#c98f5f', { p: [ax, y0 + 1.1, az + dz], tint: 0 });
-    }
-    gl.add(G.torus(1.25, 0.08, 8, 24, Math.PI), '#c98f5f', { p: [ax, y0 + 2.2, az], r: [0, Math.PI / 2, 0], tint: 0 });
-    for (let i = 0; i < 26; i++) {
-      const a = (i / 25) * Math.PI;
-      const px = ax + (r() - 0.5) * 0.4;
-      const py = y0 + 2.2 + Math.sin(a) * 1.25;
-      const pz = az + Math.cos(a) * 1.25;
-      gl.add(G.sphere(0.16, 8, 6), i % 3 ? '#9fd08a' : '#86c48a', { p: [px, py + 0.05, pz], tint: 0 });
-      if (i % 2 === 0) {
-        const len = 0.45 + r() * 0.35;
-        gl.add(G.cone(0.1, len, 7), i % 4 ? '#c3a6ee' : '#ae92e6', { p: [px, py - len / 2 - 0.05, pz], r: [Math.PI, 0, 0], tint: 0 });
-      }
-    }
-    const glMesh = new THREE.Mesh(gl.build(), toonMaterial({ vertexColors: true, wind: 0.35, rim: 1 }));
+    archeGlycine(gl, ax, heightAt(ax, az), az, r);
+    const glMesh = new THREE.Mesh(gl.build(), toonMaterial({ ...MAT.wisteria }));
     glMesh.name = 'arche-glycine';
     this.rares.push({ id: 'glycine', hours: 25, mesh: glMesh, obstacles: [{ x: ax, z: az - 1.25, r: 0.2 }, { x: ax, z: az + 1.25, r: 0.2 }], label: 'Une arche de glycine s\'est épanouie près de la maison !' });
     for (const rare of this.rares) {

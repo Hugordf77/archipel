@@ -1,8 +1,8 @@
 // Les bateaux de l'archipel : caractéristiques et modèles peints.
 import * as THREE from 'three';
-import { Builder, G } from '../render/builder.js';
-import { toonMaterial } from '../render/shaders/materials.js';
-import { LAYER_SHADOW } from '../core/globals.js';
+import { Builder, G } from '../../render/builder.js';
+import { toonMaterial } from '../../render/shaders/materials.js';
+import { LAYER_SHADOW } from '../../core/globals.js';
 
 // vitesse (m/s), zone autorisée (m depuis l'île de départ), voile, cale (emplacements)
 export const BOATS = {

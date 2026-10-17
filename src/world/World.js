@@ -11,6 +11,7 @@ import { Sky } from './env/sky.js';
 import { DayCycle } from './env/daycycle.js';
 import { leafAtlas } from '../render/textures.js';
 import { foliageMaterial, glowMaterial } from '../render/shaders/materials.js';
+import { MAT } from '../models/materials.js';
 import { NOISE, CURVE } from '../render/shaders/chunks.js';
 
 export const SMOKE_VERT = /* glsl */ `
@@ -96,7 +97,7 @@ export class World {
     const fGeo = buildClumpGeometry(this.props.clumps, 3);
     this.foliage = new THREE.Mesh(
       fGeo,
-      foliageMaterial({ leafTex, color: 0xffffff, color2: 0xf2f7d8, vertexColors: true, wind: 0.11 }),
+      foliageMaterial({ leafTex, ...MAT.foliage }),
     );
     this.foliage.name = 'foliage';
     this.foliage.frustumCulled = false;

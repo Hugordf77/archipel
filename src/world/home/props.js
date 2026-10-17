@@ -5,8 +5,9 @@ import { nextId, LAYER_SHADOW } from '../../core/globals.js';
 import { LAYOUT, heightAt } from './terrain.js';
 import { toonMaterial } from '../../render/shaders/materials.js';
 import { PAL } from '../../models/palette.js';
+import { MAT } from '../../models/materials.js';
 import { rng, segment, palmFrondGeometry } from '../../models/shapes.js';
-import { chaumiere, bibliotheque, pupitreHibou, bureauEtude, trunkAlong, grandArbre, grandArbreClumps, ponton, pontRiviere, echoppe, panneauPlace, bancBois, lanterneJardin } from '../../models/home.js';
+import { chaumiere, bibliotheque, pupitreHibou, bureauEtude, trunkAlong, grandArbre, grandArbreClumps, ponton, pontRiviere, echoppe, panneauPlace, bancBois, lanterneJardin } from '../../models/buildings/ileDepart.js';
 
 // Palette pastel chaude (couleurs « gouache »)
 export { PAL } from '../../models/palette.js';
@@ -380,12 +381,12 @@ export function buildProps() {
   // -------------------------------------------------------------------------
   const geo = mergeGeometries(statics, false);
   geo.computeBoundingSphere();
-  const mesh = new THREE.Mesh(geo, toonMaterial({ vertexColors: true, aId: true }));
+  const mesh = new THREE.Mesh(geo, toonMaterial({ ...MAT.home }));
   mesh.name = 'props';
   mesh.layers.enable(LAYER_SHADOW);
   const glassMesh = new THREE.Mesh(
     glass.build(),
-    toonMaterial({ vertexColors: true, aId: true, emissive: 0xffa94a, emissiveNight: true, rim: 0.2 }),
+    toonMaterial({ ...MAT.homeGlass }),
   );
   glassMesh.name = 'glass';
   return { mesh, glassMesh, clumps, obstacles, lanterns, spots };
