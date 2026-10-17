@@ -5,19 +5,22 @@ import * as THREE from 'three';
 import { U } from '../src/core/globals.js';
 import { Pipeline } from '../src/render/Pipeline.js';
 import { prepareUniforms, setLight, boxOf, frameBox, disposeObject } from './scene.js';
-import { defaultParams } from '../src/models/registry.js';
 
 const SIZE = 256;
 const VERSION = 1; // à changer si le cadrage ou le rendu des vignettes change
 const DB = 'archipel-catalogue';
 const STORE = 'vignettes';
 
-// code source brut des modèles, pour l'empreinte des vignettes
-const SOURCES = import.meta.glob('../src/models/**/*.js', { query: '?raw', import: 'default' });
-const COMMON = ['../src/models/assemble.js', '../src/models/materials.js', '../src/models/palette.js', '../src/models/shapes.js'];
+// code source brut des modèles (servi par le middleware de dev, hors du graphe de modules pour
+// ne pas recharger la page à chaque retouche), pour l'empreinte des vignettes
+const COMMON = ['src/models/assemble.js', 'src/models/materials.js', 'src/models/palette.js', 'src/models/shapes.js'];
 const textCache = new Map();
-async function sourceText(path) {
-  if (!textCache.has(path)) textCache.set(path, SOURCES[path] ? SOURCES[path]() : Promise.resolve(''));
+export async function sourceText(path) {
+  if (!textCache.has(path)) {
+    textCache.set(path, fetch(`/__catalogue/source?path=${encodeURIComponent(path)}`)
+      .then((r) => (r.ok ? r.text() : ''))
+      .catch(() => ''));
+  }
   return textCache.get(path);
 }
 export function forgetSources() {
@@ -28,10 +31,10 @@ function fnv(str) {
   for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
   return (h >>> 0).toString(36);
 }
-export async function fingerprint(m) {
-  const own = await sourceText(`../${m.source}`);
+export async function fingerprint(m, params) {
+  const own = await sourceText(m.source);
   const common = await Promise.all(COMMON.map(sourceText));
-  return fnv([VERSION, m.id, JSON.stringify(defaultParams(m)), own, ...common].join('\u0000'));
+  return fnv([VERSION, m.id, JSON.stringify(params), own, ...common].join('\u0000'));
 }
 
 // petite base IndexedDB (clé → data URL) ; le catalogue marche aussi sans elle
@@ -83,14 +86,15 @@ export class Thumbs {
       for (const e of entries) {
         if (!e.isIntersecting) continue;
         this.observer.unobserve(e.target);
-        this.request(e.target.__model, e.target);
+        this.request(e.target.__model, e.target, e.target.__params);
       }
     }, { rootMargin: '300px 0px' });
   }
 
-  // une carte entre dans la file quand elle approche de l'écran
-  watch(el, m) {
+  // une carte entre dans la file quand elle approche de l'écran ; params : réglages par défaut
+  watch(el, m, params) {
     el.__model = m;
+    el.__params = params;
     const known = this.urls.get(m.id);
     if (known) this.show(el, known);
     else this.observer.observe(el);
@@ -104,15 +108,15 @@ export class Thumbs {
     el.replaceChildren(img);
   }
 
-  async request(m, el) {
-    const key = `${m.id}:${await fingerprint(m)}`;
+  async request(m, el, params) {
+    const key = `${m.id}:${await fingerprint(m, params)}`;
     const cached = await cacheGet(key);
     if (cached) {
       this.urls.set(m.id, cached);
       this.show(el, cached);
       return;
     }
-    this.queue.push({ m, el, key });
+    this.queue.push({ m, el, key, params });
     this.pump();
   }
 
@@ -123,7 +127,7 @@ export class Thumbs {
     requestAnimationFrame(() => {
       const job = this.queue.shift();
       try {
-        const url = this.render(job.m);
+        const url = this.render(job.m, job.params);
         this.urls.set(job.m.id, url);
         cachePut(job.key, url);
         this.show(job.el, url);
@@ -137,8 +141,8 @@ export class Thumbs {
   }
 
   // rendu du jeu (peinture et contours) d'un modèle en lumière de jour
-  render(m) {
-    const { object3d, anim } = m.build(defaultParams(m));
+  render(m, params) {
+    const { object3d, anim } = m.build(params);
     anim?.(0, 0.6);
     prepareUniforms();
     setLight('jour');
