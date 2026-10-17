@@ -72,7 +72,8 @@ function spot(b, color, c, rad, d, size, tint = 1) {
 }
 
 // quatre pattes (avant gauche, avant droite, arrière gauche, arrière droite, en diagonale) :
-// pivot de hanche caché dans le corps, sabot posé au sol
+// pivot de hanche caché dans le corps, sabot posé au sol ; zf et zb sont les positions signées
+// des pattes avant (z > 0) et arrière (z < 0)
 function legs(o) {
   const { x, zf, zb, hip, color, tint = 0, r0, r1, hoof, hoofH = 0.06, front = null, back = null, joint = null } = o;
   const out = [];
@@ -87,7 +88,7 @@ function legs(o) {
       }
       const f = pts[pts.length - 1];
       b.add(G.cyl(r1 * 1.12, r1 * 1.22, hoofH, 8), hoof, { p: [f[0], -hip + hoofH / 2, f[2]], tint: 0 });
-    }, [sx * x, hip, sz * (sz > 0 ? zf : zb)], 'leg', 1, ph));
+    }, [sx * x, hip, sz > 0 ? zf : zb], 'leg', 1, ph));
   }
   return out;
 }
@@ -112,7 +113,7 @@ function mouton() {
     }
   }, [0, 0.62, 0.3], 'head');
   // pas de queue : une boule détourée sur la laine se lisait comme un anneau
-  return [body, head, ...legs({ x: 0.17, zf: 0.24, zb: -0.24, hip: 0.43, color: SLATE, r0: 0.055, r1: 0.045, hoof: '#3a3346' })];
+  return [body, head, ...legs({ x: 0.17, zf: 0.28, zb: -0.3, hip: 0.43, color: SLATE, r0: 0.055, r1: 0.045, hoof: '#3a3346' })];
 }
 
 // Chèvre : dos droit, cornes recourbées vers l'arrière, barbichette, oreilles tombantes
@@ -169,7 +170,7 @@ function vache() {
     bone(b, CREAM, [0, 0, 0], [0, -0.38, -0.06], 0.02, 0.016, 6, 0);
     b.add(G.sphere(0.05, 6, 4), '#ffffff', { p: [0, -0.42, -0.065], s: [1, 1.6, 1] });
   }, [0, 0.74, -0.56], 'tail');
-  return [body, head, ...legs({ x: 0.18, zf: 0.3, zb: -0.32, hip: 0.5, color: '#ecdcbf', r0: 0.075, r1: 0.065, hoof: '#4a3f3a', hoofH: 0.07 }), tail];
+  return [body, head, ...legs({ x: 0.18, zf: 0.34, zb: -0.36, hip: 0.5, color: '#ecdcbf', r0: 0.075, r1: 0.065, hoof: '#4a3f3a', hoofH: 0.07 }), tail];
 }
 
 // Cerf : cou long dressé, museau allongé, bois ramifiés, croupe blanche, jarrets marqués

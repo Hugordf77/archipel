@@ -149,7 +149,7 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
     return b;
   };
 
-  it('posent les quatre sabots au sol et tiennent le budget (9 pièces, 1 500 triangles)', async () => {
+  it('posent quatre sabots bien répartis au sol et tiennent le budget (9 pièces, 1 500 triangles)', async () => {
     const { SPECIES } = await import('../src/models/animals/especes.js');
     for (const sp of Object.keys(ONGULES)) {
       const def = SPECIES[sp];
@@ -160,6 +160,17 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
       const legs = parts.filter((p) => p.anim === 'leg');
       expect(legs, sp).toHaveLength(4);
       for (const l of legs) expect(Math.abs(partBox(THREE, l).min.y * def.scale), sp).toBeLessThanOrEqual(0.01);
+      // quatre sabots bien répartis : deux à l'avant, deux à l'arrière, écartés d'au moins la
+      // moitié de la longueur du corps, jamais l'un sur l'autre
+      const feet = legs.map((l) => {
+        const b = partBox(THREE, l);
+        return [(b.min.x + b.max.x) / 2, (b.min.z + b.max.z) / 2];
+      });
+      const body = partBox(THREE, parts[0]);
+      expect(feet.filter(([, z]) => z > 0), sp).toHaveLength(2);
+      expect(feet.filter(([, z]) => z < 0), sp).toHaveLength(2);
+      expect(Math.min(...feet.filter(([, z]) => z > 0).map(([, z]) => z)) - Math.max(...feet.filter(([, z]) => z < 0).map(([, z]) => z)), sp).toBeGreaterThan(0.5 * (body.max.z - body.min.z));
+      for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) expect(Math.hypot(feet[i][0] - feet[j][0], feet[i][1] - feet[j][1]) * def.scale, `${sp} sabots ${i} et ${j}`).toBeGreaterThan(0.15);
     }
   });
 
