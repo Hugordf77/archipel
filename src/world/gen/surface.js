@@ -426,10 +426,10 @@ function sampleColor(C, n, fi, fj, out) {
 
 // matrices et couleurs d'instances par espèce, prêtes pour les InstancedMesh du jeu
 const GRASSY = new Set(['herbe']);
-const srgbToLinear = (c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+// couleurs de palette utilisées telles quelles (ColorManagement désactivé, voir setup.js)
 const BLOOM_RGB = BLOOM_IDS.map((_, i) => {
   const h = bloomColorOf(i);
-  return [1, 3, 5].map((o) => srgbToLinear(parseInt(h.slice(o, o + 2), 16) / 255));
+  return [1, 3, 5].map((o) => parseInt(h.slice(o, o + 2), 16) / 255);
 });
 function instanceGroups(items, colors, x0, z0, V) {
   const byKind = new Map();
