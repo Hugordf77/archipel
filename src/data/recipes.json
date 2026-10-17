@@ -1,0 +1,656 @@
+{
+ "recipes": [
+  {
+   "id": "etabli",
+   "out": "etabli",
+   "n": 1,
+   "in": {
+    "bois": 6,
+    "pierre": 4
+   },
+   "station": "main",
+   "cat": "station"
+  },
+  {
+   "id": "corde",
+   "out": "corde",
+   "n": 1,
+   "in": {
+    "fibre": 3
+   },
+   "station": "main",
+   "cat": "matériau"
+  },
+  {
+   "id": "torche",
+   "out": "torche",
+   "n": 2,
+   "in": {
+    "branche": 1,
+    "fibre": 1
+   },
+   "station": "main",
+   "cat": "objet"
+  },
+  {
+   "id": "appat",
+   "out": "appat",
+   "n": 3,
+   "in": {
+    "baie": 2
+   },
+   "station": "main",
+   "cat": "objet"
+  },
+  {
+   "id": "hache_bois",
+   "out": "hache_bois",
+   "n": 1,
+   "in": {
+    "bois": 2,
+    "branche": 2
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "pioche_bois",
+   "out": "pioche_bois",
+   "n": 1,
+   "in": {
+    "bois": 2,
+    "branche": 2
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "pelle_bois",
+   "out": "pelle_bois",
+   "n": 1,
+   "in": {
+    "bois": 2,
+    "branche": 2
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "canne_bois",
+   "out": "canne_bois",
+   "n": 1,
+   "in": {
+    "bois": 2,
+    "branche": 2,
+    "corde": 1
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "filet_bois",
+   "out": "filet_bois",
+   "n": 1,
+   "in": {
+    "bois": 2,
+    "branche": 2,
+    "fibre": 3
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "hache_cuivre",
+   "out": "hache_cuivre",
+   "n": 1,
+   "in": {
+    "lingot_cuivre": 2,
+    "branche": 2
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "pioche_cuivre",
+   "out": "pioche_cuivre",
+   "n": 1,
+   "in": {
+    "lingot_cuivre": 2,
+    "branche": 2
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "pelle_cuivre",
+   "out": "pelle_cuivre",
+   "n": 1,
+   "in": {
+    "lingot_cuivre": 2,
+    "branche": 2
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "canne_cuivre",
+   "out": "canne_cuivre",
+   "n": 1,
+   "in": {
+    "lingot_cuivre": 2,
+    "branche": 2,
+    "corde": 1
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "filet_cuivre",
+   "out": "filet_cuivre",
+   "n": 1,
+   "in": {
+    "lingot_cuivre": 2,
+    "branche": 2,
+    "fibre": 3
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "hache_fer",
+   "out": "hache_fer",
+   "n": 1,
+   "in": {
+    "lingot_fer": 2,
+    "planche": 1
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "pioche_fer",
+   "out": "pioche_fer",
+   "n": 1,
+   "in": {
+    "lingot_fer": 2,
+    "planche": 1
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "pelle_fer",
+   "out": "pelle_fer",
+   "n": 1,
+   "in": {
+    "lingot_fer": 2,
+    "planche": 1
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "canne_fer",
+   "out": "canne_fer",
+   "n": 1,
+   "in": {
+    "lingot_fer": 2,
+    "planche": 1,
+    "corde": 1
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "filet_fer",
+   "out": "filet_fer",
+   "n": 1,
+   "in": {
+    "lingot_fer": 2,
+    "planche": 1,
+    "fibre": 3
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "hache_cristal",
+   "out": "hache_cristal",
+   "n": 1,
+   "in": {
+    "cristal": 2,
+    "lingot_fer": 1
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "pioche_cristal",
+   "out": "pioche_cristal",
+   "n": 1,
+   "in": {
+    "cristal": 2,
+    "lingot_fer": 1
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "pelle_cristal",
+   "out": "pelle_cristal",
+   "n": 1,
+   "in": {
+    "cristal": 2,
+    "lingot_fer": 1
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "canne_cristal",
+   "out": "canne_cristal",
+   "n": 1,
+   "in": {
+    "cristal": 2,
+    "lingot_fer": 1,
+    "corde": 1
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "filet_cristal",
+   "out": "filet_cristal",
+   "n": 1,
+   "in": {
+    "cristal": 2,
+    "lingot_fer": 1,
+    "fibre": 3
+   },
+   "station": "etabli",
+   "cat": "outil"
+  },
+  {
+   "id": "four",
+   "out": "four",
+   "n": 1,
+   "in": {
+    "pierre": 12,
+    "argile": 6
+   },
+   "station": "etabli",
+   "cat": "station"
+  },
+  {
+   "id": "couture",
+   "out": "couture",
+   "n": 1,
+   "in": {
+    "planche": 4,
+    "fibre": 10
+   },
+   "station": "etabli",
+   "cat": "station"
+  },
+  {
+   "id": "chantier",
+   "out": "chantier",
+   "n": 1,
+   "in": {
+    "planche": 20,
+    "corde": 6,
+    "lingot_fer": 4
+   },
+   "station": "etabli",
+   "cat": "station"
+  },
+  {
+   "id": "planche",
+   "out": "planche",
+   "n": 2,
+   "in": {
+    "bois": 1
+   },
+   "station": "etabli",
+   "cat": "matériau"
+  },
+  {
+   "id": "clous",
+   "out": "clous",
+   "n": 6,
+   "in": {
+    "lingot_fer": 1
+   },
+   "station": "etabli",
+   "cat": "matériau"
+  },
+  {
+   "id": "jus_coco",
+   "out": "jus_coco",
+   "n": 1,
+   "in": {
+    "coco": 2
+   },
+   "station": "etabli",
+   "cat": "nourriture"
+  },
+  {
+   "id": "tissu",
+   "out": "tissu",
+   "n": 1,
+   "in": {
+    "fibre": 4
+   },
+   "station": "couture",
+   "cat": "matériau"
+  },
+  {
+   "id": "voile",
+   "out": "voile",
+   "n": 1,
+   "in": {
+    "tissu": 4,
+    "corde": 2
+   },
+   "station": "couture",
+   "cat": "matériau"
+  },
+  {
+   "id": "teinture_rose",
+   "out": "teinture_rose",
+   "n": 1,
+   "in": {
+    "fleur_rose": 3
+   },
+   "station": "couture",
+   "cat": "teinture"
+  },
+  {
+   "id": "teinture_jaune",
+   "out": "teinture_jaune",
+   "n": 1,
+   "in": {
+    "fleur_jaune": 3
+   },
+   "station": "couture",
+   "cat": "teinture"
+  },
+  {
+   "id": "teinture_bleue",
+   "out": "teinture_bleue",
+   "n": 1,
+   "in": {
+    "fleur_bleue": 3
+   },
+   "station": "couture",
+   "cat": "teinture"
+  },
+  {
+   "id": "teinture_blanche",
+   "out": "teinture_blanche",
+   "n": 1,
+   "in": {
+    "fleur_blanche": 3
+   },
+   "station": "couture",
+   "cat": "teinture"
+  },
+  {
+   "id": "teinture_mauve",
+   "out": "teinture_mauve",
+   "n": 1,
+   "in": {
+    "fleur_mauve": 3
+   },
+   "station": "couture",
+   "cat": "teinture"
+  },
+  {
+   "id": "brique",
+   "out": "brique",
+   "n": 1,
+   "in": {
+    "argile": 2
+   },
+   "station": "four",
+   "cat": "matériau"
+  },
+  {
+   "id": "verre",
+   "out": "verre",
+   "n": 1,
+   "in": {
+    "sable": 3
+   },
+   "station": "four",
+   "cat": "matériau"
+  },
+  {
+   "id": "lingot_cuivre",
+   "out": "lingot_cuivre",
+   "n": 1,
+   "in": {
+    "cuivre": 2
+   },
+   "station": "four",
+   "cat": "matériau"
+  },
+  {
+   "id": "lingot_fer",
+   "out": "lingot_fer",
+   "n": 1,
+   "in": {
+    "fer": 2
+   },
+   "station": "four",
+   "cat": "matériau"
+  },
+  {
+   "id": "confiture",
+   "out": "confiture",
+   "n": 1,
+   "in": {
+    "baie": 4,
+    "verre": 1
+   },
+   "station": "four",
+   "cat": "nourriture"
+  },
+  {
+   "id": "brochette",
+   "out": "brochette",
+   "n": 1,
+   "in": {
+    "poisson_sardine": 2,
+    "branche": 1
+   },
+   "station": "four",
+   "cat": "nourriture"
+  },
+  {
+   "id": "soupe",
+   "out": "soupe",
+   "n": 1,
+   "in": {
+    "champignon": 3,
+    "verre": 1
+   },
+   "station": "four",
+   "cat": "nourriture"
+  },
+  {
+   "id": "bateau_barque",
+   "out": "bateau_barque",
+   "n": 1,
+   "in": {
+    "planche": 20,
+    "clous": 8,
+    "corde": 4
+   },
+   "station": "chantier",
+   "cat": "bateau"
+  },
+  {
+   "id": "bateau_voilier",
+   "out": "bateau_voilier",
+   "n": 1,
+   "in": {
+    "planche": 30,
+    "voile": 1,
+    "lingot_fer": 6,
+    "corde": 6
+   },
+   "station": "chantier",
+   "cat": "bateau"
+  },
+  {
+   "id": "bateau_goelette",
+   "out": "bateau_goelette",
+   "n": 1,
+   "in": {
+    "planche": 60,
+    "voile": 2,
+    "lingot_fer": 16,
+    "verre": 4,
+    "clous": 20
+   },
+   "station": "chantier",
+   "cat": "bateau"
+  }
+ ],
+ "pieces": {
+  "sol_bois": {
+   "planche": 1
+  },
+  "sol_pierre": {
+   "pierre": 2
+  },
+  "sol_brique": {
+   "brique": 1
+  },
+  "mur_bois": {
+   "planche": 2
+  },
+  "mur_pierre": {
+   "pierre": 3
+  },
+  "mur_brique": {
+   "brique": 2
+  },
+  "mur_fenetre": {
+   "planche": 2,
+   "verre": 1
+  },
+  "porte": {
+   "planche": 3
+  },
+  "toit_bois": {
+   "planche": 1
+  },
+  "toit_tuiles": {
+   "brique": 1
+  },
+  "toit_plat": {
+   "planche": 1
+  },
+  "faitage": {
+   "planche": 1
+  },
+  "escalier": {
+   "planche": 2
+  },
+  "poteau": {
+   "bois": 1
+  },
+  "barriere": {
+   "branche": 2
+  },
+  "barriere_blanche": {
+   "planche": 1
+  },
+  "muret": {
+   "pierre": 2
+  },
+  "ponton": {
+   "planche": 3,
+   "bois": 1
+  },
+  "chemin": {
+   "pierre": 1
+  },
+  "lampadaire": {
+   "lingot_fer": 1,
+   "verre": 1
+  },
+  "torche_poteau": {
+   "torche": 1,
+   "branche": 1
+  },
+  "banc": {
+   "planche": 3
+  },
+  "table": {
+   "planche": 4
+  },
+  "chaise": {
+   "planche": 2
+  },
+  "lit": {
+   "planche": 4,
+   "tissu": 2
+  },
+  "tapis": {
+   "tissu": 2,
+   "teinture_rose": 1
+  },
+  "etagere": {
+   "planche": 3
+  },
+  "coffre": {
+   "planche": 4,
+   "clous": 2
+  },
+  "pot_fleurs": {
+   "argile": 1,
+   "fleur_rose": 1
+  },
+  "jardiniere": {
+   "planche": 2,
+   "fleur_jaune": 2
+  },
+  "arche_fleurs": {
+   "branche": 4,
+   "fleur_rose": 2,
+   "fleur_blanche": 2
+  },
+  "fontaine": {
+   "pierre": 8,
+   "verre": 1
+  },
+  "girouette": {
+   "lingot_cuivre": 2
+  },
+  "epouvantail": {
+   "branche": 3,
+   "tissu": 1
+  },
+  "maison_invite": {
+   "planche": 30,
+   "brique": 10,
+   "verre": 2,
+   "tissu": 2
+  },
+  "etabli": {
+   "etabli": 1
+  },
+  "four": {
+   "four": 1
+  },
+  "couture": {
+   "couture": 1
+  },
+  "chantier": {
+   "chantier": 1
+  }
+ }
+}
