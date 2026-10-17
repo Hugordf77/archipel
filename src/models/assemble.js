@@ -106,24 +106,29 @@ export function assembleBuilder(draw, mat = 'home') {
   return { object3d: shadowed(g) };
 }
 
-// Animaux par pièces : [{ geo, pivot, anim, side, phase }] (faune des îles)
-export function assembleCreature(parts, { scale = 1, mat = materiaux().fauna, pace = 1 } = {}) {
+// Animaux par pièces : [{ geo, pivot, anim, side, phase }] (faune des îles). Comme en jeu, chaque
+// pièce est une instance : coat teinte le pelage (sommets teintés). L'animation alterne quatre
+// secondes de marche et quatre secondes de broutage (tête baissée jusqu'à graze).
+export function assembleCreature(parts, { scale = 1, mat = materiaux().fauna, pace = 1, coat = null, graze = 0.5 } = {}) {
   const g = new THREE.Group();
   const moving = [];
+  const color = new THREE.Color(coat ?? 0xffffff);
   for (const p of parts) {
     const pivot = new THREE.Group();
     pivot.position.fromArray(p.pivot);
-    pivot.add(new THREE.Mesh(p.geo, mat));
+    pivot.add(single(p.geo, mat, color));
     g.add(pivot);
     if (p.anim && p.anim !== 'none') moving.push({ obj: pivot, ...p });
   }
   g.scale.setScalar(scale);
   const anim = moving.length
     ? (dt, t) => {
+        const cyc = t % 8;
+        const walk = cyc < 4;
         for (const m of moving) {
           const s = t * pace + (m.phase || 0);
-          if (m.anim === 'leg') m.obj.rotation.x = Math.sin(s * 7) * 0.45;
-          else if (m.anim === 'head') m.obj.rotation.x = Math.sin(s * 1.6) * 0.12;
+          if (m.anim === 'leg') m.obj.rotation.x = walk ? Math.sin(s * 7) * 0.45 * Math.min(1, cyc * 2, (4 - cyc) * 2) : 0;
+          else if (m.anim === 'head') m.obj.rotation.x = walk ? Math.sin(s * 3) * 0.08 : graze * Math.sin((Math.PI * (cyc - 4)) / 4);
           else if (m.anim === 'wing') m.obj.rotation.z = (m.side || 1) * Math.sin(s * 9) * 0.6;
           else if (m.anim === 'tail') m.obj.rotation.y = Math.sin(s * 5) * 0.4;
         }

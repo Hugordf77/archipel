@@ -42,6 +42,8 @@ export class IslandFauna {
     const parts = def.parts();
     const capacity = 64;
     k = { def, parts, capacity, meshes: [], count: 0 };
+    // robes : couleur du pelage par animal (sommets teintés seulement)
+    if (def.coats) k.coats = def.coats.map(([, c]) => new THREE.Color(c));
     if (def.insect === 'glow') {
       const im = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), this.glow, capacity);
       im.frustumCulled = false;
@@ -83,6 +85,7 @@ export class IslandFauna {
           state: 'idle', t: rng() * 3, target: null, phase: rng() * 10, speed: 0, petT: 0, hop: 0,
           angle: rng() * 6.28, radius: sp.r * (0.5 + rng() * 0.5), seed: rng(),
         };
+        an.coat = def.coats ? Math.floor(an.seed * 9973) % def.coats.length : 0;
         an.y = this.groundY(an);
         list.push(an);
         this.animals.push(an);
@@ -139,6 +142,7 @@ export class IslandFauna {
       for (const im of k.meshes) {
         im.count = k.count;
         im.instanceMatrix.needsUpdate = true;
+        if (im.instanceColor) im.instanceColor.needsUpdate = true;
       }
     }
     this.updateHearts(dt);
@@ -252,7 +256,7 @@ export class IslandFauna {
       if (full) {
         const t = this.t;
         if (p.anim === 'leg') a = Math.sin(an.phase * 6 + p.phase) * Math.min(1, an.speed) * 0.6;
-        else if (p.anim === 'head') a = sleep ? 0.4 : an.speed < 0.1 ? 0.25 + Math.sin(t * 1.3 + an.seed * 10) * 0.25 : Math.sin(an.phase * 3) * 0.08;
+        else if (p.anim === 'head') a = sleep ? 0.4 : an.speed < 0.1 ? (def.graze ?? 0.5) * (0.5 + Math.sin(t * 1.3 + an.seed * 10) * 0.5) : Math.sin(an.phase * 3) * 0.08;
         else if (p.anim === 'wing') a = def.insect ? Math.sin(t * 28 + an.seed * 10) * 0.9 : Math.sin(t * (def.fly ? 5 : 10) + an.seed * 10) * 0.55;
         else if (p.anim === 'tail') a = Math.sin(t * (def.fish ? 8 : 4) + an.seed * 10) * 0.3;
       }
@@ -265,6 +269,7 @@ export class IslandFauna {
         pm.multiply(r);
       }
       k.meshes[pi].setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(m, pm));
+      if (k.coats) k.meshes[pi].setColorAt(i, k.coats[an.coat]);
     });
   }
 
@@ -291,7 +296,7 @@ export class IslandFauna {
     an.petT = 2.2;
     an.state = 'idle';
     an.hop = 0.25;
-    this.heart(an.x, an.y + 1.0 * an.def.scale + 0.4, an.z);
+    this.heart(an.x, an.y + (an.def.top ?? 1.0) * an.def.scale + 0.4, an.z);
   }
 
   heart(x, y, z) {

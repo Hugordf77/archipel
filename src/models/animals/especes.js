@@ -1,5 +1,6 @@
 // Animaux des îles générées : 23 espèces dessinées par pièces (corps, tête, pattes, ailes, queue).
 // Chaque pièce : { geo, pivot [x, y, z], anim, side, phase } ; le jeu les instancie (IslandFauna).
+import * as THREE from 'three';
 import { Builder, G } from '../../render/builder.js';
 
 // ---------------------------------------------------------------------------
@@ -31,39 +32,196 @@ export function quad(o) {
   return parts;
 }
 
+// ---------------------------------------------------------------------------
+// Ongulés : pièces dessinées à la main. Le pelage est teinté par animal (tint 1, sommets clairs
+// multipliés par la couleur de la robe) ; yeux, museau, sabots, cornes et bois ne le sont pas.
+const EYE = '#3d3049';
+const _up = new THREE.Vector3(0, 1, 0);
+const _z = new THREE.Vector3(0, 0, 1);
+
+// cylindre effilé entre deux points [x, y, z]
+function bone(b, color, a, c, r0, r1, sides = 8, tint = 1) {
+  const va = new THREE.Vector3(...a);
+  const vc = new THREE.Vector3(...c);
+  const dir = vc.clone().sub(va);
+  const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(_up, dir.clone().normalize()));
+  const m = va.add(vc).multiplyScalar(0.5);
+  b.add(G.cyl(r1, r0, dir.length(), sides), color, { p: [m.x, m.y, m.z], r: [e.x, e.y, e.z], tint });
+}
+
+// ellipsoïde (rayons rx, ry, rz)
+const blob = (b, color, p, rad, opts = {}, w = 9, h = 7) => b.add(G.sphere(1, w, h), color, { p, s: rad, ...opts });
+
+// œil rond et brillant, tourné vers l'avant et l'extérieur ; ring : liseré clair sur un visage sombre
+function eye(b, x, y, z, r, ring = null) {
+  const sx = Math.sign(x) || 1;
+  const rot = [0, sx * 0.55, 0];
+  if (ring) b.add(G.sphere(r * 1.45, 7, 5), ring, { p: [x - sx * r * 0.15, y, z - r * 0.2], s: [1, 1.1, 0.55], r: rot, tint: 0 });
+  b.add(G.sphere(r, 6, 4), EYE, { p: [x, y, z], s: [1, 1.15, 0.7], r: rot, tint: 0 });
+  b.add(G.sphere(r * 0.34, 5, 3), '#ffffff', { p: [x + sx * r * 0.2, y + r * 0.42, z + r * 0.62], tint: 0 });
+}
+
+// tache aplatie posée sur un ellipsoïde (centre c, rayons rad), dans la direction d
+function spot(b, color, c, rad, d, size, tint = 1) {
+  const dir = new THREE.Vector3(...d).normalize();
+  const p = new THREE.Vector3(c[0] + rad[0] * dir.x, c[1] + rad[1] * dir.y, c[2] + rad[2] * dir.z);
+  const n = new THREE.Vector3(dir.x / rad[0], dir.y / rad[1], dir.z / rad[2]).normalize();
+  const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(_z, n));
+  p.addScaledVector(n, -0.012);
+  b.add(G.sphere(1, 6, 4), color, { p: [p.x, p.y, p.z], s: [size[0], size[1], 0.035], r: [e.x, e.y, e.z], tint });
+}
+
+// quatre pattes (avant gauche, avant droite, arrière gauche, arrière droite, en diagonale) :
+// pivot de hanche caché dans le corps, sabot posé au sol
+function legs(o) {
+  const { x, zf, zb, hip, color, tint = 0, r0, r1, hoof, hoofH = 0.06, front = null, back = null, joint = null } = o;
+  const out = [];
+  for (const [sx, sz, ph] of [[-1, 1, 0], [1, 1, Math.PI], [-1, -1, Math.PI], [1, -1, 0]]) {
+    const pts = (sz > 0 ? front : back) || [[0, 0, 0], [0, -hip + hoofH, 0]];
+    out.push(part((b) => {
+      for (let i = 0; i < pts.length - 1; i++) {
+        const t0 = i / (pts.length - 1);
+        const t1 = (i + 1) / (pts.length - 1);
+        bone(b, color, pts[i], pts[i + 1], r0 + (r1 - r0) * t0, r0 + (r1 - r0) * t1, 8, tint);
+        if (joint === (sz > 0 ? 'front' : 'back') && i > 0) b.add(G.sphere(r0 + (r1 - r0) * t0, 5, 3), color, { p: pts[i], tint });
+      }
+      const f = pts[pts.length - 1];
+      b.add(G.cyl(r1 * 1.12, r1 * 1.22, hoofH, 8), hoof, { p: [f[0], -hip + hoofH / 2, f[2]], tint: 0 });
+    }, [sx * x, hip, sz * (sz > 0 ? zf : zb)], 'leg', 1, ph));
+  }
+  return out;
+}
+
+// Mouton : laine en grappe (teintée), visage et pattes ardoise, petites oreilles horizontales
+function mouton() {
+  const SLATE = '#4d4766';
+  const body = part((b) => {
+    blob(b, '#f6f1ea', [0, 0.56, -0.02], [0.37, 0.25, 0.46]);
+    const wool = [[0, 0.78, 0.18, 0.16], [0, 0.8, -0.12, 0.17], [0.25, 0.72, 0.16, 0.16], [-0.25, 0.72, 0.16, 0.16], [0.26, 0.72, -0.2, 0.16], [-0.26, 0.72, -0.2, 0.16],
+      [0.33, 0.54, -0.02, 0.16], [-0.33, 0.54, -0.02, 0.16], [0, 0.62, -0.4, 0.16], [0, 0.6, 0.34, 0.15]];
+    wool.forEach(([x, y, z, r], i) => b.add(G.sphere(r, 6, 4), i % 2 ? '#ffffff' : '#f1ece5', { p: [x, y, z] }));
+  }, [0, 0, 0]);
+  const head = part((b) => {
+    b.add(G.sphere(0.15, 7, 5), '#f4efe8', { p: [0, 0.04, 0.12] }); // collerette de laine
+    blob(b, SLATE, [0, -0.01, 0.32], [0.15, 0.16, 0.2], { tint: 0 });
+    blob(b, '#5f5672', [0, -0.08, 0.47], [0.11, 0.09, 0.09], { tint: 0 }, 7, 5);
+    b.add(G.sphere(0.12, 7, 5), '#ffffff', { p: [0, 0.13, 0.27] }); // toupet
+    for (const sx of [-1, 1]) {
+      blob(b, SLATE, [sx * 0.18, 0.05, 0.26], [0.11, 0.035, 0.06], { tint: 0 }, 6, 4);
+      eye(b, sx * 0.1, 0.03, 0.43, 0.032, '#efe6da');
+    }
+  }, [0, 0.62, 0.3], 'head');
+  // pas de queue : une boule détourée sur la laine se lisait comme un anneau
+  return [body, head, ...legs({ x: 0.17, zf: 0.24, zb: -0.24, hip: 0.43, color: SLATE, r0: 0.055, r1: 0.045, hoof: '#3a3346' })];
+}
+
+// Chèvre : dos droit, cornes recourbées vers l'arrière, barbichette, oreilles tombantes
+function chevre() {
+  const HORN = '#9c8a74';
+  const body = part((b) => {
+    b.add(G.box(0.5, 0.34, 0.78, 0.12, 1), '#ffffff', { p: [0, 0.63, -0.02] });
+    blob(b, '#ffffff', [0, 0.6, 0.3], [0.21, 0.17, 0.16], {}, 7, 5);
+  }, [0, 0, 0]);
+  const head = part((b) => {
+    bone(b, '#ffffff', [0, 0, 0], [0, 0.16, 0.2], 0.1, 0.075);
+    blob(b, '#ffffff', [0, 0.18, 0.33], [0.11, 0.12, 0.16], { r: [0.3, 0, 0] });
+    blob(b, '#f1ebe3', [0, 0.11, 0.47], [0.075, 0.07, 0.09], {}, 7, 5);
+    b.add(G.cone(0.035, 0.12, 6), '#ece6dd', { p: [0, 0.0, 0.44], r: [Math.PI + 0.25, 0, 0] }); // barbichette
+    for (const sx of [-1, 1]) {
+      const h = [[sx * 0.045, 0.28, 0.32], [sx * 0.06, 0.39, 0.27], [sx * 0.075, 0.45, 0.17], [sx * 0.08, 0.43, 0.08]];
+      for (let i = 0; i < 3; i++) bone(b, HORN, h[i], h[i + 1], 0.026 - i * 0.006, 0.02 - i * 0.006, 6, 0);
+      blob(b, '#ffffff', [sx * 0.2, 0.18, 0.29], [0.14, 0.035, 0.05], { r: [0, 0, sx * -0.6] }, 6, 4);
+      eye(b, sx * 0.075, 0.22, 0.42, 0.028);
+    }
+  }, [0, 0.6, 0.3], 'head');
+  const tail = part((b) => b.add(G.cone(0.04, 0.13, 6), '#ffffff', { p: [0, 0.05, -0.02], r: [-0.5, 0, 0] }), [0, 0.76, -0.41], 'tail');
+  return [body, head, ...legs({ x: 0.14, zf: 0.27, zb: -0.28, hip: 0.52, color: '#e9e2d8', tint: 1, r0: 0.042, r1: 0.034, hoof: '#4a3f3a',
+    front: [[0, 0, 0], [0, -0.25, 0.02], [0, -0.46, 0]], back: [[0, 0, 0], [0, -0.22, -0.06], [0, -0.46, 0]] }), tail];
+}
+
+// Vache : corps massif crème, taches (teintées), museau rose poudré, cornes courtes, clochette
+function vache() {
+  const CREAM = '#f4e7cf';
+  const C = [0, 0.6, -0.02];
+  const R = [0.36, 0.25, 0.55];
+  const body = part((b) => {
+    blob(b, CREAM, C, R, { tint: 0 });
+    const spots = [[[0.85, 0.45, 0.25], [0.2, 0.14]], [[-0.9, 0.3, -0.25], [0.18, 0.16]], [[0.25, 0.92, -0.35], [0.17, 0.13]], [[-0.4, 0.7, 0.55], [0.14, 0.12]], [[0.7, 0.15, -0.7], [0.15, 0.12]]];
+    for (const [d, sz] of spots) spot(b, '#ffffff', C, R, d, sz);
+    blob(b, '#f1b9b0', [0, 0.37, -0.24], [0.11, 0.08, 0.12], { tint: 0 }, 6, 4); // pis
+  }, [0, 0, 0]);
+  const head = part((b) => {
+    bone(b, CREAM, [0, 0, 0], [0, 0, 0.18], 0.17, 0.15, 8, 0);
+    blob(b, CREAM, [0, 0.02, 0.3], [0.2, 0.19, 0.24], { tint: 0 });
+    blob(b, '#f2c7bd', [0, -0.08, 0.5], [0.16, 0.11, 0.1], { tint: 0 }, 7, 5);
+    spot(b, '#ffffff', [0, 0.02, 0.3], [0.2, 0.19, 0.24], [0.55, 0.45, 0.7], [0.08, 0.07]);
+    b.add(G.torus(0.16, 0.018, 3, 10), '#9f6b48', { p: [0, -0.03, 0.12], tint: 0 }); // collier
+    b.add(G.cyl(0.035, 0.06, 0.08, 8), '#e8b84a', { p: [0, -0.21, 0.13], tint: 0 }); // clochette
+    for (const sx of [-1, 1]) {
+      b.add(G.sphere(0.022, 6, 4), '#7a5a55', { p: [sx * 0.05, -0.07, 0.595], tint: 0 }); // naseaux
+      const h = [[sx * 0.13, 0.17, 0.27], [sx * 0.22, 0.24, 0.28], [sx * 0.25, 0.32, 0.24]];
+      for (let i = 0; i < 2; i++) bone(b, '#f3e6c8', h[i], h[i + 1], 0.03 - i * 0.01, 0.02 - i * 0.008, 6, 0);
+      blob(b, CREAM, [sx * 0.22, 0.08, 0.25], [0.11, 0.045, 0.07], { tint: 0 }, 6, 4);
+      eye(b, sx * 0.13, 0.07, 0.44, 0.035);
+    }
+  }, [0, 0.66, 0.46], 'head');
+  const tail = part((b) => {
+    bone(b, CREAM, [0, 0, 0], [0, -0.38, -0.06], 0.02, 0.016, 6, 0);
+    b.add(G.sphere(0.05, 6, 4), '#ffffff', { p: [0, -0.42, -0.065], s: [1, 1.6, 1] });
+  }, [0, 0.74, -0.56], 'tail');
+  return [body, head, ...legs({ x: 0.18, zf: 0.3, zb: -0.32, hip: 0.5, color: '#ecdcbf', r0: 0.075, r1: 0.065, hoof: '#4a3f3a', hoofH: 0.07 }), tail];
+}
+
+// Cerf : cou long dressé, museau allongé, bois ramifiés, croupe blanche, jarrets marqués
+function cerf() {
+  const BONE = '#ead7b4';
+  const body = part((b) => {
+    blob(b, '#ffffff', [0, 0.78, -0.02], [0.21, 0.2, 0.44]);
+    blob(b, '#f3e6cf', [0, 0.69, 0], [0.17, 0.12, 0.34], { tint: 0 }, 7, 5); // ventre clair
+    blob(b, '#fbf3e6', [0, 0.8, -0.43], [0.15, 0.15, 0.08], { tint: 0 }, 7, 5); // croupe blanche
+  }, [0, 0, 0]);
+  const head = part((b) => {
+    bone(b, '#ffffff', [0, 0, 0], [0, 0.3, 0.32], 0.11, 0.07);
+    blob(b, '#ffffff', [0, 0.36, 0.45], [0.1, 0.11, 0.15], { r: [0.25, 0, 0] });
+    blob(b, '#efe6dc', [0, 0.31, 0.62], [0.065, 0.065, 0.11], {}, 7, 5);
+    b.add(G.sphere(0.03, 6, 4), EYE, { p: [0, 0.31, 0.73], tint: 0 }); // truffe
+    for (const sx of [-1, 1]) {
+      blob(b, '#ffffff', [sx * 0.13, 0.46, 0.38], [0.1, 0.04, 0.05], { r: [0, 0, sx * 0.5] }, 6, 4);
+      eye(b, sx * 0.08, 0.39, 0.53, 0.028);
+      // bois : merrain à trois segments et quatre andouillers
+      const m = [[sx * 0.05, 0.45, 0.42], [sx * 0.15, 0.6, 0.36], [sx * 0.21, 0.76, 0.27], [sx * 0.23, 0.9, 0.19]];
+      for (let i = 0; i < 3; i++) bone(b, BONE, m[i], m[i + 1], 0.024 - i * 0.005, 0.019 - i * 0.005, 5, 0);
+      for (const [a, c] of [[m[1], [sx * 0.17, 0.68, 0.5]], [m[2], [sx * 0.29, 0.86, 0.33]], [m[3], [sx * 0.18, 0.99, 0.15]], [m[3], [sx * 0.3, 0.97, 0.14]]]) bone(b, BONE, a, c, 0.014, 0.008, 5, 0);
+    }
+  }, [0, 0.8, 0.32], 'head');
+  const tail = part((b) => b.add(G.sphere(1, 6, 4), '#ffffff', { p: [0, 0, -0.03], s: [0.05, 0.08, 0.04] }), [0, 0.86, -0.46], 'tail');
+  return [body, head, ...legs({ x: 0.1, zf: 0.26, zb: -0.28, hip: 0.74, color: '#e3d8cd', tint: 1, r0: 0.046, r1: 0.03, hoof: '#3d3330', hoofH: 0.05, joint: 'back',
+    front: [[0, 0, 0], [0, -0.38, 0.02], [0, -0.69, 0]], back: [[0, 0, 0], [0, -0.33, -0.1], [0, -0.69, -0.02]] }), tail];
+}
+
 export const SPECIES = {
+  // Ongulés refaits (catalogue ANI-001 à ANI-004) : visage, cou porté par la pièce « head »,
+  // pattes à sabots, robes teintées par animal. graze : angle de broutage (rad), muzzle : bout du
+  // museau dans le repère de la tête, top : haut de la tête (m, avant l'échelle) pour le cœur.
   mouton: {
-    speed: 0.6, scale: 1, shadow: true,
-    parts: () => quad({
-      body: '#fbf7f2', bodyS: [0.75, 0.6, 1.0], head: '#4d4766', headS: [0.32, 0.34, 0.42], leg: '#4d4766', legLen: 0.32,
-      extra: (b, y) => { for (let k = 0; k < 8; k++) b.add(G.sphere(0.22, 7, 5), '#ffffff', { p: [Math.cos(k * 0.8) * 0.26, y + 0.48 + (k % 2) * 0.08, Math.sin(k * 1.3) * 0.38] }); },
-      ears: (b) => { for (const sx of [-1, 1]) b.add(G.sphere(0.07, 6, 4), '#4d4766', { p: [sx * 0.18, 0.05, 0.1], s: [1.6, 0.6, 0.8] }); },
-    }),
+    speed: 0.6, scale: 1, shadow: true, graze: 1.0, muzzle: [0, -0.1, 0.55], top: 1.0,
+    coats: [['Blanc', '#fbf7f2'], ['Noir', '#5a5160']],
+    parts: () => mouton(),
   },
   chevre: {
-    speed: 0.9, scale: 0.9, shadow: true,
-    parts: () => quad({
-      body: '#e8dcc8', bodyS: [0.55, 0.5, 0.95], head: '#e8dcc8', headS: [0.26, 0.3, 0.42], leg: '#b59a7a', legLen: 0.42, headAt: [0, 0.12, 0],
-      ears: (b) => { for (const sx of [-1, 1]) b.add(G.cone(0.04, 0.25, 5), '#8a7a6a', { p: [sx * 0.08, 0.2, 0.02], r: [-0.5, 0, sx * 0.3] }); b.add(G.cone(0.04, 0.12, 5), '#fbf7f2', { p: [0, -0.18, 0.18], r: [Math.PI, 0, 0] }); },
-      tail: (b) => b.add(G.cone(0.05, 0.14, 5), '#e8dcc8', { p: [0, 0.05, 0], r: [-2.2, 0, 0] }),
-    }),
+    speed: 0.9, scale: 0.9, shadow: true, graze: 1.2, muzzle: [0, 0.1, 0.56], top: 1.2,
+    coats: [['Crème', '#f3ead9'], ['Alpine brune', '#a9784f'], ['Noire', '#544a4e']],
+    parts: () => chevre(),
   },
   vache: {
-    speed: 0.45, scale: 1.4, shadow: true,
-    parts: () => quad({
-      body: '#fbf7f2', bodyS: [0.7, 0.62, 1.25], head: '#fbf7f2', headS: [0.36, 0.38, 0.48], leg: '#fbf7f2', legLen: 0.45, legZ: 0.38,
-      extra: (b, y) => { b.add(G.sphere(0.22, 8, 6), '#8a6a5c', { p: [0.3, y + 0.4, 0.15], s: [0.4, 1, 1.4] }); b.add(G.sphere(0.2, 8, 6), '#8a6a5c', { p: [-0.32, y + 0.35, -0.3], s: [0.4, 1, 1.2] }); },
-      ears: (b) => { for (const sx of [-1, 1]) b.add(G.cone(0.035, 0.16, 5), '#f6ead2', { p: [sx * 0.14, 0.2, 0.0], r: [0, 0, sx * -0.9] }); b.add(G.sphere(0.13, 8, 6), '#f4b4c6', { p: [0, -0.05, 0.38], s: [1.2, 0.8, 0.6] }); },
-      tail: (b) => b.add(G.cyl(0.02, 0.02, 0.5, 4), '#8a6a5c', { p: [0, -0.25, -0.02] }),
-    }),
+    speed: 0.45, scale: 1.4, shadow: true, graze: 1.12, muzzle: [0, -0.1, 0.6], top: 1.0,
+    coats: [['Pie brune', '#7a5440'], ['Pie noire', '#3b3340'], ['Pie rouge', '#b8643c']],
+    parts: () => vache(),
   },
   cerf: {
-    speed: 1.4, scale: 1.2, shadow: true, shy: 7,
-    parts: () => quad({
-      body: '#c98f5f', bodyS: [0.5, 0.55, 1.05], head: '#c98f5f', headS: [0.26, 0.3, 0.44], leg: '#9f6b48', legLen: 0.62, headAt: [0, 0.25, 0.05],
-      extra: (b, y) => b.add(G.sphere(0.18, 8, 6), '#fbf3e6', { p: [0, y + 0.4, -0.5], s: [1, 1, 0.5] }),
-      ears: (b) => { for (const sx of [-1, 1]) { b.add(G.cyl(0.025, 0.03, 0.45, 5), '#e0b07e', { p: [sx * 0.12, 0.35, -0.02], r: [0, 0, sx * -0.35] }); b.add(G.cyl(0.02, 0.025, 0.2, 5), '#e0b07e', { p: [sx * 0.22, 0.48, 0.05], r: [0.6, 0, sx * -0.8] }); } },
-    }),
+    speed: 1.4, scale: 1.2, shadow: true, shy: 7, graze: 1.2, muzzle: [0, 0.3, 0.74], top: 1.85,
+    coats: [["Fauve d'été", '#c98f5f'], ["Brun d'hiver", '#8d6a52']],
+    parts: () => cerf(),
   },
   renard: {
     speed: 1.2, scale: 0.75, shadow: true, shy: 6,

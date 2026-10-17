@@ -91,9 +91,11 @@ function decor(k) {
 const collect = (k) => ({ source: SRC.objets, ref: `collect:${k}`, usedIn: ['plages de l\'île de départ'], params: { v: [0, 5] }, build: ({ v = 0 } = {}) => assembleMesh(collectibleMesh(k, mulberry32(7 + v))) });
 const marine = (t) => ({ source: SRC.objets, ref: `marine:${t}`, usedIn: ['mer'], params: { v: [0, 5] }, build: ({ v = 0 } = {}) => assembleMesh(marineMesh(t, mulberry32(11 + v))) });
 function species(sp) {
+  const coats = SPECIES[sp].coats || [];
   return {
     source: SRC.especes, ref: `species:${sp}`, tags: ['animé'],
-    build() {
+    variants: coats.map(([label], i) => ({ label, params: { coat: i } })),
+    build({ coat = 0 } = {}) {
       const d = SPECIES[sp];
       if (d.insect === 'glow') {
         // insecte lumineux : simple halo qui pulse (comme en jeu, la nuit)
@@ -102,7 +104,7 @@ function species(sp) {
         m.scale.setScalar(0.3);
         return { object3d: m, anim: (dt, t) => m.scale.setScalar(0.25 + 0.15 * Math.sin(t * 3)) };
       }
-      return assembleCreature(d.parts(), { scale: d.scale || 1, pace: Math.max(0.4, d.speed || 1) });
+      return assembleCreature(d.parts(), { scale: d.scale || 1, pace: Math.max(0.4, d.speed || 1), coat: d.coats?.[coat]?.[1], graze: d.graze ?? 0.5 });
     },
   };
 }
@@ -389,10 +391,10 @@ const TAILLES = {
   'OBJ-021': [1.11, 0.56, 0.96],
   'OBJ-022': [0.76, 0.07, 0.24],
   'OBJ-023': [0.51, 2.4, 0.51],
-  'ANI-001': [0.92, 1.1, 1.37],
-  'ANI-002': [0.49, 1.08, 1.18],
-  'ANI-003': [1.1, 1.59, 2.38],
-  'ANI-004': [0.73, 2.19, 1.81],
+  'ANI-001': [0.98, 0.97, 1.39],
+  'ANI-002': [0.57, 0.96, 1.18],
+  'ANI-003': [1.12, 1.38, 2.44],
+  'ANI-004': [0.73, 2.15, 1.92],
   'ANI-005': [0.34, 0.63, 1.36],
   'ANI-006': [0.25, 0.45, 0.49],
   'ANI-007': [0.31, 0.27, 0.5],

@@ -130,3 +130,62 @@ describe('usage des modèles', () => {
     expect([...cases, ...micro].map((t) => `part:${t}`).filter((r) => !known.has(r))).toEqual([]);
   });
 });
+
+describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
+  // gabarit visé (L × H × P, m, échelle comprise), entrée du registre, hauteur maximale du museau en broutant
+  const ONGULES = {
+    mouton: { size: [1.0, 0.95, 1.3], id: 'ANI-001', graze: 0.12 },
+    chevre: { size: [0.6, 1.05, 1.2], id: 'ANI-002', graze: 0.12 },
+    vache: { size: [1.1, 1.5, 2.2], id: 'ANI-003', graze: 0.12 },
+    cerf: { size: [0.8, 2.0, 1.7], id: 'ANI-004', graze: 0.3 },
+  };
+  // boîte exacte d'une pièce tournée de a (rad) autour de X, à son pivot
+  const partBox = (THREE, p, a = 0) => {
+    const m = new THREE.Matrix4().makeTranslation(...p.pivot).multiply(new THREE.Matrix4().makeRotationX(a));
+    const pos = p.geo.attributes.position;
+    const v = new THREE.Vector3();
+    const b = new THREE.Box3();
+    for (let i = 0; i < pos.count; i++) b.expandByPoint(v.fromBufferAttribute(pos, i).applyMatrix4(m));
+    return b;
+  };
+
+  it('posent les quatre sabots au sol et tiennent le budget (9 pièces, 1 500 triangles)', async () => {
+    const { SPECIES } = await import('../src/models/animals/especes.js');
+    for (const sp of Object.keys(ONGULES)) {
+      const def = SPECIES[sp];
+      const parts = def.parts();
+      expect(parts.length, sp).toBeLessThanOrEqual(9);
+      const tris = parts.reduce((a, p) => a + (p.geo.index ? p.geo.index.count : p.geo.attributes.position.count) / 3, 0);
+      expect(tris, sp).toBeLessThanOrEqual(1500);
+      const legs = parts.filter((p) => p.anim === 'leg');
+      expect(legs, sp).toHaveLength(4);
+      for (const l of legs) expect(Math.abs(partBox(THREE, l).min.y * def.scale), sp).toBeLessThanOrEqual(0.01);
+    }
+  });
+
+  it('gardent la tête attachée au corps et broutent l’herbe (museau près du sol)', async () => {
+    const { SPECIES } = await import('../src/models/animals/especes.js');
+    for (const [sp, o] of Object.entries(ONGULES)) {
+      const def = SPECIES[sp];
+      const parts = def.parts();
+      const body = partBox(THREE, parts[0]);
+      const head = parts.find((p) => p.anim === 'head');
+      for (const a of [0, def.graze / 2, def.graze]) expect(partBox(THREE, head, a).intersectsBox(body), `${sp} à ${a} rad`).toBe(true);
+      const muzzle = (a) => new THREE.Vector3(...def.muzzle).applyMatrix4(new THREE.Matrix4().makeTranslation(...head.pivot).multiply(new THREE.Matrix4().makeRotationX(a))).y * def.scale;
+      expect(muzzle(def.graze), sp).toBeLessThan(o.graze);
+      expect(muzzle(def.graze), sp).toBeGreaterThan(0);
+      // au repos, la tête est portée bien plus haut
+      expect(muzzle(0), sp).toBeGreaterThan(0.45);
+    }
+  });
+
+  it('ont la taille du gabarit (±15 %) et une variante par robe', () => {
+    for (const o of Object.values(ONGULES)) {
+      const m = R.BY_ID.get(o.id);
+      const { object3d } = m.build(R.defaultParams(m));
+      const r = measure(object3d);
+      r.size.forEach((s, a) => expect(Math.abs(s - o.size[a]) / o.size[a], `${o.id} axe ${'xyz'[a]} : ${s.toFixed(2)} m`).toBeLessThanOrEqual(0.15));
+      expect(m.variants.length, o.id).toBeGreaterThanOrEqual(2);
+    }
+  });
+});

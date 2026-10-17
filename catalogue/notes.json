@@ -1,10 +1,25 @@
 {
   "version": 1,
   "notes": {
+    "ANI-001": {
+      "status": "valide",
+      "note": "Refait le 17/10/2026 : visage ardoise à yeux cerclés, collerette et toupet de laine, laine en grappe, sabots, robes blanche et noire ; broute (museau à 10 cm du sol).",
+      "updatedAt": "2026-10-17T21:57:40.956Z"
+    },
+    "ANI-002": {
+      "status": "valide",
+      "note": "Refait le 17/10/2026 : dos droit, cornes recourbées vers l'arrière, barbichette, oreilles tombantes, sabots, robes crème, alpine brune et noire.",
+      "updatedAt": "2026-10-17T21:57:40.956Z"
+    },
     "ANI-003": {
-      "status": "a-retravailler",
-      "note": "Pattes bleutées dont une décalée, museau trop rose : reprendre les pattes.",
-      "updatedAt": "2026-10-17T20:53:39.260Z"
+      "status": "valide",
+      "note": "Refait le 17/10/2026 : blanc chaud sans reflet lavande, cinq taches et une sur la tête, museau rose poudré, cornes courtes, clochette, pis, robes pie brune, pie noire et pie rouge.",
+      "updatedAt": "2026-10-17T21:57:40.956Z"
+    },
+    "ANI-004": {
+      "status": "valide",
+      "note": "Refait le 17/10/2026 : cou dressé, museau allongé et truffe, bois à quatre andouillers, croupe blanche, ventre clair, jarrets, robes fauve d'été et brun d'hiver.",
+      "updatedAt": "2026-10-17T21:57:40.956Z"
     },
     "ANI-008": {
       "status": "a-retravailler",
