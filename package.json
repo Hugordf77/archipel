@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "modeles:tailles": "node scripts/tailles-modeles.mjs"
+    "modeles:releve": "node scripts/releve-modeles.mjs"
   },
   "dependencies": {
     "@fontsource/fredoka": "5.1.0",
