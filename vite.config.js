@@ -36,7 +36,12 @@ export default defineConfig({
   plugins: [capturePlugin()],
   // IPv4 explicite : « localhost » et 127.0.0.1 fonctionnent dans tous les navigateurs
   server: { host: '127.0.0.1', port: 5173, strictPort: true },
-  build: { target: 'es2022', chunkSizeWarningLimit: 1500 },
+  build: {
+    target: 'es2022',
+    chunkSizeWarningLimit: 1500,
+    // deux pages : le jeu et le catalogue des modèles
+    rollupOptions: { input: { main: path.resolve('index.html'), catalogue: path.resolve('catalogue.html') } },
+  },
   // l'ancienne version (archive/) n'est plus testée
   test: { include: ['tests/**/*.test.js'] },
 });

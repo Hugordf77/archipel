@@ -6,6 +6,7 @@
   "description": "Archipel — un monde ouvert d’îles peintes à explorer en bateau",
   "scripts": {
     "dev": "vite",
+    "catalogue": "vite --open /catalogue.html",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",

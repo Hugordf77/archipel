@@ -4,6 +4,7 @@
 // avec les mêmes constructeurs (src/models/*), sans copie.
 //   build(params) → { object3d, anim?(dt, t) }
 //   variants : [{ label, params }] ; params : { nom: 'color' | 'bool' | [min, max] | ['a', 'b'] }
+//   defaults : valeurs des paramètres quand aucune variante ne les fixe
 //   size : [largeur, hauteur, profondeur] en mètres (boîte englobante, ±25 % vérifiés en test)
 //   usedIn : où le jeu l'emploie ; status : 'valide' | 'a-retravailler' | 'brouillon' | 'retire'
 import * as THREE from 'three';
@@ -59,8 +60,8 @@ const GABARITS = new Set(['phare', 'ruines', 'temple', 'grotte', 'cabane']);
 const ILE_DEPART = ['île de départ'];
 
 // --- fabriques par famille de constructeurs -------------------------------------------
-const kind = (k) => ({ source: SRC.veg, ref: `kind:${k}`, build: (q = {}) => assembleKind(k, q) });
-const part = (t, base = {}) => ({ source: GABARITS.has(t) ? SRC.gabarits : SRC.lieux, ref: `part:${t}`, build: (q = {}) => assemblePart({ t, ...base, ...q }) });
+const kind = (k) => ({ source: SRC.veg, ref: `kind:${k}`, defaults: { roche: '#d6cbbd', fleur: '#f7b6c8', v: 0 }, build: (q = {}) => assembleKind(k, q) });
+const part = (t, base = {}) => ({ source: GABARITS.has(t) ? SRC.gabarits : SRC.lieux, ref: `part:${t}`, defaults: base, build: (q = {}) => assemblePart({ t, ...base, ...q }) });
 const ile = (name, draw, mat) => ({ source: SRC.ile, ref: `ile:${name}`, usedIn: ILE_DEPART, build: () => assembleBuilder(draw, mat) });
 function boat(type) {
   return {
@@ -133,7 +134,7 @@ const outil = (o) => ({ source: SRC.outils, ref: o.ref, usedIn: ['main du person
 function M(id, slug, name, src, more = {}) {
   return {
     id, slug, name, category: CAT_OF[id.slice(0, 3)],
-    variants: [], params: {}, size: TAILLES[id] || [0, 0, 0], usedIn: [], tags: [], status: 'valide',
+    variants: [], params: {}, defaults: {}, size: TAILLES[id] || [0, 0, 0], usedIn: [], tags: [], status: 'valide',
     ...src, ...more,
     usedIn: [...new Set([...(src.usedIn || []), ...(more.usedIn || []), ...(USAGE[src.ref] || [])])],
     tags: [...(src.tags || []), ...(more.tags || [])],
@@ -667,4 +668,15 @@ export const categoryOf = (id) => CATEGORIES.find((c) => c.prefix === id.slice(0
 // paramètres par défaut d'un modèle : première variante s'il y en a
 export function defaultParams(m) {
   return { ...(m.variants[0]?.params || {}) };
+}
+
+// valeur affichée d'un paramètre (curseurs, couleurs, cases du catalogue)
+export function paramValue(m, params, key) {
+  if (params[key] !== undefined) return params[key];
+  if (m.defaults?.[key] !== undefined) return m.defaults[key];
+  const spec = m.params[key];
+  if (spec === 'color') return '#ffffff';
+  if (spec === 'bool') return false;
+  if (Array.isArray(spec) && typeof spec[0] === 'string') return spec[0];
+  return Array.isArray(spec) ? spec[0] : undefined;
 }
