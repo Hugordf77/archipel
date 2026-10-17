@@ -1,4 +1,4 @@
-// Gestionnaire des îles générées (v2) : chargement progressif autour du joueur,
+// Gestionnaire des îles de l'archipel : toutes les silhouettes dès le démarrage, puis
 // trois niveaux de détail (silhouette, île entière à 4 m, tuiles au mètre), lieux
 // fusionnés par île, eau douce, végétation instanciée, faune, planchers, obstacles,
 // relief pour la marche, découvertes et fenêtre de profondeur pour l'océan.
@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { U, ORIGIN, LAYER_SHADOW, nextId } from '../../core/globals.js';
 import { toonMaterial, foliageMaterial, grassMaterial } from '../../render/shaders/materials.js';
-import { islandsInRange } from './regions.js';
+import { ISLANDS, islandsInRange } from './regions.js';
 import { KINDS, KIND_RADIUS, STRIDE, TREES } from './gen/kinds.js';
 import { Surface, TILE } from './gen/surface.js';
 import { bloomColorOf } from './gen/zones.js';
@@ -17,9 +17,8 @@ import { MAT } from '../../models/materials.js';
 import { buildRivers, buildLake, buildFallFoam } from '../env/rivers.js';
 import { setGroundProvider, addObstacles, removeObstacles } from '../navigation.js';
 
-export const LOD_DIST = [220, 600, 1500];
+export const LOD_DIST = [220, 600]; // au-delà : silhouette (LOD2)
 const HYST = 30;
-const RANGE = 1700;
 const DEPTH_SIZE = 1536;
 const DEPTH_RES = 512;
 const SMALL_DIST = 90; // petite végétation visible jusqu'à cette distance du centre des tuiles
@@ -168,9 +167,8 @@ class GeoAcc {
 }
 
 export class IslandManager {
-  constructor({ root, seed, leafTex, onDiscover = null, hiddenItems = null, terraDiffs = null, onNear = null, onPoi = null }) {
+  constructor({ root, leafTex, onDiscover = null, hiddenItems = null, terraDiffs = null, onNear = null, onPoi = null }) {
     this.root = root;
-    this.seed = seed;
     this.onDiscover = onDiscover;
     this.hiddenItems = hiddenItems;
     this.terraDiffs = terraDiffs;
@@ -266,10 +264,7 @@ export class IslandManager {
   }
 
   refresh(px, pz) {
-    const list = islandsInRange(this.seed, px, pz, RANGE);
-    const seen = new Set();
-    for (const desc of list) {
-      seen.add(desc.id);
+    for (const desc of ISLANDS) {
       let e = this.entries.get(desc.id);
       if (!e) {
         const group = new THREE.Group();
@@ -281,8 +276,9 @@ export class IslandManager {
       }
       const d = Math.hypot(desc.x - px, desc.z - pz) - desc.r;
       e.d = d;
-      let want = -1;
-      for (let l = 0; l < 3; l++) {
+      // l'archipel est fini : au pire, une île reste en silhouette (jamais déchargée)
+      let want = 2;
+      for (let l = 0; l < 2; l++) {
         const lim = LOD_DIST[l] + (e.want !== -1 && e.want <= l ? HYST : 0);
         if (d < lim) {
           want = l;
@@ -314,7 +310,6 @@ export class IslandManager {
         }
       }
     }
-    for (const [id, e] of this.entries) if (!seen.has(id)) this.dispose(e);
   }
 
   applyVisibility(e) {
@@ -370,7 +365,7 @@ export class IslandManager {
   requestDepth(px, pz) {
     const cx = Math.round(px / 64) * 64;
     const cz = Math.round(pz / 64) * 64;
-    const islands = islandsInRange(this.seed, cx, cz, DEPTH_SIZE * 0.75);
+    const islands = islandsInRange(cx, cz, DEPTH_SIZE * 0.75);
     this.depth.pending = true;
     this.worker.postMessage({ type: 'depth', islands, cx, cz, size: DEPTH_SIZE, res: DEPTH_RES, req: ++this.req });
   }
@@ -746,17 +741,6 @@ export class IslandManager {
     e.plan = null;
     e.surf = null;
     e.decks = [];
-  }
-
-  dispose(e) {
-    this.dropNear(e);
-    this.dropLod1(e);
-    if (e.lod2) {
-      e.lod2.geometry.dispose();
-      e.group.remove(e.lod2);
-    }
-    this.root.remove(e.group);
-    this.entries.delete(e.desc.id);
   }
 
   // ---------------------------------------------------------------------------

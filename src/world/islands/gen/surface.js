@@ -490,6 +490,10 @@ function smallVegetation(plan, surf, x0, z0, T, Hb, W, pathW, V) {
   const nb = makeNoise(plan.seed ^ 0x0b100);
   const items = [];
   const ids = [];
+  // un identifiant par case de 10 cm (stableId) : pas de doublon dans la tuile ni avec la voisine
+  const used = new Set();
+  const x1 = (x0 + T) * 10;
+  const z1 = (z0 + T) * 10;
   const { Z: zone, n, s, ext } = plan;
   const fields = [];
   for (const p of plan.pois) for (const f of p.fields || []) if (f.crop === 'ble') fields.push(f);
@@ -539,8 +543,12 @@ function smallVegetation(plan, surf, x0, z0, T, Hb, W, pathW, V) {
           if (kind === 'fleur_champ') vr = (bloomBand(plan.traits, x, z, nb) + vr * 0.9) / BLOOM_IDS.length;
           if (kind === 'ble') vr = 0.5 + vr * 0.5;
           const ki = KIND_INDEX[kind];
+          if (Math.round(x * 10) >= x1 || Math.round(z * 10) >= z1) continue;
+          const id = stableId(plan.seed, ki, x, z);
+          if (used.has(id)) continue;
+          used.add(id);
           items.push(ki, x, y, z, rot, sc, vr);
-          ids.push(stableId(plan.seed, ki, x, z));
+          ids.push(id);
         }
       }
     }

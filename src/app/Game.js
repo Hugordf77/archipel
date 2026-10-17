@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { World } from '../world/World.js';
 import { Pipeline } from '../render/Pipeline.js';
-import { U, CHAR_IDS, ORIGIN } from '../core/globals.js';
+import { U, ORIGIN } from '../core/globals.js';
 import { IslandManager } from '../world/islands/IslandManager.js';
 import { IslandFauna } from '../entities/fauna/islandFauna.js';
 import { ARCHETYPES } from '../world/islands/archetypes.js';
@@ -12,8 +12,7 @@ import { Sailing } from '../entities/Sailing.js';
 import { AirRide } from '../entities/AirRide.js';
 import { BOATS } from '../models/boats/bateaux.js';
 import { reveal } from '../world/fog.js';
-import { BIOMES } from '../world/islands/biomes.js';
-import { toonMaterial } from '../render/shaders/materials.js';
+import { ARCHIPEL, worldLimit } from '../world/archipel.js';
 import { LAYOUT } from '../world/home/terrain.js';
 import { Fauna } from '../entities/fauna/homeFauna.js';
 import { CameraRig } from './CameraRig.js';
@@ -79,10 +78,9 @@ export class Game {
     this.state = migrate(await loadSave());
     this.audio = new AudioEngine(this.state.settings.volumes);
 
-    // --- archipel : îles générées autour du joueur ---
+    // --- archipel : les neuf îles fixes d'archipel.js ---
     this.islands = new IslandManager({
       root: this.world.root,
-      seed: this.state.world.seed,
       leafTex: this.world.leafTex,
       onDiscover: (desc) => this.discoverIsland(desc),
       // différences de sauvegarde : récoltes (identifiants stables) et terrassements
@@ -127,13 +125,11 @@ export class Game {
     this.interactions = new Interactions();
     this.registerInteractions();
     this.collectibles = new Collectibles(this.scene, this.interactions, (item) => this.pickUp(item));
-    // Éléments marins : streaming déterministe autour du joueur, séparé du
-    // maillage des îles afin de rester léger en pleine mer.
+    // Éléments marins : positions fixes de l'archipel, séparés du maillage des îles
     this.state.marine ||= { taken: [] };
     this.marine = new MarineManager({
       root: this.world.root,
       interactions: this.interactions,
-      seed: this.state.world.seed,
       taken: this.state.marine.taken,
       onCollect: (item) => this.collectMarine(item),
     });
@@ -907,11 +903,12 @@ export class Game {
     ex.islands[desc.id] = { name: desc.name, biome: desc.biome, archetype: desc.archetype, x: Math.round(desc.x), z: Math.round(desc.z), r: Math.round(desc.r), t: Date.now(), pois: [], animals: [] };
     this.markDirty();
     const kind = ARCHETYPES[desc.archetype]?.name;
-    this.ui.toast(`Nouvelle île : ${desc.name}${kind ? ` — ${kind.toLowerCase()}` : ''}`, { icon: 'map', duration: 4200 });
+    const n = Object.keys(ex.islands).length;
+    this.ui.toast(`Nouvelle île : ${desc.name}${kind ? ` — ${kind.toLowerCase()}` : ''} (${n} / ${ARCHIPEL.islands.length})`, { icon: 'map', duration: 4200 });
     this.audio?.pop(1.3);
   }
 
-  // Ancienne génération : les îles notées gardent leur entrée, rattachée à l'île la plus proche
+  // Ancienne génération : les îles notées gardent leur entrée, rattachée à l'île du même archétype
   relinkDiscoveries() {
     if (relinkDiscoveries(this.state)) this.markDirty();
   }
@@ -1113,6 +1110,10 @@ export class Game {
       this.fogT = 0.5;
       if (reveal(this.state.explorer.fog, P.x, P.z, 60)) this.markDirty();
     }
+    // brume du large : la vue se referme en approchant de la limite de l'archipel
+    const mist = worldLimit(P.x, P.z).mist;
+    this.mist = (this.mist || 0) + (mist - (this.mist || 0)) * Math.min(1, dt * 1.5);
+    U.uFogRange.value.set(170 - this.mist * 120, 1500 - this.mist * 1180);
   }
 
   // Origine flottante : le monde est décalé pour garder des coordonnées locales petites

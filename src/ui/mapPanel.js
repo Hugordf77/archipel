@@ -1,11 +1,12 @@
-// Carte parchemin (M) : brouillard qui se lève autour du joueur, îles découvertes
-// et leurs noms, épingles, zone du bateau, traces des cartes au trésor.
+// Carte parchemin (M) de l'archipel, bornée à son emprise : brouillard qui se lève autour du
+// joueur, îles découvertes et leurs noms (les autres en pointillés), limite du large, épingles,
+// zone du bateau, traces des cartes au trésor, part de l'archipel découverte.
 import { h } from './dom.js';
-import { ICON } from './icons.js';
-import { islandsInRange } from '../world/islands/regions.js';
+import { ISLANDS } from '../world/islands/regions.js';
+import { ARCHIPEL } from '../world/archipel.js';
 import { islandContext, islandHeight } from '../world/islands/islandgen.js';
 import { BIOMES } from '../world/islands/biomes.js';
-import { isRevealed, FOG_CELL } from '../world/fog.js';
+import { isRevealed, FOG_CELL, fogShare } from '../world/fog.js';
 import { heightAt } from '../world/home/terrain.js';
 import { BOATS } from '../models/boats/bateaux.js';
 
@@ -60,8 +61,11 @@ export function openMapPanel(game) {
   const ex = st.explorer;
   const P = game.player.pos;
   const view = { cx: P.x, cz: P.z, mpp: 4 }; // mètres par pixel
+  const B = ARCHIPEL.bounds;
   const canvas = h('canvas', { class: 'map-canvas', tabindex: '0', 'aria-label': 'Carte de l\'archipel' });
-  const legend = h('p', { class: 'muted map-legend' }, 'Glisse pour te déplacer, molette ou +/− pour zoomer. Clique pour poser ou retirer une épingle.');
+  const share = Math.round(fogShare(ex.fog) * 100);
+  const known = Object.keys(ex.islands).filter((id) => ISLANDS.some((d) => d.id === id)).length;
+  const legend = h('p', { class: 'muted map-legend' }, `${known} / ${ISLANDS.length} îles · ${share} % de l'archipel découvert. Glisse pour te déplacer, molette ou +/− pour zoomer, clique pour poser ou retirer une épingle.`);
   const zoomTxt = h('span', { class: 'map-scale' }, '');
   const btn = (label, title, fn) => h('button', { class: 'btn ghost small', title, onclick: fn }, label);
   const tools = h('div', { class: 'row map-tools' },
@@ -77,6 +81,7 @@ export function openMapPanel(game) {
       view.cz = 0;
       draw();
     }),
+    btn('Tout l\'archipel', 'Voir l\'archipel en entier', () => overview()),
     zoomTxt,
   );
   const body = h('div', { class: 'stack map-body' }, canvas, tools, legend);
@@ -137,15 +142,39 @@ export function openMapPanel(game) {
       g.stroke();
       g.setLineDash([]);
     }
+    // emprise de l'archipel et limite du large
+    {
+      const [ax, ay] = toScreen(B.minX, B.minZ);
+      const [bx, by] = toScreen(B.maxX, B.maxZ);
+      g.strokeStyle = 'rgba(159, 107, 72, 0.45)';
+      g.lineWidth = 1.5;
+      g.strokeRect(ax, ay, bx - ax, by - ay);
+      const [hx, hy] = toScreen(0, 0);
+      g.setLineDash([3, 7]);
+      g.strokeStyle = 'rgba(91, 74, 99, 0.35)';
+      g.beginPath();
+      g.arc(hx, hy, ARCHIPEL.limit.mist / view.mpp, 0, Math.PI * 2);
+      g.stroke();
+      g.setLineDash([]);
+    }
     // îles
-    const range = Math.hypot(W, H) * view.mpp * 0.55;
-    const isles = islandsInRange(st.world.seed, view.cx, view.cz, range);
-    isles.push({ id: 'home', x: 0, z: 0, r: 30, biome: 'prairie', name: 'Ton île' });
+    const isles = [...ISLANDS, { id: 'home', x: 0, z: 0, r: 30, biome: 'prairie', name: ARCHIPEL.home.name }];
     const labels = [];
     for (const d of isles) {
       const known = d.id === 'home' || ex.islands[d.id];
       const seen = known || isRevealed(ex.fog, d.x, d.z) || isRevealed(ex.fog, d.x + d.r * 0.7, d.z) || isRevealed(ex.fog, d.x - d.r * 0.7, d.z) || isRevealed(ex.fog, d.x, d.z + d.r * 0.7) || isRevealed(ex.fog, d.x, d.z - d.r * 0.7);
-      if (!seen) continue;
+      if (!seen) {
+        // île encore inconnue : un contour en pointillés, sans nom
+        const [sx, sy] = toScreen(d.x, d.z);
+        g.setLineDash([4, 5]);
+        g.strokeStyle = 'rgba(159, 107, 72, 0.4)';
+        g.lineWidth = 1.5;
+        g.beginPath();
+        g.arc(sx, sy, Math.max(4, (d.r * 0.9) / view.mpp), 0, Math.PI * 2);
+        g.stroke();
+        g.setLineDash([]);
+        continue;
+      }
       const ext = d.id === 'home' ? 40 : d.r * 1.38;
       const [sx, sy] = toScreen(d.x - ext, d.z - ext);
       const size = (ext * 2) / view.mpp;
@@ -164,6 +193,17 @@ export function openMapPanel(game) {
       g.lineTo(sx + 7, sy + 7);
       g.moveTo(sx + 7, sy - 7);
       g.lineTo(sx - 7, sy + 7);
+      g.stroke();
+    }
+    // bateau (s'il est ailleurs)
+    if (!game.sailing?.aboard) {
+      const [bx, by] = toScreen(st.boat.x, st.boat.z);
+      g.fillStyle = '#e0b07e';
+      g.strokeStyle = '#9f6b48';
+      g.lineWidth = 2;
+      g.beginPath();
+      g.ellipse(bx, by, 7, 4, 0, 0, Math.PI * 2);
+      g.fill();
       g.stroke();
     }
     // noms
@@ -209,17 +249,6 @@ export function openMapPanel(game) {
       g.lineTo(sx, sy);
       g.stroke();
     }
-    // bateau (s'il est ailleurs)
-    if (!game.sailing?.aboard) {
-      const [bx, by] = toScreen(st.boat.x, st.boat.z);
-      g.fillStyle = '#e0b07e';
-      g.strokeStyle = '#9f6b48';
-      g.lineWidth = 2;
-      g.beginPath();
-      g.ellipse(bx, by, 7, 4, 0, 0, Math.PI * 2);
-      g.fill();
-      g.stroke();
-    }
     // joueur : flèche dans la direction du regard
     const [px, py] = toScreen(P.x, P.z);
     const f = game.sailing?.aboard ? game.sailing.heading : game.player.facing;
@@ -251,8 +280,22 @@ export function openMapPanel(game) {
     zoomTxt.textContent = `1 cm ≈ ${Math.round(view.mpp * 38)} m`;
   }
 
+  // la vue reste sur l'archipel ; le dézoom maximal le montre en entier
+  const maxMpp = () => Math.max((B.maxX - B.minX) / Math.max(200, W || 600), (B.maxZ - B.minZ) / Math.max(200, H || 500)) * 1.08;
+  function clampView() {
+    view.mpp = Math.max(0.6, Math.min(maxMpp(), view.mpp));
+    view.cx = Math.max(B.minX, Math.min(B.maxX, view.cx));
+    view.cz = Math.max(B.minZ, Math.min(B.maxZ, view.cz));
+  }
   function zoom(k) {
-    view.mpp = Math.max(0.6, Math.min(24, view.mpp * k));
+    view.mpp *= k;
+    clampView();
+    draw();
+  }
+  function overview() {
+    view.cx = (B.minX + B.maxX) / 2;
+    view.cz = (B.minZ + B.maxZ) / 2;
+    view.mpp = maxMpp();
     draw();
   }
 
@@ -269,6 +312,7 @@ export function openMapPanel(game) {
     if (Math.hypot(dx, dy) > 4) drag.moved = true;
     view.cx = drag.cx - dx * view.mpp;
     view.cz = drag.cz - dy * view.mpp;
+    clampView();
     if (drag.moved) draw();
   });
   canvas.addEventListener('pointerup', (e) => {
@@ -297,12 +341,14 @@ export function openMapPanel(game) {
     pan(dx, dy) {
       view.cx += dx * view.mpp;
       view.cz += dy * view.mpp;
+      clampView();
       draw();
     },
     zoom,
   };
   requestAnimationFrame(() => {
     resize();
+    clampView();
     draw();
     canvas.focus();
   });

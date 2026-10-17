@@ -8,6 +8,7 @@ import { U, ORIGIN } from '../core/globals.js';
 import { LAYOUT } from '../world/home/terrain.js';
 import { setSeaConditions, waveHeightAt } from '../world/env/water.js';
 import { CURVE } from '../render/shaders/chunks.js';
+import { ARCHIPEL, worldLimit } from '../world/archipel.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
 function lerpAngle(a, b, t) {
@@ -93,7 +94,8 @@ export class Sailing {
     this.pos = new THREE.Vector3();
     this.heading = 0;
     this.lastDrag = 0;
-    this.warned = { zone: false, storm: false };
+    this.warned = { zone: false, storm: false, limit: false };
+    this.uTurn = false;
     this.creakT = 2;
     this.floatSpring = { value: LAYOUT.waterLevel, velocity: 0 };
     this.floatPitch = 0;
@@ -155,7 +157,8 @@ export class Sailing {
     if (this.aboard && !g.ui.panelOpen) {
       const ax = input.axes();
       this.throttle = THREE.MathUtils.clamp(this.throttle + ax.y * dt * 0.7, -0.25, 1);
-      this.turn += (-ax.x - this.turn) * damp(4, dt);
+      // pendant le demi-tour automatique, la barre ne répond plus
+      this.turn += ((this.uTurn ? 0 : -ax.x) - this.turn) * damp(4, dt);
       if (spec.sail) {
         if (input.held('KeyR')) {
           this.trim = Math.max(0, this.trim - dt * 0.45);
@@ -214,6 +217,25 @@ export class Sailing {
         g.ui.toast(`Le courant te ramène : avec ${spec.name === 'Radeau' ? 'un radeau' : `ta ${spec.name.toLowerCase()}`}, on ne dépasse pas ${spec.zone / 1000} km. Il faudra un bateau plus solide.`, { icon: 'boat', duration: 5200 });
       }
     } else if (dHome < spec.zone - 100) this.warned.zone = false;
+    // limite de l'archipel : brume et courant doux au-delà de 1,2 km, demi-tour à 1,4 km
+    const lim = worldLimit(this.pos.x, this.pos.z);
+    if (lim.pull > 0) {
+      px += lim.ux * lim.pull * 2.4;
+      pz += lim.uz * lim.pull * 2.4;
+      if (this.aboard && !this.warned.limit) {
+        this.warned.limit = true;
+        g.ui.toast('La brume du large se lève et un courant doux te ramène vers l\'archipel.', { icon: 'boat', duration: 4800 });
+      }
+    } else if (lim.d < ARCHIPEL.limit.mist - 150) this.warned.limit = false;
+    if (lim.turn) this.uTurn = true;
+    if (this.uTurn) {
+      // demi-tour automatique : la barre vire vers le centre, puis rend la main
+      const want = Math.atan2(lim.ux, lim.uz);
+      const diff = Math.atan2(Math.sin(want - this.heading), Math.cos(want - this.heading));
+      this.heading += Math.sign(diff) * Math.min(Math.abs(diff), dt * 0.9);
+      this.throttle = Math.max(this.throttle, 0.4);
+      if (Math.abs(diff) < 0.2 && lim.d < ARCHIPEL.limit.turn - 40) this.uTurn = false;
+    }
     if (g.weather?.storm && dHome > 150) {
       px -= (this.pos.x / dHome) * 1.3;
       pz -= (this.pos.z / dHome) * 1.3;

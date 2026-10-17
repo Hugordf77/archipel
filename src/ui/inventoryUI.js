@@ -1,6 +1,5 @@
 // Barre rapide (8 cases), sac (24 cases) et atelier de fabrication.
 import { h, replay } from './dom.js';
-import { ICON } from './icons.js';
 import { ITEMS, itemIcon, STATION_NAMES } from '../data/items.js';
 import RECIPES from '../data/recipes.json';
 import { HOTBAR, SLOTS } from '../gameplay/Inventory.js';

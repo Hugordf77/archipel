@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { buildAlbatros } from '../models/animals/albatros.js';
 import { groundAt, waterDepth } from '../world/navigation.js';
+import { worldLimit } from '../world/archipel.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
 const clamp = THREE.MathUtils.clamp;
@@ -281,6 +282,16 @@ export class AirRide {
       // Plané : très peu de traînée, l'oiseau conserve son élan
       this.velocity.x += (0 - this.velocity.x) * damp(0.55, dt);
       this.velocity.z += (0 - this.velocity.z) * damp(0.55, dt);
+    }
+
+    // Limite de l'archipel : au-delà de 1,2 km l'oiseau infléchit sa route vers le centre,
+    // au-delà de 1,4 km il fait demi-tour de lui-même
+    const lim = worldLimit(player.pos.x, player.pos.z);
+    if (lim.pull > 0) {
+      const k = damp(lim.turn ? 3 : lim.pull * 1.6, dt);
+      const cruise = Math.max(18, hSpeed);
+      this.velocity.x += (lim.ux * cruise - this.velocity.x) * k;
+      this.velocity.z += (lim.uz * cruise - this.velocity.z) * k;
     }
 
     // Traînée aérodynamique augmentée par l'angle d'attaque

@@ -72,12 +72,12 @@ describe('registre des modèles', () => {
 describe('usage des modèles', () => {
   const refs = () => new Set(R.MODELS.map((m) => m.ref));
 
-  it('recense tout ce que construisent des îles générées (végétation, lieux, curiosités, chemins, faune)', async () => {
-    const { islandsInRange } = await import('../src/world/islands/regions.js');
+  it('recense tout ce que construisent les îles de l’archipel (végétation, lieux, curiosités, chemins, faune)', async () => {
+    const { ISLANDS } = await import('../src/world/islands/regions.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const { KINDS, STRIDE } = await import('../src/world/islands/gen/kinds.js');
     const used = new Set();
-    for (const d of islandsInRange('coquille-azur-4821', 0, 0, 1500)) {
+    for (const d of ISLANDS) {
       const p = buildPlan(d);
       for (let k = 0; k < p.items.length; k += STRIDE) used.add(`kind:${KINDS[p.items[k]]}`);
       for (const poi of p.pois) for (const q of poi.parts || []) used.add(`part:${q.t}`);

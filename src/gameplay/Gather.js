@@ -7,7 +7,7 @@ import { toonMaterial } from '../render/shaders/materials.js';
 import { ITEMS } from '../data/items.js';
 import { HARVEST, TOOL_NAMES, TIER_NAMES, strikeTime, rollDrops, flowerItemFor, rollFish, rollBug } from '../data/harvest.js';
 import { BIOMES } from '../world/islands/biomes.js';
-import { groundAt, waterDepth, blockedByObstacle, isHome, projectCurved } from '../world/navigation.js';
+import { groundAt, waterDepth, blockedByObstacle, isHome } from '../world/navigation.js';
 import { h, replay } from '../ui/dom.js';
 import { kindModel } from '../models/vegetation/especes.js';
 import { outilGeometry, flotteurGeometry } from '../models/props/outils.js';

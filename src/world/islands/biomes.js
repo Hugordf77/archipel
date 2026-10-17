@@ -61,34 +61,3 @@ export const BIOMES = {
     structures: ['epave', 'grotte'],
   },
 };
-
-export const BIOME_IDS = Object.keys(BIOMES);
-
-// Rareté selon la distance (mètres) à l'île de départ : les biomes rares sont loin
-export function biomeWeight(id, dist) {
-  switch (id) {
-    case 'prairie': return 1.0;
-    case 'pins': return 0.9;
-    case 'tropical': return 0.85;
-    case 'dunes': return dist < 500 ? 0.1 : 0.55;
-    case 'atoll': return dist < 700 ? 0.1 : 0.5;
-    case 'volcan': return dist < 1400 ? 0 : 0.36;
-    case 'glace': return dist < 2000 ? 0 : 0.34;
-    case 'champignons': return dist < 2600 ? 0 : 0.3;
-    default: return 0;
-  }
-}
-
-// Affinité climatique : t (température) et h (humidité) dans [-1, 1]
-export function climateFactor(id, t, h) {
-  const c = (v) => Math.max(0.25, Math.min(2, v));
-  switch (id) {
-    case 'tropical': return c(1 + t * 0.8);
-    case 'dunes': return c(1 + t * 0.6 - h * 0.6);
-    case 'glace': return c(1 - t * 1.0);
-    case 'pins': return c(1 - t * 0.45 + h * 0.2);
-    case 'champignons': return c(1 + h * 0.8);
-    case 'atoll': return c(1 + t * 0.4);
-    default: return 1;
-  }
-}

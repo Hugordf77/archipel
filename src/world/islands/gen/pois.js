@@ -624,7 +624,10 @@ export function placePOIs(P) {
       return pois[pois.length - 1];
     },
   };
+  // retouches de l'archipel : lieux interdits, puis lieux imposés juste après la recette
+  const banned = new Set(desc.overrides?.removePois || []);
   const make = (type) => {
+    if (banned.has(type)) return null;
     if (type === 'epave') return builders.epave(false);
     if (type === 'ruines_ensablees') return builders.ruines(true);
     return builders[type] ? builders[type]() : null;
@@ -632,6 +635,7 @@ export function placePOIs(P) {
 
   // recette de l'archétype, puis ajouts génériques
   for (const [type, p] of RECIPES[arch] || []) if (p >= 1 || rng() < p) make(type);
+  for (const type of desc.overrides?.pois || []) if (!pois.some((q) => q.type === type)) make(type);
   for (const [type, p] of GENERIC) if (rng() < p && !pois.some((q) => q.type === type || (type === 'epave' && q.type === 'epave_geante'))) make(type);
   // cascades : chaque chute nommée devient une découverte
   for (const f of falls) {

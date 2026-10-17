@@ -4,11 +4,12 @@ import { Builder, G } from '../../render/builder.js';
 import { toonMaterial } from '../../render/shaders/materials.js';
 import { LAYER_SHADOW } from '../../core/globals.js';
 
-// vitesse (m/s), zone autorisée (m depuis l'île de départ), voile, cale (emplacements)
+// vitesse (m/s), zone autorisée (m depuis l'île de départ ; au-delà, la limite de l'archipel),
+// voile, cale (emplacements)
 export const BOATS = {
-  radeau: { name: 'Radeau', speed: 4, zone: 1000, sail: false, hold: 0, len: 3.2, seat: [0, 0.42, -0.4], desc: 'Quelques rondins bien ficelés. Parfait pour les îles voisines.' },
-  barque: { name: 'Barque', speed: 6, zone: 3000, sail: false, hold: 0, len: 4.2, seat: [0, 0.38, -0.2], desc: 'Une coque solide et deux rames : on va déjà bien plus loin.' },
-  voilier: { name: 'Voilier', speed: 9, speedWind: 12, zone: 6000, sail: true, hold: 0, len: 5.4, seat: [0, 0.5, -1.5], desc: 'Une voile à régler selon le vent : jusqu\'à 12 m/s au portant.' },
+  radeau: { name: 'Radeau', speed: 4, zone: 600, sail: false, hold: 0, len: 3.2, seat: [0, 0.42, -0.4], desc: 'Quelques rondins bien ficelés. Parfait pour les îles voisines.' },
+  barque: { name: 'Barque', speed: 6, zone: 1050, sail: false, hold: 0, len: 4.2, seat: [0, 0.38, -0.2], desc: 'Une coque solide et deux rames : on va déjà bien plus loin.' },
+  voilier: { name: 'Voilier', speed: 9, speedWind: 12, zone: Infinity, sail: true, hold: 0, len: 5.4, seat: [0, 0.5, -1.5], desc: 'Une voile à régler selon le vent : jusqu\'à 12 m/s au portant.' },
   goelette: { name: 'Goélette', speed: 11, speedWind: 13, zone: Infinity, sail: true, hold: 24, len: 8, seat: [0, 1.0, -2.8], desc: 'Deux mâts, une cale de 24 emplacements, et toute la mer devant soi.' },
 };
 export const BOAT_ORDER = ['radeau', 'barque', 'voilier', 'goelette'];

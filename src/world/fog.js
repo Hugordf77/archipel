@@ -1,6 +1,13 @@
 // Brouillard de la carte : cases de 32 m, rangées par région de 512 m
 // (16 × 16 bits = 64 caractères hexadécimaux par région dans la sauvegarde).
+// Il est borné à l'emprise de l'archipel : rien ne se découvre au-delà.
+import { ARCHIPEL } from './archipel.js';
+
 export const FOG_CELL = 32;
+const B = ARCHIPEL.bounds;
+const inBounds = (x, z) => x >= B.minX && x <= B.maxX && z >= B.minZ && z <= B.maxZ;
+// nombre de cases de l'archipel (pour le pourcentage de découverte)
+export const FOG_TOTAL = Math.round(((B.maxX - B.minX) / FOG_CELL) * ((B.maxZ - B.minZ) / FOG_CELL));
 const PER = 16; // cases par côté de région
 const REGION = FOG_CELL * PER;
 
@@ -37,7 +44,7 @@ export function reveal(fog, x, z, radius = 60) {
     for (let ci = c0; ci <= c1; ci++) {
       const cx = (ci + 0.5) * FOG_CELL;
       const cz = (cj + 0.5) * FOG_CELL;
-      if (Math.hypot(cx - x, cz - z) > radius + FOG_CELL * 0.5) continue;
+      if (Math.hypot(cx - x, cz - z) > radius + FOG_CELL * 0.5 || !inBounds(cx, cz)) continue;
       const rx = Math.floor(ci / PER);
       const rz = Math.floor(cj / PER);
       const key = `${rx},${rz}`;
@@ -65,3 +72,27 @@ export function revealedCount(fog) {
   for (const hex of Object.values(fog)) for (const h of hex) n += [0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4][parseInt(h, 16)];
   return n;
 }
+
+// part de l'archipel découverte (0 à 1)
+export function fogShare(fog) {
+  return Math.min(1, revealedCount(fog) / FOG_TOTAL);
+}
+
+// retire les cases hors de l'emprise (sauvegardes du monde infini)
+export function boundFog(fog) {
+  const out = {};
+  for (const [key, hex] of Object.entries(fog || {})) {
+    const [rx, rz] = key.split(',').map(Number);
+    const arr = hex.split('').map((h) => parseInt(h, 16));
+    let any = false;
+    for (let bit = 0; bit < PER * PER; bit++) {
+      const cx = (rx * PER + (bit % PER) + 0.5) * FOG_CELL;
+      const cz = (rz * PER + Math.floor(bit / PER) + 0.5) * FOG_CELL;
+      if (!inBounds(cx, cz)) arr[bit >> 2] &= ~(1 << (bit & 3));
+      else if (arr[bit >> 2] & (1 << (bit & 3))) any = true;
+    }
+    if (any) out[key] = arr.map((v) => v.toString(16)).join('');
+  }
+  return out;
+}
+

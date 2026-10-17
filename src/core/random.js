@@ -15,18 +15,6 @@ export function hashString(str) {
   return (h1 ^ h2) >>> 0;
 }
 
-// Mélange de trois entiers (graine, coordonnées de région…) → entier 32 bits
-export function hash3(a, b, c) {
-  let h = (a ^ 0x9e3779b9) >>> 0;
-  h = Math.imul(h ^ (b * 0x85ebca6b), 0xc2b2ae35);
-  h = Math.imul(h ^ (h >>> 13) ^ (c * 0x27d4eb2f), 0x165667b1);
-  h ^= h >>> 15;
-  h = Math.imul(h, 0x2c1b3c6d);
-  h ^= h >>> 12;
-  h = Math.imul(h, 0x297a2d39);
-  h ^= h >>> 15;
-  return h >>> 0;
-}
 
 // Générateur pseudo-aléatoire (mulberry32) → () => [0, 1)
 export function mulberry32(seed) {
