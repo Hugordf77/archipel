@@ -1,11 +1,11 @@
 import { h, replay } from './dom.js';
 import { ICON } from './icons.js';
-import { QUALITY } from '../scene/Pipeline.js';
+import { QUALITY } from '../render/Pipeline.js';
 import { CHANNELS, CHANNEL_LABELS } from '../audio/AudioEngine.js';
-import { exportSave, readImportFile, writeSave } from '../game/db.js';
-import { validateImport, migrate, createDefaultState } from '../game/state.js';
-import { SEASONS } from '../scene/season.js';
-import { PAD_DEFAULTS } from '../game/Gamepad.js';
+import { exportSave, readImportFile, writeSave } from '../core/db.js';
+import { validateImport, migrate, createDefaultState } from '../core/state.js';
+import { SEASONS } from '../world/env/season.js';
+import { PAD_DEFAULTS } from '../core/Gamepad.js';
 
 function slider(label, value, { min = 0, max = 1, step = 0.05, fmt = (v) => `${Math.round(v * 100)} %`, onInput }) {
   const out = h('span', { class: 'slider-val' }, fmt(value));

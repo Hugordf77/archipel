@@ -2,7 +2,7 @@ import { h, replay } from './dom.js';
 import { ICON, pieceIcon } from './icons.js';
 import {
   SKINS, HAIR_COLORS, CLOTH_COLORS, CLOTH_NAMES, SHOE_COLORS, HAIRS, EYES, PIECES, piecesOf, sanitizeAvatar,
-} from '../game/avatar.js';
+} from '../entities/character/avatar.js';
 
 // Le miroir : on change d'apparence en voyant son personnage en direct dans le monde.
 // Le panneau est collé à droite, sans voile ; on fait pivoter le personnage au glissé.

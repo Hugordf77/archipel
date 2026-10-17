@@ -1,7 +1,7 @@
 // Manette : zone morte des sticks, lecture des boutons (disposition standard et DualSense
 // en HID brut sous Firefox), nom affiché et navigation à la croix dans les panneaux.
 import { describe, expect, it } from 'vitest';
-import { BTN, stick, readPad, padName, pickFocus, GamepadInput } from '../src/game/Gamepad.js';
+import { BTN, stick, readPad, padName, pickFocus, GamepadInput } from '../src/core/Gamepad.js';
 
 const button = (value) => ({ pressed: value > 0.5, value });
 

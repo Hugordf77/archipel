@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { approachVelocity, normalizePlanarInput } from '../src/game/movement.js';
+import { approachVelocity, normalizePlanarInput } from '../src/entities/locomotion/movement.js';
 
 const vector = (x = 0, z = 0) => ({ x, y: 0, z, set(a, b, c) { this.x = a; this.y = b; this.z = c; return this; }, multiplyScalar(n) { this.x *= n; this.y *= n; this.z *= n; return this; }, add(v) { this.x += v.x; this.y += v.y; this.z += v.z; return this; } });
 

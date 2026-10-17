@@ -1,9 +1,9 @@
 import { h } from './dom.js';
 import { ICON } from './icons.js';
-import { KINDS } from '../game/collectibles.js';
-import { ARCHETYPES } from '../world/archetypes.js';
-import { BIOMES } from '../world/biomes.js';
-import { SPECIES, SPECIES_LABEL } from '../world/gen/spawns.js';
+import { KINDS } from '../gameplay/collectibles.js';
+import { ARCHETYPES } from '../world/islands/archetypes.js';
+import { BIOMES } from '../world/islands/biomes.js';
+import { SPECIES, SPECIES_LABEL } from '../world/islands/gen/spawns.js';
 import { ITEMS } from '../data/items.js';
 
 // Panneaux de l'exploration : journal de bord, carte, cartographe.

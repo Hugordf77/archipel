@@ -1,7 +1,7 @@
 import { h } from './dom.js';
 import { ICON, pieceIcon } from './icons.js';
-import { CATALOG, CATALOG_ORDER } from '../game/decor.js';
-import { PIECES, STARTER, CLOTH_COLORS, SLOT_NAMES } from '../game/avatar.js';
+import { CATALOG, CATALOG_ORDER } from '../gameplay/decor.js';
+import { PIECES, STARTER, CLOTH_COLORS, SLOT_NAMES } from '../entities/character/avatar.js';
 import { ACC_COLORS } from './mirrorPanel.js';
 
 // L'échoppe : décorations et garde-robe, payées en coquillages.

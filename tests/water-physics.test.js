@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { WATER_PHYSICS, waterSurfaceAt, waveHeightAt } from '../src/scene/water.js';
-import { U } from '../src/scene/globals.js';
+import { WATER_PHYSICS, waterSurfaceAt, waveHeightAt } from '../src/world/env/water.js';
+import { U } from '../src/core/globals.js';
 
 describe('physique déterministe de l’eau', () => {
   it('retourne la même vague pour une position, un temps et un vent donnés', () => {

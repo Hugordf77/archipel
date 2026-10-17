@@ -1,9 +1,9 @@
 // Personnage 2.0 : moteur de locomotion pur (allures, inertie de rotation, dérapage,
 // roulade, saut, rebords, pentes, clic pour aller) mesuré face aux cibles de réglage.
 import { describe, expect, it } from 'vitest';
-import { createMotor, stepMotor, interpolate, turnParams, climbable, arriveIntent, wrapAngle } from '../src/game/locomotion/motor.js';
-import { tuningFor } from '../src/game/locomotion/tuning.js';
-import { locomotionPose, strideLength, LOCO_FAMILY } from '../src/game/locomotion/pose.js';
+import { createMotor, stepMotor, interpolate, turnParams, climbable, arriveIntent, wrapAngle } from '../src/entities/locomotion/motor.js';
+import { tuningFor } from '../src/entities/locomotion/tuning.js';
+import { locomotionPose, strideLength, LOCO_FAMILY } from '../src/entities/locomotion/pose.js';
 
 const T = tuningFor('realiste');
 const DEG = Math.PI / 180;

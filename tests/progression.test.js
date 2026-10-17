@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { Inventory } from '../src/game/Inventory.js';
-import { nearbyStations } from '../src/game/decor.js';
-import { migrate } from '../src/game/state.js';
+import { Inventory } from '../src/gameplay/Inventory.js';
+import { nearbyStations } from '../src/gameplay/decor.js';
+import { migrate } from '../src/core/state.js';
 
 describe('boucle de fabrication et stations', () => {
   it('fabrique une station depuis les ressources de base', () => {

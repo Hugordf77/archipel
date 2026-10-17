@@ -31,8 +31,8 @@ const digest = (p) => [hash(p.H), hash(p.Z), hash(p.C), hash(p.items), hash(p.id
 let shared = null;
 async function samplePlans() {
   if (shared) return shared;
-  const { islandsInRange } = await import('../src/world/regions.js');
-  const { buildPlan } = await import('../src/world/gen/plan.js');
+  const { islandsInRange } = await import('../src/world/islands/regions.js');
+  const { buildPlan } = await import('../src/world/islands/gen/plan.js');
   const descs = [SEED, 'ancre-nacre-2203'].flatMap((s) => islandsInRange(s, 0, 0, 4000));
   shared = descs.map((d) => ({ d, p: buildPlan(d) }));
   return shared;
@@ -41,9 +41,9 @@ async function samplePlans() {
 describe('placement des îles', () => {
   it('est déterministe sur 200 régions, quel que soit l’ordre des requêtes', async () => {
     const regions = ring(8).slice(0, 200);
-    const a = await fresh('../src/world/regions.js');
+    const a = await fresh('../src/world/islands/regions.js');
     const first = regions.map(([x, z]) => a.regionIslands(SEED, x, z));
-    const b = await fresh('../src/world/regions.js');
+    const b = await fresh('../src/world/islands/regions.js');
     const second = regions.slice().reverse().map(([x, z]) => b.regionIslands(SEED, x, z)).reverse();
     expect(JSON.stringify(second)).toBe(JSON.stringify(first));
     const other = regions.map(([x, z]) => b.regionIslands('perle-lune-1234', x, z));
@@ -51,7 +51,7 @@ describe('placement des îles', () => {
   });
 
   it('espace les îles, respecte leur taille et la zone libre autour du départ', async () => {
-    const { islandsInRange, HOME_CLEAR, minGap } = await fresh('../src/world/regions.js');
+    const { islandsInRange, HOME_CLEAR, minGap } = await fresh('../src/world/islands/regions.js');
     const list = islandsInRange(SEED, 0, 0, 4000);
     expect(list.length).toBeGreaterThan(100);
     for (let i = 0; i < list.length; i++) {
@@ -64,7 +64,7 @@ describe('placement des îles', () => {
   });
 
   it('garantit trois îles de biomes différents entre 300 et 600 m, dont un village', async () => {
-    const { guaranteedIslands, seedInt } = await fresh('../src/world/regions.js');
+    const { guaranteedIslands, seedInt } = await fresh('../src/world/islands/regions.js');
     for (const seed of SEEDS.slice(0, 3)) {
       const near = guaranteedIslands(seedInt(seed)).filter((i) => i.dist <= 600);
       expect(near).toHaveLength(3);
@@ -75,8 +75,8 @@ describe('placement des îles', () => {
   });
 
   it('place les 8 biomes à moins de 6 km', async () => {
-    const { islandsInRange } = await fresh('../src/world/regions.js');
-    const { BIOME_IDS } = await import('../src/world/biomes.js');
+    const { islandsInRange } = await fresh('../src/world/islands/regions.js');
+    const { BIOME_IDS } = await import('../src/world/islands/biomes.js');
     for (const seed of SEEDS.slice(0, 3)) {
       const found = new Set(islandsInRange(seed, 0, 0, 6000).map((i) => i.biome));
       for (const b of BIOME_IDS) expect(found.has(b), `${b} absent (graine ${seed})`).toBe(true);
@@ -84,7 +84,7 @@ describe('placement des îles', () => {
   });
 
   it('nomme chaque île d’après son archétype, en bon français', async () => {
-    const { islandsInRange } = await fresh('../src/world/regions.js');
+    const { islandsInRange } = await fresh('../src/world/islands/regions.js');
     for (const i of islandsInRange(SEED, 0, 0, 4000)) {
       expect(i.name).toMatch(/^[A-ZÉÎ]/);
       expect(i.name, i.name).not.toMatch(/\bde [AEIOUÉÎ]|\bde le\b|\bde les\b/);
@@ -94,12 +94,12 @@ describe('placement des îles', () => {
 
 describe('plan d’île', () => {
   it('est identique sur 200 îles, modules rechargés à neuf et requêtes en ordre inverse', async () => {
-    const R = await fresh('../src/world/regions.js');
+    const R = await fresh('../src/world/islands/regions.js');
     const descs = R.islandsInRange(SEED, 0, 0, 6000).slice(0, 200);
     expect(descs).toHaveLength(200);
-    const A = await fresh('../src/world/gen/plan.js');
+    const A = await fresh('../src/world/islands/gen/plan.js');
     const first = descs.map((d) => digest(A.buildPlan(d)));
-    const B = await fresh('../src/world/gen/plan.js');
+    const B = await fresh('../src/world/islands/gen/plan.js');
     const second = descs.slice().reverse().map((d) => digest(B.buildPlan(d))).reverse();
     first.forEach((f, i) => expect(second[i], descs[i].id).toBe(f));
   }, 60000);
@@ -131,7 +131,7 @@ describe('eau douce', () => {
   });
 
   it('ne laisse fuir aucun lac (seule la rivière exutoire descend sous son niveau)', async () => {
-    const { Z } = await import('../src/world/gen/zones.js');
+    const { Z } = await import('../src/world/islands/gen/zones.js');
     let lakes = 0;
     for (const { d, p } of await samplePlans()) {
       const { H, n } = p;
@@ -172,7 +172,7 @@ describe('points d’intérêt', () => {
   });
 
   it('pose les bâtiments sur un sol aplani (pente maximale respectée)', async () => {
-    const { Surface } = await import('../src/world/gen/surface.js');
+    const { Surface } = await import('../src/world/islands/gen/surface.js');
     let n = 0;
     let steep = 0;
     for (const { p } of (await samplePlans()).slice(0, 150)) {
@@ -191,7 +191,7 @@ describe('points d’intérêt', () => {
   });
 
   it('installe le moulin à vent sur un point haut et dégagé', async () => {
-    const { Z } = await import('../src/world/gen/zones.js');
+    const { Z } = await import('../src/world/islands/gen/zones.js');
     const ranks = [];
     for (const { p } of await samplePlans()) {
       const m = p.pois.find((q) => q.type === 'moulin_vent');
@@ -211,7 +211,7 @@ describe('points d’intérêt', () => {
   });
 
   it('bâtit chaque village près d’une anse, avec sa jetée et ses barques', async () => {
-    const { bilinear } = await import('../src/world/gen/grid.js');
+    const { bilinear } = await import('../src/world/islands/gen/grid.js');
     let n = 0;
     for (const { d, p } of await samplePlans()) {
       const vil = p.pois.find((q) => q.type === 'village');
@@ -250,9 +250,9 @@ describe('chemins', () => {
 
 describe('identifiants', () => {
   it('sont stables et uniques (arbres, lieux, petite végétation des tuiles)', async () => {
-    const { islandsInRange } = await import('../src/world/regions.js');
-    const { buildPlan } = await fresh('../src/world/gen/plan.js');
-    const { Surface, buildTile, TILE } = await import('../src/world/gen/surface.js');
+    const { islandsInRange } = await import('../src/world/islands/regions.js');
+    const { buildPlan } = await fresh('../src/world/islands/gen/plan.js');
+    const { Surface, buildTile, TILE } = await import('../src/world/islands/gen/surface.js');
     const d = islandsInRange(SEED, 0, 0, 3000).sort((a, b) => b.r - a.r)[0];
     const a = buildPlan(d);
     const b = buildPlan({ ...d });
@@ -286,9 +286,9 @@ describe('identifiants', () => {
 
 describe('budget du Worker', () => {
   it('construit plan + LOD1 en moins de 60 ms en moyenne, 120 ms pour une grande île, une tuile en moins de 15 ms', async () => {
-    const { islandsInRange } = await import('../src/world/regions.js');
-    const { buildPlan } = await import('../src/world/gen/plan.js');
-    const { Surface, buildLOD1, buildTile, TILE } = await import('../src/world/gen/surface.js');
+    const { islandsInRange } = await import('../src/world/islands/regions.js');
+    const { buildPlan } = await import('../src/world/islands/gen/plan.js');
+    const { Surface, buildLOD1, buildTile, TILE } = await import('../src/world/islands/gen/surface.js');
     const all = islandsInRange(SEED, 0, 0, 6000);
     for (const d of all.slice(0, 10)) buildLOD1(buildPlan(d)); // chauffe du compilateur
     const time = (d) => {
@@ -322,8 +322,8 @@ describe('budget du Worker', () => {
 
 describe('migration', () => {
   it('vide récoltes et terrassements d’une sauvegarde de l’ancien générateur et rattache le journal', async () => {
-    const { migrate, relinkDiscoveries } = await import('../src/game/state.js');
-    const { GEN_VERSION, islandsInRange } = await import('../src/world/regions.js');
+    const { migrate, relinkDiscoveries } = await import('../src/core/state.js');
+    const { GEN_VERSION, islandsInRange } = await import('../src/world/islands/regions.js');
     const target = islandsInRange(SEED, 0, 0, 2000)[0];
     const old = {
       version: 2,
@@ -353,8 +353,8 @@ describe('migration', () => {
 
 describe('statistiques sur 1 000 îles à moins de 6 km', () => {
   it('atteint les cibles de richesse', async () => {
-    const { islandsInRange, NEIGHBOR_RANGE } = await fresh('../src/world/regions.js');
-    const { buildPlan } = await fresh('../src/world/gen/plan.js');
+    const { islandsInRange, NEIGHBOR_RANGE } = await fresh('../src/world/islands/regions.js');
+    const { buildPlan } = await fresh('../src/world/islands/gen/plan.js');
     const rows = [];
     let dup = 0;
     for (const seed of SEEDS) {
@@ -401,7 +401,7 @@ describe('statistiques sur 1 000 îles à moins de 6 km', () => {
 
 describe('fenêtre de profondeur', () => {
   it('encode les hauteurs en demi-flottants', async () => {
-    const { toHalf, halfToFloat } = await import('../src/world/gen/surface.js');
+    const { toHalf, halfToFloat } = await import('../src/world/islands/gen/surface.js');
     expect(toHalf(0)).toBe(0);
     expect(toHalf(1)).toBe(0x3c00);
     expect(toHalf(-2)).toBe(0xc000);

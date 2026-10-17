@@ -2,12 +2,12 @@
 // et leurs noms, épingles, zone du bateau, traces des cartes au trésor.
 import { h } from './dom.js';
 import { ICON } from './icons.js';
-import { islandsInRange } from '../world/regions.js';
-import { islandContext, islandHeight } from '../world/islandgen.js';
-import { BIOMES } from '../world/biomes.js';
+import { islandsInRange } from '../world/islands/regions.js';
+import { islandContext, islandHeight } from '../world/islands/islandgen.js';
+import { BIOMES } from '../world/islands/biomes.js';
 import { isRevealed, FOG_CELL } from '../world/fog.js';
-import { heightAt } from '../scene/terrain.js';
-import { BOATS } from '../game/boats.js';
+import { heightAt } from '../world/home/terrain.js';
+import { BOATS } from '../entities/boats.js';
 
 const shapeCache = new Map();
 // silhouette peinte d'une île (petit canevas mis en cache)

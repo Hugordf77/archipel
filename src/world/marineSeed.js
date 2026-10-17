@@ -1,4 +1,4 @@
-import { hashString } from './random.js';
+import { hashString } from '../core/random.js';
 
 export const MARINE_CELL_SIZE = 150;
 

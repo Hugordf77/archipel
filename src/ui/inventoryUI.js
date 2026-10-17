@@ -3,7 +3,7 @@ import { h, replay } from './dom.js';
 import { ICON } from './icons.js';
 import { ITEMS, itemIcon, STATION_NAMES } from '../data/items.js';
 import RECIPES from '../data/recipes.json';
-import { HOTBAR, SLOTS } from '../game/Inventory.js';
+import { HOTBAR, SLOTS } from '../gameplay/Inventory.js';
 
 export const RECIPE_LIST = RECIPES.recipes;
 const CAT_LABEL = { ressource: 'Ressource', nourriture: 'Nourriture', graine: 'Graine', fleur: 'Fleur', poisson: 'Poisson', insecte: 'Insecte', matériau: 'Matériau', teinture: 'Teinture', objet: 'Objet', outil: 'Outil', station: 'Station', bateau: 'Bateau' };

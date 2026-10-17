@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { Builder, G } from '../scene/builder.js';
-import { toonMaterial } from '../shaders/materials.js';
-import { nextId } from '../scene/globals.js';
-import { waterDepth } from '../game/navigation.js';
+import { Builder, G } from '../render/builder.js';
+import { toonMaterial } from '../render/shaders/materials.js';
+import { nextId } from '../core/globals.js';
+import { waterDepth } from './navigation.js';
 import { MARINE_CELL_SIZE, marineCellKey, marineCellSeed } from './marineSeed.js';
 
 // Éléments marins procéduraux. Les positions sont calculées par cellule et par
