@@ -1,6 +1,7 @@
 // Animaux de l'île de départ : mouette, crabe, papillon (géométries par pièce ; le jeu
 // les instancie et les anime dans entities/fauna/homeFauna.js).
-import { Builder, G } from '../../render/builder.js';
+import { Builder, G } from '../../../render/builder.js';
+import { fiche, homeCreature } from '../../kit/fiches.js';
 
 // pivots (repère de l'animal) : ailes de la mouette et du papillon, six pattes du crabe
 export const GULL_PIVOTS = [[-0.12, 0.05, 0], [0.12, 0.05, 0]];
@@ -58,3 +59,11 @@ export function gullGeometry(id) {
   });
   return [b.build(), ...wings];
 }
+
+
+// fiches du registre : corps et pièces mobiles aux pivots du jeu
+export default [
+  fiche('ANI-024', 'mouette-depart', 'Mouette (île de départ)', homeCreature('mouette', gullGeometry, GULL_PIVOTS, 'gull', 'wing')),
+  fiche('ANI-025', 'crabe-depart', 'Crabe (île de départ)', homeCreature('crabe', crabGeometry, CRAB_LEG_PIVOTS, 'crab', 'leg', 0.85)),
+  fiche('ANI-026', 'papillon-depart', 'Papillon (île de départ)', homeCreature('papillon', butterflyGeometry, BUTTERFLY_PIVOTS, 'butterfly', 'wing')),
+];

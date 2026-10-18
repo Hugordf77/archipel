@@ -8,7 +8,7 @@ import { toonMaterial, glowMaterial } from '../../render/shaders/materials.js';
 import { LAYER_SHADOW, U } from '../../core/globals.js';
 import { mulberry32 } from '../../core/random.js';
 import { SPECIES_LABEL } from '../../world/islands/gen/spawns.js';
-import { SPECIES } from '../../models/animals/especes.js';
+import { SPECIES } from '../../models/animaux/index.js';
 import { MAT } from '../../models/kit/materials.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);

@@ -3,7 +3,7 @@ import { toonMaterial, glowMaterial } from '../../render/shaders/materials.js';
 import { nextId, LAYER_SHADOW, U } from '../../core/globals.js';
 import { coastRadius, heightAt, LAYOUT } from '../../world/home/terrain.js';
 import { MAT } from '../../models/kit/materials.js';
-import { butterflyGeometry, crabGeometry, gullGeometry, GULL_PIVOTS, BUTTERFLY_PIVOTS, CRAB_LEG_PIVOTS } from '../../models/animals/ileDepart.js';
+import { butterflyGeometry, crabGeometry, gullGeometry, GULL_PIVOTS, BUTTERFLY_PIVOTS, CRAB_LEG_PIVOTS } from '../../models/animaux/index.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
 const rand = (a, b) => a + Math.random() * (b - a);

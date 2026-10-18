@@ -2,7 +2,7 @@
 // autorisées selon le bateau, tempêtes qui repoussent, embarquer / débarquer,
 // sillage et caméra de navigation. Coordonnées absolues (origine flottante gérée au rendu).
 import * as THREE from 'three';
-import { BOATS, buildBoat } from '../models/boats/bateaux.js';
+import { BOATS, buildBoat } from '../models/bateaux/index.js';
 import { groundAt, waterDepth, canStand, blockedByObstacle } from '../world/navigation.js';
 import { U, ORIGIN } from '../core/globals.js';
 import { LAYOUT } from '../world/home/terrain.js';

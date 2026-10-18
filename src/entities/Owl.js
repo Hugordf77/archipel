@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { nextId } from '../core/globals.js';
-import { buildHibou } from '../models/animals/hibou.js';
+import { buildHibou } from '../models/animaux/index.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
 

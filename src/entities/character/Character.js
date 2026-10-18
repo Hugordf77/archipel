@@ -5,8 +5,8 @@ import { SMOKE_VERT, SMOKE_FRAG } from '../../world/World.js';
 import { defaultAvatar, sanitizeAvatar, SKINS, HAIR_COLORS } from './avatar.js';
 import { FaceAtlas, faceGeometry, EXPRESSIONS, BLINKABLE, EYE, cellUV } from './face.js';
 import { locomotionPose, LOCO_FAMILY, FAMILY_HALFLIFE } from '../locomotion/pose.js';
-import { HC, B, PARENT, REST, ID, tint, HAIR_STYLES, buildAvatarGeometry } from '../../models/character/personnage.js';
-import { crayonGeometry } from '../../models/props/outils.js';
+import { HC, B, PARENT, REST, ID, tint, HAIR_STYLES, buildAvatarGeometry } from '../../models/personnage/index.js';
+import { crayonGeometry } from '../../models/personnage/index.js';
 export { HAIR_STYLES };
 
 // Joueur humain, chibi et rond (≈ 1,45 m, tête = 40 % de la hauteur).

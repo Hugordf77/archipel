@@ -1,9 +1,10 @@
 // Hibou cartographe : corps, tête à lunettes, yeux, ailes articulées à l'épaule.
 // Renvoie les groupes animés (le jeu les fait cligner, hocher et battre des ailes).
 import * as THREE from 'three';
-import { Builder, G } from '../../render/builder.js';
-import { toonMaterial } from '../../render/shaders/materials.js';
-import { nextId, LAYER_SHADOW } from '../../core/globals.js';
+import { Builder, G } from '../../../render/builder.js';
+import { toonMaterial } from '../../../render/shaders/materials.js';
+import { nextId, LAYER_SHADOW } from '../../../core/globals.js';
+import { fiche, ILE_DEPART } from '../../kit/fiches.js';
 
 export function buildHibou(id = nextId()) {
   const mat = toonMaterial({ vertexColors: true, id: id, rim: 1.1, pigment: 0.7 });
@@ -75,3 +76,18 @@ export function buildHibou(id = nextId()) {
   root.traverse((o) => o.isMesh && o.layers.enable(LAYER_SHADOW));
   return { root, body, torso, head, headMesh, eyes, wings };
 }
+
+
+export default fiche('ANI-027', 'hibou', 'Hibou cartographe', {
+  ref: 'hibou', usedIn: ILE_DEPART, tags: ['animé', 'personnage'],
+  build() {
+    const h = buildHibou();
+    return {
+      object3d: h.root,
+      anim: (dt, t) => {
+        h.wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * Math.max(0, Math.sin(t * 2)) * 0.3; });
+        h.head.rotation.y = Math.sin(t * 0.7) * 0.5;
+      },
+    };
+  },
+});

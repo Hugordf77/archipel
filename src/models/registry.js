@@ -7,23 +7,13 @@
 //   defaults : valeurs des paramètres quand aucune variante ne les fixe
 //   size : [largeur, hauteur, profondeur] en mètres (boîte englobante, ±25 % vérifiés en test)
 //   usedIn : où le jeu l'emploie ; status : 'valide' | 'a-retravailler' | 'brouillon' | 'retire'
-import * as THREE from 'three';
-import { glowMaterial } from '../render/shaders/materials.js';
-import { nextId } from '../core/globals.js';
 import { mulberry32 } from '../core/random.js';
 import { PAL } from './kit/palette.js';
-import { assembleKind, assemblePart, assembleBuilder, assembleCreature, assembleMesh, materiaux } from './kit/assemble.js';
+import { assembleKind, assemblePart, assembleBuilder, assembleMesh } from './kit/assemble.js';
+import { FICHES } from './index.gen.js';
 import * as ILE from './buildings/ileDepart.js';
-import { buildBoat, BOATS } from './boats/bateaux.js';
 import { CATALOG } from './decor/catalogue.js';
 import { collectibleMesh, marineMesh } from './props/objets.js';
-import { outilGeometry, crayonGeometry, flotteurGeometry, OUTILS } from './props/outils.js';
-import { SPECIES } from './animals/especes.js';
-import { gullGeometry, crabGeometry, butterflyGeometry, GULL_PIVOTS, CRAB_LEG_PIVOTS, BUTTERFLY_PIVOTS } from './animals/ileDepart.js';
-import { buildHibou } from './animals/hibou.js';
-import { buildAlbatros } from './animals/albatros.js';
-import { Character } from '../entities/character/Character.js';
-import { defaultAvatar, HAIRS, PIECES } from '../entities/character/avatar.js';
 
 export const CATEGORIES = [
   { id: 'arbres', prefix: 'ARB', label: 'Arbres' },
@@ -46,15 +36,8 @@ const SRC = {
   lieux: 'src/models/structures/lieux.js',
   gabarits: 'src/models/buildings/gabarits.js',
   ile: 'src/models/buildings/ileDepart.js',
-  bateaux: 'src/models/boats/bateaux.js',
   decor: 'src/models/decor/catalogue.js',
   objets: 'src/models/props/objets.js',
-  outils: 'src/models/props/outils.js',
-  especes: 'src/models/animals/especes.js',
-  faune: 'src/models/animals/ileDepart.js',
-  hibou: 'src/models/animals/hibou.js',
-  albatros: 'src/models/animals/albatros.js',
-  perso: 'src/models/character/personnage.js',
 };
 const GABARITS = new Set(['phare', 'ruines', 'temple', 'grotte', 'cabane']);
 const ILE_DEPART = ['île de départ'];
@@ -63,22 +46,6 @@ const ILE_DEPART = ['île de départ'];
 const kind = (k) => ({ source: SRC.veg, ref: `kind:${k}`, defaults: { roche: '#d6cbbd', fleur: '#f7b6c8', v: 0 }, build: (q = {}) => assembleKind(k, q) });
 const part = (t, base = {}) => ({ source: GABARITS.has(t) ? SRC.gabarits : SRC.lieux, ref: `part:${t}`, defaults: base, build: (q = {}) => assemblePart({ t, ...base, ...q }) });
 const ile = (name, draw, mat) => ({ source: SRC.ile, ref: `ile:${name}`, usedIn: ILE_DEPART, build: () => assembleBuilder(draw, mat) });
-function boat(type) {
-  return {
-    source: SRC.bateaux, ref: `boat:${type}`, usedIn: ['chantier naval', 'mer'],
-    build() {
-      const bt = buildBoat(type);
-      return {
-        object3d: bt.group,
-        anim: (dt, t) => {
-          bt.body.rotation.z = Math.sin(t * 1.3) * 0.04;
-          bt.body.rotation.x = Math.sin(t * 0.9) * 0.025;
-          for (const s of [bt.sail || []].flat()) s.rotation.y = Math.sin(t * 0.5) * 0.15;
-        },
-      };
-    },
-  };
-}
 function decor(k) {
   return {
     source: SRC.decor, ref: `decor:${k}`, usedIn: ['échoppe de l\'île de départ'],
@@ -90,47 +57,6 @@ function decor(k) {
 }
 const collect = (k) => ({ source: SRC.objets, ref: `collect:${k}`, usedIn: ['plages de l\'île de départ'], params: { v: [0, 5] }, build: ({ v = 0 } = {}) => assembleMesh(collectibleMesh(k, mulberry32(7 + v))) });
 const marine = (t) => ({ source: SRC.objets, ref: `marine:${t}`, usedIn: ['mer'], params: { v: [0, 5] }, build: ({ v = 0 } = {}) => assembleMesh(marineMesh(t, mulberry32(11 + v))) });
-function species(sp) {
-  const coats = SPECIES[sp].coats || [];
-  return {
-    source: SRC.especes, ref: `species:${sp}`, tags: ['animé'],
-    variants: coats.map(([label], i) => ({ label, params: { coat: i } })),
-    build({ coat = 0 } = {}) {
-      const d = SPECIES[sp];
-      if (d.insect === 'glow') {
-        // insecte lumineux : simple halo qui pulse (comme en jeu, la nuit)
-        const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMaterial(...d.glow));
-        m.renderOrder = 10;
-        m.scale.setScalar(0.3);
-        return { object3d: m, anim: (dt, t) => m.scale.setScalar(0.25 + 0.15 * Math.sin(t * 3)) };
-      }
-      return assembleCreature(d.parts(), { scale: d.scale || 1, pace: Math.max(0.4, d.speed || 1), coat: d.coats?.[coat]?.[1], graze: d.graze ?? 0.5, nod: d.nod ?? 0 });
-    },
-  };
-}
-// animaux de l'île de départ : corps + pièces mobiles aux pivots du jeu
-function homeCreature(name, geos, pivots, matKey, anim, scale = 1) {
-  return {
-    source: SRC.faune, ref: `faune:${name}`, usedIn: ILE_DEPART, tags: ['animé'],
-    build() {
-      const [body, ...rest] = geos(nextId());
-      const parts = [{ geo: body, pivot: [0, 0, 0] }];
-      pivots.forEach((pv, i) => parts.push({ geo: rest[Math.floor((i * rest.length) / pivots.length)], pivot: pv, anim, side: i < pivots.length / 2 ? -1 : 1, phase: i * 1.7 }));
-      return assembleCreature(parts, { mat: materiaux()[matKey], scale });
-    },
-  };
-}
-function perso(over = {}, ref = 'avatar') {
-  return {
-    source: SRC.perso, ref, usedIn: ['personnage joueur'], tags: ['animé'],
-    params: { skin: [0, 5], hairColor: [0, 7] },
-    build(q = {}) {
-      const c = new Character({ ...defaultAvatar(), ...over, ...q });
-      return { object3d: c.root, anim: (dt) => c.update(dt, 0) };
-    },
-  };
-}
-const outil = (o) => ({ source: SRC.outils, ref: o.ref, usedIn: ['main du personnage'], build: o.build });
 
 // entrée : id, slug, nom, constructeur, compléments (variantes, paramètres, usage, étiquettes…)
 function M(id, slug, name, src, more = {}) {
@@ -450,7 +376,8 @@ const TAILLES = {
 const v3 = (labels, key = 'v') => labels.map((label, i) => ({ label, params: { [key]: i } }));
 const SAME = (other) => ({ tags: [`même modèle que ${other}`] });
 
-export const MODELS = [
+// modèles pas encore rangés dans un dossier (src/models/<catégorie>/<modèle>/)
+const ANCIENS = [
   // --- ARB : arbres -----------------------------------------------------------------
   M('ARB-001', 'arbre-pompon', 'Arbre pompon', kind('arbre_pompon'), { tags: ['abattable'] }),
   M('ARB-002', 'arbre-fruitier', 'Arbre fruitier', kind('arbre_fruitier'), { tags: ['abattable', 'fruits'] }),
@@ -568,10 +495,6 @@ export const MODELS = [
   M('MON-008', 'cairn', 'Cairn', part('cairn'), { tags: ['curiosité'] }),
 
   // --- NAV : bateaux et épaves ----------------------------------------------------------
-  M('NAV-001', 'radeau', BOATS.radeau.name, boat('radeau'), { tags: ['monture', 'animé'] }),
-  M('NAV-002', 'barque', BOATS.barque.name, boat('barque'), { tags: ['monture', 'animé'] }),
-  M('NAV-003', 'voilier', BOATS.voilier.name, boat('voilier'), { tags: ['monture', 'animé'] }),
-  M('NAV-004', 'goelette', BOATS.goelette.name, boat('goelette'), { tags: ['monture', 'animé'] }),
   M('NAV-005', 'barque-amarree', 'Barque amarrée', part('barque_amarree'), { variants: v3(['Corail', 'Menthe', 'Ciel']), params: { v: [0, 3] }, tags: ['village'] }),
   M('NAV-006', 'barque-echouee', 'Barque échouée', part('barque_echouee'), { params: { v: [0, 2] }, tags: ['épave'] }),
   M('NAV-007', 'epave', 'Épave', part('epave'), { params: { len: [8, 20], sunk: 'bool' }, tags: ['épave'] }),
@@ -604,65 +527,23 @@ export const MODELS = [
   M('OBJ-017', 'bouteille-mer', 'Bouteille à la mer', marine('bouteille'), { tags: ['flotte'] }),
   M('OBJ-018', 'caisse-flottante', 'Caisse flottante', marine('caisse'), { tags: ['flotte'] }),
   M('OBJ-019', 'algue', 'Algue', marine('algue'), { tags: ['sous l\'eau'] }),
-  M('OBJ-020', 'flotteur-peche', 'Flotteur de pêche', outil({ ref: 'flotteur', build: () => assembleMesh(flotteurGeometry(), 'bobber') }), { usedIn: ['pêche'] }),
   // compléments de l'inventaire
   M('OBJ-021', 'recif-marin', 'Récif marin', marine('recif'), { tags: ['sous l\'eau'] }),
   M('OBJ-022', 'banc-poissons', 'Banc de poissons', marine('poissons'), { tags: ['pêche'] }),
   M('OBJ-023', 'nichoir-lieu', 'Nichoir (lieu)', part('nichoir'), { tags: ['curiosité'] }),
-
-  // --- ANI : animaux --------------------------------------------------------------------
-  ...[['mouton', 'Mouton'], ['chevre', 'Chèvre'], ['vache', 'Vache'], ['cerf', 'Cerf'], ['renard', 'Renard'], ['lapin', 'Lapin'],
-    ['herisson', 'Hérisson'], ['ecureuil', 'Écureuil'], ['tortue', 'Tortue'], ['crabe', 'Crabe'], ['mouette', 'Mouette'], ['perroquet', 'Perroquet'],
-    ['flamant', 'Flamant rose'], ['canard', 'Canard'], ['grenouille', 'Grenouille'], ['poisson', 'Poisson'], ['papillon', 'Papillon'], ['abeille', 'Abeille'],
-    ['luciole', 'Luciole'], ['phoque', 'Phoque'], ['pingouin', 'Pingouin'], ['lezard', 'Lézard'], ['escargot', 'Escargot géant']]
-    .map(([sp, name], i) => M(`ANI-${String(i + 1).padStart(3, '0')}`, sp, name, species(sp))),
-  M('ANI-024', 'mouette-depart', 'Mouette (île de départ)', homeCreature('mouette', gullGeometry, GULL_PIVOTS, 'gull', 'wing')),
-  M('ANI-025', 'crabe-depart', 'Crabe (île de départ)', homeCreature('crabe', crabGeometry, CRAB_LEG_PIVOTS, 'crab', 'leg', 0.85)),
-  M('ANI-026', 'papillon-depart', 'Papillon (île de départ)', homeCreature('papillon', butterflyGeometry, BUTTERFLY_PIVOTS, 'butterfly', 'wing')),
-  M('ANI-027', 'hibou', 'Hibou cartographe', {
-    source: SRC.hibou, ref: 'hibou', usedIn: ILE_DEPART, tags: ['animé', 'personnage'],
-    build() {
-      const h = buildHibou();
-      return {
-        object3d: h.root,
-        anim: (dt, t) => {
-          h.wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * Math.max(0, Math.sin(t * 2)) * 0.3; });
-          h.head.rotation.y = Math.sin(t * 0.7) * 0.5;
-        },
-      };
-    },
-  }),
-  M('ANI-028', 'albatros', 'Grand albatros (monture)', {
-    source: SRC.albatros, ref: 'albatros', usedIn: ['vol'], tags: ['animé', 'monture'],
-    build() {
-      const r = buildAlbatros();
-      return {
-        object3d: r,
-        anim: (dt, t) => {
-          const f = Math.sin(t * 3) * 0.45;
-          r.userData.wings[0].rotation.z = f;
-          r.userData.wings[1].rotation.z = -f;
-        },
-      };
-    },
-  }),
-
-  // --- PER : personnage -----------------------------------------------------------------
-  M('PER-001', 'corps-visage', 'Corps et visage', perso({}, 'avatar'), {
-    variants: [{ label: 'Yeux ovales', params: { eyes: 'ovale' } }, { label: 'Yeux ronds', params: { eyes: 'rond' } }, { label: 'Yeux en amande', params: { eyes: 'amande' } }],
-    tags: ['atlas d\'expressions'],
-  }),
-  ...['bol', 'carre', 'queue', 'macarons', 'boucles', 'longs'].map((k, i) => M(`PER-${String(i + 2).padStart(3, '0')}`, `coupe-${k}`, `Coupe : ${HAIRS[k]}`, perso({ hair: k }, `hair:${k}`), { tags: ['coupe'] })),
-  ...['tshirt', 'pull', 'gilet', 'robe', 'short', 'jupe', 'pantalon', 'salopette', 'baskets', 'bottes', 'sandales', 'echarpe']
-    .map((k, i) => M(`PER-${String(i + 8).padStart(3, '0')}`, `tenue-${k}`, PIECES[k].name, perso({ [PIECES[k].slot]: k }, `piece:${k}`), { tags: ['tenue', PIECES[k].slot] })),
-  ...['bob', 'barrette', 'lunettes', 'sac']
-    .map((k, i) => M(`PER-${String(i + 20).padStart(3, '0')}`, `accessoire-${k}`, PIECES[k].name, perso({ accessory: k }, `piece:${k}`), { tags: ['accessoire'] })),
-  M('PER-024', 'crayon', 'Crayon d\'étude', outil({ ref: 'crayon', build: () => assembleMesh(crayonGeometry(), 'tool') }), { tags: ['objet tenu'] }),
-  M('PER-025', 'outils', 'Outils', outil({ ref: 'outils', build: ({ outil: o = 'hache', tete = '#c9cdd6' } = {}) => assembleMesh(outilGeometry(o, tete), 'tool') }), {
-    variants: OUTILS.map((o) => ({ label: o[0].toUpperCase() + o.slice(1), params: { outil: o } })),
-    params: { outil: OUTILS, tete: 'color' }, tags: ['objet tenu'],
-  }),
 ];
+
+// fiches des dossiers de modèle (index.gen.js) : complétées comme les anciennes entrées
+const ORDRE = new Map(CATEGORIES.map((c, i) => [c.prefix, i]));
+function complete(f) {
+  return {
+    variants: [], params: {}, defaults: {}, tags: [], status: 'valide', ...f,
+    name: f.nom, category: f.categorie, size: TAILLES[f.id] || [0, 0, 0],
+    usedIn: [...new Set([...(f.usedIn || []), ...(USAGE[f.ref] || [])])],
+  };
+}
+export const MODELS = [...ANCIENS, ...FICHES.map(complete)]
+  .sort((a, b) => ORDRE.get(a.id.slice(0, 3)) - ORDRE.get(b.id.slice(0, 3)) || a.id.localeCompare(b.id));
 
 export const BY_ID = new Map(MODELS.map((m) => [m.id, m]));
 export const categoryOf = (id) => CATEGORIES.find((c) => c.prefix === id.slice(0, 3));

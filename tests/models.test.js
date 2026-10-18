@@ -69,6 +69,23 @@ describe('registre des modèles', () => {
   });
 });
 
+describe('dossiers de modèle', () => {
+  it('index.gen.js est à jour (npm run modeles:index)', async () => {
+    const fs = await import('node:fs');
+    const { indexGenere, INDEX } = await import('../scripts/modeles/index.mjs');
+    expect(fs.readFileSync(INDEX, 'utf8')).toBe(indexGenere());
+  });
+
+  it('rangent chaque fiche dans le dossier de sa catégorie, sous src/models', async () => {
+    const { FICHES } = await import('../src/models/index.gen.js');
+    expect(FICHES.length).toBeGreaterThan(0);
+    for (const f of FICHES) {
+      expect(f.categorie, f.id).toBe(R.categoryOf(f.id).id);
+      expect(f.source, f.id).toMatch(new RegExp(`^src/models/${f.categorie}/[a-z0-9-]+/index\\.js$`));
+    }
+  });
+});
+
 describe('usage des modèles', () => {
   const refs = () => new Set(R.MODELS.map((m) => m.ref));
 
@@ -93,13 +110,13 @@ describe('usage des modèles', () => {
 
   it('couvre les tables du jeu : espèces, bateaux, décor, trésors, mer, faune, coupes, tenues, outils', async () => {
     const { KINDS } = await import('../src/world/islands/gen/kinds.js');
-    const { SPECIES } = await import('../src/models/animals/especes.js');
-    const { BOATS } = await import('../src/models/boats/bateaux.js');
+    const { SPECIES } = await import('../src/models/animaux/index.js');
+    const { BOATS } = await import('../src/models/bateaux/index.js');
     const { CATALOG } = await import('../src/models/decor/catalogue.js');
     const { KINDS: TREASURES } = await import('../src/gameplay/collectibles.js');
     const { MARINE_TYPES } = await import('../src/models/props/objets.js');
     const { HAIRS, PIECES } = await import('../src/entities/character/avatar.js');
-    const { OUTILS } = await import('../src/models/props/outils.js');
+    const { OUTILS } = await import('../src/models/personnage/index.js');
     const need = [
       ...KINDS.map((k) => `kind:${k}`),
       ...Object.keys(SPECIES).map((k) => `species:${k}`),
@@ -164,7 +181,7 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
   };
 
   it('posent quatre sabots bien répartis au sol et tiennent le budget (9 pièces, triangles)', async () => {
-    const { SPECIES } = await import('../src/models/animals/especes.js');
+    const { SPECIES } = await import('../src/models/animaux/index.js');
     for (const [sp, o] of Object.entries(ONGULES)) {
       const def = SPECIES[sp];
       const parts = def.parts();
@@ -190,7 +207,7 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
   });
 
   it('gardent la tête attachée au corps, par le cou s’il y en a un, et broutent l’herbe (museau près du sol)', async () => {
-    const { SPECIES } = await import('../src/models/animals/especes.js');
+    const { SPECIES } = await import('../src/models/animaux/index.js');
     for (const [sp, o] of Object.entries(ONGULES)) {
       const def = SPECIES[sp];
       const parts = def.parts();
@@ -217,7 +234,7 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
   });
 
   it('font sortir les pattes de la vache du dessous du corps, jamais du flanc', async () => {
-    const { SPECIES } = await import('../src/models/animals/especes.js');
+    const { SPECIES } = await import('../src/models/animaux/index.js');
     const def = SPECIES.vache;
     const parts = def.parts();
     // enveloppe du corps : tonneau, croupe et épaules ({ c, rad, n } : |x|^n + |y|^n + |z|^n = 1)
@@ -251,7 +268,7 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
   });
 
   it('ont une version allégée (au loin) aux mêmes pièces, nettement plus légère', async () => {
-    const { SPECIES } = await import('../src/models/animals/especes.js');
+    const { SPECIES } = await import('../src/models/animaux/index.js');
     const tri = (parts) => parts.reduce((a, p) => a + (p.geo.index ? p.geo.index.count : p.geo.attributes.position.count) / 3, 0);
     for (const [sp, def] of Object.entries(SPECIES)) {
       if (!def.lod) continue;

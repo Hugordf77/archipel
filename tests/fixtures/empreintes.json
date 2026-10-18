@@ -1,4 +1,5206 @@
 {
+ "fiches": {
+  "ARB-001": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Arbre pompon",
+   "params": {},
+   "ref": "kind:arbre_pompon",
+   "size": [
+    4.09,
+    4.68,
+    4.05
+   ],
+   "slug": "arbre-pompon",
+   "status": "valide",
+   "tags": [
+    "abattable"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "ARB-002": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Arbre fruitier",
+   "params": {},
+   "ref": "kind:arbre_fruitier",
+   "size": [
+    4.56,
+    4.82,
+    4.74
+   ],
+   "slug": "arbre-fruitier",
+   "status": "valide",
+   "tags": [
+    "abattable",
+    "fruits"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": []
+  },
+  "ARB-003": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Cerisier",
+   "params": {},
+   "ref": "kind:arbre_cerisier",
+   "size": [
+    4.56,
+    4.84,
+    4.74
+   ],
+   "slug": "cerisier",
+   "status": "valide",
+   "tags": [
+    "abattable",
+    "fleuri"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs"
+   ],
+   "variants": []
+  },
+  "ARB-004": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Pin",
+   "params": {},
+   "ref": "kind:pin",
+   "size": [
+    3.66,
+    4.33,
+    3.84
+   ],
+   "slug": "pin",
+   "status": "valide",
+   "tags": [
+    "abattable"
+   ],
+   "usedIn": [
+    "Mont des Aigles",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "ARB-005": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Pin givré",
+   "params": {},
+   "ref": "kind:pin_givre",
+   "size": [
+    4.12,
+    4.39,
+    3.64
+   ],
+   "slug": "pin-givre",
+   "status": "valide",
+   "tags": [
+    "abattable",
+    "glace"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "ARB-006": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Sapin enneigé",
+   "params": {},
+   "ref": "kind:sapin_neige",
+   "size": [
+    3.61,
+    4.46,
+    3.67
+   ],
+   "slug": "sapin-enneige",
+   "status": "valide",
+   "tags": [
+    "abattable",
+    "glace"
+   ],
+   "usedIn": [
+    "Rocher Percé",
+    "Mont des Aigles"
+   ],
+   "variants": []
+  },
+  "ARB-007": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Palmier",
+   "params": {},
+   "ref": "kind:palmier",
+   "size": [
+    4.74,
+    4.5,
+    4.86
+   ],
+   "slug": "palmier",
+   "status": "valide",
+   "tags": [
+    "abattable",
+    "tropical"
+   ],
+   "usedIn": [
+    "Falaises de Nacre",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "ARB-008": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Bouleau",
+   "params": {},
+   "ref": "kind:bouleau",
+   "size": [
+    2.9,
+    4.84,
+    2.96
+   ],
+   "slug": "bouleau",
+   "status": "valide",
+   "tags": [
+    "abattable"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "ARB-009": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Saule",
+   "params": {},
+   "ref": "kind:saule",
+   "size": [
+    4.65,
+    4.8,
+    4.85
+   ],
+   "slug": "saule",
+   "status": "valide",
+   "tags": [
+    "abattable",
+    "bord de l'eau"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Bois des Lanternes"
+   ],
+   "variants": []
+  },
+  "ARB-010": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Érable",
+   "params": {},
+   "ref": "kind:erable",
+   "size": [
+    4.23,
+    5.01,
+    4.03
+   ],
+   "slug": "erable",
+   "status": "valide",
+   "tags": [
+    "abattable",
+    "automne"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Bois des Lanternes"
+   ],
+   "variants": []
+  },
+  "ARB-011": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Bambou",
+   "params": {},
+   "ref": "kind:bambou",
+   "size": [
+    2.07,
+    5.11,
+    2.48
+   ],
+   "slug": "bambou",
+   "status": "valide",
+   "tags": [
+    "abattable"
+   ],
+   "usedIn": [
+    "Falaises de Nacre"
+   ],
+   "variants": []
+  },
+  "ARB-012": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Fougère arborescente",
+   "params": {},
+   "ref": "kind:fougere_arbo",
+   "size": [
+    3.06,
+    2.74,
+    3.06
+   ],
+   "slug": "fougere-arborescente",
+   "status": "valide",
+   "tags": [
+    "tropical"
+   ],
+   "usedIn": [
+    "Falaises de Nacre",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "ARB-013": {
+   "category": "arbres",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Champignon géant",
+   "params": {
+    "v": [
+     0,
+     4
+    ]
+   },
+   "ref": "kind:champi_geant",
+   "size": [
+    3.2,
+    3.33,
+    3.17
+   ],
+   "slug": "champignon-geant",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "Bois des Lanternes"
+   ],
+   "variants": [
+    {
+     "label": "Rose",
+     "params": {
+      "v": 0
+     }
+    },
+    {
+     "label": "Pêche",
+     "params": {
+      "v": 1
+     }
+    },
+    {
+     "label": "Lilas",
+     "params": {
+      "v": 2
+     }
+    },
+    {
+     "label": "Menthe",
+     "params": {
+      "v": 3
+     }
+    },
+    {
+     "label": "Beurre",
+     "params": {
+      "v": 4
+     }
+    }
+   ]
+  },
+  "ARB-014": {
+   "category": "arbres",
+   "defaults": {},
+   "name": "Grand arbre de l'île de départ",
+   "params": {},
+   "ref": "ile:grandArbre",
+   "size": [
+    9.98,
+    10.04,
+    9.93
+   ],
+   "slug": "grand-arbre",
+   "status": "valide",
+   "tags": [
+    "repère"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "ARB-015": {
+   "category": "arbres",
+   "defaults": {},
+   "name": "Arbre géant (lieu)",
+   "params": {
+    "kind": [
+     "chene",
+     "sapin",
+     "champi"
+    ]
+   },
+   "ref": "part:arbre_geant",
+   "size": [
+    13.17,
+    16.45,
+    13.03
+   ],
+   "slug": "arbre-geant",
+   "status": "valide",
+   "tags": [
+    "repère"
+   ],
+   "usedIn": [
+    "Bois des Lanternes"
+   ],
+   "variants": [
+    {
+     "label": "Chêne",
+     "params": {
+      "kind": "chene"
+     }
+    },
+    {
+     "label": "Sapin",
+     "params": {
+      "kind": "sapin"
+     }
+    },
+    {
+     "label": "Champignon",
+     "params": {
+      "kind": "champi"
+     }
+    }
+   ]
+  },
+  "PLA-001": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Arbuste",
+   "params": {},
+   "ref": "kind:arbuste",
+   "size": [
+    2.48,
+    1.9,
+    2.29
+   ],
+   "slug": "arbuste",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "PLA-002": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Buisson à baies",
+   "params": {},
+   "ref": "kind:buisson_baies",
+   "size": [
+    2.11,
+    2.1,
+    2.16
+   ],
+   "slug": "buisson-baies",
+   "status": "valide",
+   "tags": [
+    "récolte"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "PLA-003": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Buisson fleuri",
+   "params": {},
+   "ref": "kind:buisson_fleuri",
+   "size": [
+    1.84,
+    1.93,
+    1.75
+   ],
+   "slug": "buisson-fleuri",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "PLA-004": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Cactus",
+   "params": {},
+   "ref": "kind:cactus",
+   "size": [
+    1.18,
+    2.07,
+    0.6
+   ],
+   "slug": "cactus",
+   "status": "valide",
+   "tags": [
+    "dunes"
+   ],
+   "usedIn": [
+    "Cratère de Braise",
+    "Dunes du Mirage"
+   ],
+   "variants": []
+  },
+  "PLA-005": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Cactus fleuri",
+   "params": {},
+   "ref": "kind:cactus_fleur",
+   "size": [
+    0.89,
+    2.07,
+    0.56
+   ],
+   "slug": "cactus-fleuri",
+   "status": "valide",
+   "tags": [
+    "dunes"
+   ],
+   "usedIn": [
+    "Dunes du Mirage"
+   ],
+   "variants": []
+  },
+  "PLA-006": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Fougère",
+   "params": {},
+   "ref": "kind:fougere",
+   "size": [
+    1.61,
+    0.52,
+    1.4
+   ],
+   "slug": "fougere",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "PLA-007": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Lavande",
+   "params": {},
+   "ref": "kind:lavande",
+   "size": [
+    0.61,
+    0.68,
+    0.61
+   ],
+   "slug": "lavande",
+   "status": "valide",
+   "tags": [
+    "champs"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "PLA-008": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Tournesol",
+   "params": {},
+   "ref": "kind:tournesol",
+   "size": [
+    0.6,
+    1.91,
+    0.28
+   ],
+   "slug": "tournesol",
+   "status": "valide",
+   "tags": [
+    "champs"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Falaises de Nacre",
+    "Bois des Lanternes",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "PLA-009": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Blé",
+   "params": {},
+   "ref": "kind:ble",
+   "size": [
+    0.19,
+    1.02,
+    0.21
+   ],
+   "slug": "ble",
+   "status": "valide",
+   "tags": [
+    "champs",
+    "récolte"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": []
+  },
+  "PLA-010": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Roseau",
+   "params": {},
+   "ref": "kind:roseau",
+   "size": [
+    0.38,
+    1.4,
+    0.4
+   ],
+   "slug": "roseau",
+   "status": "valide",
+   "tags": [
+    "bord de l'eau"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "PLA-011": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Nénuphar",
+   "params": {},
+   "ref": "kind:nenuphar",
+   "size": [
+    1.21,
+    0.17,
+    0.88
+   ],
+   "slug": "nenuphar",
+   "status": "valide",
+   "tags": [
+    "bord de l'eau"
+   ],
+   "usedIn": [
+    "Falaises de Nacre",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "PLA-012": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Potiron",
+   "params": {},
+   "ref": "kind:potiron",
+   "size": [
+    0.88,
+    0.47,
+    0.59
+   ],
+   "slug": "potiron",
+   "status": "valide",
+   "tags": [
+    "récolte"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "PLA-013": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Petit champignon",
+   "params": {
+    "v": [
+     0,
+     4
+    ]
+   },
+   "ref": "kind:champi_petit",
+   "size": [
+    0.75,
+    0.43,
+    0.56
+   ],
+   "slug": "petit-champignon",
+   "status": "valide",
+   "tags": [
+    "récolte"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Mont des Aigles",
+    "Bois des Lanternes"
+   ],
+   "variants": []
+  },
+  "PLA-014": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Massif de fleurs",
+   "params": {
+    "fleur": "color"
+   },
+   "ref": "kind:fleurs",
+   "size": [
+    0.66,
+    0.48,
+    0.71
+   ],
+   "slug": "massif-fleurs",
+   "status": "valide",
+   "tags": [
+    "teinté par instance"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "PLA-015": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Fleur des champs",
+   "params": {
+    "fleur": "color"
+   },
+   "ref": "kind:fleur_champ",
+   "size": [
+    0.18,
+    0.41,
+    0.17
+   ],
+   "slug": "fleur-des-champs",
+   "status": "valide",
+   "tags": [
+    "teinté par instance"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "PLA-016": {
+   "category": "plantes",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Herbe",
+   "params": {},
+   "ref": "kind:herbe",
+   "size": [
+    0.39,
+    0.36,
+    0.33
+   ],
+   "slug": "herbe",
+   "status": "valide",
+   "tags": [
+    "tuiles"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "PLA-017": {
+   "category": "plantes",
+   "defaults": {},
+   "name": "Fleur géante",
+   "params": {},
+   "ref": "part:fleur_geante",
+   "size": [
+    1.94,
+    2.6,
+    1.81
+   ],
+   "slug": "fleur-geante",
+   "status": "valide",
+   "tags": [
+    "curiosité"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs",
+    "Bois des Lanternes"
+   ],
+   "variants": []
+  },
+  "PLA-018": {
+   "category": "plantes",
+   "defaults": {},
+   "name": "Lavande géante (rareté)",
+   "params": {},
+   "ref": "ile:lavandeGeante",
+   "size": [
+    1.29,
+    1.25,
+    1.22
+   ],
+   "slug": "lavande-geante",
+   "status": "valide",
+   "tags": [
+    "rareté",
+    "10 h d'étude"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "PLA-019": {
+   "category": "plantes",
+   "defaults": {},
+   "name": "Arche de glycine (rareté)",
+   "params": {},
+   "ref": "ile:archeGlycine",
+   "size": [
+    0.71,
+    3.66,
+    2.82
+   ],
+   "slug": "arche-glycine",
+   "status": "valide",
+   "tags": [
+    "rareté",
+    "25 h d'étude"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "ROC-001": {
+   "category": "rochers",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Rocher",
+   "params": {
+    "roche": "color"
+   },
+   "ref": "kind:rocher",
+   "size": [
+    1.89,
+    1.02,
+    1.43
+   ],
+   "slug": "rocher",
+   "status": "valide",
+   "tags": [
+    "minable"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "ROC-002": {
+   "category": "rochers",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Rocher moussu",
+   "params": {
+    "roche": "color"
+   },
+   "ref": "kind:rocher_mousse",
+   "size": [
+    1.5,
+    1.17,
+    1.46
+   ],
+   "slug": "rocher-moussu",
+   "status": "valide",
+   "tags": [
+    "minable"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "ROC-003": {
+   "category": "rochers",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Cristal",
+   "params": {},
+   "ref": "kind:cristal",
+   "size": [
+    1.03,
+    1.48,
+    0.85
+   ],
+   "slug": "cristal",
+   "status": "valide",
+   "tags": [
+    "minable",
+    "lumineux"
+   ],
+   "usedIn": [
+    "Mont des Aigles"
+   ],
+   "variants": []
+  },
+  "ROC-004": {
+   "category": "rochers",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Filon de cuivre",
+   "params": {
+    "roche": "color"
+   },
+   "ref": "kind:filon_cuivre",
+   "size": [
+    1.79,
+    1.23,
+    1.56
+   ],
+   "slug": "filon-cuivre",
+   "status": "valide",
+   "tags": [
+    "minable"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "ROC-005": {
+   "category": "rochers",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Filon de fer",
+   "params": {
+    "roche": "color"
+   },
+   "ref": "kind:filon_fer",
+   "size": [
+    1.79,
+    1.23,
+    1.56
+   ],
+   "slug": "filon-fer",
+   "status": "valide",
+   "tags": [
+    "minable"
+   ],
+   "usedIn": [
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles"
+   ],
+   "variants": []
+  },
+  "ROC-006": {
+   "category": "rochers",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Obsidienne",
+   "params": {
+    "roche": "color"
+   },
+   "ref": "kind:obsidienne",
+   "size": [
+    1.2,
+    0.99,
+    0.96
+   ],
+   "slug": "obsidienne",
+   "status": "valide",
+   "tags": [
+    "minable",
+    "cratère"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "ROC-007": {
+   "category": "rochers",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Souche",
+   "params": {},
+   "ref": "kind:souche",
+   "size": [
+    0.86,
+    0.44,
+    0.88
+   ],
+   "slug": "souche",
+   "status": "valide",
+   "tags": [
+    "bois"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "ROC-008": {
+   "category": "rochers",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Bois mort",
+   "params": {},
+   "ref": "kind:bois_mort",
+   "size": [
+    1.15,
+    1.84,
+    0.37
+   ],
+   "slug": "bois-mort",
+   "status": "valide",
+   "tags": [
+    "bois"
+   ],
+   "usedIn": [
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Dunes du Mirage"
+   ],
+   "variants": []
+  },
+  "ROC-009": {
+   "category": "rochers",
+   "defaults": {},
+   "name": "Pile de bois",
+   "params": {},
+   "ref": "part:bois_pile",
+   "size": [
+    0.88,
+    0.54,
+    1.2
+   ],
+   "slug": "pile-bois",
+   "status": "valide",
+   "tags": [
+    "bois"
+   ],
+   "usedIn": [
+    "Mont des Aigles",
+    "Bois des Lanternes"
+   ],
+   "variants": []
+  },
+  "ROC-010": {
+   "category": "rochers",
+   "defaults": {},
+   "name": "Rondin",
+   "params": {},
+   "ref": "part:rondin",
+   "size": [
+    2.02,
+    0.57,
+    0.6
+   ],
+   "slug": "rondin",
+   "status": "valide",
+   "tags": [
+    "bois",
+    "assise"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Rocher Percé",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "BAT-001": {
+   "category": "batiments",
+   "defaults": {
+    "roof": "#f19b86",
+    "wall": "#fbf3e6"
+   },
+   "name": "Maison de village",
+   "params": {
+    "merchant": "bool",
+    "roof": "color",
+    "v": [
+     0,
+     2
+    ],
+    "wall": "color"
+   },
+   "ref": "part:maison",
+   "size": [
+    3.8,
+    3.82,
+    3.41
+   ],
+   "slug": "maison-village",
+   "status": "valide",
+   "tags": [
+    "village",
+    "teinté"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": [
+    {
+     "label": "Petite",
+     "params": {
+      "v": 0
+     }
+    },
+    {
+     "label": "Moyenne",
+     "params": {
+      "v": 1
+     }
+    },
+    {
+     "label": "Grande",
+     "params": {
+      "v": 2
+     }
+    },
+    {
+     "label": "Marchand",
+     "params": {
+      "merchant": true,
+      "v": 1
+     }
+    }
+   ]
+  },
+  "BAT-002": {
+   "category": "batiments",
+   "defaults": {},
+   "name": "Chaumière du joueur",
+   "params": {},
+   "ref": "ile:chaumiere",
+   "size": [
+    5.77,
+    5.22,
+    5.85
+   ],
+   "slug": "chaumiere",
+   "status": "valide",
+   "tags": [
+    "maison"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "BAT-003": {
+   "category": "batiments",
+   "defaults": {},
+   "name": "Bibliothèque-souche du hibou",
+   "params": {},
+   "ref": "ile:bibliotheque",
+   "size": [
+    8.05,
+    6.31,
+    7.91
+   ],
+   "slug": "bibliotheque-souche",
+   "status": "valide",
+   "tags": [
+    "hibou"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "BAT-004": {
+   "category": "batiments",
+   "defaults": {
+    "color": "#f19b86",
+    "wall": "#fbf3e6"
+   },
+   "name": "Moulin à vent",
+   "params": {
+    "color": "color",
+    "wall": "color"
+   },
+   "ref": "part:moulin",
+   "size": [
+    7.66,
+    10.43,
+    4.6
+   ],
+   "slug": "moulin",
+   "status": "valide",
+   "tags": [
+    "village",
+    "animé",
+    "teinté"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs"
+   ],
+   "variants": []
+  },
+  "BAT-005": {
+   "category": "batiments",
+   "defaults": {},
+   "name": "Moulin à eau",
+   "params": {},
+   "ref": "part:moulin_eau",
+   "size": [
+    4.2,
+    3.81,
+    3.2
+   ],
+   "slug": "moulin-eau",
+   "status": "valide",
+   "tags": [
+    "village",
+    "animé",
+    "rivière"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": []
+  },
+  "BAT-006": {
+   "category": "batiments",
+   "defaults": {},
+   "name": "Phare",
+   "params": {},
+   "ref": "part:phare",
+   "size": [
+    6.35,
+    10.76,
+    4.8
+   ],
+   "slug": "phare",
+   "status": "valide",
+   "tags": [
+    "falaises",
+    "lumineux"
+   ],
+   "usedIn": [
+    "Falaises de Nacre"
+   ],
+   "variants": []
+  },
+  "BAT-007": {
+   "category": "batiments",
+   "defaults": {},
+   "name": "Tour de guet",
+   "params": {
+    "stone": "bool"
+   },
+   "ref": "part:tour_guet",
+   "size": [
+    3.39,
+    10.26,
+    3.54
+   ],
+   "slug": "tour-guet",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "Mont des Aigles"
+   ],
+   "variants": [
+    {
+     "label": "Bois",
+     "params": {
+      "stone": false
+     }
+    },
+    {
+     "label": "Pierre",
+     "params": {
+      "stone": true
+     }
+    }
+   ]
+  },
+  "BAT-008": {
+   "category": "batiments",
+   "defaults": {},
+   "name": "Temple",
+   "params": {},
+   "ref": "part:temple",
+   "size": [
+    7,
+    5.5,
+    7
+   ],
+   "slug": "temple",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "Cratère de Braise",
+    "Dunes du Mirage"
+   ],
+   "variants": []
+  },
+  "BAT-009": {
+   "category": "batiments",
+   "defaults": {},
+   "name": "Cabane d'ermite",
+   "params": {},
+   "ref": "part:cabane",
+   "size": [
+    2.8,
+    3.37,
+    3.09
+   ],
+   "slug": "cabane-ermite",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "Mont des Aigles",
+    "Bois des Lanternes"
+   ],
+   "variants": []
+  },
+  "BAT-010": {
+   "category": "batiments",
+   "defaults": {},
+   "name": "Observatoire",
+   "params": {},
+   "ref": "part:observatoire",
+   "size": [
+    4.73,
+    5.46,
+    4.8
+   ],
+   "slug": "observatoire",
+   "status": "valide",
+   "tags": [
+    "montagne"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "BAT-011": {
+   "category": "batiments",
+   "defaults": {},
+   "name": "Étal du marché",
+   "params": {
+    "v": [
+     0,
+     2
+    ]
+   },
+   "ref": "part:etal",
+   "size": [
+    2,
+    2.21,
+    1.11
+   ],
+   "slug": "etal-marche",
+   "status": "valide",
+   "tags": [
+    "village"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": [
+    {
+     "label": "Corail",
+     "params": {
+      "v": 0
+     }
+    },
+    {
+     "label": "Menthe",
+     "params": {
+      "v": 1
+     }
+    },
+    {
+     "label": "Beurre",
+     "params": {
+      "v": 2
+     }
+    }
+   ]
+  },
+  "BAT-012": {
+   "category": "batiments",
+   "defaults": {},
+   "name": "Échoppe",
+   "params": {},
+   "ref": "ile:echoppe",
+   "size": [
+    1.62,
+    3.2,
+    3.43
+   ],
+   "slug": "echoppe",
+   "status": "valide",
+   "tags": [
+    "commerce"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "STR-001": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Jetée",
+   "params": {
+    "len": [
+     6,
+     20
+    ]
+   },
+   "ref": "part:jetee",
+   "size": [
+    2.35,
+    3.6,
+    12
+   ],
+   "slug": "jetee",
+   "status": "valide",
+   "tags": [
+    "village",
+    "accostage"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": []
+  },
+  "STR-002": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Ponton",
+   "params": {},
+   "ref": "ile:ponton",
+   "size": [
+    2.9,
+    3.54,
+    11.18
+   ],
+   "slug": "ponton",
+   "status": "valide",
+   "tags": [
+    "accostage"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "STR-003": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Pont",
+   "params": {
+    "len": [
+     3,
+     10
+    ]
+   },
+   "ref": "part:pont",
+   "size": [
+    5.1,
+    0.87,
+    1.82
+   ],
+   "slug": "pont",
+   "status": "valide",
+   "tags": [
+    "chemins"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "STR-004": {
+   "category": "ouvrages",
+   "defaults": {
+    "x1": 12,
+    "y": 0,
+    "y1": 0,
+    "z1": 0
+   },
+   "name": "Pont de corde",
+   "params": {
+    "x1": [
+     6,
+     20
+    ],
+    "y1": [
+     -3,
+     3
+    ]
+   },
+   "ref": "part:pont_corde",
+   "size": [
+    12.38,
+    2.04,
+    1.76
+   ],
+   "slug": "pont-corde",
+   "status": "valide",
+   "tags": [
+    "chemins"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "STR-005": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Escalier",
+   "params": {
+    "len": [
+     2,
+     6
+    ],
+    "rise": [
+     0.5,
+     3
+    ]
+   },
+   "ref": "part:escalier",
+   "size": [
+    3.08,
+    1.73,
+    1.6
+   ],
+   "slug": "escalier",
+   "status": "valide",
+   "tags": [
+    "chemins"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Cratère de Braise",
+    "Dunes du Mirage"
+   ],
+   "variants": []
+  },
+  "STR-006": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Puits",
+   "params": {},
+   "ref": "part:puits",
+   "size": [
+    1.85,
+    2.55,
+    1.9
+   ],
+   "slug": "puits",
+   "status": "valide",
+   "tags": [
+    "village"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "STR-007": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Clôture de champ",
+   "params": {
+    "d": [
+     4,
+     16
+    ],
+    "w": [
+     6,
+     24
+    ]
+   },
+   "ref": "part:cloture_champ",
+   "size": [
+    16.12,
+    0.8,
+    10.14
+   ],
+   "slug": "cloture-champ",
+   "status": "valide",
+   "tags": [
+    "champs"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": []
+  },
+  "STR-008": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Potager",
+   "params": {},
+   "ref": "part:potager",
+   "size": [
+    2.4,
+    0.46,
+    1.4
+   ],
+   "slug": "potager",
+   "status": "valide",
+   "tags": [
+    "village"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Mont des Aigles",
+    "Bois des Lanternes"
+   ],
+   "variants": []
+  },
+  "STR-009": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Épouvantail",
+   "params": {},
+   "ref": "part:epouvantail",
+   "size": [
+    1.4,
+    2.38,
+    0.84
+   ],
+   "slug": "epouvantail",
+   "status": "valide",
+   "tags": [
+    "champs"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "STR-010": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Bassin chaud",
+   "params": {
+    "size": [
+     0.6,
+     1.6
+    ]
+   },
+   "ref": "part:bassin_chaud",
+   "size": [
+    3.24,
+    1.85,
+    3.2
+   ],
+   "slug": "bassin-chaud",
+   "status": "valide",
+   "tags": [
+    "cratère"
+   ],
+   "usedIn": [
+    "Mont des Aigles",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "STR-011": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Arche",
+   "params": {
+    "size": [
+     0.8,
+     2
+    ]
+   },
+   "ref": "part:arche",
+   "size": [
+    3.92,
+    12.64,
+    11.27
+   ],
+   "slug": "arche",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "Rocher Percé",
+    "Falaises de Nacre"
+   ],
+   "variants": []
+  },
+  "STR-012": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Arche fleurie",
+   "params": {},
+   "ref": "part:arche_fleurie",
+   "size": [
+    2.52,
+    3.66,
+    0.42
+   ],
+   "slug": "arche-fleurie",
+   "status": "valide",
+   "tags": [
+    "champs"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs"
+   ],
+   "variants": []
+  },
+  "STR-013": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Panneau",
+   "params": {},
+   "ref": "part:panneau",
+   "size": [
+    1.49,
+    2,
+    0.99
+   ],
+   "slug": "panneau",
+   "status": "valide",
+   "tags": [
+    "chemins"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "STR-014": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Corde à linge",
+   "params": {
+    "len": [
+     2,
+     8
+    ]
+   },
+   "ref": "part:linge",
+   "size": [
+    4.09,
+    2,
+    0.1
+   ],
+   "slug": "corde-linge",
+   "status": "valide",
+   "tags": [
+    "village"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": []
+  },
+  "STR-015": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Lanterne",
+   "params": {},
+   "ref": "part:lanterne",
+   "size": [
+    0.62,
+    2.2,
+    0.4
+   ],
+   "slug": "lanterne",
+   "status": "valide",
+   "tags": [
+    "lumineux"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": []
+  },
+  "STR-016": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Lanterne de pierre",
+   "params": {},
+   "ref": "part:lanterne_pierre",
+   "size": [
+    0.68,
+    1.77,
+    0.68
+   ],
+   "slug": "lanterne-pierre",
+   "status": "valide",
+   "tags": [
+    "curiosité",
+    "lumineux"
+   ],
+   "usedIn": [
+    "Cratère de Braise",
+    "Dunes du Mirage"
+   ],
+   "variants": []
+  },
+  "STR-017": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Banc",
+   "params": {},
+   "ref": "part:banc",
+   "size": [
+    1.6,
+    0.93,
+    0.45
+   ],
+   "slug": "banc",
+   "status": "valide",
+   "tags": [
+    "assise"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": []
+  },
+  "STR-018": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Banc avec vue",
+   "params": {},
+   "ref": "part:banc_vue",
+   "size": [
+    1.6,
+    0.93,
+    0.45
+   ],
+   "slug": "banc-vue",
+   "status": "valide",
+   "tags": [
+    "assise",
+    "curiosité"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Falaises de Nacre",
+    "Mont des Aigles"
+   ],
+   "variants": []
+  },
+  "STR-019": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Casiers",
+   "params": {},
+   "ref": "part:casiers",
+   "size": [
+    2.28,
+    0.49,
+    0.8
+   ],
+   "slug": "casiers",
+   "status": "valide",
+   "tags": [
+    "village",
+    "pêche"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": []
+  },
+  "STR-020": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Parasol et transats",
+   "params": {},
+   "ref": "ile:parasol",
+   "size": [
+    3.02,
+    2.39,
+    2.6
+   ],
+   "slug": "parasol-transats",
+   "status": "valide",
+   "tags": [
+    "plage"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "STR-021": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Bureau d'étude",
+   "params": {},
+   "ref": "ile:bureauEtude",
+   "size": [
+    4.06,
+    1.42,
+    3.06
+   ],
+   "slug": "bureau-etude",
+   "status": "valide",
+   "tags": [
+    "étude",
+    "lumineux"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "STR-022": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Pont de la rivière",
+   "params": {},
+   "ref": "ile:pontRiviere",
+   "size": [
+    5.1,
+    1,
+    1.54
+   ],
+   "slug": "pont-riviere",
+   "status": "valide",
+   "tags": [
+    "chemins"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "STR-023": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Pupitre et perchoir du hibou",
+   "params": {},
+   "ref": "ile:pupitreHibou",
+   "size": [
+    3.65,
+    1.35,
+    1.22
+   ],
+   "slug": "pupitre-hibou",
+   "status": "valide",
+   "tags": [
+    "hibou"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "STR-024": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Panneau de la place",
+   "params": {},
+   "ref": "ile:panneauPlace",
+   "size": [
+    1.53,
+    1.7,
+    0.83
+   ],
+   "slug": "panneau-place",
+   "status": "valide",
+   "tags": [
+    "chemins"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "STR-025": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Banc de bois",
+   "params": {},
+   "ref": "ile:bancBois",
+   "size": [
+    1.43,
+    0.88,
+    1.07
+   ],
+   "slug": "banc-bois",
+   "status": "valide",
+   "tags": [
+    "assise"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "STR-026": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Lanterne de jardin",
+   "params": {},
+   "ref": "ile:lanterneJardin",
+   "size": [
+    0.53,
+    2.14,
+    0.56
+   ],
+   "slug": "lanterne-jardin",
+   "status": "valide",
+   "tags": [
+    "lumineux"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "STR-027": {
+   "category": "ouvrages",
+   "defaults": {},
+   "name": "Cascade",
+   "params": {
+    "w": [
+     1,
+     6
+    ]
+   },
+   "ref": "part:cascade",
+   "size": [
+    7.89,
+    1.33,
+    8.12
+   ],
+   "slug": "cascade",
+   "status": "valide",
+   "tags": [
+    "rivière",
+    "animé"
+   ],
+   "usedIn": [
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "MON-001": {
+   "category": "monuments",
+   "defaults": {},
+   "name": "Ruines",
+   "params": {},
+   "ref": "part:ruines",
+   "size": [
+    7,
+    3.33,
+    5.5
+   ],
+   "slug": "ruines",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "Falaises de Nacre",
+    "Bois des Lanternes",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "MON-002": {
+   "category": "monuments",
+   "defaults": {
+    "sand": true
+   },
+   "name": "Ruines ensablées",
+   "params": {},
+   "ref": "part:ruines",
+   "size": [
+    9.6,
+    6.83,
+    7.8
+   ],
+   "slug": "ruines-ensablees",
+   "status": "valide",
+   "tags": [
+    "dunes"
+   ],
+   "usedIn": [
+    "Falaises de Nacre",
+    "Bois des Lanternes",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "MON-003": {
+   "category": "monuments",
+   "defaults": {},
+   "name": "Grotte",
+   "params": {},
+   "ref": "part:grotte",
+   "size": [
+    7.77,
+    5.48,
+    4.82
+   ],
+   "slug": "grotte",
+   "status": "valide",
+   "tags": [
+    "falaises"
+   ],
+   "usedIn": [
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "MON-004": {
+   "category": "monuments",
+   "defaults": {},
+   "name": "Cercle de pierres",
+   "params": {
+    "count": [
+     5,
+     12
+    ]
+   },
+   "ref": "part:cercle_pierres",
+   "size": [
+    8.73,
+    2.73,
+    8.8
+   ],
+   "slug": "cercle-pierres",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "Île aux Mille Fleurs",
+    "Mont des Aigles",
+    "Bois des Lanternes"
+   ],
+   "variants": []
+  },
+  "MON-005": {
+   "category": "monuments",
+   "defaults": {},
+   "name": "Statue géante",
+   "params": {},
+   "ref": "part:statue",
+   "size": [
+    3.2,
+    5.1,
+    3.2
+   ],
+   "slug": "statue-geante",
+   "status": "valide",
+   "tags": [
+    "repère"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "MON-006": {
+   "category": "monuments",
+   "defaults": {},
+   "name": "Totem",
+   "params": {},
+   "ref": "part:totem",
+   "size": [
+    1.68,
+    2.15,
+    0.71
+   ],
+   "slug": "totem",
+   "status": "valide",
+   "tags": [
+    "curiosité"
+   ],
+   "usedIn": [
+    "Cratère de Braise",
+    "Dunes du Mirage"
+   ],
+   "variants": []
+  },
+  "MON-007": {
+   "category": "monuments",
+   "defaults": {},
+   "name": "Autel",
+   "params": {},
+   "ref": "part:autel",
+   "size": [
+    1.2,
+    1.06,
+    0.7
+   ],
+   "slug": "autel",
+   "status": "valide",
+   "tags": [
+    "curiosité"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "MON-008": {
+   "category": "monuments",
+   "defaults": {},
+   "name": "Cairn",
+   "params": {},
+   "ref": "part:cairn",
+   "size": [
+    0.63,
+    1.52,
+    0.62
+   ],
+   "slug": "cairn",
+   "status": "valide",
+   "tags": [
+    "curiosité"
+   ],
+   "usedIn": [
+    "Falaises de Nacre",
+    "Cratère de Braise",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "NAV-001": {
+   "category": "bateaux",
+   "defaults": {},
+   "name": "Radeau",
+   "params": {},
+   "ref": "boat:radeau",
+   "size": [
+    2.14,
+    2.39,
+    4.1
+   ],
+   "slug": "radeau",
+   "status": "valide",
+   "tags": [
+    "monture",
+    "animé"
+   ],
+   "usedIn": [
+    "chantier naval",
+    "mer"
+   ],
+   "variants": []
+  },
+  "NAV-002": {
+   "category": "bateaux",
+   "defaults": {},
+   "name": "Barque",
+   "params": {},
+   "ref": "boat:barque",
+   "size": [
+    4.8,
+    1.1,
+    4.45
+   ],
+   "slug": "barque",
+   "status": "valide",
+   "tags": [
+    "monture",
+    "animé"
+   ],
+   "usedIn": [
+    "chantier naval",
+    "mer"
+   ],
+   "variants": []
+  },
+  "NAV-003": {
+   "category": "bateaux",
+   "defaults": {},
+   "name": "Voilier",
+   "params": {},
+   "ref": "boat:voilier",
+   "size": [
+    2.01,
+    6.35,
+    5.72
+   ],
+   "slug": "voilier",
+   "status": "valide",
+   "tags": [
+    "monture",
+    "animé"
+   ],
+   "usedIn": [
+    "chantier naval",
+    "mer"
+   ],
+   "variants": []
+  },
+  "NAV-004": {
+   "category": "bateaux",
+   "defaults": {},
+   "name": "Goélette",
+   "params": {},
+   "ref": "boat:goelette",
+   "size": [
+    2.76,
+    7.95,
+    8.72
+   ],
+   "slug": "goelette",
+   "status": "valide",
+   "tags": [
+    "monture",
+    "animé"
+   ],
+   "usedIn": [
+    "chantier naval",
+    "mer"
+   ],
+   "variants": []
+  },
+  "NAV-005": {
+   "category": "bateaux",
+   "defaults": {},
+   "name": "Barque amarrée",
+   "params": {
+    "v": [
+     0,
+     3
+    ]
+   },
+   "ref": "part:barque_amarree",
+   "size": [
+    1.5,
+    0.84,
+    3.8
+   ],
+   "slug": "barque-amarree",
+   "status": "valide",
+   "tags": [
+    "village"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": [
+    {
+     "label": "Corail",
+     "params": {
+      "v": 0
+     }
+    },
+    {
+     "label": "Menthe",
+     "params": {
+      "v": 1
+     }
+    },
+    {
+     "label": "Ciel",
+     "params": {
+      "v": 2
+     }
+    }
+   ]
+  },
+  "NAV-006": {
+   "category": "bateaux",
+   "defaults": {},
+   "name": "Barque échouée",
+   "params": {
+    "v": [
+     0,
+     2
+    ]
+   },
+   "ref": "part:barque_echouee",
+   "size": [
+    1.71,
+    0.95,
+    3.8
+   ],
+   "slug": "barque-echouee",
+   "status": "valide",
+   "tags": [
+    "épave"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Dunes du Mirage"
+   ],
+   "variants": []
+  },
+  "NAV-007": {
+   "category": "bateaux",
+   "defaults": {},
+   "name": "Épave",
+   "params": {
+    "len": [
+     8,
+     20
+    ],
+    "sunk": "bool"
+   },
+   "ref": "part:epave",
+   "size": [
+    6.56,
+    5.84,
+    14
+   ],
+   "slug": "epave",
+   "status": "valide",
+   "tags": [
+    "épave"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Rocher Percé",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "NAV-008": {
+   "category": "bateaux",
+   "defaults": {},
+   "name": "Grande épave",
+   "params": {},
+   "ref": "part:epave_geante",
+   "size": [
+    6.56,
+    5.84,
+    15
+   ],
+   "slug": "grande-epave",
+   "status": "valide",
+   "tags": [
+    "épave",
+    "repère"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "NAV-009": {
+   "category": "bateaux",
+   "defaults": {},
+   "name": "Ancre",
+   "params": {},
+   "ref": "part:ancre",
+   "size": [
+    1.36,
+    0.14,
+    1.88
+   ],
+   "slug": "ancre",
+   "status": "valide",
+   "tags": [
+    "curiosité"
+   ],
+   "usedIn": [
+    "Bois des Lanternes",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "NAV-010": {
+   "category": "bateaux",
+   "defaults": {},
+   "name": "Bouée",
+   "params": {
+    "v": [
+     0,
+     5
+    ]
+   },
+   "ref": "marine:bouee",
+   "size": [
+    0.4,
+    0.59,
+    0.4
+   ],
+   "slug": "bouee",
+   "status": "valide",
+   "tags": [
+    "flotte"
+   ],
+   "usedIn": [
+    "mer"
+   ],
+   "variants": []
+  },
+  "NAV-011": {
+   "category": "bateaux",
+   "defaults": {},
+   "name": "Bouée échouée",
+   "params": {},
+   "ref": "part:bouee_echouee",
+   "size": [
+    0.94,
+    0.37,
+    0.92
+   ],
+   "slug": "bouee-echouee",
+   "status": "valide",
+   "tags": [
+    "curiosité"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "DEC-001": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Pierres de chemin",
+   "params": {},
+   "ref": "decor:pierre",
+   "size": [
+    1.52,
+    0.14,
+    0.9
+   ],
+   "slug": "decor-pierre",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "4 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-002": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Pot de fleurs",
+   "params": {},
+   "ref": "decor:pot",
+   "size": [
+    0.58,
+    0.62,
+    0.58
+   ],
+   "slug": "decor-pot",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "6 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-003": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Bout de clôture",
+   "params": {},
+   "ref": "decor:cloture",
+   "size": [
+    1.56,
+    0.88,
+    0.16
+   ],
+   "slug": "decor-cloture",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "5 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-004": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Lanterne en papier",
+   "params": {},
+   "ref": "decor:lanterne",
+   "size": [
+    1,
+    1.62,
+    0.39
+   ],
+   "slug": "decor-lanterne",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "12 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-005": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Lampe champignon",
+   "params": {},
+   "ref": "decor:champi",
+   "size": [
+    1,
+    1,
+    0.68
+   ],
+   "slug": "decor-champi",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "14 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-006": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Nichoir",
+   "params": {},
+   "ref": "decor:nichoir",
+   "size": [
+    0.42,
+    1.99,
+    0.47
+   ],
+   "slug": "decor-nichoir",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "16 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-007": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Banc rond",
+   "params": {},
+   "ref": "decor:banc",
+   "size": [
+    1.4,
+    0.89,
+    0.48
+   ],
+   "slug": "decor-banc",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "18 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-008": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Guirlande de fanions",
+   "params": {},
+   "ref": "decor:fanions",
+   "size": [
+    2.32,
+    1.7,
+    0.12
+   ],
+   "slug": "decor-fanions",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "20 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-009": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Hamac",
+   "params": {},
+   "ref": "decor:hamac",
+   "size": [
+    2.58,
+    1.5,
+    0.7
+   ],
+   "slug": "decor-hamac",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "35 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-010": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Télescope",
+   "params": {},
+   "ref": "decor:telescope",
+   "size": [
+    0.54,
+    1.39,
+    0.81
+   ],
+   "slug": "decor-telescope",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "45 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-011": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Moulin à vent",
+   "params": {},
+   "ref": "decor:moulin",
+   "size": [
+    1.59,
+    2.3,
+    1
+   ],
+   "slug": "decor-moulin",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "50 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-012": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Arche fleurie",
+   "params": {},
+   "ref": "decor:arche",
+   "size": [
+    1.74,
+    2.68,
+    0.35
+   ],
+   "slug": "decor-arche",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "55 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-013": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Statue du hibou",
+   "params": {},
+   "ref": "decor:statue",
+   "size": [
+    0.7,
+    1.49,
+    0.7
+   ],
+   "slug": "decor-statue",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "70 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-014": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Établi",
+   "params": {},
+   "ref": "decor:etabli",
+   "size": [
+    1.35,
+    1.15,
+    0.72
+   ],
+   "slug": "decor-etabli",
+   "status": "valide",
+   "tags": [
+    "atelier",
+    "undefined coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-015": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Four",
+   "params": {},
+   "ref": "decor:four",
+   "size": [
+    1.26,
+    1.1,
+    1.37
+   ],
+   "slug": "decor-four",
+   "status": "valide",
+   "tags": [
+    "atelier",
+    "undefined coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-016": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Table de couture",
+   "params": {},
+   "ref": "decor:couture",
+   "size": [
+    1.2,
+    1.17,
+    0.68
+   ],
+   "slug": "decor-couture",
+   "status": "valide",
+   "tags": [
+    "atelier",
+    "undefined coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-017": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Chantier naval",
+   "params": {},
+   "ref": "decor:chantier",
+   "size": [
+    1.8,
+    1.37,
+    0.82
+   ],
+   "slug": "decor-chantier",
+   "status": "valide",
+   "tags": [
+    "atelier",
+    "undefined coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "DEC-018": {
+   "category": "decor",
+   "defaults": {},
+   "name": "Fontaine",
+   "params": {},
+   "ref": "decor:fontaine",
+   "size": [
+    2,
+    1.37,
+    2
+   ],
+   "slug": "decor-fontaine",
+   "status": "valide",
+   "tags": [
+    "décor",
+    "90 coquillages"
+   ],
+   "usedIn": [
+    "échoppe de l'île de départ"
+   ],
+   "variants": []
+  },
+  "OBJ-001": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Coffre",
+   "params": {},
+   "ref": "part:coffre",
+   "size": [
+    0.84,
+    0.73,
+    0.59
+   ],
+   "slug": "coffre",
+   "status": "valide",
+   "tags": [
+    "trésor"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Rocher Percé",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "OBJ-002": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Coffre caché",
+   "params": {},
+   "ref": "part:coffre_cache",
+   "size": [
+    0.84,
+    0.73,
+    0.59
+   ],
+   "slug": "coffre-cache",
+   "status": "valide",
+   "tags": [
+    "trésor",
+    "curiosité"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Dunes du Mirage"
+   ],
+   "variants": []
+  },
+  "OBJ-003": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Tonneaux",
+   "params": {},
+   "ref": "part:tonneaux",
+   "size": [
+    2.11,
+    0.8,
+    0.99
+   ],
+   "slug": "tonneaux",
+   "status": "valide",
+   "tags": [
+    "curiosité"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs",
+    "Cratère de Braise",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "OBJ-004": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Charrette",
+   "params": {},
+   "ref": "part:charrette",
+   "size": [
+    2.81,
+    1.29,
+    1.34
+   ],
+   "slug": "charrette",
+   "status": "valide",
+   "tags": [
+    "curiosité"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Mont des Aigles"
+   ],
+   "variants": []
+  },
+  "OBJ-005": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Feu de camp",
+   "params": {},
+   "ref": "part:feu_camp",
+   "size": [
+    1.8,
+    0.96,
+    1.87
+   ],
+   "slug": "feu-camp",
+   "status": "valide",
+   "tags": [
+    "lumineux"
+   ],
+   "usedIn": [
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "OBJ-006": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Tente",
+   "params": {
+    "v": [
+     0,
+     1
+    ]
+   },
+   "ref": "part:tente",
+   "size": [
+    2.76,
+    2.4,
+    2.76
+   ],
+   "slug": "tente",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Dunes du Mirage",
+    "Lagon Turquoise"
+   ],
+   "variants": [
+    {
+     "label": "Corail",
+     "params": {
+      "v": 0
+     }
+    },
+    {
+     "label": "Menthe",
+     "params": {
+      "v": 1
+     }
+    }
+   ]
+  },
+  "OBJ-007": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Ruche",
+   "params": {},
+   "ref": "part:ruche",
+   "size": [
+    0.68,
+    1.61,
+    0.68
+   ],
+   "slug": "ruche",
+   "status": "valide",
+   "tags": [
+    "champs"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs"
+   ],
+   "variants": []
+  },
+  "OBJ-008": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Nid",
+   "params": {},
+   "ref": "part:nid",
+   "size": [
+    0.94,
+    0.25,
+    0.92
+   ],
+   "slug": "nid",
+   "status": "valide",
+   "tags": [
+    "curiosité"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Bois des Lanternes"
+   ],
+   "variants": []
+  },
+  "OBJ-009": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Cercle de champignons",
+   "params": {},
+   "ref": "part:cercle_champi",
+   "size": [
+    2.44,
+    0.35,
+    2.47
+   ],
+   "slug": "cercle-champignons",
+   "status": "valide",
+   "tags": [
+    "curiosité"
+   ],
+   "usedIn": [
+    "Bois des Lanternes"
+   ],
+   "variants": []
+  },
+  "OBJ-010": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Récif",
+   "params": {
+    "size": [
+     0.6,
+     2
+    ]
+   },
+   "ref": "part:recif",
+   "size": [
+    2.59,
+    1.2,
+    2.53
+   ],
+   "slug": "recif",
+   "status": "valide",
+   "tags": [
+    "lagon"
+   ],
+   "usedIn": [
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "OBJ-011": {
+   "category": "objets",
+   "defaults": {
+    "fleur": "#f7b6c8",
+    "roche": "#d6cbbd",
+    "v": 0
+   },
+   "name": "Corail",
+   "params": {},
+   "ref": "kind:corail",
+   "size": [
+    0.48,
+    0.59,
+    0.47
+   ],
+   "slug": "corail",
+   "status": "valide",
+   "tags": [
+    "lagon"
+   ],
+   "usedIn": [
+    "Falaises de Nacre",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "OBJ-012": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Coquillage",
+   "params": {
+    "v": [
+     0,
+     5
+    ]
+   },
+   "ref": "collect:coquillage",
+   "size": [
+    0.25,
+    0.07,
+    0.25
+   ],
+   "slug": "coquillage",
+   "status": "valide",
+   "tags": [
+    "trésor du jour"
+   ],
+   "usedIn": [
+    "plages de l'île de départ"
+   ],
+   "variants": []
+  },
+  "OBJ-013": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Étoile de mer",
+   "params": {
+    "v": [
+     0,
+     5
+    ]
+   },
+   "ref": "collect:etoile",
+   "size": [
+    0.39,
+    0.07,
+    0.37
+   ],
+   "slug": "etoile-mer",
+   "status": "valide",
+   "tags": [
+    "trésor du jour"
+   ],
+   "usedIn": [
+    "plages de l'île de départ"
+   ],
+   "variants": []
+  },
+  "OBJ-014": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Pêche",
+   "params": {
+    "v": [
+     0,
+     5
+    ]
+   },
+   "ref": "collect:peche",
+   "size": [
+    0.24,
+    0.25,
+    0.24
+   ],
+   "slug": "peche",
+   "status": "valide",
+   "tags": [
+    "trésor du jour"
+   ],
+   "usedIn": [
+    "plages de l'île de départ"
+   ],
+   "variants": []
+  },
+  "OBJ-015": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Perle",
+   "params": {
+    "v": [
+     0,
+     5
+    ]
+   },
+   "ref": "collect:perle",
+   "size": [
+    0.24,
+    0.15,
+    0.24
+   ],
+   "slug": "perle",
+   "status": "valide",
+   "tags": [
+    "trésor du jour"
+   ],
+   "usedIn": [
+    "plages de l'île de départ"
+   ],
+   "variants": []
+  },
+  "OBJ-016": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Verre poli",
+   "params": {
+    "v": [
+     0,
+     5
+    ]
+   },
+   "ref": "collect:verre",
+   "size": [
+    0.17,
+    0.06,
+    0.14
+   ],
+   "slug": "verre-poli",
+   "status": "valide",
+   "tags": [
+    "trésor du jour"
+   ],
+   "usedIn": [
+    "plages de l'île de départ"
+   ],
+   "variants": []
+  },
+  "OBJ-017": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Bouteille à la mer",
+   "params": {
+    "v": [
+     0,
+     5
+    ]
+   },
+   "ref": "marine:bouteille",
+   "size": [
+    0.26,
+    0.42,
+    0.16
+   ],
+   "slug": "bouteille-mer",
+   "status": "valide",
+   "tags": [
+    "flotte"
+   ],
+   "usedIn": [
+    "mer"
+   ],
+   "variants": []
+  },
+  "OBJ-018": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Caisse flottante",
+   "params": {
+    "v": [
+     0,
+     5
+    ]
+   },
+   "ref": "marine:caisse",
+   "size": [
+    0.38,
+    0.26,
+    0.33
+   ],
+   "slug": "caisse-flottante",
+   "status": "valide",
+   "tags": [
+    "flotte"
+   ],
+   "usedIn": [
+    "mer"
+   ],
+   "variants": []
+  },
+  "OBJ-019": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Algue",
+   "params": {
+    "v": [
+     0,
+     5
+    ]
+   },
+   "ref": "marine:algue",
+   "size": [
+    0.3,
+    1,
+    0.31
+   ],
+   "slug": "algue",
+   "status": "valide",
+   "tags": [
+    "sous l'eau"
+   ],
+   "usedIn": [
+    "mer"
+   ],
+   "variants": []
+  },
+  "OBJ-020": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Flotteur de pêche",
+   "params": {},
+   "ref": "flotteur",
+   "size": [
+    0.18,
+    0.27,
+    0.17
+   ],
+   "slug": "flotteur-peche",
+   "status": "valide",
+   "tags": [],
+   "usedIn": [
+    "main du personnage",
+    "pêche"
+   ],
+   "variants": []
+  },
+  "OBJ-021": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Récif marin",
+   "params": {
+    "v": [
+     0,
+     5
+    ]
+   },
+   "ref": "marine:recif",
+   "size": [
+    1.11,
+    0.56,
+    0.96
+   ],
+   "slug": "recif-marin",
+   "status": "valide",
+   "tags": [
+    "sous l'eau"
+   ],
+   "usedIn": [
+    "mer"
+   ],
+   "variants": []
+  },
+  "OBJ-022": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Banc de poissons",
+   "params": {
+    "v": [
+     0,
+     5
+    ]
+   },
+   "ref": "marine:poissons",
+   "size": [
+    0.76,
+    0.07,
+    0.24
+   ],
+   "slug": "banc-poissons",
+   "status": "valide",
+   "tags": [
+    "pêche"
+   ],
+   "usedIn": [
+    "mer"
+   ],
+   "variants": []
+  },
+  "OBJ-023": {
+   "category": "objets",
+   "defaults": {},
+   "name": "Nichoir (lieu)",
+   "params": {},
+   "ref": "part:nichoir",
+   "size": [
+    0.51,
+    2.4,
+    0.51
+   ],
+   "slug": "nichoir-lieu",
+   "status": "valide",
+   "tags": [
+    "curiosité"
+   ],
+   "usedIn": [
+    "Rocher Percé",
+    "Bois des Lanternes",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "ANI-001": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Mouton",
+   "params": {},
+   "ref": "species:mouton",
+   "size": [
+    0.52,
+    0.89,
+    1.11
+   ],
+   "slug": "mouton",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Village de Pommeraie"
+   ],
+   "variants": [
+    {
+     "label": "Crème",
+     "params": {
+      "coat": 0
+     }
+    },
+    {
+     "label": "Blanc",
+     "params": {
+      "coat": 1
+     }
+    },
+    {
+     "label": "Noir",
+     "params": {
+      "coat": 2
+     }
+    }
+   ]
+  },
+  "ANI-002": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Chèvre",
+   "params": {},
+   "ref": "species:chevre",
+   "size": [
+    0.57,
+    0.96,
+    1.18
+   ],
+   "slug": "chevre",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs",
+    "Falaises de Nacre",
+    "Mont des Aigles",
+    "Cratère de Braise"
+   ],
+   "variants": [
+    {
+     "label": "Crème",
+     "params": {
+      "coat": 0
+     }
+    },
+    {
+     "label": "Alpine brune",
+     "params": {
+      "coat": 1
+     }
+    },
+    {
+     "label": "Noire",
+     "params": {
+      "coat": 2
+     }
+    }
+   ]
+  },
+  "ANI-003": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Vache",
+   "params": {},
+   "ref": "species:vache",
+   "size": [
+    0.87,
+    1.6,
+    1.86
+   ],
+   "slug": "vache",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [],
+   "variants": [
+    {
+     "label": "Pie brune",
+     "params": {
+      "coat": 0
+     }
+    },
+    {
+     "label": "Pie noire",
+     "params": {
+      "coat": 1
+     }
+    },
+    {
+     "label": "Pie rouge",
+     "params": {
+      "coat": 2
+     }
+    }
+   ]
+  },
+  "ANI-004": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Cerf",
+   "params": {},
+   "ref": "species:cerf",
+   "size": [
+    0.73,
+    2.15,
+    1.92
+   ],
+   "slug": "cerf",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs"
+   ],
+   "variants": [
+    {
+     "label": "Fauve d'été",
+     "params": {
+      "coat": 0
+     }
+    },
+    {
+     "label": "Brun d'hiver",
+     "params": {
+      "coat": 1
+     }
+    }
+   ]
+  },
+  "ANI-005": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Renard",
+   "params": {},
+   "ref": "species:renard",
+   "size": [
+    0.34,
+    0.63,
+    1.36
+   ],
+   "slug": "renard",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "ANI-006": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Lapin",
+   "params": {},
+   "ref": "species:lapin",
+   "size": [
+    0.25,
+    0.45,
+    0.49
+   ],
+   "slug": "lapin",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "ANI-007": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Hérisson",
+   "params": {},
+   "ref": "species:herisson",
+   "size": [
+    0.31,
+    0.27,
+    0.5
+   ],
+   "slug": "herisson",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "ANI-008": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Écureuil",
+   "params": {},
+   "ref": "species:ecureuil",
+   "size": [
+    0.17,
+    0.42,
+    0.35
+   ],
+   "slug": "ecureuil",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Mont des Aigles"
+   ],
+   "variants": []
+  },
+  "ANI-009": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Tortue",
+   "params": {},
+   "ref": "species:tortue",
+   "size": [
+    0.63,
+    0.34,
+    0.88
+   ],
+   "slug": "tortue",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "ANI-010": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Crabe",
+   "params": {},
+   "ref": "species:crabe",
+   "size": [
+    0.46,
+    0.2,
+    0.25
+   ],
+   "slug": "crabe",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Village de Pommeraie",
+    "Dunes du Mirage"
+   ],
+   "variants": []
+  },
+  "ANI-011": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Mouette",
+   "params": {},
+   "ref": "species:mouette",
+   "size": [
+    1.87,
+    0.37,
+    0.92
+   ],
+   "slug": "mouette",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "ANI-012": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Perroquet",
+   "params": {},
+   "ref": "species:perroquet",
+   "size": [
+    1.46,
+    0.29,
+    0.72
+   ],
+   "slug": "perroquet",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Falaises de Nacre"
+   ],
+   "variants": []
+  },
+  "ANI-013": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Flamant rose",
+   "params": {},
+   "ref": "species:flamant",
+   "size": [
+    0.49,
+    2.08,
+    0.94
+   ],
+   "slug": "flamant",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "ANI-014": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Canard",
+   "params": {},
+   "ref": "species:canard",
+   "size": [
+    0.29,
+    0.35,
+    0.5
+   ],
+   "slug": "canard",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "ANI-015": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Grenouille",
+   "params": {},
+   "ref": "species:grenouille",
+   "size": [
+    0.24,
+    0.17,
+    0.22
+   ],
+   "slug": "grenouille",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "ANI-016": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Poisson",
+   "params": {},
+   "ref": "species:poisson",
+   "size": [
+    0.18,
+    0.24,
+    0.5
+   ],
+   "slug": "poisson",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Falaises de Nacre",
+    "Bois des Lanternes",
+    "Cratère de Braise",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "ANI-017": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Papillon",
+   "params": {},
+   "ref": "species:papillon",
+   "size": [
+    0.33,
+    0.03,
+    0.17
+   ],
+   "slug": "papillon",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs",
+    "Rocher Percé",
+    "Bois des Lanternes",
+    "Lagon Turquoise"
+   ],
+   "variants": []
+  },
+  "ANI-018": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Abeille",
+   "params": {},
+   "ref": "species:abeille",
+   "size": [
+    0.17,
+    0.11,
+    0.11
+   ],
+   "slug": "abeille",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Île aux Mille Fleurs"
+   ],
+   "variants": []
+  },
+  "ANI-019": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Luciole",
+   "params": {},
+   "ref": "species:luciole",
+   "size": [
+    0.3,
+    0.3,
+    0
+   ],
+   "slug": "luciole",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Mont des Aigles",
+    "Bois des Lanternes",
+    "Cratère de Braise"
+   ],
+   "variants": []
+  },
+  "ANI-020": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Phoque",
+   "params": {},
+   "ref": "species:phoque",
+   "size": [
+    0.72,
+    0.74,
+    1.88
+   ],
+   "slug": "phoque",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "ANI-021": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Pingouin",
+   "params": {},
+   "ref": "species:pingouin",
+   "size": [
+    0.41,
+    0.83,
+    0.39
+   ],
+   "slug": "pingouin",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "ANI-022": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Lézard",
+   "params": {},
+   "ref": "species:lezard",
+   "size": [
+    0.25,
+    0.1,
+    0.74
+   ],
+   "slug": "lezard",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "Falaises de Nacre",
+    "Dunes du Mirage"
+   ],
+   "variants": []
+  },
+  "ANI-023": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Escargot géant",
+   "params": {},
+   "ref": "species:escargot",
+   "size": [
+    0.32,
+    0.61,
+    0.83
+   ],
+   "slug": "escargot",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [],
+   "variants": []
+  },
+  "ANI-024": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Mouette (île de départ)",
+   "params": {},
+   "ref": "faune:mouette",
+   "size": [
+    2.28,
+    0.41,
+    1.05
+   ],
+   "slug": "mouette-depart",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "ANI-025": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Crabe (île de départ)",
+   "params": {},
+   "ref": "faune:crabe",
+   "size": [
+    0.66,
+    0.3,
+    0.4
+   ],
+   "slug": "crabe-depart",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "ANI-026": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Papillon (île de départ)",
+   "params": {},
+   "ref": "faune:papillon",
+   "size": [
+    0.46,
+    0.04,
+    0.28
+   ],
+   "slug": "papillon-depart",
+   "status": "valide",
+   "tags": [
+    "animé"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "ANI-027": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Hibou cartographe",
+   "params": {},
+   "ref": "hibou",
+   "size": [
+    0.72,
+    0.93,
+    0.59
+   ],
+   "slug": "hibou",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "personnage"
+   ],
+   "usedIn": [
+    "île de départ"
+   ],
+   "variants": []
+  },
+  "ANI-028": {
+   "category": "animaux",
+   "defaults": {},
+   "name": "Grand albatros (monture)",
+   "params": {},
+   "ref": "albatros",
+   "size": [
+    7.5,
+    1.48,
+    4.38
+   ],
+   "slug": "albatros",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "monture"
+   ],
+   "usedIn": [
+    "vol"
+   ],
+   "variants": []
+  },
+  "PER-001": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Corps et visage",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "avatar",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "corps-visage",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "atlas d'expressions"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": [
+    {
+     "label": "Yeux ovales",
+     "params": {
+      "eyes": "ovale"
+     }
+    },
+    {
+     "label": "Yeux ronds",
+     "params": {
+      "eyes": "rond"
+     }
+    },
+    {
+     "label": "Yeux en amande",
+     "params": {
+      "eyes": "amande"
+     }
+    }
+   ]
+  },
+  "PER-002": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Coupe : Bol court",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "hair:bol",
+   "size": [
+    0.71,
+    1.54,
+    0.69
+   ],
+   "slug": "coupe-bol",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "coupe"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-003": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Coupe : Carré frangé",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "hair:carre",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "coupe-carre",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "coupe"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-004": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Coupe : Queue haute",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "hair:queue",
+   "size": [
+    0.65,
+    1.46,
+    0.75
+   ],
+   "slug": "coupe-queue",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "coupe"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-005": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Coupe : Deux macarons",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "hair:macarons",
+   "size": [
+    0.72,
+    1.5,
+    0.69
+   ],
+   "slug": "coupe-macarons",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "coupe"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-006": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Coupe : Boucles",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "hair:boucles",
+   "size": [
+    0.91,
+    1.52,
+    0.88
+   ],
+   "slug": "coupe-boucles",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "coupe"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-007": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Coupe : Longs lisses",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "hair:longs",
+   "size": [
+    0.74,
+    1.48,
+    0.69
+   ],
+   "slug": "coupe-longs",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "coupe"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-008": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "T-shirt",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:tshirt",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "tenue-tshirt",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "top"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-009": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Pull rayé",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:pull",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "tenue-pull",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "top"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-010": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Gilet",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:gilet",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "tenue-gilet",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "top"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-011": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Robe trapèze",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:robe",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "tenue-robe",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "top"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-012": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Short",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:short",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "tenue-short",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "bottom"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-013": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Jupe",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:jupe",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "tenue-jupe",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "bottom"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-014": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Pantalon roulé",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:pantalon",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "tenue-pantalon",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "bottom"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-015": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Salopette",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:salopette",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "tenue-salopette",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "bottom"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-016": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Baskets rondes",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:baskets",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "tenue-baskets",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "shoes"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-017": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Bottes de pluie",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:bottes",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "tenue-bottes",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "shoes"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-018": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Sandales",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:sandales",
+   "size": [
+    0.67,
+    1.49,
+    0.69
+   ],
+   "slug": "tenue-sandales",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "shoes"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-019": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Écharpe menthe",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:echarpe",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "tenue-echarpe",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "tenue",
+    "accessory"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-020": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Bob",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:bob",
+   "size": [
+    0.79,
+    1.51,
+    0.77
+   ],
+   "slug": "accessoire-bob",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "accessoire"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-021": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Barrette",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:barrette",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "accessoire-barrette",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "accessoire"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-022": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Lunettes rondes",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:lunettes",
+   "size": [
+    0.67,
+    1.48,
+    0.72
+   ],
+   "slug": "accessoire-lunettes",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "accessoire"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-023": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Petit sac à dos",
+   "params": {
+    "hairColor": [
+     0,
+     7
+    ],
+    "skin": [
+     0,
+     5
+    ]
+   },
+   "ref": "piece:sac",
+   "size": [
+    0.67,
+    1.48,
+    0.69
+   ],
+   "slug": "accessoire-sac",
+   "status": "valide",
+   "tags": [
+    "animé",
+    "accessoire"
+   ],
+   "usedIn": [
+    "personnage joueur"
+   ],
+   "variants": []
+  },
+  "PER-024": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Crayon d'étude",
+   "params": {},
+   "ref": "crayon",
+   "size": [
+    0.02,
+    0.16,
+    0.02
+   ],
+   "slug": "crayon",
+   "status": "valide",
+   "tags": [
+    "objet tenu"
+   ],
+   "usedIn": [
+    "main du personnage"
+   ],
+   "variants": []
+  },
+  "PER-025": {
+   "category": "personnage",
+   "defaults": {},
+   "name": "Outils",
+   "params": {
+    "outil": [
+     "hache",
+     "pioche",
+     "pelle",
+     "canne",
+     "filet"
+    ],
+    "tete": "color"
+   },
+   "ref": "outils",
+   "size": [
+    0.03,
+    0.53,
+    0.16
+   ],
+   "slug": "outils",
+   "status": "valide",
+   "tags": [
+    "objet tenu"
+   ],
+   "usedIn": [
+    "main du personnage"
+   ],
+   "variants": [
+    {
+     "label": "Hache",
+     "params": {
+      "outil": "hache"
+     }
+    },
+    {
+     "label": "Pioche",
+     "params": {
+      "outil": "pioche"
+     }
+    },
+    {
+     "label": "Pelle",
+     "params": {
+      "outil": "pelle"
+     }
+    },
+    {
+     "label": "Canne",
+     "params": {
+      "outil": "canne"
+     }
+    },
+    {
+     "label": "Filet",
+     "params": {
+      "outil": "filet"
+     }
+    }
+   ]
+  }
+ },
  "modeles": {
   "ARB-001": [
    {

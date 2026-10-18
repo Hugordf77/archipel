@@ -128,10 +128,13 @@ export async function calculer({ seul = null } = {}) {
   const { KIND_RADIUS } = await charge('src/world/islands/gen/kinds.js');
   const modeles = {};
   const physique = {};
+  const fiches = {};
   try {
     for (const m of R.MODELS) {
       if (seul && m.id !== seul) continue;
       const runs = [R.defaultParams(m), ...m.variants.map((v) => v.params)];
+      // fiche du registre : identité, usage, réglages (statuts et notes vivent dans catalogue/notes.json)
+      fiches[m.id] = net({ slug: m.slug, name: m.name, category: m.category, ref: m.ref, status: m.status, size: m.size, tags: m.tags, usedIn: m.usedIn, params: m.params, defaults: m.defaults, variants: m.variants });
       modeles[m.id] = runs.map((params) => {
         Math.random = graine(7);
         const { object3d, anim } = m.build(params);
@@ -152,8 +155,8 @@ export async function calculer({ seul = null } = {}) {
         });
       } else if (kind === 'kind') physique[m.id] = { encombrement: KIND_RADIUS[key] };
     }
-    if (seul) return { modeles, physique };
-    return { modeles, physique, tables: await tables(), ileDepart: await ileDepart() };
+    if (seul) return { fiches, modeles, physique };
+    return { fiches, modeles, physique, tables: await tables(), ileDepart: await ileDepart() };
   } finally {
     Math.random = random;
     performance.now = now;
