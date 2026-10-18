@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { Builder, G } from '../../render/builder.js';
 import { toonMaterial } from '../../render/shaders/materials.js';
-import { lavandeGeante, archeGlycine } from '../../models/buildings/ileDepart.js';
+import { lavandeGeante, archeGlycine } from '../../models/plantes/raretes/index.js';
+import physiqueRaretes from '../../models/plantes/raretes/physique.js';
 import { MAT } from '../../models/kit/materials.js';
 import { LAYOUT, heightAt, pathMask, vnoise, distToPolyline } from './terrain.js';
 
@@ -221,7 +222,8 @@ export class Flowers {
     const obstacles = [];
     for (const [cx, cz] of spots) {
       lavandeGeante(lav, cx, heightAt(cx, cz), cz, r);
-      obstacles.push({ x: cx, z: cz, r: 0.6, low: true });
+      const { obstacles: obs, bas } = physiqueRaretes.lavandeGeante;
+      for (const [ox, oz, rr] of obs) obstacles.push({ x: cx + ox, z: cz + oz, r: rr, low: bas });
     }
     const lavMesh = new THREE.Mesh(lav.build(), toonMaterial({ ...MAT.lavender }));
     lavMesh.name = 'lavandes-geantes';
@@ -233,7 +235,7 @@ export class Flowers {
     archeGlycine(gl, ax, heightAt(ax, az), az, r);
     const glMesh = new THREE.Mesh(gl.build(), toonMaterial({ ...MAT.wisteria }));
     glMesh.name = 'arche-glycine';
-    this.rares.push({ id: 'glycine', hours: 25, mesh: glMesh, obstacles: [{ x: ax, z: az - 1.25, r: 0.2 }, { x: ax, z: az + 1.25, r: 0.2 }], label: 'Une arche de glycine s\'est épanouie près de la maison !' });
+    this.rares.push({ id: 'glycine', hours: 25, mesh: glMesh, obstacles: physiqueRaretes.archeGlycine.obstacles.map(([ox, oz, rr]) => ({ x: ax + ox, z: az + oz, r: rr })), label: 'Une arche de glycine s\'est épanouie près de la maison !' });
     for (const rare of this.rares) {
       rare.mesh.visible = false;
       this.group.add(rare.mesh);

@@ -196,9 +196,11 @@ async function tables() {
 // île de départ : obstacles posés par le jeu autour de ses bâtiments et de son mobilier
 async function ileDepart() {
   const { buildProps } = await charge('src/world/home/props.js');
+  const { Flowers } = await charge('src/world/home/flowers.js');
   Math.random = graine(11);
   const p = buildProps();
-  return { obstacles: net(p.obstacles), lanternes: net(p.lanterns), spots: net(p.spots) };
+  const raretes = new Flowers([]).rares.map((r) => ({ id: r.id, obstacles: r.obstacles }));
+  return { obstacles: net(p.obstacles), lanternes: net(p.lanterns), spots: net(p.spots), raretes: net(raretes) };
 }
 
 // --- comparaison ------------------------------------------------------------------------

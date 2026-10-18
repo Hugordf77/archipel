@@ -1,40 +1,13 @@
-// Objets et petites découvertes : trésors du jour (coquillage, étoile de mer, verre poli, perle,
-// pêche) et objets flottants de la mer (algue, récif, bouée, bouteille, caisse, flotteurs).
+// Objets de la mer, tirés au sort par world/marine.js : algue (OBJ-019), récif marin (OBJ-021), banc de
+// poissons (OBJ-022), bouée (NAV-010, sa fiche est dans bateaux/mouillage), bouteille (OBJ-017) et caisse
+// flottante (OBJ-018) ; rnd fait varier hauteurs et inclinaisons.
 import * as THREE from 'three';
-import { Builder, G } from '../../render/builder.js';
-import { toonMaterial } from '../../render/shaders/materials.js';
-import { nextId, LAYER_SHADOW } from '../../core/globals.js';
-
-export function collectibleMesh(kind, rnd) {
-  const id = nextId();
-  const b = new Builder(id);
-  if (kind === 'coquillage') {
-    const c = ['#ffd7c4', '#f9c0cf', '#fff1dc'][Math.floor(rnd() * 3)];
-    for (let i = 0; i < 5; i++) {
-      const a = (i / 4 - 0.5) * 1.5;
-      b.add(G.sphere(0.07, 8, 6), c, { p: [Math.sin(a) * 0.08, 0.035, Math.cos(a) * 0.06 - 0.02], s: [0.45, 0.45, 1.5], r: [0, a, 0] });
-    }
-    b.add(G.sphere(0.05, 8, 6), '#e9a991', { p: [0, 0.03, -0.07], s: [1.4, 0.7, 0.8] });
-  } else if (kind === 'etoile') {
-    for (let i = 0; i < 5; i++) {
-      const a = (i / 5) * Math.PI * 2;
-      b.add(G.sphere(0.06, 8, 6), '#f6a96f', { p: [Math.sin(a) * 0.09, 0.025, Math.cos(a) * 0.09], s: [0.7, 0.4, 1.9], r: [0, a, 0] });
-    }
-    b.add(G.sphere(0.06, 8, 6), '#f39a63', { p: [0, 0.035, 0], s: [1, 0.55, 1] });
-  } else if (kind === 'verre') {
-    const c = ['#9fdcc8', '#9cc8ec', '#c7b2e6'][Math.floor(rnd() * 3)];
-    b.add(G.box(0.16, 0.06, 0.12, 0.03), c, { p: [0, 0.03, 0], r: [0, rnd() * 3, 0] });
-  } else if (kind === 'perle') {
-    b.add(G.sphere(0.12, 12, 8), '#f4dfe8', { p: [0, 0.03, 0], s: [1, 0.3, 1] });
-    b.add(G.sphere(0.06, 12, 10), '#fffaf6', { p: [0, 0.08, 0.02] });
-  } else if (kind === 'peche') {
-    b.add(G.sphere(0.12, 12, 10), '#f7b48a', { p: [0, 0.11, 0] });
-    b.add(G.sphere(0.05, 6, 4), '#9fd08a', { p: [0.05, 0.22, 0], s: [1, 0.4, 0.6] });
-  }
-  const mesh = new THREE.Mesh(b.build(), toonMaterial({ vertexColors: true, id, rim: 1.3 }));
-  mesh.layers.enable(LAYER_SHADOW);
-  return mesh;
-}
+import { Builder, G } from '../../../render/builder.js';
+import { toonMaterial } from '../../../render/shaders/materials.js';
+import { nextId } from '../../../core/globals.js';
+import { mulberry32 } from '../../../core/random.js';
+import { assembleMesh } from '../../kit/assemble.js';
+import { fiche } from '../../kit/fiches.js';
 
 // objets de la mer que sait dessiner marineMesh (tirés au sort par marine.js)
 export const MARINE_TYPES = ['algue', 'recif', 'poissons', 'bouee', 'bouteille', 'caisse'];
@@ -81,3 +54,17 @@ export function marineMesh(type, rnd) {
   mesh.layers.enable(1);
   return mesh;
 }
+
+
+// fiche d'un objet de la mer : v tire une des six graines
+export function marine(t) {
+  return { ref: `marine:${t}`, usedIn: ['mer'], params: { v: [0, 5] }, build: ({ v = 0 } = {}) => assembleMesh(marineMesh(t, mulberry32(11 + v))) };
+}
+
+export default [
+  fiche('OBJ-017', 'bouteille-mer', 'Bouteille à la mer', marine('bouteille'), { tags: ['flotte'] }),
+  fiche('OBJ-018', 'caisse-flottante', 'Caisse flottante', marine('caisse'), { tags: ['flotte'] }),
+  fiche('OBJ-019', 'algue', 'Algue', marine('algue'), { tags: ['sous l\'eau'] }),
+  fiche('OBJ-021', 'recif-marin', 'Récif marin', marine('recif'), { tags: ['sous l\'eau'] }),
+  fiche('OBJ-022', 'banc-poissons', 'Banc de poissons', marine('poissons'), { tags: ['pêche'] }),
+];

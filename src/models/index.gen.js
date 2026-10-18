@@ -1,8 +1,30 @@
 // Généré par « npm run modeles:index » (scripts/modeles/index.mjs) : ne pas modifier à la main.
 // Une entrée par dossier de modèle : sa fiche (ou celles de sa famille), avec son fichier source.
+import arbres_arbre_fruitier from './arbres/arbre-fruitier/index.js';
 import arbres_arbre_geant from './arbres/arbre-geant/index.js';
+import arbres_arbre_pompon from './arbres/arbre-pompon/index.js';
+import arbres_bambou from './arbres/bambou/index.js';
+import arbres_bouleau from './arbres/bouleau/index.js';
+import arbres_cerisier from './arbres/cerisier/index.js';
+import arbres_champignon_geant from './arbres/champignon-geant/index.js';
+import arbres_coniferes from './arbres/coniferes/index.js';
+import arbres_erable from './arbres/erable/index.js';
+import arbres_fougere_arborescente from './arbres/fougere-arborescente/index.js';
+import arbres_grand_arbre from './arbres/grand-arbre/index.js';
+import arbres_palmier from './arbres/palmier/index.js';
+import arbres_saule from './arbres/saule/index.js';
+import plantes_bord_de_l_eau from './plantes/bord-de-l-eau/index.js';
+import plantes_buissons from './plantes/buissons/index.js';
+import plantes_cactus from './plantes/cactus/index.js';
+import plantes_champs from './plantes/champs/index.js';
 import plantes_fleur_geante from './plantes/fleur-geante/index.js';
+import plantes_fleurs from './plantes/fleurs/index.js';
+import plantes_herbe from './plantes/herbe/index.js';
+import plantes_raretes from './plantes/raretes/index.js';
+import plantes_sous_bois from './plantes/sous-bois/index.js';
+import rochers_blocs from './rochers/blocs/index.js';
 import rochers_bois from './rochers/bois/index.js';
+import rochers_mineraux from './rochers/mineraux/index.js';
 import batiments_bibliotheque_souche from './batiments/bibliotheque-souche/index.js';
 import batiments_cabane_ermite from './batiments/cabane-ermite/index.js';
 import batiments_chaumiere from './batiments/chaumiere/index.js';
@@ -37,12 +59,17 @@ import bateaux_goelette from './bateaux/goelette/index.js';
 import bateaux_mouillage from './bateaux/mouillage/index.js';
 import bateaux_radeau from './bateaux/radeau/index.js';
 import bateaux_voilier from './bateaux/voilier/index.js';
+import decor_ateliers from './decor/ateliers/index.js';
+import decor_curiosites from './decor/curiosites/index.js';
+import decor_jardin from './decor/jardin/index.js';
 import objets_campement from './objets/campement/index.js';
 import objets_coffre from './objets/coffre/index.js';
 import objets_curiosites from './objets/curiosites/index.js';
 import objets_flotteur_peche from './objets/flotteur-peche/index.js';
 import objets_lagon from './objets/lagon/index.js';
+import objets_mer from './objets/mer/index.js';
 import objets_ruche from './objets/ruche/index.js';
+import objets_tresors from './objets/tresors/index.js';
 import animaux_abeille from './animaux/abeille/index.js';
 import animaux_albatros from './animaux/albatros/index.js';
 import animaux_canard from './animaux/canard/index.js';
@@ -79,9 +106,31 @@ import personnage_tenues from './personnage/tenues/index.js';
 const avec = (f, source) => (Array.isArray(f) ? f : [f]).map((m) => ({ source, ...m }));
 
 export const FICHES = [
+  ...avec(arbres_arbre_fruitier, 'src/models/arbres/arbre-fruitier/index.js'),
   ...avec(arbres_arbre_geant, 'src/models/arbres/arbre-geant/index.js'),
+  ...avec(arbres_arbre_pompon, 'src/models/arbres/arbre-pompon/index.js'),
+  ...avec(arbres_bambou, 'src/models/arbres/bambou/index.js'),
+  ...avec(arbres_bouleau, 'src/models/arbres/bouleau/index.js'),
+  ...avec(arbres_cerisier, 'src/models/arbres/cerisier/index.js'),
+  ...avec(arbres_champignon_geant, 'src/models/arbres/champignon-geant/index.js'),
+  ...avec(arbres_coniferes, 'src/models/arbres/coniferes/index.js'),
+  ...avec(arbres_erable, 'src/models/arbres/erable/index.js'),
+  ...avec(arbres_fougere_arborescente, 'src/models/arbres/fougere-arborescente/index.js'),
+  ...avec(arbres_grand_arbre, 'src/models/arbres/grand-arbre/index.js'),
+  ...avec(arbres_palmier, 'src/models/arbres/palmier/index.js'),
+  ...avec(arbres_saule, 'src/models/arbres/saule/index.js'),
+  ...avec(plantes_bord_de_l_eau, 'src/models/plantes/bord-de-l-eau/index.js'),
+  ...avec(plantes_buissons, 'src/models/plantes/buissons/index.js'),
+  ...avec(plantes_cactus, 'src/models/plantes/cactus/index.js'),
+  ...avec(plantes_champs, 'src/models/plantes/champs/index.js'),
   ...avec(plantes_fleur_geante, 'src/models/plantes/fleur-geante/index.js'),
+  ...avec(plantes_fleurs, 'src/models/plantes/fleurs/index.js'),
+  ...avec(plantes_herbe, 'src/models/plantes/herbe/index.js'),
+  ...avec(plantes_raretes, 'src/models/plantes/raretes/index.js'),
+  ...avec(plantes_sous_bois, 'src/models/plantes/sous-bois/index.js'),
+  ...avec(rochers_blocs, 'src/models/rochers/blocs/index.js'),
   ...avec(rochers_bois, 'src/models/rochers/bois/index.js'),
+  ...avec(rochers_mineraux, 'src/models/rochers/mineraux/index.js'),
   ...avec(batiments_bibliotheque_souche, 'src/models/batiments/bibliotheque-souche/index.js'),
   ...avec(batiments_cabane_ermite, 'src/models/batiments/cabane-ermite/index.js'),
   ...avec(batiments_chaumiere, 'src/models/batiments/chaumiere/index.js'),
@@ -116,12 +165,17 @@ export const FICHES = [
   ...avec(bateaux_mouillage, 'src/models/bateaux/mouillage/index.js'),
   ...avec(bateaux_radeau, 'src/models/bateaux/radeau/index.js'),
   ...avec(bateaux_voilier, 'src/models/bateaux/voilier/index.js'),
+  ...avec(decor_ateliers, 'src/models/decor/ateliers/index.js'),
+  ...avec(decor_curiosites, 'src/models/decor/curiosites/index.js'),
+  ...avec(decor_jardin, 'src/models/decor/jardin/index.js'),
   ...avec(objets_campement, 'src/models/objets/campement/index.js'),
   ...avec(objets_coffre, 'src/models/objets/coffre/index.js'),
   ...avec(objets_curiosites, 'src/models/objets/curiosites/index.js'),
   ...avec(objets_flotteur_peche, 'src/models/objets/flotteur-peche/index.js'),
   ...avec(objets_lagon, 'src/models/objets/lagon/index.js'),
+  ...avec(objets_mer, 'src/models/objets/mer/index.js'),
   ...avec(objets_ruche, 'src/models/objets/ruche/index.js'),
+  ...avec(objets_tresors, 'src/models/objets/tresors/index.js'),
   ...avec(animaux_abeille, 'src/models/animaux/abeille/index.js'),
   ...avec(animaux_albatros, 'src/models/animaux/albatros/index.js'),
   ...avec(animaux_canard, 'src/models/animaux/canard/index.js'),

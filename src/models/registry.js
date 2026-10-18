@@ -7,16 +7,10 @@
 //   defaults : valeurs des paramètres quand aucune variante ne les fixe
 //   size : [largeur, hauteur, profondeur] en mètres (boîte englobante, ±25 % vérifiés en test)
 //   usedIn : où le jeu l'emploie ; status : 'valide' | 'a-retravailler' | 'brouillon' | 'retire'
-import { mulberry32 } from '../core/random.js';
-import { PAL } from './kit/palette.js';
-import { assembleKind, assemblePart, assembleBuilder, assembleMesh } from './kit/assemble.js';
 import { FICHES } from './index.gen.js';
 // tables du jeu : chargées pour assembler lieux et végétation seuls (kit/tables.js)
 import './lieux.js';
-import './vegetation/especes.js';
-import * as ILE from './buildings/ileDepart.js';
-import { CATALOG } from './decor/catalogue.js';
-import { collectibleMesh, marineMesh } from './props/objets.js';
+import './vegetation.js';
 
 export const CATEGORIES = [
   { id: 'arbres', prefix: 'ARB', label: 'Arbres' },
@@ -32,45 +26,6 @@ export const CATEGORIES = [
   { id: 'personnage', prefix: 'PER', label: 'Personnage' },
 ];
 export const STATUTS = { valide: 'Validé', 'a-retravailler': 'À retravailler', brouillon: 'Brouillon', retire: 'Retiré' };
-const CAT_OF = Object.fromEntries(CATEGORIES.map((c) => [c.prefix, c.id]));
-
-const SRC = {
-  veg: 'src/models/vegetation/especes.js',
-  lieux: 'src/models/structures/lieux.js',
-  gabarits: 'src/models/buildings/gabarits.js',
-  ile: 'src/models/buildings/ileDepart.js',
-  decor: 'src/models/decor/catalogue.js',
-  objets: 'src/models/props/objets.js',
-};
-const GABARITS = new Set(['phare', 'ruines', 'temple', 'grotte', 'cabane']);
-const ILE_DEPART = ['île de départ'];
-
-// --- fabriques par famille de constructeurs -------------------------------------------
-const kind = (k) => ({ source: SRC.veg, ref: `kind:${k}`, defaults: { roche: '#d6cbbd', fleur: '#f7b6c8', v: 0 }, build: (q = {}) => assembleKind(k, q) });
-const part = (t, base = {}) => ({ source: GABARITS.has(t) ? SRC.gabarits : SRC.lieux, ref: `part:${t}`, defaults: base, build: (q = {}) => assemblePart({ t, ...base, ...q }) });
-const ile = (name, draw, mat) => ({ source: SRC.ile, ref: `ile:${name}`, usedIn: ILE_DEPART, build: () => assembleBuilder(draw, mat) });
-function decor(k) {
-  return {
-    source: SRC.decor, ref: `decor:${k}`, usedIn: ['échoppe de l\'île de départ'],
-    build() {
-      const o = CATALOG[k].build();
-      return { object3d: o, anim: o.userData.anim ? (dt, t) => o.userData.anim(dt, t) : undefined };
-    },
-  };
-}
-const collect = (k) => ({ source: SRC.objets, ref: `collect:${k}`, usedIn: ['plages de l\'île de départ'], params: { v: [0, 5] }, build: ({ v = 0 } = {}) => assembleMesh(collectibleMesh(k, mulberry32(7 + v))) });
-const marine = (t) => ({ source: SRC.objets, ref: `marine:${t}`, usedIn: ['mer'], params: { v: [0, 5] }, build: ({ v = 0 } = {}) => assembleMesh(marineMesh(t, mulberry32(11 + v))) });
-
-// entrée : id, slug, nom, constructeur, compléments (variantes, paramètres, usage, étiquettes…)
-function M(id, slug, name, src, more = {}) {
-  return {
-    id, slug, name, category: CAT_OF[id.slice(0, 3)],
-    variants: [], params: {}, defaults: {}, size: TAILLES[id] || [0, 0, 0], usedIn: [], tags: [], status: 'valide',
-    ...src, ...more,
-    usedIn: [...new Set([...(src.usedIn || []), ...(more.usedIn || []), ...(USAGE[src.ref] || [])])],
-    tags: [...(src.tags || []), ...(more.tags || [])],
-  };
-}
 // relevés (npm run modeles:releve, après un changement voulu) : boîtes englobantes en mètres
 // et îles de l'archipel qui emploient chaque modèle
 // <usage>
@@ -376,86 +331,6 @@ const TAILLES = {
 };
 // </tailles>
 
-const v3 = (labels, key = 'v') => labels.map((label, i) => ({ label, params: { [key]: i } }));
-const SAME = (other) => ({ tags: [`même modèle que ${other}`] });
-
-// modèles pas encore rangés dans un dossier (src/models/<catégorie>/<modèle>/)
-const ANCIENS = [
-  // --- ARB : arbres -----------------------------------------------------------------
-  M('ARB-001', 'arbre-pompon', 'Arbre pompon', kind('arbre_pompon'), { tags: ['abattable'] }),
-  M('ARB-002', 'arbre-fruitier', 'Arbre fruitier', kind('arbre_fruitier'), { tags: ['abattable', 'fruits'] }),
-  M('ARB-003', 'cerisier', 'Cerisier', kind('arbre_cerisier'), { tags: ['abattable', 'fleuri'] }),
-  M('ARB-004', 'pin', 'Pin', kind('pin'), { tags: ['abattable'] }),
-  M('ARB-005', 'pin-givre', 'Pin givré', kind('pin_givre'), { tags: ['abattable', 'glace'] }),
-  M('ARB-006', 'sapin-enneige', 'Sapin enneigé', kind('sapin_neige'), { tags: ['abattable', 'glace'] }),
-  M('ARB-007', 'palmier', 'Palmier', kind('palmier'), { tags: ['abattable', 'tropical'] }),
-  M('ARB-008', 'bouleau', 'Bouleau', kind('bouleau'), { tags: ['abattable'] }),
-  M('ARB-009', 'saule', 'Saule', kind('saule'), { tags: ['abattable', 'bord de l\'eau'] }),
-  M('ARB-010', 'erable', 'Érable', kind('erable'), { tags: ['abattable', 'automne'] }),
-  M('ARB-011', 'bambou', 'Bambou', kind('bambou'), { tags: ['abattable'] }),
-  M('ARB-012', 'fougere-arborescente', 'Fougère arborescente', kind('fougere_arbo'), { tags: ['tropical'] }),
-  M('ARB-013', 'champignon-geant', 'Champignon géant', kind('champi_geant'), { params: { v: [0, 4] }, variants: v3(['Rose', 'Pêche', 'Lilas', 'Menthe', 'Beurre']) }),
-  M('ARB-014', 'grand-arbre', 'Grand arbre de l\'île de départ', ile('grandArbre', (b) => ILE.grandArbreClumps(ILE.grandArbre(b, 0, 0, 0))), { tags: ['repère'] }),
-
-  // --- PLA : plantes, fleurs et cultures ------------------------------------------------
-  M('PLA-001', 'arbuste', 'Arbuste', kind('arbuste')),
-  M('PLA-002', 'buisson-baies', 'Buisson à baies', kind('buisson_baies'), { tags: ['récolte'] }),
-  M('PLA-003', 'buisson-fleuri', 'Buisson fleuri', kind('buisson_fleuri')),
-  M('PLA-004', 'cactus', 'Cactus', kind('cactus'), { tags: ['dunes'] }),
-  M('PLA-005', 'cactus-fleuri', 'Cactus fleuri', kind('cactus_fleur'), { tags: ['dunes'] }),
-  M('PLA-006', 'fougere', 'Fougère', kind('fougere')),
-  M('PLA-007', 'lavande', 'Lavande', kind('lavande'), { tags: ['champs'] }),
-  M('PLA-008', 'tournesol', 'Tournesol', kind('tournesol'), { tags: ['champs'] }),
-  M('PLA-009', 'ble', 'Blé', kind('ble'), { tags: ['champs', 'récolte'] }),
-  M('PLA-010', 'roseau', 'Roseau', kind('roseau'), { tags: ['bord de l\'eau'] }),
-  M('PLA-011', 'nenuphar', 'Nénuphar', kind('nenuphar'), { tags: ['bord de l\'eau'] }),
-  M('PLA-012', 'potiron', 'Potiron', kind('potiron'), { tags: ['récolte'] }),
-  M('PLA-013', 'petit-champignon', 'Petit champignon', kind('champi_petit'), { params: { v: [0, 4] }, tags: ['récolte'] }),
-  M('PLA-014', 'massif-fleurs', 'Massif de fleurs', kind('fleurs'), { params: { fleur: 'color' }, tags: ['teinté par instance'] }),
-  M('PLA-015', 'fleur-des-champs', 'Fleur des champs', kind('fleur_champ'), { params: { fleur: 'color' }, tags: ['teinté par instance'] }),
-  M('PLA-016', 'herbe', 'Herbe', kind('herbe'), { tags: ['tuiles'] }),
-  M('PLA-018', 'lavande-geante', 'Lavande géante (rareté)', ile('lavandeGeante', (b) => ILE.lavandeGeante(b, 0, 0, 0), 'lavender'), { tags: ['rareté', '10 h d\'étude'] }),
-  M('PLA-019', 'arche-glycine', 'Arche de glycine (rareté)', ile('archeGlycine', (b) => ILE.archeGlycine(b, 0, 0, 0), 'wisteria'), { tags: ['rareté', '25 h d\'étude'] }),
-
-  // --- ROC : rochers, bois et minerais --------------------------------------------------
-  M('ROC-001', 'rocher', 'Rocher', kind('rocher'), { params: { roche: 'color' }, tags: ['minable'] }),
-  M('ROC-002', 'rocher-moussu', 'Rocher moussu', kind('rocher_mousse'), { params: { roche: 'color' }, tags: ['minable'] }),
-  M('ROC-003', 'cristal', 'Cristal', kind('cristal'), { tags: ['minable', 'lumineux'] }),
-  M('ROC-004', 'filon-cuivre', 'Filon de cuivre', kind('filon_cuivre'), { params: { roche: 'color' }, tags: ['minable'] }),
-  M('ROC-005', 'filon-fer', 'Filon de fer', kind('filon_fer'), { params: { roche: 'color' }, tags: ['minable'] }),
-  M('ROC-006', 'obsidienne', 'Obsidienne', kind('obsidienne'), { params: { roche: 'color' }, tags: ['minable', 'cratère'] }),
-  M('ROC-007', 'souche', 'Souche', kind('souche'), { tags: ['bois'] }),
-  M('ROC-008', 'bois-mort', 'Bois mort', kind('bois_mort'), { tags: ['bois'] }),
-
-  // --- BAT : bâtiments ------------------------------------------------------------------
-
-  // --- STR : ouvrages et aménagements ---------------------------------------------------
-  // compléments de l'inventaire (relevés dans le code)
-
-  // --- MON : ruines et monuments --------------------------------------------------------
-
-  // --- NAV : bateaux et épaves ----------------------------------------------------------
-  M('NAV-010', 'bouee', 'Bouée', marine('bouee'), { tags: ['flotte'] }),
-
-  // --- DEC : décor achetable --------------------------------------------------------------
-  ...['pierre', 'pot', 'cloture', 'lanterne', 'champi', 'nichoir', 'banc', 'fanions', 'hamac', 'telescope', 'moulin', 'arche', 'statue', 'etabli', 'four', 'couture', 'chantier', 'fontaine']
-    .map((k, i) => M(`DEC-${String(i + 1).padStart(3, '0')}`, `decor-${k}`, CATALOG[k].name, decor(k), { tags: [CATALOG[k].station ? 'atelier' : 'décor', `${CATALOG[k].price} coquillages`] })),
-
-  // --- OBJ : objets et petites découvertes ----------------------------------------------
-  M('OBJ-011', 'corail', 'Corail', kind('corail'), { tags: ['lagon'] }),
-  M('OBJ-012', 'coquillage', 'Coquillage', collect('coquillage'), { tags: ['trésor du jour'] }),
-  M('OBJ-013', 'etoile-mer', 'Étoile de mer', collect('etoile'), { tags: ['trésor du jour'] }),
-  M('OBJ-014', 'peche', 'Pêche', collect('peche'), { tags: ['trésor du jour'] }),
-  M('OBJ-015', 'perle', 'Perle', collect('perle'), { tags: ['trésor du jour'] }),
-  M('OBJ-016', 'verre-poli', 'Verre poli', collect('verre'), { tags: ['trésor du jour'] }),
-  M('OBJ-017', 'bouteille-mer', 'Bouteille à la mer', marine('bouteille'), { tags: ['flotte'] }),
-  M('OBJ-018', 'caisse-flottante', 'Caisse flottante', marine('caisse'), { tags: ['flotte'] }),
-  M('OBJ-019', 'algue', 'Algue', marine('algue'), { tags: ['sous l\'eau'] }),
-  // compléments de l'inventaire
-  M('OBJ-021', 'recif-marin', 'Récif marin', marine('recif'), { tags: ['sous l\'eau'] }),
-  M('OBJ-022', 'banc-poissons', 'Banc de poissons', marine('poissons'), { tags: ['pêche'] }),
-];
-
 // fiches des dossiers de modèle (index.gen.js) : complétées comme les anciennes entrées
 const ORDRE = new Map(CATEGORIES.map((c, i) => [c.prefix, i]));
 function complete(f) {
@@ -465,7 +340,7 @@ function complete(f) {
     usedIn: [...new Set([...(f.usedIn || []), ...(USAGE[f.ref] || [])])],
   };
 }
-export const MODELS = [...ANCIENS, ...FICHES.map(complete)]
+export const MODELS = FICHES.map(complete)
   .sort((a, b) => ORDRE.get(a.id.slice(0, 3)) - ORDRE.get(b.id.slice(0, 3)) || a.id.localeCompare(b.id));
 
 export const BY_ID = new Map(MODELS.map((m) => [m.id, m]));

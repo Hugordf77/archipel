@@ -4,7 +4,7 @@ import { toonMaterial, glowMaterial } from '../render/shaders/materials.js';
 import { LAYER_SHADOW } from '../core/globals.js';
 import { coastRadius, heightAt } from '../world/home/terrain.js';
 import { groundAt, blockedByObstacle } from '../world/navigation.js';
-import { collectibleMesh } from '../models/props/objets.js';
+import { collectibleMesh } from '../models/objets/index.js';
 
 // Petits trésors qui apparaissent chaque jour (positions tirées selon la date)
 export const KINDS = {

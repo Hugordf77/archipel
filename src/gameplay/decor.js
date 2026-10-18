@@ -3,7 +3,7 @@ import { U, ORIGIN } from '../core/globals.js';
 import { groundAt, blockedByObstacle, waterDepth, addObstacle, removeObstacle, pickGround } from '../world/navigation.js';
 import { uid } from '../core/state.js';
 import { ITEMS } from '../data/items.js';
-import { CATALOG, CATALOG_ORDER } from '../models/decor/catalogue.js';
+import { CATALOG, CATALOG_ORDER } from '../models/decor/index.js';
 export { CATALOG, CATALOG_ORDER };
 
 export function nearbyStations(decor, x, z, radius = 5.5) {

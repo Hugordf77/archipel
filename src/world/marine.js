@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { waterDepth } from './navigation.js';
 import { ARCHIPEL } from './archipel.js';
 import { hashString, mulberry32 } from '../core/random.js';
-import { marineMesh } from '../models/props/objets.js';
+import { marineMesh } from '../models/objets/index.js';
 
 // Éléments de la mer à positions fixes (ARCHIPEL.marine) : algues, récifs, bancs de poissons,
 // bouées, bouteilles et caisses. Tous construits au démarrage (une cinquantaine d'objets) ;

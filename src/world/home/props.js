@@ -7,7 +7,8 @@ import { toonMaterial } from '../../render/shaders/materials.js';
 import { PAL } from '../../models/kit/palette.js';
 import { MAT } from '../../models/kit/materials.js';
 import { rng, segment, palmFrondGeometry } from '../../models/kit/shapes.js';
-import { trunkAlong, grandArbre, grandArbreClumps } from '../../models/buildings/ileDepart.js';
+import { trunkAlong, grandArbre, grandArbreClumps } from '../../models/arbres/grand-arbre/index.js';
+import physiqueGrandArbre from '../../models/arbres/grand-arbre/physique.js';
 import { ponton } from '../../models/ouvrages/ponton/index.js';
 import { pupitreHibou, bureauEtude, pontRiviere, panneauPlace, bancBois, lanterneJardin } from '../../models/ouvrages/mobilier-depart/index.js';
 import physiqueMobilier from '../../models/ouvrages/mobilier-depart/physique.js';
@@ -98,7 +99,7 @@ export function buildProps() {
     const top = grandArbre(b, x, y, z);
     push(b);
     clumps.push(...grandArbreClumps(top));
-    obstacles.push({ x, z, r: 0.95 });
+    poser(physiqueGrandArbre, x, z);
     spots.tree = { x, z, top };
   }
 

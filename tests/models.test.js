@@ -94,6 +94,14 @@ describe('dossiers de modèle', () => {
     }
   }, 60000);
 
+  it('physique.gen.js est à jour et donne un encombrement à chaque espèce de la végétation', async () => {
+    const fs = await import('node:fs');
+    const { physiqueGeneree, PHYSIQUE } = await import('../scripts/modeles/index.mjs');
+    expect(fs.readFileSync(PHYSIQUE, 'utf8')).toBe(await physiqueGeneree());
+    const { KINDS, KIND_RADIUS } = await import('../src/world/islands/gen/kinds.js');
+    for (const k of KINDS) expect(typeof KIND_RADIUS[k], k).toBe('number');
+  }, 30000);
+
   it('rangent chaque fiche dans le dossier de sa catégorie, sous src/models', async () => {
     const { FICHES } = await import('../src/models/index.gen.js');
     expect(FICHES.length).toBeGreaterThan(0);
@@ -130,9 +138,9 @@ describe('usage des modèles', () => {
     const { KINDS } = await import('../src/world/islands/gen/kinds.js');
     const { SPECIES } = await import('../src/models/animaux/index.js');
     const { BOATS } = await import('../src/models/bateaux/index.js');
-    const { CATALOG } = await import('../src/models/decor/catalogue.js');
+    const { CATALOG } = await import('../src/models/decor/index.js');
     const { KINDS: TREASURES } = await import('../src/gameplay/collectibles.js');
-    const { MARINE_TYPES } = await import('../src/models/props/objets.js');
+    const { MARINE_TYPES } = await import('../src/models/objets/index.js');
     const { HAIRS, PIECES } = await import('../src/entities/character/avatar.js');
     const { OUTILS } = await import('../src/models/personnage/index.js');
     const need = [

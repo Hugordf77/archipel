@@ -9,7 +9,7 @@ import { HARVEST, TOOL_NAMES, TIER_NAMES, strikeTime, rollDrops, flowerItemFor, 
 import { BIOMES } from '../world/islands/biomes.js';
 import { groundAt, waterDepth, blockedByObstacle, isHome } from '../world/navigation.js';
 import { h, replay } from '../ui/dom.js';
-import { kindModel } from '../models/vegetation/especes.js';
+import { kindModel } from '../models/vegetation.js';
 import { outilGeometry } from '../models/personnage/index.js';
 import { flotteurGeometry } from '../models/objets/flotteur-peche/index.js';
 import { MAT } from '../models/kit/materials.js';

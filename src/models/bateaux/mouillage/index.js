@@ -1,9 +1,10 @@
-// Mouillage : ancre échouée (NAV-009) et bouée échouée (NAV-011). La bouée qui flotte (NAV-010) est
-// dessinée avec les objets de la mer (objets/mer).
+// Mouillage : ancre échouée (NAV-009), bouée qui flotte (NAV-010, dessinée avec les objets de la mer,
+// objets/mer) et bouée échouée (NAV-011).
 import { Builder, G } from '../../../render/builder.js';
 import { CREAM, lire } from '../../kit/lieux.js';
 import { fiche, part } from '../../kit/fiches.js';
 import physique from './physique.js';
+import { marine } from '../../objets/mer/index.js';
 
 export function ancre() {
   const b = new Builder();
@@ -22,5 +23,6 @@ export function boueeEchouee() {
 
 export default [
   fiche('NAV-009', 'ancre', 'Ancre', part('ancre'), { tags: ['curiosité'] }),
+  fiche('NAV-010', 'bouee', 'Bouée', marine('bouee'), { tags: ['flotte'] }),
   fiche('NAV-011', 'bouee-echouee', 'Bouée échouée', part('bouee_echouee'), { tags: ['curiosité'] }),
 ];

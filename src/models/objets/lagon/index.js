@@ -1,8 +1,8 @@
-// Lagon : récif de coraux ronds (OBJ-010, taille réglable). Le corail isolé (OBJ-011) rejoint ce
-// dossier avec la végétation.
+// Lagon : récif de coraux ronds (OBJ-010, taille réglable) et corail en branches (OBJ-011).
 import { Builder, G } from '../../../render/builder.js';
+import { mulberry32 } from '../../../core/random.js';
 import { lire } from '../../kit/lieux.js';
-import { fiche, part } from '../../kit/fiches.js';
+import { fiche, kind, part } from '../../kit/fiches.js';
 import physique from './physique.js';
 
 export function recif(p) {
@@ -13,4 +13,19 @@ export function recif(p) {
   return { solid: b, obstacles: lire(physique.recif.obstacles) };
 }
 
-export default fiche('OBJ-010', 'recif', 'Récif', part('recif'), { params: { size: [0.6, 2] }, tags: ['lagon'] });
+
+export function corail() {
+  const b = new Builder();
+  const rand = mulberry32(17);
+  for (let k = 0; k < 7; k++) {
+    const a = rand() * Math.PI * 2;
+    const l = 0.25 + rand() * 0.35;
+    b.add(G.capsule(0.06, l, 3, 8), k % 2 ? '#f4a2a0' : '#f6b98a', { p: [Math.cos(a) * 0.15, l * 0.5, Math.sin(a) * 0.15], r: [Math.cos(a) * 0.5, 0, Math.sin(a) * 0.5] });
+  }
+  return { solid: b.build() };
+}
+
+export default [
+  fiche('OBJ-010', 'recif', 'Récif', part('recif'), { params: { size: [0.6, 2] }, tags: ['lagon'] }),
+  fiche('OBJ-011', 'corail', 'Corail', kind('corail'), { tags: ['lagon'] }),
+];

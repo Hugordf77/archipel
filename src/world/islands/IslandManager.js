@@ -11,7 +11,7 @@ import { KINDS, KIND_RADIUS, STRIDE, TREES } from './gen/kinds.js';
 import { Surface, TILE } from './gen/surface.js';
 import { bloomColorOf } from './gen/zones.js';
 import { BIOMES } from './biomes.js';
-import { kindModel, CAP_COLORS, ROCKY } from '../../models/vegetation/especes.js';
+import { kindModel, CAP_COLORS, ROCKY } from '../../models/vegetation.js';
 import { partModel, rotY, recolorPart } from '../../models/lieux.js';
 import { MAT } from '../../models/kit/materials.js';
 import { buildRivers, buildLake, buildFallFoam } from '../env/rivers.js';

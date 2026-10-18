@@ -118,7 +118,7 @@ describe('archipel', () => {
 
   it('place les éléments de la mer en eau libre, à positions fixes et identifiants uniques', async () => {
     const { ARCHIPEL } = await import('../src/world/archipel.js');
-    const { MARINE_TYPES } = await import('../src/models/props/objets.js');
+    const { MARINE_TYPES } = await import('../src/models/objets/index.js');
     const ids = new Set();
     for (const m of ARCHIPEL.marine) {
       expect(ids.has(m.id)).toBe(false);
