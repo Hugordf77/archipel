@@ -26,6 +26,7 @@ export class IslandFauna {
     this.byIsland = new Map();
     this._m = new THREE.Matrix4();
     this._p = new THREE.Matrix4();
+    this._loc = []; // matrices locales des pièces d'un animal (chaînage cou → tête)
     this._q = new THREE.Quaternion();
     this._e = new THREE.Euler();
     this._v = new THREE.Vector3();
@@ -251,23 +252,32 @@ export class IslandFauna {
     this._e.set(0, an.heading, bank + roll + (sleep ? 0 : 0));
     this._q.setFromEuler(this._e);
     m.compose(this._v.set(an.x, an.y + an.hop - (sleep ? 0.06 : 0), an.z), this._q, this._s.set(sc, sleep ? sc * 0.85 : sc, sc));
+    // broutage : graze va de 0 (tête portée) à 1 (museau dans l'herbe) ; en marche, léger hochement
+    const idle = an.speed < 0.1;
+    const graze = sleep ? 0.35 : idle ? 0.5 + Math.sin(this.t * 1.3 + an.seed * 10) * 0.5 : 0;
+    const bob = sleep || idle ? 0 : Math.sin(an.phase * 3) * 0.08;
+    const loc = this._loc;
     k.parts.forEach((p, pi) => {
       let a = 0;
       if (full) {
         const t = this.t;
         if (p.anim === 'leg') a = Math.sin(an.phase * 6 + p.phase) * Math.min(1, an.speed) * 0.6;
-        else if (p.anim === 'head') a = sleep ? 0.4 : an.speed < 0.1 ? (def.graze ?? 0.5) * (0.5 + Math.sin(t * 1.3 + an.seed * 10) * 0.5) : Math.sin(an.phase * 3) * 0.08;
+        // cou articulé : le cou plie jusqu'à def.graze, la tête qu'il porte jusqu'à def.nod
+        else if (p.anim === 'neck') a = graze * def.graze + bob;
+        else if (p.anim === 'head') a = p.parent != null ? graze * (def.nod ?? 0) : sleep ? 0.4 : graze * (def.graze ?? 0.5) + bob;
         else if (p.anim === 'wing') a = def.insect ? Math.sin(t * 28 + an.seed * 10) * 0.9 : Math.sin(t * (def.fly ? 5 : 10) + an.seed * 10) * 0.55;
         else if (p.anim === 'tail') a = Math.sin(t * (def.fish ? 8 : 4) + an.seed * 10) * 0.3;
       }
-      const pm = this._p.makeTranslation(p.pivot[0], p.pivot[1], p.pivot[2]);
+      // pivot dans le repère de la pièce parente (la tête suit le cou), sinon dans celui du corps
+      const pm = (loc[pi] ??= new THREE.Matrix4()).makeTranslation(p.pivot[0], p.pivot[1], p.pivot[2]);
       if (a) {
-        const r = new THREE.Matrix4();
+        const r = this._p;
         if (p.anim === 'wing') r.makeRotationZ(a * p.side);
         else if (p.anim === 'tail') r.makeRotationY(a);
         else r.makeRotationX(a);
         pm.multiply(r);
       }
+      if (p.parent != null) pm.premultiply(loc[p.parent]);
       k.meshes[pi].setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(m, pm));
       if (k.coats) k.meshes[pi].setColorAt(i, k.coats[an.coat]);
     });

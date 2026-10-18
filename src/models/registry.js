@@ -104,7 +104,7 @@ function species(sp) {
         m.scale.setScalar(0.3);
         return { object3d: m, anim: (dt, t) => m.scale.setScalar(0.25 + 0.15 * Math.sin(t * 3)) };
       }
-      return assembleCreature(d.parts(), { scale: d.scale || 1, pace: Math.max(0.4, d.speed || 1), coat: d.coats?.[coat]?.[1], graze: d.graze ?? 0.5 });
+      return assembleCreature(d.parts(), { scale: d.scale || 1, pace: Math.max(0.4, d.speed || 1), coat: d.coats?.[coat]?.[1], graze: d.graze ?? 0.5, nod: d.nod ?? 0 });
     },
   };
 }
@@ -393,7 +393,7 @@ const TAILLES = {
   'OBJ-023': [0.51, 2.4, 0.51],
   'ANI-001': [0.98, 0.97, 1.39],
   'ANI-002': [0.57, 0.96, 1.18],
-  'ANI-003': [1.12, 1.38, 2.44],
+  'ANI-003': [0.87, 1.59, 1.84],
   'ANI-004': [0.73, 2.15, 1.92],
   'ANI-005': [0.34, 0.63, 1.36],
   'ANI-006': [0.25, 0.45, 0.49],

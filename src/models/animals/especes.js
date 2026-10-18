@@ -1,13 +1,17 @@
 // Animaux des îles générées : 23 espèces dessinées par pièces (corps, tête, pattes, ailes, queue).
-// Chaque pièce : { geo, pivot [x, y, z], anim, side, phase } ; le jeu les instancie (IslandFauna).
+// Chaque pièce : { geo, pivot [x, y, z], anim, side, phase, parent? } ; le jeu les instancie (IslandFauna).
 import * as THREE from 'three';
 import { Builder, G } from '../../render/builder.js';
+import { nextId } from '../../core/globals.js';
 
 // ---------------------------------------------------------------------------
 // Gabarits de silhouettes. Chaque pièce : { geo, pivot [x,y,z], anim, side, phase }
-// anim : 'leg' (balancier), 'head' (hoche), 'wing' (bat), 'tail' (remue), 'hop' (rien : tout le corps saute)
-export function part(build, pivot, anim = 'none', side = 1, phase = 0) {
-  const b = new Builder();
+// anim : 'leg' (balancier), 'head' (hoche), 'neck' (cou qui porte la tête), 'wing' (bat), 'tail' (remue),
+// 'hop' (rien : tout le corps saute). parent : indice de la pièce qui porte celle-ci (la tête sur le
+// cou), placée avant elle ; le pivot est alors dans le repère de ce parent
+// id : identifiant de contour partagé (pas de trait d'encre entre deux pièces soudées, cou et corps)
+export function part(build, pivot, anim = 'none', side = 1, phase = 0, id = undefined) {
+  const b = new Builder(id);
   build(b);
   return { geo: b.build(), pivot, anim, side, phase };
 }
@@ -37,7 +41,6 @@ export function quad(o) {
 // multipliés par la couleur de la robe) ; yeux, museau, sabots, cornes et bois ne le sont pas.
 const EYE = '#3d3049';
 const _up = new THREE.Vector3(0, 1, 0);
-const _z = new THREE.Vector3(0, 0, 1);
 
 // cylindre effilé entre deux points [x, y, z]
 function bone(b, color, a, c, r0, r1, sides = 8, tint = 1) {
@@ -61,21 +64,96 @@ function eye(b, x, y, z, r, ring = null) {
   b.add(G.sphere(r * 0.34, 5, 3), '#ffffff', { p: [x + sx * r * 0.2, y + r * 0.42, z + r * 0.62], tint: 0 });
 }
 
-// tache aplatie posée sur un ellipsoïde (centre c, rayons rad), dans la direction d
-function spot(b, color, c, rad, d, size, tint = 1) {
-  const dir = new THREE.Vector3(...d).normalize();
-  const p = new THREE.Vector3(c[0] + rad[0] * dir.x, c[1] + rad[1] * dir.y, c[2] + rad[2] * dir.z);
-  const n = new THREE.Vector3(dir.x / rad[0], dir.y / rad[1], dir.z / rad[2]).normalize();
-  const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(_z, n));
-  p.addScaledVector(n, -0.012);
-  b.add(G.sphere(1, 6, 4), color, { p: [p.x, p.y, p.z], s: [size[0], size[1], 0.035], r: [e.x, e.y, e.z], tint });
+// Surface lisse de centre c et de rayons rad : |x|^n + |y|^n + |z|^n = 1 en coordonnées réduites.
+// n = 2 donne l'ellipsoïde, n = 3 un pavé arrondi (dos droit, croupe carrée, poitrail rond).
+// at(u, p, nrm) : point de la surface dans la direction réduite u (vue du centre) et sa normale
+function surface(c, rad, n = 2) {
+  const q = new THREE.Vector3();
+  const pw = (v, e) => Math.sign(v) * Math.abs(v) ** e;
+  return {
+    at(u, p, nrm) {
+      q.copy(u).multiplyScalar((Math.abs(u.x) ** n + Math.abs(u.y) ** n + Math.abs(u.z) ** n) ** (-1 / n));
+      nrm.set(pw(q.x, n - 1) / rad[0], pw(q.y, n - 1) / rad[1], pw(q.z, n - 1) / rad[2]).normalize();
+      p.set(c[0] + q.x * rad[0], c[1] + q.y * rad[1], c[2] + q.z * rad[2]);
+    },
+  };
+}
+
+// maillage d'une surface (sphère w × h projetée, normales exactes)
+function hull(b, color, surf, w, h, opts = {}) {
+  const g = new THREE.SphereGeometry(1, w, h);
+  const pos = g.attributes.position;
+  const nor = g.attributes.normal;
+  const u = new THREE.Vector3();
+  const p = new THREE.Vector3();
+  const n = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    surf.at(u.fromBufferAttribute(pos, i), p, n);
+    pos.setXYZ(i, p.x, p.y, p.z);
+    nor.setXYZ(i, n.x, n.y, n.z);
+  }
+  b.add(g, color, opts);
+}
+
+// tache lobée (nuage, haricot) épousant une surface : centrée dans la direction réduite d, de
+// demi-tailles angulaires size (le long du corps, en travers), contour ondulé selon seed ; à peine
+// décollée de la surface et teintée par la robe (sommets blancs, tint 1). Une grande tache a une
+// couronne intérieure, pour épouser la courbure sans s'enfoncer
+function patch(b, surf, d, size, seed, { lift = 0.008 } = {}) {
+  const u0 = new THREE.Vector3(...d).normalize();
+  const t1 = new THREE.Vector3(0, 0, 1).addScaledVector(u0, -u0.z);
+  if (t1.lengthSq() < 0.04) t1.set(0, 1, 0).addScaledVector(u0, -u0.y);
+  t1.normalize();
+  const t2 = new THREE.Vector3().crossVectors(u0, t1);
+  const lobe = (th) => 1 + 0.16 * Math.sin(2 * th + seed * 2.3) + 0.13 * Math.sin(3 * th + seed * 4.1) + 0.06 * Math.sin(4 * th + seed * 1.7);
+  const pos = [];
+  const nor = [];
+  const u = new THREE.Vector3();
+  const p = new THREE.Vector3();
+  const n = new THREE.Vector3();
+  const put = (a, c) => {
+    const rho = Math.hypot(a, c);
+    u.copy(u0).multiplyScalar(Math.cos(rho));
+    if (rho > 1e-6) u.addScaledVector(t1, (Math.sin(rho) * a) / rho).addScaledVector(t2, (Math.sin(rho) * c) / rho);
+    surf.at(u, p, n);
+    p.addScaledVector(n, lift);
+    pos.push(p.x, p.y, p.z);
+    nor.push(n.x, n.y, n.z);
+  };
+  const big = Math.max(...size) > 0.45;
+  const rings = big ? [0.5, 1] : [1];
+  const seg = big ? 18 : 14;
+  put(0, 0);
+  for (const k of rings) {
+    for (let i = 0; i < seg; i++) {
+      const th = (i / seg) * Math.PI * 2;
+      const r = lobe(th) * k;
+      put(size[0] * r * Math.cos(th), size[1] * r * Math.sin(th));
+    }
+  }
+  // centre en éventail, puis couronnes (sens direct vu de l'extérieur)
+  const idx = [];
+  for (let i = 0; i < seg; i++) {
+    const j = (i + 1) % seg;
+    idx.push(0, 1 + i, 1 + j);
+    for (let r = 1; r < rings.length; r++) {
+      const a = 1 + (r - 1) * seg;
+      const c = a + seg;
+      idx.push(a + i, c + i, c + j, a + i, c + j, a + j);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  g.setIndex(idx);
+  b.add(g, '#ffffff', { tint: 1 });
 }
 
 // quatre pattes (avant gauche, avant droite, arrière gauche, arrière droite, en diagonale) :
 // pivot de hanche caché dans le corps, sabot posé au sol ; zf et zb sont les positions signées
-// des pattes avant (z > 0) et arrière (z < 0)
+// des pattes avant (z > 0) et arrière (z < 0) ; cloven : sabot fendu en deux onglons
 function legs(o) {
-  const { x, zf, zb, hip, color, tint = 0, r0, r1, hoof, hoofH = 0.06, front = null, back = null, joint = null } = o;
+  const { x, zf, zb, hip, color, tint = 0, r0, r1, hoof, hoofH = 0.06, front = null, back = null, joint = null, cloven = false } = o;
   const out = [];
   for (const [sx, sz, ph] of [[-1, 1, 0], [1, 1, Math.PI], [-1, -1, Math.PI], [1, -1, 0]]) {
     const pts = (sz > 0 ? front : back) || [[0, 0, 0], [0, -hip + hoofH, 0]];
@@ -87,7 +165,8 @@ function legs(o) {
         if (joint === (sz > 0 ? 'front' : 'back') && i > 0) b.add(G.sphere(r0 + (r1 - r0) * t0, 5, 3), color, { p: pts[i], tint });
       }
       const f = pts[pts.length - 1];
-      b.add(G.cyl(r1 * 1.12, r1 * 1.22, hoofH, 8), hoof, { p: [f[0], -hip + hoofH / 2, f[2]], tint: 0 });
+      if (cloven) for (const s of [-1, 1]) b.add(G.cyl(r1 * 0.62, r1 * 0.7, hoofH, 5), hoof, { p: [f[0] + s * r1 * 0.5, -hip + hoofH / 2, f[2] + r1 * 0.12], tint: 0 });
+      else b.add(G.cyl(r1 * 1.12, r1 * 1.22, hoofH, 8), hoof, { p: [f[0], -hip + hoofH / 2, f[2]], tint: 0 });
     }, [sx * x, hip, sz > 0 ? zf : zb], 'leg', 1, ph));
   }
   return out;
@@ -140,37 +219,69 @@ function chevre() {
     front: [[0, 0, 0], [0, -0.25, 0.02], [0, -0.46, 0]], back: [[0, 0, 0], [0, -0.22, -0.06], [0, -0.46, 0]] }), tail];
 }
 
-// Vache : corps massif crème, taches (teintées), museau rose poudré, cornes courtes, clochette
+// Vache (d'après la planche de référence) : corps en tonneau à dos droit et croupe carrée, pattes
+// courtes effilées à onglons, cou court qui porte la tête au-dessus du garrot et plie pour brouter,
+// crâne rond, large museau rose, oreilles en feuille, cornes courtes relevées, collier bleu et
+// cloche dorée, pis à quatre trayons, queue à houppe ; taches lobées teintées par la robe
 function vache() {
-  const CREAM = '#f4e7cf';
-  const C = [0, 0.6, -0.02];
-  const R = [0.36, 0.25, 0.55];
+  const CREAM = '#f5e9d6';
+  const PINK = '#f0b4a8';
+  const NECK = 0.62; // inclinaison du cou vers l'avant (rad)
+  const shell = surface([0, 0.545, -0.035], [0.25, 0.29, 0.465], 3);
+  const skin = nextId();
   const body = part((b) => {
-    blob(b, CREAM, C, R, { tint: 0 });
-    const spots = [[[0.85, 0.45, 0.25], [0.2, 0.14]], [[-0.9, 0.3, -0.25], [0.18, 0.16]], [[0.25, 0.92, -0.35], [0.17, 0.13]], [[-0.4, 0.7, 0.55], [0.14, 0.12]], [[0.7, 0.15, -0.7], [0.15, 0.12]]];
-    for (const [d, sz] of spots) spot(b, '#ffffff', C, R, d, sz);
-    blob(b, '#f1b9b0', [0, 0.37, -0.24], [0.11, 0.08, 0.12], { tint: 0 }, 6, 4); // pis
-  }, [0, 0, 0]);
+    hull(b, CREAM, shell, 14, 10, { tint: 0 });
+    // selle sur le dos (dessus et deux flancs) ; à droite (vue de profil de la planche) épaule, flanc,
+    // croupe et cuisse ; à gauche, d'autres taches
+    const spots = [
+      [[0, 1, -0.05], [0.42, 0.62], 1], [[-1, 0.75, -0.05], [0.34, 0.32], 2], [[1, 0.7, 0.05], [0.36, 0.33], 3],
+      [[-0.9, 0.2, 0.62], [0.26, 0.4], 4], [[-1, -0.45, 0.05], [0.3, 0.16], 5], [[-0.85, 0.45, -0.75], [0.25, 0.27], 6], [[-0.75, -0.7, -0.62], [0.17, 0.18], 7],
+      [[1, -0.05, -0.1], [0.33, 0.28], 8], [[0.9, 0.3, 0.7], [0.21, 0.24], 9], [[0.8, 0.4, -0.8], [0.23, 0.25], 10],
+    ];
+    for (const [d, size, seed] of spots) patch(b, shell, d, size, seed);
+    // pis rose à quatre trayons, entre les pattes arrière
+    blob(b, PINK, [0, 0.25, -0.19], [0.135, 0.09, 0.12], { tint: 0 }, 7, 5);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.add(G.cyl(0.018, 0.022, 0.07, 4), '#e9a194', { p: [sx * 0.055, 0.17, -0.19 + sz * 0.055], tint: 0 });
+  }, [0, 0, 0], 'none', 1, 0, skin);
+  // cou : pivot au poitrail, il porte la tête (pièce suivante) ; collier et cloche sous la gorge
+  const axis = new THREE.Vector3(0, Math.cos(NECK), Math.sin(NECK));
+  const throat = new THREE.Vector3(0, -Math.sin(NECK), Math.cos(NECK));
+  const neck = part((b) => {
+    blob(b, CREAM, axis.clone().multiplyScalar(0.246).toArray(), [0.155, 0.27, 0.155], { r: [NECK, 0, 0], tint: 0 }, 8, 6);
+    const ring = axis.clone().multiplyScalar(0.36);
+    b.add(G.torus(0.145, 0.026, 4, 12), '#6a8fd4', { p: ring.toArray(), r: [NECK - Math.PI / 2, 0, 0], tint: 0 });
+    const bell = ring.addScaledVector(throat, 0.17);
+    b.add(G.cyl(0.03, 0.05, 0.085, 4), '#e2b23e', { p: [0, bell.y - 0.045, bell.z + 0.01], r: [0, Math.PI / 4, 0], tint: 0 });
+    b.add(G.sphere(0.017, 4, 2), '#a8781f', { p: [0, bell.y - 0.095, bell.z + 0.01], tint: 0 }); // battant
+  }, [0, 0.5, 0.22], 'neck', 1, 0, skin);
+  const crane = surface([0, 0.02, 0.02], [0.165, 0.16, 0.165]);
   const head = part((b) => {
-    bone(b, CREAM, [0, 0, 0], [0, 0, 0.18], 0.17, 0.15, 8, 0);
-    blob(b, CREAM, [0, 0.02, 0.3], [0.2, 0.19, 0.24], { tint: 0 });
-    blob(b, '#f2c7bd', [0, -0.08, 0.5], [0.16, 0.11, 0.1], { tint: 0 }, 7, 5);
-    spot(b, '#ffffff', [0, 0.02, 0.3], [0.2, 0.19, 0.24], [0.55, 0.45, 0.7], [0.08, 0.07]);
-    b.add(G.torus(0.16, 0.018, 3, 10), '#9f6b48', { p: [0, -0.03, 0.12], tint: 0 }); // collier
-    b.add(G.cyl(0.035, 0.06, 0.08, 8), '#e8b84a', { p: [0, -0.21, 0.13], tint: 0 }); // clochette
+    hull(b, CREAM, crane, 10, 8, { tint: 0 });
+    blob(b, PINK, [0, -0.08, 0.19], [0.125, 0.085, 0.09], { tint: 0 }, 9, 6);
+    patch(b, crane, [0.62, 0.35, 0.65], [0.38, 0.36], 12); // tache autour de l'œil gauche, jusqu'à l'oreille
     for (const sx of [-1, 1]) {
-      b.add(G.sphere(0.022, 6, 4), '#7a5a55', { p: [sx * 0.05, -0.07, 0.595], tint: 0 }); // naseaux
-      const h = [[sx * 0.13, 0.17, 0.27], [sx * 0.22, 0.24, 0.28], [sx * 0.25, 0.32, 0.24]];
-      for (let i = 0; i < 2; i++) bone(b, '#f3e6c8', h[i], h[i + 1], 0.03 - i * 0.01, 0.02 - i * 0.008, 6, 0);
-      blob(b, CREAM, [sx * 0.22, 0.08, 0.25], [0.11, 0.045, 0.07], { tint: 0 }, 6, 4);
-      eye(b, sx * 0.13, 0.07, 0.44, 0.035);
+      b.add(G.sphere(1, 5, 3), '#b9716b', { p: [sx * 0.048, -0.075, 0.268], s: [0.02, 0.028, 0.012], r: [0, sx * 0.35, 0], tint: 0 }); // naseau
+      eye(b, sx * 0.1, 0.05, 0.14, 0.03);
+      // oreille en feuille, à plat vers l'avant, intérieur rose ; la gauche prend la tache
+      const e = new THREE.Euler(0, sx * 0.3, -sx * 0.15);
+      const at = (o) => new THREE.Vector3(...o).applyEuler(e).add(new THREE.Vector3(sx * 0.215, 0.05, -0.05)).toArray();
+      blob(b, sx > 0 ? '#ffffff' : CREAM, at([0, 0, 0]), [0.1, 0.055, 0.028], { r: [e.x, e.y, e.z], tint: sx > 0 ? 1 : 0 }, 6, 4);
+      blob(b, '#eea69d', at([sx * 0.012, 0, 0.02]), [0.07, 0.035, 0.012], { r: [e.x, e.y, e.z], tint: 0 }, 5, 3);
+      // corne courte, vers l'extérieur puis le haut
+      const h = [[sx * 0.075, 0.12, -0.03], [sx * 0.13, 0.2, -0.03], [sx * 0.15, 0.28, -0.05]];
+      for (let i = 0; i < 2; i++) bone(b, '#ecdcb4', h[i], h[i + 1], 0.03 - i * 0.012, 0.018 - i * 0.01, 5, 0);
     }
-  }, [0, 0.66, 0.46], 'head');
+  }, axis.clone().multiplyScalar(0.43).toArray(), 'head');
+  head.parent = 1;
+  // queue attachée en haut de la croupe, en courbe douce, houppe évasée de la couleur des taches
   const tail = part((b) => {
-    bone(b, CREAM, [0, 0, 0], [0, -0.38, -0.06], 0.02, 0.016, 6, 0);
-    b.add(G.sphere(0.05, 6, 4), '#ffffff', { p: [0, -0.42, -0.065], s: [1, 1.6, 1] });
-  }, [0, 0.74, -0.56], 'tail');
-  return [body, head, ...legs({ x: 0.18, zf: 0.34, zb: -0.36, hip: 0.5, color: '#ecdcbf', r0: 0.075, r1: 0.065, hoof: '#4a3f3a', hoofH: 0.07 }), tail];
+    const t = [[0, 0, 0], [0, -0.04, -0.05], [0, -0.2, -0.075], [0, -0.35, -0.06]];
+    for (let i = 0; i < 3; i++) bone(b, CREAM, t[i], t[i + 1], 0.024 - i * 0.003, 0.021 - i * 0.003, 5, 0);
+    b.add(G.cone(0.045, 0.09, 6), '#ffffff', { p: [0, -0.38, -0.06] });
+    blob(b, '#ffffff', [0, -0.425, -0.06], [0.045, 0.03, 0.045], {}, 6, 3);
+  }, [0, 0.74, -0.46], 'tail');
+  return [body, neck, head, ...legs({ x: 0.13, zf: 0.22, zb: -0.3, hip: 0.5, color: CREAM, r0: 0.09, r1: 0.062, hoof: '#3b3537', hoofH: 0.055, cloven: true, joint: 'back',
+    front: [[0, 0, 0], [0, -0.25, 0.012], [0, -0.445, 0]], back: [[0, 0, 0], [0, -0.22, -0.05], [0, -0.445, 0]] }), tail];
 }
 
 // Cerf : cou long dressé, museau allongé, bois ramifiés, croupe blanche, jarrets marqués
@@ -201,9 +312,10 @@ function cerf() {
 }
 
 export const SPECIES = {
-  // Ongulés refaits (catalogue ANI-001 à ANI-004) : visage, cou porté par la pièce « head »,
-  // pattes à sabots, robes teintées par animal. graze : angle de broutage (rad), muzzle : bout du
-  // museau dans le repère de la tête, top : haut de la tête (m, avant l'échelle) pour le cœur.
+  // Ongulés refaits (catalogue ANI-001 à ANI-004) : visage, cou porté par la pièce « head » (la vache
+  // a un cou articulé, pièce « neck »), pattes à sabots, robes teintées par animal. graze : angle de
+  // broutage (rad) de la tête, ou du cou s'il y en a un ; nod : angle de la tête portée par le cou ;
+  // muzzle : bout du museau dans le repère de la tête ; top : haut de la tête (m, avant l'échelle).
   mouton: {
     speed: 0.6, scale: 1, shadow: true, graze: 1.0, muzzle: [0, -0.1, 0.55], top: 1.0,
     coats: [['Blanc', '#fbf7f2'], ['Noir', '#5a5160']],
@@ -215,8 +327,8 @@ export const SPECIES = {
     parts: () => chevre(),
   },
   vache: {
-    speed: 0.45, scale: 1.4, shadow: true, graze: 1.12, muzzle: [0, -0.1, 0.6], top: 1.0,
-    coats: [['Pie brune', '#7a5440'], ['Pie noire', '#3b3340'], ['Pie rouge', '#b8643c']],
+    speed: 0.45, scale: 1.4, shadow: true, graze: 1.45, nod: -0.6, muzzle: [0, -0.14, 0.22], top: 1.15,
+    coats: [['Pie brune', '#8a5a3c'], ['Pie noire', '#3b3340'], ['Pie rouge', '#b8643c']],
     parts: () => vache(),
   },
   cerf: {

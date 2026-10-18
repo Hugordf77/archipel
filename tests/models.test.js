@@ -132,16 +132,28 @@ describe('usage des modèles', () => {
 });
 
 describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
-  // gabarit visé (L × H × P, m, échelle comprise), entrée du registre, hauteur maximale du museau en broutant
+  // gabarit visé (L × H × P, m, échelle comprise), entrée du registre, hauteur maximale du museau en
+  // broutant, budget de triangles (la vache, refaite d'après sa planche, a droit à 2 000)
   const ONGULES = {
-    mouton: { size: [1.0, 0.95, 1.3], id: 'ANI-001', graze: 0.12 },
-    chevre: { size: [0.6, 1.05, 1.2], id: 'ANI-002', graze: 0.12 },
-    vache: { size: [1.1, 1.5, 2.2], id: 'ANI-003', graze: 0.12 },
-    cerf: { size: [0.8, 2.0, 1.7], id: 'ANI-004', graze: 0.3 },
+    mouton: { size: [1.0, 0.95, 1.3], id: 'ANI-001', graze: 0.12, tris: 1500 },
+    chevre: { size: [0.6, 1.05, 1.2], id: 'ANI-002', graze: 0.12, tris: 1500 },
+    vache: { size: [0.9, 1.6, 1.85], id: 'ANI-003', graze: 0.12, tris: 2000 },
+    cerf: { size: [0.8, 2.0, 1.7], id: 'ANI-004', graze: 0.3, tris: 1500 },
   };
-  // boîte exacte d'une pièce tournée de a (rad) autour de X, à son pivot
-  const partBox = (THREE, p, a = 0) => {
-    const m = new THREE.Matrix4().makeTranslation(...p.pivot).multiply(new THREE.Matrix4().makeRotationX(a));
+  // matrices des pièces pour une part de broutage k (0 : tête portée, 1 : museau dans l'herbe), comme
+  // le jeu : la tête (ou le cou) plie jusqu'à graze, la tête portée par un cou jusqu'à nod
+  const pose = (THREE, parts, def, k) => {
+    const out = [];
+    for (const p of parts) {
+      const a = p.anim === 'neck' ? k * def.graze : p.anim === 'head' ? k * (p.parent != null ? def.nod ?? 0 : def.graze) : 0;
+      const m = new THREE.Matrix4().makeTranslation(...p.pivot).multiply(new THREE.Matrix4().makeRotationX(a));
+      if (p.parent != null) m.premultiply(out[p.parent]);
+      out.push(m);
+    }
+    return out;
+  };
+  // boîte exacte d'une pièce placée par m (par défaut : à son pivot, au repos)
+  const partBox = (THREE, p, m = new THREE.Matrix4().makeTranslation(...p.pivot)) => {
     const pos = p.geo.attributes.position;
     const v = new THREE.Vector3();
     const b = new THREE.Box3();
@@ -149,14 +161,14 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
     return b;
   };
 
-  it('posent quatre sabots bien répartis au sol et tiennent le budget (9 pièces, 1 500 triangles)', async () => {
+  it('posent quatre sabots bien répartis au sol et tiennent le budget (9 pièces, triangles)', async () => {
     const { SPECIES } = await import('../src/models/animals/especes.js');
-    for (const sp of Object.keys(ONGULES)) {
+    for (const [sp, o] of Object.entries(ONGULES)) {
       const def = SPECIES[sp];
       const parts = def.parts();
       expect(parts.length, sp).toBeLessThanOrEqual(9);
       const tris = parts.reduce((a, p) => a + (p.geo.index ? p.geo.index.count : p.geo.attributes.position.count) / 3, 0);
-      expect(tris, sp).toBeLessThanOrEqual(1500);
+      expect(tris, sp).toBeLessThanOrEqual(o.tris);
       const legs = parts.filter((p) => p.anim === 'leg');
       expect(legs, sp).toHaveLength(4);
       for (const l of legs) expect(Math.abs(partBox(THREE, l).min.y * def.scale), sp).toBeLessThanOrEqual(0.01);
@@ -174,17 +186,28 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
     }
   });
 
-  it('gardent la tête attachée au corps et broutent l’herbe (museau près du sol)', async () => {
+  it('gardent la tête attachée au corps, par le cou s’il y en a un, et broutent l’herbe (museau près du sol)', async () => {
     const { SPECIES } = await import('../src/models/animals/especes.js');
     for (const [sp, o] of Object.entries(ONGULES)) {
       const def = SPECIES[sp];
       const parts = def.parts();
-      const body = partBox(THREE, parts[0]);
-      const head = parts.find((p) => p.anim === 'head');
-      for (const a of [0, def.graze / 2, def.graze]) expect(partBox(THREE, head, a).intersectsBox(body), `${sp} à ${a} rad`).toBe(true);
-      const muzzle = (a) => new THREE.Vector3(...def.muzzle).applyMatrix4(new THREE.Matrix4().makeTranslation(...head.pivot).multiply(new THREE.Matrix4().makeRotationX(a))).y * def.scale;
-      expect(muzzle(def.graze), sp).toBeLessThan(o.graze);
-      expect(muzzle(def.graze), sp).toBeGreaterThan(0);
+      // une pièce portée l'est par une pièce qui la précède (le jeu chaîne les matrices dans l'ordre)
+      parts.forEach((p, i) => p.parent != null && expect(p.parent, sp).toBeLessThan(i));
+      const hi = parts.findIndex((p) => p.anim === 'head');
+      const head = parts[hi];
+      for (const k of [0, 0.5, 1]) {
+        const m = pose(THREE, parts, def, k);
+        const body = partBox(THREE, parts[0], m[0]);
+        const hb = partBox(THREE, head, m[hi]);
+        const holder = head.parent != null ? partBox(THREE, parts[head.parent], m[head.parent]) : body;
+        expect(hb.intersectsBox(holder), `${sp} : tête détachée à k = ${k}`).toBe(true);
+        expect(holder.intersectsBox(body), `${sp} : cou détaché à k = ${k}`).toBe(true);
+        // la tête ne passe pas sous le sol
+        expect(hb.min.y * def.scale, `${sp} à k = ${k}`).toBeGreaterThan(-0.01);
+      }
+      const muzzle = (k) => new THREE.Vector3(...def.muzzle).applyMatrix4(pose(THREE, parts, def, k)[hi]).y * def.scale;
+      expect(muzzle(1), sp).toBeLessThan(o.graze);
+      expect(muzzle(1), sp).toBeGreaterThan(0);
       // au repos, la tête est portée bien plus haut
       expect(muzzle(0), sp).toBeGreaterThan(0.45);
     }
