@@ -531,4 +531,17 @@ loadNotes().then(() => {
 });
 
 // outils de mise au point (captures, tests manuels)
-window.__catalogue = { ui, notes, open: openSheet, compare: openCompare, close: closeSheet, get viewer() { return viewer; }, thumbs, exportSheet };
+// poignée de dev (planches, scripts/modeles/planche.js de la skill modele-3d) : ouvrir une fiche avec des
+// paramètres, piloter la vue, lire le registre
+window.__catalogue = {
+  ui, notes, open: openSheet, compare: openCompare, close: closeSheet, get viewer() { return viewer; }, thumbs, exportSheet,
+  get R() { return R; },
+  ouvrir(id, params = null) {
+    openSheet(id);
+    if (params) {
+      ui.params = { ...ui.params, ...params };
+      openSheet(id, { keepParams: true, keepView: true });
+    }
+    return viewer;
+  },
+};

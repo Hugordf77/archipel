@@ -175,6 +175,30 @@ ce que le jeu construit, dossiers et index générés, chargement sans cycle d'i
 `tests/empreintes.test.js` (empreinte de chaque modèle), `tests/kit.test.js` (aides du kit) et
 `tests/catalogue-notes.test.js`.
 
+## Créer ou reprendre un modèle avec Evis
+
+Evis est l'agent de modélisation du projet (`.claude/agents/evis.md`) ; son regard critique, en lecture
+seule, est `.claude/agents/evis-critique.md`. Les règles qu'ils appliquent sont dans `docs/DA.md`, la méthode
+dans la skill `modele-3d` (`.claude/skills/modele-3d/SKILL.md`).
+
+- **Appel** : « Evis, reprends ANI-002 d'après cette planche » (avec l'image), « Evis, modélise un ours
+  d'après cette description », ou la skill `/modele-3d`.
+- **Méthode** : planche 6 vues, écarts chiffrés, construction dans le dossier du modèle, mesures, captures
+  comparées, note du catalogue, un commit par modèle.
+- **Boucle** : Evis construit, Evis-critique analyse (proportions mesurées face à la référence, défauts
+  classés avec leur `fichier:ligne`, verdict « valide » ou « à reprendre »), Evis corrige ; trois tours au
+  plus, puis validation par l'utilisateur.
+- **Outils** :
+  - `npm run modeles:mesure -- <id>` : chaque règle chiffrée de la DA, ✓ ou ✗ ;
+  - dans le catalogue, `await (await import('/scripts/modeles/planche.js')).planche({ id })` : planche 6 vues,
+    broutage, gros plans, référence / modèle, dans `captures/` ;
+  - dans le jeu, `await (await import('/scripts/modeles/jeu.js')).jeu({ espece })` : captures de près et de
+    loin, coût en triangles de chaque espèce, sauvegarde verrouillée ;
+  - l'aide « Collisions » de la fiche.
+- **Garde-fous** : toute hausse de budget (`src/models/kit/budgets.js`) ou tout changement d'une aide du
+  `kit/` employée ailleurs se demande ; les empreintes des autres modèles restent identiques ; `git add`
+  avec des chemins explicites.
+
 ## Rendu (shaders GLSL sur mesure)
 
 1. **Toon** : rampe douce à 4 paliers, ombres teintées violet/bleu (jamais noires), rim light chaude,

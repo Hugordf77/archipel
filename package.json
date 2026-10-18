@@ -13,7 +13,8 @@
     "modeles:releve": "node scripts/modeles/releve.mjs",
     "modeles:empreinte": "node scripts/modeles/empreinte.mjs",
     "modeles:index": "node scripts/modeles/index.mjs",
-    "modeles:fiches": "node scripts/modeles/fiches.mjs"
+    "modeles:fiches": "node scripts/modeles/fiches.mjs",
+    "modeles:mesure": "node scripts/modeles/mesure.mjs"
   },
   "dependencies": {
     "@fontsource/fredoka": "5.1.0",

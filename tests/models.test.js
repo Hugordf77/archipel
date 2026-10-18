@@ -132,6 +132,39 @@ describe('dossiers de modèle', () => {
   });
 });
 
+describe('budgets de triangles (docs/DA.md)', () => {
+  const tri = (o) => {
+    let t = 0;
+    o.traverse((x) => { if (x.geometry) t += (x.geometry.index ? x.geometry.index.count : x.geometry.attributes.position.count) / 3; });
+    return Math.round(t);
+  };
+  it('tiennent le budget de leur catégorie ou de leur fiche, sauf écarts connus qui ne grossissent pas', async () => {
+    const B = await import('../src/models/kit/budgets.js');
+    for (const m of R.MODELS) {
+      const t = Math.max(...[R.defaultParams(m), ...m.variants.map((v) => v.params)].map((p) => tri(m.build(p).object3d)));
+      const budget = B.budgetDe(m);
+      if (B.ECARTS[m.id]) {
+        expect(t, `${m.id} : écart connu qui grossit`).toBeLessThanOrEqual(B.ECARTS[m.id]);
+        expect(t, `${m.id} tient son budget : le retirer de ECARTS (kit/budgets.js)`).toBeGreaterThan(budget);
+      } else expect(t, `${m.id} : ${t} triangles pour un budget de ${budget}`).toBeLessThanOrEqual(budget);
+    }
+  });
+
+  it('donnent une version allégée aux mêmes pièces aux espèces de plus de 4 000 triangles', async () => {
+    const B = await import('../src/models/kit/budgets.js');
+    const { SPECIES } = await import('../src/models/animaux/index.js');
+    const t = (parts) => parts.reduce((a, p) => a + (p.geo.index ? p.geo.index.count : p.geo.attributes.position.count) / 3, 0);
+    for (const [sp, d] of Object.entries(SPECIES)) {
+      const fin = t(d.parts());
+      if (fin <= B.LOD_SEUIL) continue;
+      expect(d.lod, `${sp} : ${fin} triangles sans version allégée`).toBeTypeOf('function');
+      expect(d.lodDist ?? 20, sp).toBeGreaterThanOrEqual(B.LOD_DISTANCE);
+      const m = R.MODELS.find((x) => x.ref === `species:${sp}`);
+      expect(t(d.lod()), sp).toBeLessThanOrEqual(m.budget?.lod ?? B.LOD_SEUIL);
+    }
+  });
+});
+
 describe('usage des modèles', () => {
   const refs = () => new Set(R.MODELS.map((m) => m.ref));
 
