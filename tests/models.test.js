@@ -155,14 +155,10 @@ describe('usage des modèles', () => {
   });
 
   it('couvre chaque élément de lieu que sait construire le jeu', async () => {
-    const fs = await import('node:fs');
-    const src = fs.readFileSync(new URL('../src/models/structures/lieux.js', import.meta.url), 'utf8');
-    const cases = [...src.matchAll(/case '(\w+)'/g)].map((m) => m[1]);
-    const micro = [...src.slice(src.indexOf('const MICRO')).matchAll(/^ {2}(\w+): \(\) =>/gm)].map((m) => m[1]);
-    expect(cases.length).toBeGreaterThan(35);
-    expect(micro.length).toBe(16);
+    const { TYPES_DE_LIEUX } = await import('../src/models/lieux.js');
+    expect(TYPES_DE_LIEUX).toHaveLength(56);
     const known = refs();
-    expect([...cases, ...micro].map((t) => `part:${t}`).filter((r) => !known.has(r))).toEqual([]);
+    expect(TYPES_DE_LIEUX.map((t) => `part:${t}`).filter((r) => !known.has(r))).toEqual([]);
   });
 });
 

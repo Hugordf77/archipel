@@ -4,7 +4,7 @@ import { toonMaterial, foliageMaterial, glowMaterial, grassMaterial } from '../.
 import { nextId, LAYER_SHADOW } from '../../core/globals.js';
 import { LAYOUT, heightAt, pathMask, vnoise, coastRadius, distToPolyline } from './terrain.js';
 import { PAL } from '../../models/kit/palette.js';
-import { parasolPlage, transat } from '../../models/buildings/ileDepart.js';
+import { parasolPlage, transat } from '../../models/ouvrages/mobilier-depart/index.js';
 import { buildClumpGeometry } from '../../render/foliage.js';
 import { cloudAtlas } from '../../render/textures.js';
 import { tuftGeometry } from '../../render/grass.js';

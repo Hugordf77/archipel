@@ -12,7 +12,7 @@ import { PAL } from './kit/palette.js';
 import { assembleKind, assemblePart, assembleBuilder, assembleMesh } from './kit/assemble.js';
 import { FICHES } from './index.gen.js';
 // tables du jeu : chargées pour assembler lieux et végétation seuls (kit/tables.js)
-import './structures/lieux.js';
+import './lieux.js';
 import './vegetation/especes.js';
 import * as ILE from './buildings/ileDepart.js';
 import { CATALOG } from './decor/catalogue.js';
@@ -396,10 +396,6 @@ const ANCIENS = [
   M('ARB-012', 'fougere-arborescente', 'Fougère arborescente', kind('fougere_arbo'), { tags: ['tropical'] }),
   M('ARB-013', 'champignon-geant', 'Champignon géant', kind('champi_geant'), { params: { v: [0, 4] }, variants: v3(['Rose', 'Pêche', 'Lilas', 'Menthe', 'Beurre']) }),
   M('ARB-014', 'grand-arbre', 'Grand arbre de l\'île de départ', ile('grandArbre', (b) => ILE.grandArbreClumps(ILE.grandArbre(b, 0, 0, 0))), { tags: ['repère'] }),
-  M('ARB-015', 'arbre-geant', 'Arbre géant (lieu)', part('arbre_geant'), {
-    variants: [{ label: 'Chêne', params: { kind: 'chene' } }, { label: 'Sapin', params: { kind: 'sapin' } }, { label: 'Champignon', params: { kind: 'champi' } }],
-    params: { kind: ['chene', 'sapin', 'champi'] }, tags: ['repère'],
-  }),
 
   // --- PLA : plantes, fleurs et cultures ------------------------------------------------
   M('PLA-001', 'arbuste', 'Arbuste', kind('arbuste')),
@@ -418,7 +414,6 @@ const ANCIENS = [
   M('PLA-014', 'massif-fleurs', 'Massif de fleurs', kind('fleurs'), { params: { fleur: 'color' }, tags: ['teinté par instance'] }),
   M('PLA-015', 'fleur-des-champs', 'Fleur des champs', kind('fleur_champ'), { params: { fleur: 'color' }, tags: ['teinté par instance'] }),
   M('PLA-016', 'herbe', 'Herbe', kind('herbe'), { tags: ['tuiles'] }),
-  M('PLA-017', 'fleur-geante', 'Fleur géante', part('fleur_geante'), { tags: ['curiosité'] }),
   M('PLA-018', 'lavande-geante', 'Lavande géante (rareté)', ile('lavandeGeante', (b) => ILE.lavandeGeante(b, 0, 0, 0), 'lavender'), { tags: ['rareté', '10 h d\'étude'] }),
   M('PLA-019', 'arche-glycine', 'Arche de glycine (rareté)', ile('archeGlycine', (b) => ILE.archeGlycine(b, 0, 0, 0), 'wisteria'), { tags: ['rareté', '25 h d\'étude'] }),
 
@@ -431,71 +426,22 @@ const ANCIENS = [
   M('ROC-006', 'obsidienne', 'Obsidienne', kind('obsidienne'), { params: { roche: 'color' }, tags: ['minable', 'cratère'] }),
   M('ROC-007', 'souche', 'Souche', kind('souche'), { tags: ['bois'] }),
   M('ROC-008', 'bois-mort', 'Bois mort', kind('bois_mort'), { tags: ['bois'] }),
-  M('ROC-009', 'pile-bois', 'Pile de bois', part('bois_pile'), { tags: ['bois'] }),
-  M('ROC-010', 'rondin', 'Rondin', part('rondin'), { tags: ['bois', 'assise'] }),
 
   // --- BAT : bâtiments ------------------------------------------------------------------
 
   // --- STR : ouvrages et aménagements ---------------------------------------------------
-  M('STR-001', 'jetee', 'Jetée', part('jetee'), { params: { len: [6, 20] }, tags: ['village', 'accostage'] }),
-  M('STR-002', 'ponton', 'Ponton', ile('ponton', (b) => ILE.ponton(b, { x: 0, z0: -5.5, z1: 5.5, w: 2.4, h: 0.86 })), { tags: ['accostage'] }),
-  M('STR-003', 'pont', 'Pont', part('pont'), { params: { len: [3, 10] }, tags: ['chemins'] }),
-  M('STR-004', 'pont-corde', 'Pont de corde', part('pont_corde', { x1: 12, z1: 0, y: 0, y1: 0 }), { params: { x1: [6, 20], y1: [-3, 3] }, tags: ['chemins'] }),
-  M('STR-005', 'escalier', 'Escalier', part('escalier'), { params: { len: [2, 6], rise: [0.5, 3] }, tags: ['chemins'] }),
-  M('STR-006', 'puits', 'Puits', part('puits'), { tags: ['village'] }),
-  M('STR-007', 'cloture-champ', 'Clôture de champ', part('cloture_champ'), { params: { w: [6, 24], d: [4, 16] }, tags: ['champs'] }),
-  M('STR-008', 'potager', 'Potager', part('potager'), { tags: ['village'] }),
-  M('STR-009', 'epouvantail', 'Épouvantail', part('epouvantail'), { tags: ['champs'] }),
-  M('STR-010', 'bassin-chaud', 'Bassin chaud', part('bassin_chaud'), { params: { size: [0.6, 1.6] }, tags: ['cratère'] }),
-  M('STR-011', 'arche', 'Arche', part('arche'), { params: { size: [0.8, 2] } }),
-  M('STR-012', 'arche-fleurie', 'Arche fleurie', part('arche_fleurie'), { tags: ['champs'] }),
-  M('STR-013', 'panneau', 'Panneau', part('panneau'), { tags: ['chemins'] }),
-  M('STR-014', 'corde-linge', 'Corde à linge', part('linge'), { params: { len: [2, 8] }, tags: ['village'] }),
-  M('STR-015', 'lanterne', 'Lanterne', part('lanterne'), { tags: ['lumineux'] }),
-  M('STR-016', 'lanterne-pierre', 'Lanterne de pierre', part('lanterne_pierre'), { tags: ['curiosité', 'lumineux'] }),
-  M('STR-017', 'banc', 'Banc', part('banc'), { tags: ['assise'] }),
-  M('STR-018', 'banc-vue', 'Banc avec vue', part('banc_vue'), { ...SAME('STR-017'), tags: ['assise', 'curiosité'] }),
-  M('STR-019', 'casiers', 'Casiers', part('casiers'), { tags: ['village', 'pêche'] }),
-  M('STR-020', 'parasol-transats', 'Parasol et transats', ile('parasol', (b) => {
-    ILE.parasolPlage(b, 0, 0, 0);
-    ILE.transat(b, -1.2, 0, 0.8, PAL.mint);
-    ILE.transat(b, 1.2, 0, 0.6, PAL.sky);
-  }), { tags: ['plage'] }),
-  M('STR-021', 'bureau-etude', 'Bureau d\'étude', ile('bureauEtude', (b, glass) => ILE.bureauEtude(b, glass, 0, 0, 0)), { tags: ['étude', 'lumineux'] }),
   // compléments de l'inventaire (relevés dans le code)
-  M('STR-022', 'pont-riviere', 'Pont de la rivière', ile('pontRiviere', (b) => ILE.pontRiviere(b, -2.4, 2.4, 0, 0)), { tags: ['chemins'] }),
-  M('STR-023', 'pupitre-hibou', 'Pupitre et perchoir du hibou', ile('pupitreHibou', (b) => ILE.pupitreHibou(b, { x: 0, z: 0 }, 0)), { tags: ['hibou'] }),
-  M('STR-024', 'panneau-place', 'Panneau de la place', ile('panneauPlace', (b) => ILE.panneauPlace(b, 0, 0, 0)), { tags: ['chemins'] }),
-  M('STR-025', 'banc-bois', 'Banc de bois', ile('bancBois', (b) => ILE.bancBois(b, 0, 0, 0)), { tags: ['assise'] }),
-  M('STR-026', 'lanterne-jardin', 'Lanterne de jardin', ile('lanterneJardin', (b, glass) => ILE.lanterneJardin(b, glass, 0, 0, 0)), { tags: ['lumineux'] }),
-  M('STR-027', 'cascade', 'Cascade', part('cascade'), { params: { w: [1, 6] }, tags: ['rivière', 'animé'] }),
 
   // --- MON : ruines et monuments --------------------------------------------------------
 
   // --- NAV : bateaux et épaves ----------------------------------------------------------
-  M('NAV-005', 'barque-amarree', 'Barque amarrée', part('barque_amarree'), { variants: v3(['Corail', 'Menthe', 'Ciel']), params: { v: [0, 3] }, tags: ['village'] }),
-  M('NAV-006', 'barque-echouee', 'Barque échouée', part('barque_echouee'), { params: { v: [0, 2] }, tags: ['épave'] }),
-  M('NAV-007', 'epave', 'Épave', part('epave'), { params: { len: [8, 20], sunk: 'bool' }, tags: ['épave'] }),
-  M('NAV-008', 'grande-epave', 'Grande épave', part('epave_geante'), { tags: ['épave', 'repère'] }),
-  M('NAV-009', 'ancre', 'Ancre', part('ancre'), { tags: ['curiosité'] }),
   M('NAV-010', 'bouee', 'Bouée', marine('bouee'), { tags: ['flotte'] }),
-  M('NAV-011', 'bouee-echouee', 'Bouée échouée', part('bouee_echouee'), { tags: ['curiosité'] }),
 
   // --- DEC : décor achetable --------------------------------------------------------------
   ...['pierre', 'pot', 'cloture', 'lanterne', 'champi', 'nichoir', 'banc', 'fanions', 'hamac', 'telescope', 'moulin', 'arche', 'statue', 'etabli', 'four', 'couture', 'chantier', 'fontaine']
     .map((k, i) => M(`DEC-${String(i + 1).padStart(3, '0')}`, `decor-${k}`, CATALOG[k].name, decor(k), { tags: [CATALOG[k].station ? 'atelier' : 'décor', `${CATALOG[k].price} coquillages`] })),
 
   // --- OBJ : objets et petites découvertes ----------------------------------------------
-  M('OBJ-001', 'coffre', 'Coffre', part('coffre'), { tags: ['trésor'] }),
-  M('OBJ-002', 'coffre-cache', 'Coffre caché', part('coffre_cache'), { ...SAME('OBJ-001'), tags: ['trésor', 'curiosité'] }),
-  M('OBJ-003', 'tonneaux', 'Tonneaux', part('tonneaux'), { tags: ['curiosité'] }),
-  M('OBJ-004', 'charrette', 'Charrette', part('charrette'), { tags: ['curiosité'] }),
-  M('OBJ-005', 'feu-camp', 'Feu de camp', part('feu_camp'), { tags: ['lumineux'] }),
-  M('OBJ-006', 'tente', 'Tente', part('tente'), { variants: v3(['Corail', 'Menthe']), params: { v: [0, 1] } }),
-  M('OBJ-007', 'ruche', 'Ruche', part('ruche'), { tags: ['champs'] }),
-  M('OBJ-008', 'nid', 'Nid', part('nid'), { tags: ['curiosité'] }),
-  M('OBJ-009', 'cercle-champignons', 'Cercle de champignons', part('cercle_champi'), { tags: ['curiosité'] }),
-  M('OBJ-010', 'recif', 'Récif', part('recif'), { params: { size: [0.6, 2] }, tags: ['lagon'] }),
   M('OBJ-011', 'corail', 'Corail', kind('corail'), { tags: ['lagon'] }),
   M('OBJ-012', 'coquillage', 'Coquillage', collect('coquillage'), { tags: ['trésor du jour'] }),
   M('OBJ-013', 'etoile-mer', 'Étoile de mer', collect('etoile'), { tags: ['trésor du jour'] }),
@@ -508,7 +454,6 @@ const ANCIENS = [
   // compléments de l'inventaire
   M('OBJ-021', 'recif-marin', 'Récif marin', marine('recif'), { tags: ['sous l\'eau'] }),
   M('OBJ-022', 'banc-poissons', 'Banc de poissons', marine('poissons'), { tags: ['pêche'] }),
-  M('OBJ-023', 'nichoir-lieu', 'Nichoir (lieu)', part('nichoir'), { tags: ['curiosité'] }),
 ];
 
 // fiches des dossiers de modèle (index.gen.js) : complétées comme les anciennes entrées

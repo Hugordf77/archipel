@@ -7,7 +7,10 @@ import { toonMaterial } from '../../render/shaders/materials.js';
 import { PAL } from '../../models/kit/palette.js';
 import { MAT } from '../../models/kit/materials.js';
 import { rng, segment, palmFrondGeometry } from '../../models/kit/shapes.js';
-import { pupitreHibou, bureauEtude, trunkAlong, grandArbre, grandArbreClumps, ponton, pontRiviere, panneauPlace, bancBois, lanterneJardin } from '../../models/buildings/ileDepart.js';
+import { trunkAlong, grandArbre, grandArbreClumps } from '../../models/buildings/ileDepart.js';
+import { ponton } from '../../models/ouvrages/ponton/index.js';
+import { pupitreHibou, bureauEtude, pontRiviere, panneauPlace, bancBois, lanterneJardin } from '../../models/ouvrages/mobilier-depart/index.js';
+import physiqueMobilier from '../../models/ouvrages/mobilier-depart/physique.js';
 import { chaumiere } from '../../models/batiments/chaumiere/index.js';
 import physiqueChaumiere from '../../models/batiments/chaumiere/physique.js';
 import { bibliotheque } from '../../models/batiments/bibliotheque-souche/index.js';
@@ -65,10 +68,8 @@ export function buildProps() {
     const oy = heightAt(o.x, o.z);
     const p = new Builder();
     pupitreHibou(p, o, oy);
-    const cx = o.x - 1.7;
-    const cz = o.z - 0.5;
     push(p);
-    obstacles.push({ x: o.x, z: o.z, r: 0.45 }, { x: cx, z: cz, r: 0.6 });
+    poser(physiqueMobilier.pupitreHibou, o.x, o.z);
     spots.owl = { x: o.x, z: o.z + 1.2, perch: new THREE.Vector3(o.x + 1.0, oy + 1.38, o.z - 0.1), lectern: new THREE.Vector3(o.x, oy + 1.1, o.z) };
   }
 
@@ -82,7 +83,7 @@ export function buildProps() {
     bureauEtude(b, glass, x, y, z);
     const sz = z - 0.85;
     push(b);
-    obstacles.push({ x: x - 0.55, z, r: 0.6 }, { x: x + 0.55, z, r: 0.6 });
+    poser(physiqueMobilier.bureauEtude, x, z);
     spots.desk = { x, z: sz, seatY: y + 0.52, deskTop: new THREE.Vector3(x, y + 0.86, z), potPos: new THREE.Vector3(x - 0.25, y + 0.86, z - 0.2) };
   }
 
@@ -353,7 +354,7 @@ export function buildProps() {
     const b = new Builder();
     panneauPlace(b, x, y, z);
     push(b);
-    obstacles.push({ x, z, r: 0.25 });
+    poser(physiqueMobilier.panneauPlace, x, z);
   }
 
   // -------------------------------------------------------------------------
@@ -366,7 +367,7 @@ export function buildProps() {
     const b = new Builder();
     bancBois(b, x, y, z);
     push(b);
-    obstacles.push({ x, z, r: 0.7 });
+    poser(physiqueMobilier.bancBois, x, z);
   }
 
   // -------------------------------------------------------------------------
@@ -381,7 +382,7 @@ export function buildProps() {
     const b = new Builder();
     lanterneJardin(b, glass, x, y, z);
     push(b);
-    obstacles.push({ x, z, r: 0.2 });
+    poser(physiqueMobilier.lanterneJardin, x, z);
     lanterns.push(new THREE.Vector3(x, y + 1.72, z));
   }
 
