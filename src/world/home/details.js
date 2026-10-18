@@ -3,7 +3,7 @@ import { Builder, G } from '../../render/builder.js';
 import { toonMaterial, foliageMaterial, glowMaterial, grassMaterial } from '../../render/shaders/materials.js';
 import { nextId, LAYER_SHADOW } from '../../core/globals.js';
 import { LAYOUT, heightAt, pathMask, vnoise, coastRadius, distToPolyline } from './terrain.js';
-import { PAL } from '../../models/palette.js';
+import { PAL } from '../../models/kit/palette.js';
 import { parasolPlage, transat } from '../../models/buildings/ileDepart.js';
 import { buildClumpGeometry } from '../../render/foliage.js';
 import { cloudAtlas } from '../../render/textures.js';

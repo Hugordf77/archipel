@@ -13,7 +13,7 @@ import { bloomColorOf } from './gen/zones.js';
 import { BIOMES } from './biomes.js';
 import { kindModel, CAP_COLORS, ROCKY } from '../../models/vegetation/especes.js';
 import { partModel, rotY, recolorPart } from '../../models/structures/lieux.js';
-import { MAT } from '../../models/materials.js';
+import { MAT } from '../../models/kit/materials.js';
 import { buildRivers, buildLake, buildFallFoam } from '../env/rivers.js';
 import { setGroundProvider, addObstacles, removeObstacles } from '../navigation.js';
 

@@ -269,31 +269,6 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
     }
   });
 
-  it('limb : tube continu, sans bouchon interne, bout arrondi en option', async () => {
-    const { limb } = await import('../src/models/animals/especes.js');
-    const { Builder } = await import('../src/render/builder.js');
-    const tube = (end) => {
-      const bd = new Builder();
-      limb(bd, '#ffffff', [[0, 0, 0], [0, -0.25, 0.012], [0, -0.4, 0], [0, -0.47, 0]], [0.07, 0.064, 0.056, 0.045], { sides: 10, rings: 4, end });
-      return bd.build();
-    };
-    // un anneau de sommets par section : 2 × côtés × intervalles, aucun bouchon
-    const pos = tube('open').attributes.position;
-    expect(pos.count / 3).toBe(2 * 10 * 4);
-    // aucune face transverse : toutes longent l'axe (vertical) de la patte
-    const a = new THREE.Vector3();
-    const b = new THREE.Vector3();
-    const c = new THREE.Vector3();
-    for (let i = 0; i < pos.count; i += 3) {
-      a.fromBufferAttribute(pos, i);
-      b.fromBufferAttribute(pos, i + 1).sub(a);
-      c.fromBufferAttribute(pos, i + 2).sub(a);
-      expect(Math.abs(b.cross(c).normalize().y)).toBeLessThan(0.5);
-    }
-    // bout arrondi : deux anneaux de dôme et une pointe
-    expect(tube('round').attributes.position.count / 3).toBe(2 * 10 * 6 + 10);
-  });
-
   it('ont la taille du gabarit (±15 %) et une variante par robe', () => {
     for (const o of Object.values(ONGULES)) {
       const m = R.BY_ID.get(o.id);

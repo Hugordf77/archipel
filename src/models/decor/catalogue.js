@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { Builder, G } from '../../render/builder.js';
 import { toonMaterial, glowMaterial } from '../../render/shaders/materials.js';
 import { LAYER_SHADOW } from '../../core/globals.js';
-import { PAL } from '../palette.js';
+import { PAL } from '../kit/palette.js';
 
 // ---------------------------------------------------------------------------
 // Catalogue de l'échoppe (prix en coquillages)

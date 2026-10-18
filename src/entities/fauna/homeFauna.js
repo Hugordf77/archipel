@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { toonMaterial, glowMaterial } from '../../render/shaders/materials.js';
 import { nextId, LAYER_SHADOW, U } from '../../core/globals.js';
 import { coastRadius, heightAt, LAYOUT } from '../../world/home/terrain.js';
-import { MAT } from '../../models/materials.js';
+import { MAT } from '../../models/kit/materials.js';
 import { butterflyGeometry, crabGeometry, gullGeometry, GULL_PIVOTS, BUTTERFLY_PIVOTS, CRAB_LEG_PIVOTS } from '../../models/animals/ileDepart.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);

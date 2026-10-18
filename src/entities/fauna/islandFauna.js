@@ -9,7 +9,7 @@ import { LAYER_SHADOW, U } from '../../core/globals.js';
 import { mulberry32 } from '../../core/random.js';
 import { SPECIES_LABEL } from '../../world/islands/gen/spawns.js';
 import { SPECIES } from '../../models/animals/especes.js';
-import { MAT } from '../../models/materials.js';
+import { MAT } from '../../models/kit/materials.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
 const _zero = new THREE.Matrix4().makeScale(0, 0, 0);

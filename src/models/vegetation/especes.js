@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { Builder, G } from '../../render/builder.js';
 import { buildClumpGeometry } from '../../render/foliage.js';
-import { palmFrondGeometry } from '../shapes.js';
+import { palmFrondGeometry } from '../kit/shapes.js';
 import { tuftGeometry } from '../../render/grass.js';
 import { mulberry32 } from '../../core/random.js';
 

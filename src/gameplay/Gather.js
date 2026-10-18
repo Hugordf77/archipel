@@ -11,7 +11,7 @@ import { groundAt, waterDepth, blockedByObstacle, isHome } from '../world/naviga
 import { h, replay } from '../ui/dom.js';
 import { kindModel } from '../models/vegetation/especes.js';
 import { outilGeometry, flotteurGeometry } from '../models/props/outils.js';
-import { MAT } from '../models/materials.js';
+import { MAT } from '../models/kit/materials.js';
 import { STRIDE } from '../world/islands/islandgen.js';
 import { BLOOM_IDS } from '../world/islands/gen/zones.js';
 

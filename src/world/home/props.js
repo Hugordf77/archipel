@@ -4,18 +4,18 @@ import { Builder, G } from '../../render/builder.js';
 import { nextId, LAYER_SHADOW } from '../../core/globals.js';
 import { LAYOUT, heightAt } from './terrain.js';
 import { toonMaterial } from '../../render/shaders/materials.js';
-import { PAL } from '../../models/palette.js';
-import { MAT } from '../../models/materials.js';
-import { rng, segment, palmFrondGeometry } from '../../models/shapes.js';
+import { PAL } from '../../models/kit/palette.js';
+import { MAT } from '../../models/kit/materials.js';
+import { rng, segment, palmFrondGeometry } from '../../models/kit/shapes.js';
 import { chaumiere, bibliotheque, pupitreHibou, bureauEtude, trunkAlong, grandArbre, grandArbreClumps, ponton, pontRiviere, echoppe, panneauPlace, bancBois, lanterneJardin } from '../../models/buildings/ileDepart.js';
 
 // Palette pastel chaude (couleurs « gouache »)
-export { PAL } from '../../models/palette.js';
+export { PAL } from '../../models/kit/palette.js';
 
 
 const UP = new THREE.Vector3(0, 1, 0);
 
-export { palmFrondGeometry } from '../../models/shapes.js';
+export { palmFrondGeometry } from '../../models/kit/shapes.js';
 
 export function buildProps() {
   const statics = [];

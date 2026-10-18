@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Builder, G } from '../../render/builder.js';
 import { toonMaterial } from '../../render/shaders/materials.js';
 import { lavandeGeante, archeGlycine } from '../../models/buildings/ileDepart.js';
-import { MAT } from '../../models/materials.js';
+import { MAT } from '../../models/kit/materials.js';
 import { LAYOUT, heightAt, pathMask, vnoise, distToPolyline } from './terrain.js';
 
 // ---------------------------------------------------------------------------

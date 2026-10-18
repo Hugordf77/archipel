@@ -4,8 +4,8 @@
 // coordonnées de l'île, le catalogue des modèles (0, 0, 0).
 import * as THREE from 'three';
 import { G } from '../../render/builder.js';
-import { PAL } from '../palette.js';
-import { rng, segment } from '../shapes.js';
+import { PAL } from '../kit/palette.js';
+import { rng, segment } from '../kit/shapes.js';
 
 // Maison du joueur : chaumière ronde au toit gonflé (porte face +z)
 export function chaumiere(b, glass, x, y, z) {

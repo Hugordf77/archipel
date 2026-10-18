@@ -2,7 +2,7 @@
 // feuille de palmier. Pures (pas de scène) : utilisables par le jeu et le catalogue.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { G } from '../render/builder.js';
+import { G } from '../../render/builder.js';
 
 export function rng(seed) {
   let s = (seed * 9301 + 49297) >>> 0;

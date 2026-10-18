@@ -3,14 +3,14 @@
 // modèles (catalogue, tests) ; le jeu, lui, regroupe ces mêmes modèles par île.
 // Chaque fonction renvoie { object3d, anim? } ; anim(dt, t) anime le modèle.
 import * as THREE from 'three';
-import { Builder } from '../render/builder.js';
-import { toonMaterial, foliageMaterial, grassMaterial } from '../render/shaders/materials.js';
-import { buildClumpGeometry } from '../render/foliage.js';
-import { leafAtlas } from '../render/textures.js';
-import { LAYER_SHADOW } from '../core/globals.js';
+import { Builder } from '../../render/builder.js';
+import { toonMaterial, foliageMaterial, grassMaterial } from '../../render/shaders/materials.js';
+import { buildClumpGeometry } from '../../render/foliage.js';
+import { leafAtlas } from '../../render/textures.js';
+import { LAYER_SHADOW } from '../../core/globals.js';
 import { MAT } from './materials.js';
-import { kindModel, ROCKY, CAP_COLORS } from './vegetation/especes.js';
-import { partModel, recolorPart } from './structures/lieux.js';
+import { kindModel, ROCKY, CAP_COLORS } from '../vegetation/especes.js';
+import { partModel, recolorPart } from '../structures/lieux.js';
 
 let mats = null;
 export function materiaux() {

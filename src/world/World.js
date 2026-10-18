@@ -11,7 +11,7 @@ import { Sky } from './env/sky.js';
 import { DayCycle } from './env/daycycle.js';
 import { leafAtlas } from '../render/textures.js';
 import { foliageMaterial, glowMaterial } from '../render/shaders/materials.js';
-import { MAT } from '../models/materials.js';
+import { MAT } from '../models/kit/materials.js';
 import { NOISE, CURVE } from '../render/shaders/chunks.js';
 
 export const SMOKE_VERT = /* glsl */ `

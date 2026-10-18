@@ -13,7 +13,7 @@ const STORE = 'vignettes';
 
 // code source brut des modèles (servi par le middleware de dev, hors du graphe de modules pour
 // ne pas recharger la page à chaque retouche), pour l'empreinte des vignettes
-const COMMON = ['src/models/assemble.js', 'src/models/materials.js', 'src/models/palette.js', 'src/models/shapes.js'];
+const COMMON = ['assemble', 'materials', 'palette', 'shapes', 'formes', 'laine', 'accessoires', 'pieces'].map((k) => `src/models/kit/${k}.js`);
 const textCache = new Map();
 export async function sourceText(path) {
   if (!textCache.has(path)) {
