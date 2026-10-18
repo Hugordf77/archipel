@@ -293,6 +293,7 @@ function ensureViewer() {
       toggle('wire', 'Fil de fer'),
       toggle('bbox', 'Cotes'),
       toggle('scale', 'Silhouette 1,4 m'),
+      toggle('collisions', 'Collisions'),
       toggle('rotate', 'Rotation'),
       toggle('anim', 'Animation')),
     h('p', { class: 'hint' }, 'Glisser pour tourner · molette pour zoomer · clic droit pour déplacer · ← → modèle voisin · Échap pour fermer'),

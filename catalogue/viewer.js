@@ -1,12 +1,23 @@
 // Vue 3D d'une fiche (ou d'une comparaison de 2 à 4 modèles à la même échelle) : orbite et
 // rotation automatique, sol quadrillé au mètre, silhouette du personnage (1,4 m), lumière
 // jour / soir / nuit, rendu du jeu (peinture et contours du Pipeline) ou rendu brut, fil de fer,
-// boîte englobante cotée en mètres, animations des modèles.
+// boîte englobante cotée en mètres, animations des modèles, collisions (obstacles, encombrement,
+// planchers, tels que le jeu les emploie : collisions.js).
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { U } from '../src/core/globals.js';
 import { Pipeline } from '../src/render/Pipeline.js';
 import { prepareUniforms, setLight, skyBackground, boxOf, statsOf, makeSilhouette, makeGrid, disposeObject, fmtMeters } from './scene.js';
+import { physiqueDe, objetCollisions, COULEURS } from './collisions.js';
+import { partModel } from '../src/models/lieux.js';
+import { KIND_RADIUS } from '../src/world/islands/gen/kinds.js';
+import { CATALOG } from '../src/models/decor/index.js';
+
+// physique.js de chaque dossier de modèle (pièces de l'île de départ), par chemin depuis la racine
+const PHYSIQUES = Object.fromEntries(Object.entries(import.meta.glob('../src/models/*/*/physique.js', { eager: true, import: 'default' }))
+  .map(([f, d]) => [f.replace(/^\.\.\//, ''), d]));
+const DEPS = { partModel, KIND_RADIUS, CATALOG, physiques: PHYSIQUES };
+const hex = (c) => `#${c.toString(16).padStart(6, '0')}`;
 
 const GAP = 1.2; // écart entre deux modèles comparés (m)
 
@@ -16,8 +27,10 @@ export class Viewer {
     this.canvas = document.createElement('canvas');
     this.dims = document.createElement('div');
     this.dims.className = 'dims';
+    this.legend = document.createElement('div');
+    this.legend.className = 'collisions-legend';
     stage.prepend(this.canvas);
-    stage.append(this.dims);
+    stage.append(this.dims, this.legend);
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: false, preserveDrawingBuffer: true });
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     this.pipeline = new Pipeline(this.renderer);
@@ -46,7 +59,7 @@ export class Viewer {
     this.wireMat = new THREE.MeshBasicMaterial({ color: 0x5b4a63, wireframe: true });
     this.items = [];
     this.grid = null;
-    this.opts = { light: 'jour', render: 'jeu', wire: false, bbox: true, rotate: true, anim: true, grid: true, scale: true };
+    this.opts = { light: 'jour', render: 'jeu', wire: false, bbox: true, rotate: true, anim: true, grid: true, scale: true, collisions: false };
     this.t = 0;
     this.running = false;
     this.ro = new ResizeObserver(() => this.resize());
@@ -88,6 +101,13 @@ export class Viewer {
     }
     this.box = boxOf(this.root);
     const size = this.box.getSize(new THREE.Vector3());
+    // collisions de chaque modèle, à son origine : colonnes jusqu'à 1,8 m (taille d'un joueur), ou moins
+    for (const it of this.items) {
+      it.phys = physiqueDe(it.m, it.params, DEPS);
+      it.collisions = objetCollisions(it.phys, Math.max(0.3, Math.min(1.8, size.y)));
+      it.collisions.position.copy(it.holder.position);
+      this.helpers.add(it.collisions);
+    }
     // silhouette à gauche du premier modèle
     this.silhouette.position.set(this.box.min.x - 0.75, 0, this.box.max.z - Math.min(size.z, 1.2) * 0.5);
     if (this.grid) {
@@ -124,6 +144,10 @@ export class Viewer {
     for (const it of this.items) {
       this.root.remove(it.holder);
       disposeObject(it.obj);
+      if (it.collisions) {
+        this.helpers.remove(it.collisions);
+        disposeObject(it.collisions);
+      }
     }
     this.items = [];
   }
@@ -147,6 +171,9 @@ export class Viewer {
     this.boxHelper.visible = o.bbox && this.items.length === 1;
     if (this.box) this.boxHelper.box.copy(this.box);
     this.dims.hidden = !o.bbox;
+    for (const it of this.items) if (it.collisions) it.collisions.visible = o.collisions;
+    this.legend.hidden = !o.collisions;
+    if (o.collisions) this.legend.replaceChildren(...this.items.map((it) => legende(it.phys)));
     this.pipeline.forceShadow = true;
   }
 
@@ -251,4 +278,21 @@ export class Viewer {
     this.frameStep(0);
     return this.canvas.toDataURL('image/png');
   }
+}
+
+// légende chiffrée des collisions d'un modèle
+function legende(phys) {
+  const ligne = (couleur, texte) => {
+    const p = document.createElement('p');
+    const pastille = document.createElement('span');
+    pastille.style.background = hex(couleur);
+    p.append(pastille, texte);
+    return p;
+  };
+  const div = document.createElement('div');
+  if (phys.obstacles.length) div.append(ligne(COULEURS.obstacle, `${phys.obstacles.length} obstacle${phys.obstacles.length > 1 ? 's' : ''} : r ${phys.obstacles.map(([, , r]) => fmtMeters(r)).join(', ')}`));
+  if (phys.encombrement) div.append(ligne(COULEURS.encombrement, `Encombrement : r ${fmtMeters(phys.encombrement)}`));
+  if (phys.planchers.length) div.append(ligne(COULEURS.plancher, `${phys.planchers.length} plancher${phys.planchers.length > 1 ? 's' : ''} : ${phys.planchers.map((d) => `${fmtMeters(Math.hypot(d.x1 - d.x0, d.z1 - d.z0))} × ${fmtMeters(d.w)}`).join(', ')}`));
+  if (!div.children.length) div.append(ligne(0xb8a99a, 'Aucune collision : on passe au travers'));
+  return div;
 }
