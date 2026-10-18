@@ -134,9 +134,10 @@ describe('usage des modèles', () => {
 describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
   // gabarit visé (L × H × P, m, échelle comprise), entrée du registre, hauteur maximale du museau en
   // broutant, budget de triangles (vache et mouton, refaits d'après leur planche, ont droit à 3 500 et
-  // 3 400 : laine bouclée, cou articulé) ; exact : nombre de triangles figé (géométrie inchangée)
+  // 10 000 : boucles de laine vues de près ; le mouton lointain passe à une version allégée) ; exact :
+  // nombre de triangles figé (géométrie inchangée)
   const ONGULES = {
-    mouton: { size: [0.5, 0.9, 1.12], id: 'ANI-001', graze: 0.12, tris: 3400 },
+    mouton: { size: [0.5, 0.9, 1.12], id: 'ANI-001', graze: 0.12, tris: 10000 },
     chevre: { size: [0.6, 1.05, 1.2], id: 'ANI-002', graze: 0.12, tris: 1500, exact: 1096 },
     vache: { size: [0.9, 1.6, 1.85], id: 'ANI-003', graze: 0.12, tris: 3500 },
     cerf: { size: [0.8, 2.0, 1.7], id: 'ANI-004', graze: 0.3, tris: 1500, exact: 1376 },
@@ -246,6 +247,25 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
       }
       // moins de 3 cm au-dessus du bas du ventre à l'aplomb de la hanche
       expect((top - bottomAt(l.pivot[0], l.pivot[2])) * def.scale).toBeLessThan(0.03);
+    }
+  });
+
+  it('ont une version allégée (au loin) aux mêmes pièces, nettement plus légère', async () => {
+    const { SPECIES } = await import('../src/models/animals/especes.js');
+    const tri = (parts) => parts.reduce((a, p) => a + (p.geo.index ? p.geo.index.count : p.geo.attributes.position.count) / 3, 0);
+    for (const [sp, def] of Object.entries(SPECIES)) {
+      if (!def.lod) continue;
+      const hi = def.parts();
+      const lo = def.lod();
+      // le jeu réutilise les matrices de la version fine : mêmes pièces, pivots, animations, parents
+      expect(lo.length, sp).toBe(hi.length);
+      lo.forEach((p, i) => {
+        expect(p.anim, sp).toBe(hi[i].anim);
+        expect(p.parent, sp).toBe(hi[i].parent);
+        expect(p.pivot, sp).toEqual(hi[i].pivot);
+      });
+      expect(tri(lo), sp).toBeLessThanOrEqual(3400);
+      expect(tri(lo), sp).toBeLessThan(tri(hi) * 0.4);
     }
   });
 

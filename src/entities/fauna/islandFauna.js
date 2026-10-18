@@ -53,14 +53,17 @@ export class IslandFauna {
       this.root.add(im);
       k.meshes.push(im);
     } else {
-      for (const p of parts) {
+      const meshes = (list) => list.map((p) => {
         const im = new THREE.InstancedMesh(p.geo, this.mat, capacity);
         im.frustumCulled = false;
         im.count = 0;
         if (def.shadow) im.layers.enable(LAYER_SHADOW);
         this.root.add(im);
-        k.meshes.push(im);
-      }
+        return im;
+      });
+      k.meshes = meshes(parts);
+      // version allégée pour les animaux lointains : mêmes pièces (pivots, animations), moins de facettes
+      if (def.lod) k.low = { meshes: meshes(def.lod()), count: 0, dist: def.lodDist ?? 20 };
     }
     this.kinds.set(sp, k);
     return k;
@@ -128,7 +131,10 @@ export class IslandFauna {
     this.t += dt;
     const night = U.uNight.value > 0.55;
     const P = player.pos;
-    for (const k of this.kinds.values()) k.count = 0;
+    for (const k of this.kinds.values()) {
+      k.count = 0;
+      if (k.low) k.low.count = 0;
+    }
     for (const an of this.animals) {
       const dx = an.x - P.x;
       const dz = an.z - P.z;
@@ -137,13 +143,15 @@ export class IslandFauna {
       const full = dist < 80;
       // simplifié au loin : un pas de simulation sur quatre
       if (full || ((this.t * 60) | 0) % 4 === 0) this.behave(an, full ? dt : dt * 4, dist, dx, dz, night);
-      this.draw(an, full);
+      this.draw(an, full, dist);
     }
     for (const k of this.kinds.values()) {
-      for (const im of k.meshes) {
-        im.count = k.count;
-        im.instanceMatrix.needsUpdate = true;
-        if (im.instanceColor) im.instanceColor.needsUpdate = true;
+      for (const set of k.low ? [k, k.low] : [k]) {
+        for (const im of set.meshes) {
+          im.count = set.count;
+          im.instanceMatrix.needsUpdate = true;
+          if (im.instanceColor) im.instanceColor.needsUpdate = true;
+        }
       }
     }
     this.updateHearts(dt);
@@ -232,10 +240,13 @@ export class IslandFauna {
     else an.hop *= 0.8;
   }
 
-  draw(an, full) {
+  draw(an, full, dist = 0) {
     const k = this.kind(an.sp);
-    if (!k || k.count >= k.capacity) return;
-    const i = k.count++;
+    if (!k) return;
+    // au-delà de k.low.dist, la version allégée (mêmes pièces, mêmes matrices)
+    const set = k.low && dist > k.low.dist ? k.low : k;
+    if (set.count >= k.capacity) return;
+    const i = set.count++;
     const def = an.def;
     const sc = def.scale;
     const m = this._m;
@@ -278,8 +289,8 @@ export class IslandFauna {
         pm.multiply(r);
       }
       if (p.parent != null) pm.premultiply(loc[p.parent]);
-      k.meshes[pi].setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(m, pm));
-      if (k.coats) k.meshes[pi].setColorAt(i, k.coats[an.coat]);
+      set.meshes[pi].setMatrixAt(i, new THREE.Matrix4().multiplyMatrices(m, pm));
+      if (k.coats) set.meshes[pi].setColorAt(i, k.coats[an.coat]);
     });
   }
 

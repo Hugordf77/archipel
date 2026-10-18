@@ -43,6 +43,8 @@ export function quad(o) {
 const EYE = '#3d3049';
 // onglon arrondi (profil tourné, bord supérieur adouci), 5,5 cm de haut
 const HOOF = G.lathe([[0.001, 0], [0.042, 0], [0.04, 0.04], [0.001, 0.055]], 5);
+// sabot lisse : bord arrondi, dessus bombé (vu de près)
+const HOOF_SMOOTH = G.lathe([[0.001, 0], [0.042, 0], [0.044, 0.016], [0.04, 0.036], [0.028, 0.05], [0.001, 0.055]], 8);
 const _up = new THREE.Vector3(0, 1, 0);
 
 // cylindre effilé entre deux points [x, y, z]
@@ -59,13 +61,14 @@ function bone(b, color, a, c, r0, r1, sides = 8, tint = 1) {
 const blob = (b, color, p, rad, opts = {}, w = 9, h = 7) => b.add(G.sphere(1, w, h), color, { p, s: rad, ...opts });
 
 // œil rond et brillant, tourné vers l'avant et l'extérieur ; ring : liseré clair sur un visage sombre ;
-// detail : pupille et reflet plus ronds (vus de près)
-function eye(b, x, y, z, r, ring = null, detail = false) {
+// detail : pupille et reflet plus ronds, vus de près (true ou 1, puis 2 pour plus fin encore)
+function eye(b, x, y, z, r, ring = null, detail = 0) {
   const sx = Math.sign(x) || 1;
   const rot = [0, sx * 0.55, 0];
+  const [pw, ph, hw, hh] = detail === 2 ? [10, 8, 6, 5] : detail ? [8, 6, 6, 4] : [6, 4, 5, 3];
   if (ring) b.add(G.sphere(r * 1.45, 7, 5), ring, { p: [x - sx * r * 0.15, y, z - r * 0.2], s: [1, 1.1, 0.55], r: rot, tint: 0 });
-  b.add(G.sphere(r, detail ? 8 : 6, detail ? 6 : 4), EYE, { p: [x, y, z], s: [1, 1.15, 0.7], r: rot, tint: 0 });
-  b.add(G.sphere(r * 0.34, detail ? 6 : 5, detail ? 4 : 3), '#ffffff', { p: [x + sx * r * 0.2, y + r * 0.42, z + r * 0.62], tint: 0 });
+  b.add(G.sphere(r, pw, ph), EYE, { p: [x, y, z], s: [1, 1.15, 0.7], r: rot, tint: 0 });
+  b.add(G.sphere(r * 0.34, hw, hh), '#ffffff', { p: [x + sx * r * 0.2, y + r * 0.42, z + r * 0.62], tint: 0 });
 }
 
 // Tube lisse le long d'une courbe Catmull-Rom passant par pts, un rayon par point (interpolé), sans
@@ -209,45 +212,84 @@ function patch(b, surf, d, size, seed, { lift = 0.008 } = {}) {
   b.add(g, '#ffffff', { tint: 1 });
 }
 
-// Laine bouclée (chou-fleur) : icosphère posée sur une surface lisse (rayons rad, exposant n), centrée
-// en p et tournée de r, bosselée de touffes rondes. Les centres des touffes sont répartis sur la surface
-// elle-même, à spacing (m) les uns des autres (tirage sur une spirale de Fibonacci, ordre de visite fixé
-// par seed) ; chaque sommet est porté par la touffe la plus proche (profil en dôme) et s'enfonce de
-// depth (m) au plus dans le sillon entre deux touffes. Teintée par la robe (sommets blancs, tint 1).
-// detail : finesse de l'icosphère, 20 × (detail + 1)² triangles
-function fleece(b, rad, { p = [0, 0, 0], r = [0, 0, 0], n = 2, detail = 3, spacing = 0.1, depth = 0.02, seed = 1 } = {}) {
-  const surf = surface([0, 0, 0], rad, n);
+// Places réparties à intervalle régulier sur une surface (centrée à l'origine) : points tirés sur une
+// spirale de Fibonacci, gardés s'ils sont à plus de spacing de tous les autres (ordre de visite fixé
+// par seed) ; keep(p, n) écarte des zones. Renvoie [{ p, n }] (point et normale)
+function scatter(surf, spacing, seed = 1, keep = () => true) {
+  const M = 1200;
   const u = new THREE.Vector3();
-  const nrm = new THREE.Vector3();
-  const M = 900;
   const cand = [];
   for (let i = 0; i < M; i++) {
     const y = 1 - (2 * (i + 0.5)) / M;
     const k = Math.sqrt(1 - y * y);
-    const c = new THREE.Vector3();
-    surf.at(u.set(Math.cos(i * 2.39996) * k, y, Math.sin(i * 2.39996) * k), c, nrm);
-    cand.push([((i * 7919 + seed * 104729) % M) * M + i, c]);
+    const p = new THREE.Vector3();
+    const n = new THREE.Vector3();
+    surf.at(u.set(Math.cos(i * 2.39996) * k, y, Math.sin(i * 2.39996) * k), p, n);
+    if (keep(p, n)) cand.push([((i * 7919 + seed * 104729) % M) * M + i, p, n]);
   }
   cand.sort((a, c) => a[0] - c[0]);
-  const C = [];
+  const out = [];
   const s2 = spacing * spacing;
-  for (const [, c] of cand) if (C.every((o) => o.distanceToSquared(c) >= s2)) C.push(c);
-  const size = spacing * 0.62;
-  const g = mergeVertices(new THREE.IcosahedronGeometry(1, detail).deleteAttribute('normal').deleteAttribute('uv'));
-  const pos = g.attributes.position;
+  for (const [, p, n] of cand) if (out.every((o) => o.p.distanceToSquared(p) >= s2)) out.push({ p, n });
+  return out;
+}
+
+// Laine en boucles : dômes lisses posés sur un fond de laine (surface centrée à l'origine, placée en at
+// et tournée de rot), aux places de scatter, de rayon spacing × 0,7 (± 15 %), enfoncés d'un tiers et
+// tournés au hasard sur eux-mêmes ; teintés par la robe (sommets blancs, tint 1)
+const CURL = new THREE.SphereGeometry(1, 12, 5, 0, Math.PI * 2, 0, Math.PI * 0.6);
+const CURL_S = new THREE.SphereGeometry(1, 10, 4, 0, Math.PI * 2, 0, Math.PI * 0.6);
+// mêmes boucles vues de loin (version allégée d'un animal)
+const CURL_LITE = new THREE.SphereGeometry(1, 7, 3, 0, Math.PI * 2, 0, Math.PI * 0.6);
+const CURL_S_LITE = new THREE.SphereGeometry(1, 6, 2, 0, Math.PI * 2, 0, Math.PI * 0.6);
+function curls(b, surf, spacing, { at = [0, 0, 0], rot = [0, 0, 0], seed = 1, keep, geo = CURL } = {}) {
+  const Q = new THREE.Quaternion().setFromEuler(new THREE.Euler(...rot));
+  const A = new THREE.Vector3(...at);
+  const q = new THREE.Quaternion();
+  const tw = new THREE.Quaternion();
+  const e = new THREE.Euler();
+  scatter(surf, spacing, seed, keep).forEach(({ p, n }, i) => {
+    const h = ((i * 2654435761 + seed * 40503) >>> 0) / 4294967296;
+    const r = spacing * 0.7 * (0.85 + 0.3 * h);
+    n.applyQuaternion(Q);
+    p.applyQuaternion(Q).add(A).addScaledVector(n, -0.35 * r);
+    e.setFromQuaternion(q.setFromUnitVectors(_up, n).multiply(tw.setFromAxisAngle(_up, h * 6.283)));
+    b.add(geo, '#ffffff', { p: p.toArray(), s: r, r: [e.x, e.y, e.z], tint: 1 });
+  });
+}
+
+// Maillage lisse d'une surface donnée point par point (at(u) : point dans la direction u) : sphère
+// w × h déformée, sommets soudés, normales recalculées
+function skinMesh(b, color, at, w, h, opts = {}) {
+  const g = new THREE.SphereGeometry(1, w, h).deleteAttribute('normal').deleteAttribute('uv');
+  const m = mergeVertices(g);
+  const pos = m.attributes.position;
+  const u = new THREE.Vector3();
   const q = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
-    surf.at(u.fromBufferAttribute(pos, i), q, nrm);
-    let m = 0;
-    for (const c of C) {
-      const d2 = q.distanceToSquared(c) / (size * size);
-      if (d2 < 1) m = Math.max(m, Math.sqrt(1 - d2));
-    }
-    q.addScaledVector(nrm, -depth * (1 - m));
+    at(u.fromBufferAttribute(pos, i), q);
     pos.setXYZ(i, q.x, q.y, q.z);
   }
-  g.computeVertexNormals();
-  b.add(g, '#ffffff', { p, r, tint: 1 });
+  m.computeVertexNormals();
+  b.add(m, color, opts);
+}
+
+// Feuille (oreille) : longueur sur x (base en −x, pointe effilée en +x), largeur y, épaisseur z ; la
+// face avant (+z) est creusée pour loger l'intérieur
+function leafGeo(w, h, cup = 0.5) {
+  const g = new THREE.SphereGeometry(1, w, h).deleteAttribute('normal').deleteAttribute('uv');
+  const m = mergeVertices(g);
+  const pos = m.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    let z = pos.getZ(i) * 0.45;
+    const t = (x + 1) / 2;
+    if (z > 0) z -= cup * 0.45 * (1 - x * x) * (1 - y * y);
+    pos.setXYZ(i, x, y * (1 - 0.5 * t * t) * (0.85 + 0.15 * (1 - t)), z);
+  }
+  m.computeVertexNormals();
+  return m;
 }
 
 // Collier (tore autour d'un cou incliné de tilt vers l'avant, à la distance at de son pivot) et cloche
@@ -273,12 +315,12 @@ function collar(b, tilt, at, R, tube, k = 1) {
 // des pattes avant (z > 0) et arrière (z < 0) ; cloven : sabot fendu en deux onglons ; hoofRound :
 // sabots arrondis (profil tourné) ; radii : un rayon par point, la patte est alors un tube lisse (limb)
 function legs(o) {
-  const { x, zf, zb, hip, color, tint = 0, r0, r1, hoof, hoofH = 0.06, front = null, back = null, joint = null, cloven = false, hoofRound = false, radii = null, sides = 10 } = o;
+  const { x, zf, zb, hip, color, tint = 0, r0, r1, hoof, hoofH = 0.06, front = null, back = null, joint = null, cloven = false, hoofRound = false, radii = null, sides = 10, rings = 4, hoofGeo = HOOF } = o;
   const out = [];
   for (const [sx, sz, ph] of [[-1, 1, 0], [1, 1, Math.PI], [-1, -1, Math.PI], [1, -1, 0]]) {
     const pts = (sz > 0 ? front : back) || [[0, 0, 0], [0, -hip + hoofH, 0]];
     out.push(part((b) => {
-      if (radii) limb(b, color, pts, radii, { sides, rings: 4, tint });
+      if (radii) limb(b, color, pts, radii, { sides, rings, tint });
       else for (let i = 0; i < pts.length - 1; i++) {
         const t0 = i / (pts.length - 1);
         const t1 = (i + 1) / (pts.length - 1);
@@ -289,7 +331,7 @@ function legs(o) {
       if (hoofRound && cloven) for (const s of [-1, 1]) b.add(HOOF, hoof, { p: [f[0] + s * 0.034, -hip, f[2]], s: [0.75, hoofH / 0.055, 1.15], tint: 0 });
       else if (hoofRound) {
         const k = ((radii ? radii[radii.length - 1] : r1) * 1.2) / 0.042;
-        b.add(HOOF, hoof, { p: [f[0], -hip, f[2]], s: [k, hoofH / 0.055, k * 1.1], tint: 0 });
+        b.add(hoofGeo, hoof, { p: [f[0], -hip, f[2]], s: [k, hoofH / 0.055, k * 1.1], tint: 0 });
       }
       else if (cloven) for (const s of [-1, 1]) b.add(G.cyl(r1 * 0.62, r1 * 0.7, hoofH, 5), hoof, { p: [f[0] + s * r1 * 0.5, -hip + hoofH / 2, f[2] + r1 * 0.12], tint: 0 });
       else b.add(G.cyl(r1 * 1.12, r1 * 1.22, hoofH, 8), hoof, { p: [f[0], -hip + hoofH / 2, f[2]], tint: 0 });
@@ -298,42 +340,118 @@ function legs(o) {
   return out;
 }
 
-// Mouton (d'après la planche de référence) : nuage de laine bouclée (teintée par la robe), cou court
-// laineux qui porte la tête au-dessus du dos et plie pour brouter, visage rose lisse encadré d'une
-// calotte de laine, petits yeux noirs, nez rose, oreilles roses à l'horizontale, collier bleu et
-// cloche, pattes courtes roses à sabots arrondis, queue en touffe
-function mouton() {
+// Mouton (d'après la planche de référence) : laine en boucles rondes (teintée par la robe), cou court
+// laineux qui porte la tête au-dessus du dos et plie pour brouter, visage rose lisse d'un seul tenant
+// (museau tiré du visage), nez rose en triangle et bouche en Y, yeux noirs brillants, frange de
+// boucles sur le front, oreilles en feuille creusée à l'intérieur rose, collier bleu et cloche,
+// pattes courtes roses à sabots arrondis, queue en touffe
+const EAR = leafGeo(11, 6, 0.55);
+const EAR_IN = leafGeo(9, 5, 0.3);
+const EAR_LITE = leafGeo(7, 4, 0.55);
+const EAR_IN_LITE = leafGeo(6, 3, 0.3);
+// lite : version allégée pour les moutons lointains (mêmes pièces et mêmes boucles, moins de facettes,
+// sans la bouche)
+function mouton(lite = false) {
   const SKIN = '#f6d6c8';
   const NECK = 0.4; // inclinaison du cou vers l'avant (rad)
+  // corps : fond de laine en tonneau couvert de boucles, sauf dessous (ventre à l'ombre)
+  const BODY = [0, 0.44, -0.05];
+  const core = surface([0, 0, 0], [0.2, 0.22, 0.36], 2.5);
   const body = part((b) => {
-    fleece(b, [0.25, 0.27, 0.41], { p: [0, 0.44, -0.05], n: 2.5, detail: 7, spacing: 0.1, depth: 0.045, seed: 1 });
+    hull(b, '#ffffff', core, lite ? 10 : 14, lite ? 8 : 10, { p: BODY, tint: 1 });
+    curls(b, core, 0.13, { at: BODY, seed: 1, geo: lite ? CURL_LITE : CURL, keep: (q, n) => n.y > -0.8 });
   }, [0, 0, 0]);
   // cou : pivot dans le poitrail, il porte la tête (pièce suivante) ; collier et cloche sous la gorge
   const axis = new THREE.Vector3(0, Math.cos(NECK), Math.sin(NECK));
+  const NAT = axis.clone().multiplyScalar(0.18).toArray();
+  const neckCore = surface([0, 0, 0], [0.085, 0.16, 0.085]);
   const neck = part((b) => {
-    fleece(b, [0.12, 0.2, 0.12], { p: axis.clone().multiplyScalar(0.18).toArray(), r: [NECK, 0, 0], detail: 1, spacing: 0.09, depth: 0.02, seed: 2 });
+    hull(b, '#ffffff', neckCore, lite ? 7 : 10, lite ? 5 : 8, { p: NAT, r: [NECK, 0, 0], tint: 1 });
+    curls(b, neckCore, 0.095, { at: NAT, rot: [NECK, 0, 0], seed: 2, geo: lite ? CURL_S_LITE : CURL_S });
     collar(b, NECK, 0.2, 0.123, 0.018, 0.68);
   }, [0, 0.38, 0.2], 'neck');
+  // visage : ellipsoïde dont le bas de l'avant est tiré en museau (une seule surface, sans pli)
+  const FC = [0, -0.01, 0.055];
+  const FR = [0.1, 0.115, 0.112];
+  // bosses douces : museau (devant, en bas), joues
+  const BUMPS = [[[0, -0.5, 0.87], 0.032, 0.62], [[0.55, -0.4, 0.73], 0.012, 0.45], [[-0.55, -0.4, 0.73], 0.012, 0.45]].map(([d, a, w]) => [new THREE.Vector3(...d).normalize(), a, w]);
+  const face = (u, out = new THREE.Vector3()) => {
+    const k = u.clone().normalize();
+    let bump = 0;
+    for (const [d, a, w] of BUMPS) bump += a * Math.exp(-((Math.acos(Math.min(1, k.dot(d))) / w) ** 2));
+    return out.set(FC[0] + k.x * (FR[0] + bump), FC[1] + k.y * (FR[1] + bump), FC[2] + k.z * (FR[2] + bump));
+  };
+  // point et normale du visage dans la direction d
+  const onFace = (d) => {
+    const u = new THREE.Vector3(...d).normalize();
+    const t1 = new THREE.Vector3().crossVectors(u, Math.abs(u.y) < 0.9 ? _up : new THREE.Vector3(1, 0, 0)).normalize();
+    const t2 = new THREE.Vector3().crossVectors(u, t1);
+    const e = 0.01;
+    const a = face(u.clone().addScaledVector(t1, e)).sub(face(u.clone().addScaledVector(t1, -e)));
+    const c = face(u.clone().addScaledVector(t2, e)).sub(face(u.clone().addScaledVector(t2, -e)));
+    const n = new THREE.Vector3().crossVectors(a, c).normalize();
+    if (n.dot(u) < 0) n.negate();
+    return { p: face(u), n };
+  };
+  // pose une pièce plate (épaisseur sur z) contre le visage, en d, enfoncée de inset, tournée de twist
+  const onSkin = (geo, color, d, s, inset, twist = 0) => {
+    const { p, n } = onFace(d);
+    const q = new THREE.Quaternion().setFromAxisAngle(n, twist).multiply(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n));
+    const e = new THREE.Euler().setFromQuaternion(q);
+    b0.add(geo, color, { p: p.addScaledVector(n, -inset).toArray(), s, r: [e.x, e.y, e.z], tint: 0 });
+    return { p, n };
+  };
+  let b0 = null;
+  const capCore = surface([0, 0, 0], [0.125, 0.09, 0.125]);
+  const CAP = [0, 0.055, -0.035];
   const head = part((b) => {
-    blob(b, SKIN, [0, -0.02, 0.06], [0.11, 0.12, 0.135], { tint: 0 }, 12, 9); // visage
-    blob(b, SKIN, [0, -0.075, 0.14], [0.072, 0.058, 0.068], { tint: 0 }, 10, 7); // museau
-    b.add(G.sphere(1, 8, 5), '#d98b8a', { p: [0, -0.058, 0.203], s: [0.025, 0.016, 0.009], tint: 0 }); // nez
-    // calotte de laine : couvre le dessus et l'arrière de la tête, frange jusqu'aux sourcils
-    fleece(b, [0.15, 0.115, 0.15], { p: [0, 0.05, -0.03], detail: 3, spacing: 0.065, depth: 0.022, seed: 3 });
-    for (const sx of [-1, 1]) {
-      eye(b, sx * 0.058, 0.015, 0.16, 0.019, null, true);
-      // oreille rose à l'horizontale, à plat vers l'avant, intérieur plus rose
-      const eo = new THREE.Euler(0, sx * 0.3, -sx * 0.2);
-      const at = (o) => new THREE.Vector3(...o).applyEuler(eo).add(new THREE.Vector3(sx * 0.15, 0, -0.02)).toArray();
-      blob(b, SKIN, at([0, 0, 0]), [0.075, 0.035, 0.02], { r: [eo.x, eo.y, eo.z], tint: 0 }, 7, 5);
-      blob(b, '#eaa5a0', at([sx * 0.008, 0, 0.014]), [0.05, 0.022, 0.008], { r: [eo.x, eo.y, eo.z], tint: 0 }, 5, 3);
+    b0 = b;
+    skinMesh(b, SKIN, face, lite ? 12 : 20, lite ? 9 : 14, { tint: 0 });
+    // nez : petit triangle rose arrondi, pointe en bas ; sillon et bouche en Y dessous
+    const nose = lite ? new THREE.SphereGeometry(1, 6, 4) : new THREE.SphereGeometry(1, 10, 6);
+    const np = nose.attributes.position;
+    for (let i = 0; i < np.count; i++) np.setX(i, np.getX(i) * (0.6 + 0.4 * (np.getY(i) + 1) / 2));
+    onSkin(nose, '#e39a98', [0, -0.36, 0.93], [0.025, 0.017, 0.01], 0.004);
+    const m = onFace([0, -0.6, 0.8]);
+    const top = onFace([0, -0.45, 0.89]).p;
+    if (!lite) bone(b, '#c47c7b', top.toArray(), m.p.clone().addScaledVector(m.n, 0.0005).toArray(), 0.0024, 0.0024, 4, 0);
+    const X = new THREE.Vector3(1, 0, 0);
+    const Y = new THREE.Vector3().crossVectors(m.n, X);
+    const frame = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(X, Y, m.n));
+    if (!lite) for (const sx of [-1, 1]) {
+      const arc = 1.9;
+      const q = frame.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -Math.PI / 2 - arc / 2));
+      const e = new THREE.Euler().setFromQuaternion(q);
+      const c = m.p.clone().addScaledVector(X, sx * 0.0105).addScaledVector(Y, 0.011).addScaledVector(m.n, 0.0008);
+      b.add(G.torus(0.011, 0.0022, 3, 6, arc), '#c47c7b', { p: c.toArray(), r: [e.x, e.y, e.z], tint: 0 });
     }
+    // yeux noirs brillants, bien écartés, à mi-hauteur du visage
+    for (const sx of [-1, 1]) {
+      const { p, n } = onFace([sx * 0.5, 0.25, 0.83]);
+      p.addScaledVector(n, -0.006);
+      eye(b, p.x, p.y, p.z, 0.019, null, lite ? 0 : 2);
+      // oreille en feuille creusée, à l'horizontale sous la laine, intérieur rose
+      const eo = new THREE.Euler(0.3, sx * 0.35, -sx * 0.3);
+      const at = (o) => new THREE.Vector3(...o).applyEuler(eo).add(new THREE.Vector3(sx * 0.165, -0.005, -0.015)).toArray();
+      const [E, EI] = lite ? [EAR_LITE, EAR_IN_LITE] : [EAR, EAR_IN];
+      const ear = sx > 0 ? E : E.clone().scale(-1, 1, 1);
+      const inner = sx > 0 ? EI : EI.clone().scale(-1, 1, 1);
+      b.add(ear, SKIN, { p: at([0, 0, 0]), s: [0.068, 0.04, 0.03], r: [eo.x, eo.y, eo.z], tint: 0 });
+      b.add(inner, '#eba3a0', { p: at([sx * 0.007, 0, 0.004]), s: [0.052, 0.028, 0.012], r: [eo.x, eo.y, eo.z], tint: 0 });
+    }
+    // calotte de laine : fond lisse et boucles sur le dessus, l'arrière et les côtés, frange sur le front
+    hull(b, '#ffffff', capCore, lite ? 8 : 12, lite ? 6 : 9, { p: CAP, tint: 1 });
+    curls(b, capCore, 0.058, { at: CAP, seed: 3, geo: lite ? CURL_S_LITE : CURL_S, keep: (q) => !(q.z + CAP[2] > 0.02 && q.y + CAP[1] < 0.075 && Math.abs(q.x) < 0.085) });
   }, axis.clone().multiplyScalar(0.36).toArray(), 'head');
   head.geo.scale(1.1, 1.1, 1.1); // tête un peu plus grosse, comme sur la planche
   head.parent = 1;
-  // queue : touffe de laine en haut de la croupe, pendante
-  const tail = part((b) => fleece(b, [0.06, 0.09, 0.07], { p: [0, -0.09, -0.05], r: [-0.25, 0, 0], detail: 2, spacing: 0.055, depth: 0.015, seed: 4 }), [0, 0.54, -0.44], 'tail');
-  return [body, neck, head, ...legs({ x: 0.1, zf: 0.15, zb: -0.31, hip: 0.36, color: SKIN, hoof: '#c99d8c', hoofH: 0.045, hoofRound: true, radii: [0.056, 0.052, 0.047, 0.04], sides: 8,
+  // queue : touffe de boucles en haut de la croupe, pendante
+  const tailCore = surface([0, 0, 0], [0.04, 0.065, 0.04]);
+  const tail = part((b) => {
+    hull(b, '#ffffff', tailCore, lite ? 6 : 8, lite ? 4 : 6, { p: [0, -0.09, -0.05], r: [-0.25, 0, 0], tint: 1 });
+    curls(b, tailCore, 0.045, { at: [0, -0.09, -0.05], rot: [-0.25, 0, 0], seed: 4, geo: lite ? CURL_S_LITE : CURL_S });
+  }, [0, 0.54, -0.44], 'tail');
+  return [body, neck, head, ...legs({ x: 0.1, zf: 0.15, zb: -0.31, hip: 0.36, color: SKIN, hoof: '#c99d8c', hoofH: 0.045, hoofRound: true, hoofGeo: lite ? HOOF : HOOF_SMOOTH, radii: [0.056, 0.052, 0.047, 0.04], sides: lite ? 6 : 10, rings: lite ? 3 : 5,
     front: [[0, 0, 0], [0, -0.17, 0.006], [0, -0.28, 0], [0, -0.3375, 0]], back: [[0, 0, 0], [0, -0.15, -0.03], [0, -0.28, 0], [0, -0.3375, 0]] }), tail];
 }
 
@@ -468,9 +586,11 @@ export const SPECIES = {
   // broutage (rad) de la tête, ou du cou s'il y en a un ; nod : angle de la tête portée par le cou ;
   // muzzle : bout du museau dans le repère de la tête ; top : haut de la tête (m, avant l'échelle).
   mouton: {
-    speed: 0.6, scale: 1, shadow: true, graze: 1.5, nod: -0.7, muzzle: [0, -0.121, 0.209], top: 0.92,
+    speed: 0.6, scale: 1, shadow: true, graze: 1.5, nod: -0.7, muzzle: [0, -0.11, 0.19], top: 0.92,
     coats: [['Crème', '#f4e9d0'], ['Blanc', '#fbf8f1'], ['Noir', '#5a5160']],
     parts: () => mouton(),
+    // au-delà de 20 m du joueur, la version allégée (mêmes pièces)
+    lod: () => mouton(true), lodDist: 20,
   },
   chevre: {
     speed: 0.9, scale: 0.9, shadow: true, graze: 1.2, muzzle: [0, 0.1, 0.56], top: 1.2,
