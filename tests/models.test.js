@@ -133,12 +133,13 @@ describe('usage des modèles', () => {
 
 describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
   // gabarit visé (L × H × P, m, échelle comprise), entrée du registre, hauteur maximale du museau en
-  // broutant, budget de triangles (la vache, refaite d'après sa planche, a droit à 2 000)
+  // broutant, budget de triangles (la vache, finie d'après sa planche, a droit à 3 500) ; exact : nombre
+  // de triangles figé (géométrie inchangée par la finition de la vache)
   const ONGULES = {
-    mouton: { size: [1.0, 0.95, 1.3], id: 'ANI-001', graze: 0.12, tris: 1500 },
-    chevre: { size: [0.6, 1.05, 1.2], id: 'ANI-002', graze: 0.12, tris: 1500 },
-    vache: { size: [0.9, 1.6, 1.85], id: 'ANI-003', graze: 0.12, tris: 2000 },
-    cerf: { size: [0.8, 2.0, 1.7], id: 'ANI-004', graze: 0.3, tris: 1500 },
+    mouton: { size: [1.0, 0.95, 1.3], id: 'ANI-001', graze: 0.12, tris: 1500, exact: 1296 },
+    chevre: { size: [0.6, 1.05, 1.2], id: 'ANI-002', graze: 0.12, tris: 1500, exact: 1096 },
+    vache: { size: [0.9, 1.6, 1.85], id: 'ANI-003', graze: 0.12, tris: 3500 },
+    cerf: { size: [0.8, 2.0, 1.7], id: 'ANI-004', graze: 0.3, tris: 1500, exact: 1376 },
   };
   // matrices des pièces pour une part de broutage k (0 : tête portée, 1 : museau dans l'herbe), comme
   // le jeu : la tête (ou le cou) plie jusqu'à graze, la tête portée par un cou jusqu'à nod
@@ -169,6 +170,7 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
       expect(parts.length, sp).toBeLessThanOrEqual(9);
       const tris = parts.reduce((a, p) => a + (p.geo.index ? p.geo.index.count : p.geo.attributes.position.count) / 3, 0);
       expect(tris, sp).toBeLessThanOrEqual(o.tris);
+      if (o.exact) expect(tris, `${sp} : géométrie modifiée`).toBe(o.exact);
       const legs = parts.filter((p) => p.anim === 'leg');
       expect(legs, sp).toHaveLength(4);
       for (const l of legs) expect(Math.abs(partBox(THREE, l).min.y * def.scale), sp).toBeLessThanOrEqual(0.01);
@@ -211,6 +213,65 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
       // au repos, la tête est portée bien plus haut
       expect(muzzle(0), sp).toBeGreaterThan(0.45);
     }
+  });
+
+  it('font sortir les pattes de la vache du dessous du corps, jamais du flanc', async () => {
+    const { SPECIES } = await import('../src/models/animals/especes.js');
+    const def = SPECIES.vache;
+    const parts = def.parts();
+    // enveloppe du corps : tonneau, croupe et épaules ({ c, rad, n } : |x|^n + |y|^n + |z|^n = 1)
+    const shells = parts[0].shell;
+    expect(shells.length).toBeGreaterThan(0);
+    const F = (e, q) => e.rad.reduce((a, r, i) => a + Math.abs((q[i] - e.c[i]) / r) ** e.n, 0);
+    const bottomAt = (x, z) => Math.min(...shells.map((e) => {
+      const q = Math.abs((x - e.c[0]) / e.rad[0]) ** e.n + Math.abs((z - e.c[2]) / e.rad[2]) ** e.n;
+      return q >= 1 ? Infinity : e.c[1] - e.rad[1] * (1 - q) ** (1 / e.n);
+    }));
+    const a = new THREE.Vector3();
+    const b = new THREE.Vector3();
+    const q = new THREE.Vector3();
+    for (const l of parts.filter((p) => p.anim === 'leg')) {
+      // point le plus haut de la patte (arêtes échantillonnées) hors de l'enveloppe, au repos
+      const pos = l.geo.attributes.position;
+      let top = -Infinity;
+      for (let t = 0; t < pos.count; t += 3) {
+        for (let e = 0; e < 3; e++) {
+          a.fromBufferAttribute(pos, t + e);
+          b.fromBufferAttribute(pos, t + ((e + 1) % 3));
+          for (let k = 0; k <= 8; k++) {
+            q.copy(a).lerp(b, k / 8).add(new THREE.Vector3(...l.pivot));
+            if (q.y > top && shells.every((s) => F(s, q.toArray()) > 1)) top = q.y;
+          }
+        }
+      }
+      // moins de 3 cm au-dessus du bas du ventre à l'aplomb de la hanche
+      expect((top - bottomAt(l.pivot[0], l.pivot[2])) * def.scale).toBeLessThan(0.03);
+    }
+  });
+
+  it('limb : tube continu, sans bouchon interne, bout arrondi en option', async () => {
+    const { limb } = await import('../src/models/animals/especes.js');
+    const { Builder } = await import('../src/render/builder.js');
+    const tube = (end) => {
+      const bd = new Builder();
+      limb(bd, '#ffffff', [[0, 0, 0], [0, -0.25, 0.012], [0, -0.4, 0], [0, -0.47, 0]], [0.07, 0.064, 0.056, 0.045], { sides: 10, rings: 4, end });
+      return bd.build();
+    };
+    // un anneau de sommets par section : 2 × côtés × intervalles, aucun bouchon
+    const pos = tube('open').attributes.position;
+    expect(pos.count / 3).toBe(2 * 10 * 4);
+    // aucune face transverse : toutes longent l'axe (vertical) de la patte
+    const a = new THREE.Vector3();
+    const b = new THREE.Vector3();
+    const c = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i += 3) {
+      a.fromBufferAttribute(pos, i);
+      b.fromBufferAttribute(pos, i + 1).sub(a);
+      c.fromBufferAttribute(pos, i + 2).sub(a);
+      expect(Math.abs(b.cross(c).normalize().y)).toBeLessThan(0.5);
+    }
+    // bout arrondi : deux anneaux de dôme et une pointe
+    expect(tube('round').attributes.position.count / 3).toBe(2 * 10 * 6 + 10);
   });
 
   it('ont la taille du gabarit (±15 %) et une variante par robe', () => {

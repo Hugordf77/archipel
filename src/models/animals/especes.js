@@ -40,6 +40,8 @@ export function quad(o) {
 // Ongulés : pièces dessinées à la main. Le pelage est teinté par animal (tint 1, sommets clairs
 // multipliés par la couleur de la robe) ; yeux, museau, sabots, cornes et bois ne le sont pas.
 const EYE = '#3d3049';
+// onglon arrondi (profil tourné, bord supérieur adouci), 5,5 cm de haut
+const HOOF = G.lathe([[0.001, 0], [0.042, 0], [0.04, 0.04], [0.001, 0.055]], 5);
 const _up = new THREE.Vector3(0, 1, 0);
 
 // cylindre effilé entre deux points [x, y, z]
@@ -55,13 +57,70 @@ function bone(b, color, a, c, r0, r1, sides = 8, tint = 1) {
 // ellipsoïde (rayons rx, ry, rz)
 const blob = (b, color, p, rad, opts = {}, w = 9, h = 7) => b.add(G.sphere(1, w, h), color, { p, s: rad, ...opts });
 
-// œil rond et brillant, tourné vers l'avant et l'extérieur ; ring : liseré clair sur un visage sombre
-function eye(b, x, y, z, r, ring = null) {
+// œil rond et brillant, tourné vers l'avant et l'extérieur ; ring : liseré clair sur un visage sombre ;
+// detail : pupille et reflet plus ronds (vus de près)
+function eye(b, x, y, z, r, ring = null, detail = false) {
   const sx = Math.sign(x) || 1;
   const rot = [0, sx * 0.55, 0];
   if (ring) b.add(G.sphere(r * 1.45, 7, 5), ring, { p: [x - sx * r * 0.15, y, z - r * 0.2], s: [1, 1.1, 0.55], r: rot, tint: 0 });
-  b.add(G.sphere(r, 6, 4), EYE, { p: [x, y, z], s: [1, 1.15, 0.7], r: rot, tint: 0 });
-  b.add(G.sphere(r * 0.34, 5, 3), '#ffffff', { p: [x + sx * r * 0.2, y + r * 0.42, z + r * 0.62], tint: 0 });
+  b.add(G.sphere(r, detail ? 8 : 6, detail ? 6 : 4), EYE, { p: [x, y, z], s: [1, 1.15, 0.7], r: rot, tint: 0 });
+  b.add(G.sphere(r * 0.34, detail ? 6 : 5, detail ? 4 : 3), '#ffffff', { p: [x + sx * r * 0.2, y + r * 0.42, z + r * 0.62], tint: 0 });
+}
+
+// Tube lisse le long d'une courbe Catmull-Rom passant par pts, un rayon par point (interpolé), sans
+// bouchon interne : pas de fente aux jointures. Le départ reste ouvert (enfoui dans le corps, le
+// crâne ou la croupe) ; end : 'open' (bout caché dans un sabot) ou 'round' (bout fermé en dôme)
+export function limb(b, color, pts, radii, { sides = 8, rings = 6, tint = 0, end = 'open' } = {}) {
+  const curve = new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(...q)));
+  const k = pts.length - 1;
+  const rad = (t) => {
+    const i = Math.min(k - 1, Math.floor(t * k));
+    return radii[i] + (radii[i + 1] - radii[i]) * (t * k - i);
+  };
+  // anneaux : centre, tangente, rayon, inclinaison de la normale (dôme)
+  const rs = [];
+  for (let i = 0; i <= rings; i++) rs.push({ c: curve.getPoint(i / rings), t: curve.getTangent(i / rings).normalize(), r: rad(i / rings), a: 0 });
+  const last = rs[rs.length - 1];
+  if (end === 'round') for (const a of [0.7, 1.2]) rs.push({ c: last.c.clone().addScaledVector(last.t, last.r * Math.sin(a)), t: last.t, r: last.r * Math.cos(a), a });
+  // repère transporté d'un anneau à l'autre (sans torsion)
+  const n = Math.abs(rs[0].t.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+  const q = new THREE.Quaternion();
+  const pos = [];
+  const nor = [];
+  const d = new THREE.Vector3();
+  const bn = new THREE.Vector3();
+  rs.forEach((R, i) => {
+    if (i > 0) n.applyQuaternion(q.setFromUnitVectors(rs[i - 1].t, R.t));
+    n.addScaledVector(R.t, -n.dot(R.t)).normalize();
+    bn.crossVectors(R.t, n);
+    for (let j = 0; j < sides; j++) {
+      const th = (j / sides) * Math.PI * 2;
+      d.copy(n).multiplyScalar(Math.cos(th)).addScaledVector(bn, Math.sin(th));
+      pos.push(R.c.x + d.x * R.r, R.c.y + d.y * R.r, R.c.z + d.z * R.r);
+      d.multiplyScalar(Math.cos(R.a)).addScaledVector(R.t, Math.sin(R.a));
+      nor.push(d.x, d.y, d.z);
+    }
+  });
+  const idx = [];
+  for (let i = 0; i < rs.length - 1; i++) {
+    for (let j = 0; j < sides; j++) {
+      const a = i * sides + j;
+      const bb = i * sides + ((j + 1) % sides);
+      idx.push(a, bb, a + sides, bb, bb + sides, a + sides);
+    }
+  }
+  if (end === 'round') {
+    const tip = last.c.clone().addScaledVector(last.t, last.r);
+    const base = (rs.length - 1) * sides;
+    pos.push(tip.x, tip.y, tip.z);
+    nor.push(last.t.x, last.t.y, last.t.z);
+    for (let j = 0; j < sides; j++) idx.push(base + j, base + ((j + 1) % sides), base + sides);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  g.setIndex(idx);
+  b.add(g, color, { tint });
 }
 
 // Surface lisse de centre c et de rayons rad : |x|^n + |y|^n + |z|^n = 1 en coordonnées réduites.
@@ -105,7 +164,7 @@ function patch(b, surf, d, size, seed, { lift = 0.008 } = {}) {
   if (t1.lengthSq() < 0.04) t1.set(0, 1, 0).addScaledVector(u0, -u0.y);
   t1.normalize();
   const t2 = new THREE.Vector3().crossVectors(u0, t1);
-  const lobe = (th) => 1 + 0.16 * Math.sin(2 * th + seed * 2.3) + 0.13 * Math.sin(3 * th + seed * 4.1) + 0.06 * Math.sin(4 * th + seed * 1.7);
+  const lobe = (th) => 1 + 0.18 * Math.sin(2 * th + seed * 2.3) + 0.15 * Math.sin(3 * th + seed * 4.1) + 0.07 * Math.sin(4 * th + seed * 1.7);
   const pos = [];
   const nor = [];
   const u = new THREE.Vector3();
@@ -122,7 +181,7 @@ function patch(b, surf, d, size, seed, { lift = 0.008 } = {}) {
   };
   const big = Math.max(...size) > 0.45;
   const rings = big ? [0.5, 1] : [1];
-  const seg = big ? 18 : 14;
+  const seg = big ? 20 : 12;
   put(0, 0);
   for (const k of rings) {
     for (let i = 0; i < seg; i++) {
@@ -151,21 +210,24 @@ function patch(b, surf, d, size, seed, { lift = 0.008 } = {}) {
 
 // quatre pattes (avant gauche, avant droite, arrière gauche, arrière droite, en diagonale) :
 // pivot de hanche caché dans le corps, sabot posé au sol ; zf et zb sont les positions signées
-// des pattes avant (z > 0) et arrière (z < 0) ; cloven : sabot fendu en deux onglons
+// des pattes avant (z > 0) et arrière (z < 0) ; cloven : sabot fendu en deux onglons ('round' :
+// onglons arrondis) ; radii : un rayon par point, la patte est alors un tube lisse (limb)
 function legs(o) {
-  const { x, zf, zb, hip, color, tint = 0, r0, r1, hoof, hoofH = 0.06, front = null, back = null, joint = null, cloven = false } = o;
+  const { x, zf, zb, hip, color, tint = 0, r0, r1, hoof, hoofH = 0.06, front = null, back = null, joint = null, cloven = false, radii = null, sides = 10 } = o;
   const out = [];
   for (const [sx, sz, ph] of [[-1, 1, 0], [1, 1, Math.PI], [-1, -1, Math.PI], [1, -1, 0]]) {
     const pts = (sz > 0 ? front : back) || [[0, 0, 0], [0, -hip + hoofH, 0]];
     out.push(part((b) => {
-      for (let i = 0; i < pts.length - 1; i++) {
+      if (radii) limb(b, color, pts, radii, { sides, rings: 4, tint });
+      else for (let i = 0; i < pts.length - 1; i++) {
         const t0 = i / (pts.length - 1);
         const t1 = (i + 1) / (pts.length - 1);
         bone(b, color, pts[i], pts[i + 1], r0 + (r1 - r0) * t0, r0 + (r1 - r0) * t1, 8, tint);
         if (joint === (sz > 0 ? 'front' : 'back') && i > 0) b.add(G.sphere(r0 + (r1 - r0) * t0, 5, 3), color, { p: pts[i], tint });
       }
       const f = pts[pts.length - 1];
-      if (cloven) for (const s of [-1, 1]) b.add(G.cyl(r1 * 0.62, r1 * 0.7, hoofH, 5), hoof, { p: [f[0] + s * r1 * 0.5, -hip + hoofH / 2, f[2] + r1 * 0.12], tint: 0 });
+      if (cloven === 'round') for (const s of [-1, 1]) b.add(HOOF, hoof, { p: [f[0] + s * 0.034, -hip, f[2]], s: [0.75, hoofH / 0.055, 1.15], tint: 0 });
+      else if (cloven) for (const s of [-1, 1]) b.add(G.cyl(r1 * 0.62, r1 * 0.7, hoofH, 5), hoof, { p: [f[0] + s * r1 * 0.5, -hip + hoofH / 2, f[2] + r1 * 0.12], tint: 0 });
       else b.add(G.cyl(r1 * 1.12, r1 * 1.22, hoofH, 8), hoof, { p: [f[0], -hip + hoofH / 2, f[2]], tint: 0 });
     }, [sx * x, hip, sz > 0 ? zf : zb], 'leg', 1, ph));
   }
@@ -219,18 +281,24 @@ function chevre() {
     front: [[0, 0, 0], [0, -0.25, 0.02], [0, -0.46, 0]], back: [[0, 0, 0], [0, -0.22, -0.06], [0, -0.46, 0]] }), tail];
 }
 
-// Vache (d'après la planche de référence) : corps en tonneau à dos droit et croupe carrée, pattes
-// courtes effilées à onglons, cou court qui porte la tête au-dessus du garrot et plie pour brouter,
-// crâne rond, large museau rose, oreilles en feuille, cornes courtes relevées, collier bleu et
-// cloche dorée, pis à quatre trayons, queue à houppe ; taches lobées teintées par la robe
+// Vache (d'après la planche de référence) : corps en tonneau à dos droit et croupe carrée, croupe et
+// épaules soudées d'où sortent des pattes lisses à onglons, cou court qui porte la tête au-dessus du
+// garrot et plie pour brouter, crâne rond, large museau rose, oreilles en feuille, cornes relevées,
+// collier bleu et cloche dorée, gros pis à quatre trayons, queue à houppe ; taches lobées teintées
+// par la robe
 function vache() {
   const CREAM = '#f5e9d6';
   const PINK = '#f0b4a8';
   const NECK = 0.62; // inclinaison du cou vers l'avant (rad)
-  const shell = surface([0, 0.545, -0.035], [0.25, 0.29, 0.465], 3);
+  // enveloppe du corps : tonneau, plus croupe et épaules (même pièce, donc sans trait d'encre) qui
+  // enveloppent le haut des pattes : celles-ci sortent du dessous, jamais du flanc
+  const SHELL = [{ c: [0, 0.545, -0.035], rad: [0.25, 0.29, 0.465], n: 3 }];
+  for (const sx of [-1, 1]) SHELL.push({ c: [sx * 0.11, 0.36, -0.3], rad: [0.11, 0.14, 0.16], n: 2.5 }, { c: [sx * 0.11, 0.36, 0.22], rad: [0.1, 0.13, 0.14], n: 2.5 });
+  const [shell, ...masses] = SHELL.map((e) => surface(e.c, e.rad, e.n));
   const skin = nextId();
   const body = part((b) => {
-    hull(b, CREAM, shell, 14, 10, { tint: 0 });
+    hull(b, CREAM, shell, 18, 13, { tint: 0 });
+    for (const m of masses) hull(b, CREAM, m, 7, 5, { tint: 0 });
     // selle sur le dos (dessus et deux flancs) ; à droite (vue de profil de la planche) épaule, flanc,
     // croupe et cuisse ; à gauche, d'autres taches
     const spots = [
@@ -239,49 +307,62 @@ function vache() {
       [[1, -0.05, -0.1], [0.33, 0.28], 8], [[0.9, 0.3, 0.7], [0.21, 0.24], 9], [[0.8, 0.4, -0.8], [0.23, 0.25], 10],
     ];
     for (const [d, size, seed] of spots) patch(b, shell, d, size, seed);
-    // pis rose à quatre trayons, entre les pattes arrière
-    blob(b, PINK, [0, 0.25, -0.19], [0.135, 0.09, 0.12], { tint: 0 }, 7, 5);
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.add(G.cyl(0.018, 0.022, 0.07, 4), '#e9a194', { p: [sx * 0.055, 0.17, -0.19 + sz * 0.055], tint: 0 });
+    // gros pis rose, visible de dos entre les cuisses ; quatre trayons arrondis, un peu écartés
+    blob(b, PINK, [0, 0.235, -0.16], [0.14, 0.095, 0.13], { tint: 0 }, 10, 8);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) limb(b, '#e9a194', [[sx * 0.055, 0.172, -0.16 + sz * 0.055], [sx * 0.067, 0.105, -0.16 + sz * 0.065]], [0.02, 0.018], { sides: 6, rings: 1, end: 'round' });
   }, [0, 0, 0], 'none', 1, 0, skin);
+  body.shell = SHELL;
   // cou : pivot au poitrail, il porte la tête (pièce suivante) ; collier et cloche sous la gorge
   const axis = new THREE.Vector3(0, Math.cos(NECK), Math.sin(NECK));
   const throat = new THREE.Vector3(0, -Math.sin(NECK), Math.cos(NECK));
   const neck = part((b) => {
-    blob(b, CREAM, axis.clone().multiplyScalar(0.246).toArray(), [0.155, 0.27, 0.155], { r: [NECK, 0, 0], tint: 0 }, 8, 6);
+    blob(b, CREAM, axis.clone().multiplyScalar(0.246).toArray(), [0.155, 0.27, 0.155], { r: [NECK, 0, 0], tint: 0 }, 9, 8);
     const ring = axis.clone().multiplyScalar(0.36);
-    b.add(G.torus(0.145, 0.026, 4, 12), '#6a8fd4', { p: ring.toArray(), r: [NECK - Math.PI / 2, 0, 0], tint: 0 });
-    const bell = ring.addScaledVector(throat, 0.17);
-    b.add(G.cyl(0.03, 0.05, 0.085, 4), '#e2b23e', { p: [0, bell.y - 0.045, bell.z + 0.01], r: [0, Math.PI / 4, 0], tint: 0 });
-    b.add(G.sphere(0.017, 4, 2), '#a8781f', { p: [0, bell.y - 0.095, bell.z + 0.01], tint: 0 }); // battant
+    b.add(G.torus(0.145, 0.026, 5, 16), '#6a8fd4', { p: ring.toArray(), r: [NECK - Math.PI / 2, 0, 0], tint: 0 });
+    // cloche : profil tourné (épaule ronde, lèvre évasée), anneau au collier, bouche sombre et battant
+    const top = ring.addScaledVector(throat, 0.17);
+    const y0 = top.y - 0.1;
+    const z0 = top.z + 0.012;
+    b.add(G.lathe([[0.05, 0], [0.056, 0.006], [0.044, 0.03], [0.034, 0.06], [0.024, 0.082], [0.001, 0.09]], 8), '#e2b23e', { p: [0, y0, z0], tint: 0 });
+    b.add(G.cyl(0.046, 0.046, 0.002, 6), '#6b4f1c', { p: [0, y0 + 0.004, z0], tint: 0 });
+    b.add(G.torus(0.012, 0.004, 3, 6), '#c99a2e', { p: [0, top.y - 0.006, z0], tint: 0 });
+    b.add(G.sphere(0.016, 5, 3), '#5a4318', { p: [0, y0 - 0.01, z0], tint: 0 });
   }, [0, 0.5, 0.22], 'neck', 1, 0, skin);
   const crane = surface([0, 0.02, 0.02], [0.165, 0.16, 0.165]);
+  const MC = [0, -0.08, 0.19];
+  const MR = [0.125, 0.085, 0.09];
   const head = part((b) => {
-    hull(b, CREAM, crane, 10, 8, { tint: 0 });
-    blob(b, PINK, [0, -0.08, 0.19], [0.125, 0.085, 0.09], { tint: 0 }, 9, 6);
+    hull(b, CREAM, crane, 12, 9, { tint: 0 });
+    blob(b, PINK, MC, MR, { tint: 0 }, 12, 9);
     patch(b, crane, [0.62, 0.35, 0.65], [0.38, 0.36], 12); // tache autour de l'œil gauche, jusqu'à l'oreille
     for (const sx of [-1, 1]) {
-      b.add(G.sphere(1, 5, 3), '#b9716b', { p: [sx * 0.048, -0.075, 0.268], s: [0.02, 0.028, 0.012], r: [0, sx * 0.35, 0], tint: 0 }); // naseau
-      eye(b, sx * 0.1, 0.05, 0.14, 0.03);
+      // naseau ovale posé selon la normale du museau, penché vers l'extérieur et le haut, creux sombre
+      const p = new THREE.Vector3(sx * 0.05, -0.07, 0);
+      p.z = MC[2] + MR[2] * Math.sqrt(1 - ((p.x - MC[0]) / MR[0]) ** 2 - ((p.y - MC[1]) / MR[1]) ** 2);
+      const nrm = new THREE.Vector3((p.x - MC[0]) / MR[0] ** 2, (p.y - MC[1]) / MR[1] ** 2, (p.z - MC[2]) / MR[2] ** 2).normalize();
+      const q = new THREE.Quaternion().setFromAxisAngle(nrm, -sx * 0.35).multiply(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), nrm));
+      const e = new THREE.Euler().setFromQuaternion(q);
+      b.add(G.sphere(1, 8, 4), '#b06866', { p: p.clone().addScaledVector(nrm, -0.003).toArray(), s: [0.022, 0.03, 0.01], r: [e.x, e.y, e.z], tint: 0 });
+      b.add(G.sphere(1, 6, 3), '#7e4646', { p: p.clone().addScaledVector(nrm, 0.0035).toArray(), s: [0.012, 0.019, 0.006], r: [e.x, e.y, e.z], tint: 0 });
+      eye(b, sx * 0.1, 0.05, 0.14, 0.03, null, true);
       // oreille en feuille, à plat vers l'avant, intérieur rose ; la gauche prend la tache
-      const e = new THREE.Euler(0, sx * 0.3, -sx * 0.15);
-      const at = (o) => new THREE.Vector3(...o).applyEuler(e).add(new THREE.Vector3(sx * 0.215, 0.05, -0.05)).toArray();
-      blob(b, sx > 0 ? '#ffffff' : CREAM, at([0, 0, 0]), [0.1, 0.055, 0.028], { r: [e.x, e.y, e.z], tint: sx > 0 ? 1 : 0 }, 6, 4);
-      blob(b, '#eea69d', at([sx * 0.012, 0, 0.02]), [0.07, 0.035, 0.012], { r: [e.x, e.y, e.z], tint: 0 }, 5, 3);
-      // corne courte, vers l'extérieur puis le haut
-      const h = [[sx * 0.075, 0.12, -0.03], [sx * 0.13, 0.2, -0.03], [sx * 0.15, 0.28, -0.05]];
-      for (let i = 0; i < 2; i++) bone(b, '#ecdcb4', h[i], h[i + 1], 0.03 - i * 0.012, 0.018 - i * 0.01, 5, 0);
+      const eo = new THREE.Euler(0, sx * 0.3, -sx * 0.15);
+      const at = (o) => new THREE.Vector3(...o).applyEuler(eo).add(new THREE.Vector3(sx * 0.215, 0.05, -0.05)).toArray();
+      blob(b, sx > 0 ? '#ffffff' : CREAM, at([0, 0, 0]), [0.1, 0.055, 0.028], { r: [eo.x, eo.y, eo.z], tint: sx > 0 ? 1 : 0 }, 8, 6);
+      blob(b, '#eea69d', at([sx * 0.012, 0, 0.02]), [0.07, 0.035, 0.012], { r: [eo.x, eo.y, eo.z], tint: 0 }, 6, 3);
+      // corne : vers l'extérieur, puis le haut, puis un peu vers l'intérieur ; pointe arrondie
+      limb(b, '#ecdcb4', [[sx * 0.06, 0.1, -0.03], [sx * 0.11, 0.165, -0.03], [sx * 0.155, 0.225, -0.035], [sx * 0.15, 0.285, -0.05]], [0.034, 0.028, 0.019, 0.01], { sides: 7, rings: 4, end: 'round' });
     }
   }, axis.clone().multiplyScalar(0.43).toArray(), 'head');
   head.parent = 1;
-  // queue attachée en haut de la croupe, en courbe douce, houppe évasée de la couleur des taches
+  // queue : racine enfoncée dans la croupe, courbe douce en S, houppe en pinceau (couleur des taches)
   const tail = part((b) => {
-    const t = [[0, 0, 0], [0, -0.04, -0.05], [0, -0.2, -0.075], [0, -0.35, -0.06]];
-    for (let i = 0; i < 3; i++) bone(b, CREAM, t[i], t[i + 1], 0.024 - i * 0.003, 0.021 - i * 0.003, 5, 0);
-    b.add(G.cone(0.045, 0.09, 6), '#ffffff', { p: [0, -0.38, -0.06] });
-    blob(b, '#ffffff', [0, -0.425, -0.06], [0.045, 0.03, 0.045], {}, 6, 3);
-  }, [0, 0.74, -0.46], 'tail');
-  return [body, neck, head, ...legs({ x: 0.13, zf: 0.22, zb: -0.3, hip: 0.5, color: CREAM, r0: 0.09, r1: 0.062, hoof: '#3b3537', hoofH: 0.055, cloven: true, joint: 'back',
-    front: [[0, 0, 0], [0, -0.25, 0.012], [0, -0.445, 0]], back: [[0, 0, 0], [0, -0.22, -0.05], [0, -0.445, 0]] }), tail];
+    limb(b, CREAM, [[0, 0.01, 0.03], [0, -0.01, -0.04], [0, -0.12, -0.1], [0, -0.26, -0.095], [0, -0.37, -0.06]], [0.03, 0.028, 0.025, 0.022, 0.02], { sides: 6, rings: 5, end: 'round' });
+    blob(b, '#ffffff', [0, -0.42, -0.06], [0.032, 0.07, 0.032], {}, 5, 4);
+    for (const sx of [-1, 1]) blob(b, '#ffffff', [sx * 0.022, -0.415, -0.06], [0.026, 0.06, 0.026], { r: [0, 0, sx * 0.35] }, 5, 4);
+  }, [0, 0.7, -0.45], 'tail');
+  return [body, neck, head, ...legs({ x: 0.11, zf: 0.22, zb: -0.3, hip: 0.5, color: CREAM, hoof: '#3b3537', hoofH: 0.055, cloven: 'round', radii: [0.07, 0.064, 0.056, 0.045],
+    front: [[0, 0, 0], [0, -0.25, 0.012], [0, -0.4, 0], [0, -0.4725, 0]], back: [[0, 0, 0], [0, -0.22, -0.05], [0, -0.4, 0], [0, -0.4725, 0]] }), tail];
 }
 
 // Cerf : cou long dressé, museau allongé, bois ramifiés, croupe blanche, jarrets marqués
