@@ -208,6 +208,7 @@ export function toonMaterial(opts = {}) {
     emissiveVColor = 0,
     face = null,
     character = false,
+    warmShadow = 0,
   } = opts;
   const defines = {};
   if (wind > 0) defines.USE_WIND = '';
@@ -230,6 +231,7 @@ export function toonMaterial(opts = {}) {
       uId: { value: id },
       uOutline: { value: outline },
       uRim: { value: rim },
+      uWarmShadow: { value: warmShadow },
       uWindAmount: { value: wind },
       uEmissive: { value: new THREE.Color(emissive) },
       uEmissiveNight: { value: emissiveNight ? 1 : 0 },

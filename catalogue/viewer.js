@@ -21,6 +21,8 @@ export class Viewer {
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: false, preserveDrawingBuffer: true });
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     this.pipeline = new Pipeline(this.renderer);
+    // fiche vue de près : qualité haute, comme les vignettes (traits moins crénelés)
+    this.pipeline.settings.quality = 'high';
     this.camera = new THREE.PerspectiveCamera(32, 1, 0.05, 500);
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enableDamping = true;

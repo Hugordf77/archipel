@@ -108,6 +108,9 @@ uniform vec3 uSunColor;
 uniform vec3 uSkyAmbient;
 uniform vec3 uGroundAmbient;
 uniform vec3 uShadowTint;
+// part (0 à 1) de l'ombre ramenée vers un gris chaud de même luminance : pelages clairs sans
+// reflet violet (faune) ; 0 pour tous les autres matériaux
+uniform float uWarmShadow;
 uniform vec3 uRimColor;
 uniform vec3 uFogColor;
 uniform vec2 uFogRange;
@@ -133,7 +136,8 @@ vec3 toonShade(vec3 albedo, vec3 N, vec3 V, float shadow, float rimAmount) {
   x *= mix(0.42, 1.0, shadow);
   float r = toonRamp(x);
   // ombre : teinte froide (violet/bleu), lumière : teinte chaude du soleil
-  vec3 shadowCol = albedo * uShadowTint;
+  vec3 warm = vec3(dot(uShadowTint, vec3(0.333))) * vec3(1.06, 0.98, 0.92);
+  vec3 shadowCol = albedo * mix(uShadowTint, warm, uWarmShadow);
   vec3 litCol = albedo * uSunColor * 0.94;
   vec3 col = mix(shadowCol, litCol, r);
   // ambiance hémisphérique légère

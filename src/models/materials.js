@@ -15,8 +15,9 @@ export const MAT = Object.freeze({
   // île de départ : pièces fusionnées et vitres qui s'allument le soir
   home: { vertexColors: true, aId: true },
   homeGlass: { vertexColors: true, aId: true, emissive: 0xffa94a, emissiveNight: true, rim: 0.2 },
-  // faune des îles (pièces instanciées) ; le pelage prend la robe de chaque animal
-  fauna: { vertexColors: true, aId: true, tintMask: true, rim: 1.0, outline: 0.6 },
+  // faune des îles (pièces instanciées) ; le pelage prend la robe de chaque animal ; ombres
+  // ramenées vers un gris chaud (un pelage blanc ne vire pas au violet)
+  fauna: { vertexColors: true, aId: true, tintMask: true, rim: 1.0, outline: 0.6, warmShadow: 0.6 },
   // faune de l'île de départ (l'identifiant de contour est ajouté par le jeu)
   gull: { vertexColors: true, rim: 1, pigment: 0.4 },
   crab: { vertexColors: true, rim: 1, pigment: 0.5 },
