@@ -133,10 +133,10 @@ describe('usage des modèles', () => {
 
 describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
   // gabarit visé (L × H × P, m, échelle comprise), entrée du registre, hauteur maximale du museau en
-  // broutant, budget de triangles (la vache, finie d'après sa planche, a droit à 3 500) ; exact : nombre
-  // de triangles figé (géométrie inchangée par la finition de la vache)
+  // broutant, budget de triangles (vache et mouton, refaits d'après leur planche, ont droit à 3 500 et
+  // 3 400 : laine bouclée, cou articulé) ; exact : nombre de triangles figé (géométrie inchangée)
   const ONGULES = {
-    mouton: { size: [1.0, 0.95, 1.3], id: 'ANI-001', graze: 0.12, tris: 1500, exact: 1296 },
+    mouton: { size: [0.5, 0.9, 1.12], id: 'ANI-001', graze: 0.12, tris: 3400 },
     chevre: { size: [0.6, 1.05, 1.2], id: 'ANI-002', graze: 0.12, tris: 1500, exact: 1096 },
     vache: { size: [0.9, 1.6, 1.85], id: 'ANI-003', graze: 0.12, tris: 3500 },
     cerf: { size: [0.8, 2.0, 1.7], id: 'ANI-004', graze: 0.3, tris: 1500, exact: 1376 },

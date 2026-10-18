@@ -1,6 +1,7 @@
 // Animaux des îles générées : 23 espèces dessinées par pièces (corps, tête, pattes, ailes, queue).
 // Chaque pièce : { geo, pivot [x, y, z], anim, side, phase, parent? } ; le jeu les instancie (IslandFauna).
 import * as THREE from 'three';
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { Builder, G } from '../../render/builder.js';
 import { nextId } from '../../core/globals.js';
 
@@ -208,12 +209,71 @@ function patch(b, surf, d, size, seed, { lift = 0.008 } = {}) {
   b.add(g, '#ffffff', { tint: 1 });
 }
 
+// Laine bouclée (chou-fleur) : icosphère posée sur une surface lisse (rayons rad, exposant n), centrée
+// en p et tournée de r, bosselée de touffes rondes. Les centres des touffes sont répartis sur la surface
+// elle-même, à spacing (m) les uns des autres (tirage sur une spirale de Fibonacci, ordre de visite fixé
+// par seed) ; chaque sommet est porté par la touffe la plus proche (profil en dôme) et s'enfonce de
+// depth (m) au plus dans le sillon entre deux touffes. Teintée par la robe (sommets blancs, tint 1).
+// detail : finesse de l'icosphère, 20 × (detail + 1)² triangles
+function fleece(b, rad, { p = [0, 0, 0], r = [0, 0, 0], n = 2, detail = 3, spacing = 0.1, depth = 0.02, seed = 1 } = {}) {
+  const surf = surface([0, 0, 0], rad, n);
+  const u = new THREE.Vector3();
+  const nrm = new THREE.Vector3();
+  const M = 900;
+  const cand = [];
+  for (let i = 0; i < M; i++) {
+    const y = 1 - (2 * (i + 0.5)) / M;
+    const k = Math.sqrt(1 - y * y);
+    const c = new THREE.Vector3();
+    surf.at(u.set(Math.cos(i * 2.39996) * k, y, Math.sin(i * 2.39996) * k), c, nrm);
+    cand.push([((i * 7919 + seed * 104729) % M) * M + i, c]);
+  }
+  cand.sort((a, c) => a[0] - c[0]);
+  const C = [];
+  const s2 = spacing * spacing;
+  for (const [, c] of cand) if (C.every((o) => o.distanceToSquared(c) >= s2)) C.push(c);
+  const size = spacing * 0.62;
+  const g = mergeVertices(new THREE.IcosahedronGeometry(1, detail).deleteAttribute('normal').deleteAttribute('uv'));
+  const pos = g.attributes.position;
+  const q = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    surf.at(u.fromBufferAttribute(pos, i), q, nrm);
+    let m = 0;
+    for (const c of C) {
+      const d2 = q.distanceToSquared(c) / (size * size);
+      if (d2 < 1) m = Math.max(m, Math.sqrt(1 - d2));
+    }
+    q.addScaledVector(nrm, -depth * (1 - m));
+    pos.setXYZ(i, q.x, q.y, q.z);
+  }
+  g.computeVertexNormals();
+  b.add(g, '#ffffff', { p, r, tint: 1 });
+}
+
+// Collier (tore autour d'un cou incliné de tilt vers l'avant, à la distance at de son pivot) et cloche
+// tournée qui pend sous la gorge : épaule ronde, lèvre évasée, anneau, bouche sombre et battant ; k :
+// taille de la cloche (1 : 9 cm de haut)
+const BELL = [[0.05, 0], [0.056, 0.006], [0.044, 0.03], [0.034, 0.06], [0.024, 0.082], [0.001, 0.09]];
+function collar(b, tilt, at, R, tube, k = 1) {
+  const axis = new THREE.Vector3(0, Math.cos(tilt), Math.sin(tilt));
+  const throat = new THREE.Vector3(0, -Math.sin(tilt), Math.cos(tilt));
+  const ring = axis.multiplyScalar(at);
+  b.add(G.torus(R, tube, 5, 16), '#6a8fd4', { p: ring.toArray(), r: [tilt - Math.PI / 2, 0, 0], tint: 0 });
+  const top = ring.addScaledVector(throat, R + tube - 0.001);
+  const y0 = top.y - 0.1 * k;
+  const z0 = top.z + 0.012 * k;
+  b.add(G.lathe(BELL.map(([x, y]) => [x * k, y * k]), 8), '#e2b23e', { p: [0, y0, z0], tint: 0 });
+  b.add(G.cyl(0.046 * k, 0.046 * k, 0.002, 6), '#6b4f1c', { p: [0, y0 + 0.004 * k, z0], tint: 0 });
+  b.add(G.torus(0.012 * k, 0.004 * k, 3, 6), '#c99a2e', { p: [0, top.y - 0.006 * k, z0], tint: 0 });
+  b.add(G.sphere(0.016 * k, 5, 3), '#5a4318', { p: [0, y0 - 0.01 * k, z0], tint: 0 });
+}
+
 // quatre pattes (avant gauche, avant droite, arrière gauche, arrière droite, en diagonale) :
 // pivot de hanche caché dans le corps, sabot posé au sol ; zf et zb sont les positions signées
-// des pattes avant (z > 0) et arrière (z < 0) ; cloven : sabot fendu en deux onglons ('round' :
-// onglons arrondis) ; radii : un rayon par point, la patte est alors un tube lisse (limb)
+// des pattes avant (z > 0) et arrière (z < 0) ; cloven : sabot fendu en deux onglons ; hoofRound :
+// sabots arrondis (profil tourné) ; radii : un rayon par point, la patte est alors un tube lisse (limb)
 function legs(o) {
-  const { x, zf, zb, hip, color, tint = 0, r0, r1, hoof, hoofH = 0.06, front = null, back = null, joint = null, cloven = false, radii = null, sides = 10 } = o;
+  const { x, zf, zb, hip, color, tint = 0, r0, r1, hoof, hoofH = 0.06, front = null, back = null, joint = null, cloven = false, hoofRound = false, radii = null, sides = 10 } = o;
   const out = [];
   for (const [sx, sz, ph] of [[-1, 1, 0], [1, 1, Math.PI], [-1, -1, Math.PI], [1, -1, 0]]) {
     const pts = (sz > 0 ? front : back) || [[0, 0, 0], [0, -hip + hoofH, 0]];
@@ -226,7 +286,11 @@ function legs(o) {
         if (joint === (sz > 0 ? 'front' : 'back') && i > 0) b.add(G.sphere(r0 + (r1 - r0) * t0, 5, 3), color, { p: pts[i], tint });
       }
       const f = pts[pts.length - 1];
-      if (cloven === 'round') for (const s of [-1, 1]) b.add(HOOF, hoof, { p: [f[0] + s * 0.034, -hip, f[2]], s: [0.75, hoofH / 0.055, 1.15], tint: 0 });
+      if (hoofRound && cloven) for (const s of [-1, 1]) b.add(HOOF, hoof, { p: [f[0] + s * 0.034, -hip, f[2]], s: [0.75, hoofH / 0.055, 1.15], tint: 0 });
+      else if (hoofRound) {
+        const k = ((radii ? radii[radii.length - 1] : r1) * 1.2) / 0.042;
+        b.add(HOOF, hoof, { p: [f[0], -hip, f[2]], s: [k, hoofH / 0.055, k * 1.1], tint: 0 });
+      }
       else if (cloven) for (const s of [-1, 1]) b.add(G.cyl(r1 * 0.62, r1 * 0.7, hoofH, 5), hoof, { p: [f[0] + s * r1 * 0.5, -hip + hoofH / 2, f[2] + r1 * 0.12], tint: 0 });
       else b.add(G.cyl(r1 * 1.12, r1 * 1.22, hoofH, 8), hoof, { p: [f[0], -hip + hoofH / 2, f[2]], tint: 0 });
     }, [sx * x, hip, sz > 0 ? zf : zb], 'leg', 1, ph));
@@ -234,27 +298,43 @@ function legs(o) {
   return out;
 }
 
-// Mouton : laine en grappe (teintée), visage et pattes ardoise, petites oreilles horizontales
+// Mouton (d'après la planche de référence) : nuage de laine bouclée (teintée par la robe), cou court
+// laineux qui porte la tête au-dessus du dos et plie pour brouter, visage rose lisse encadré d'une
+// calotte de laine, petits yeux noirs, nez rose, oreilles roses à l'horizontale, collier bleu et
+// cloche, pattes courtes roses à sabots arrondis, queue en touffe
 function mouton() {
-  const SLATE = '#4d4766';
+  const SKIN = '#f6d6c8';
+  const NECK = 0.4; // inclinaison du cou vers l'avant (rad)
   const body = part((b) => {
-    blob(b, '#f6f1ea', [0, 0.56, -0.02], [0.37, 0.25, 0.46]);
-    const wool = [[0, 0.78, 0.18, 0.16], [0, 0.8, -0.12, 0.17], [0.25, 0.72, 0.16, 0.16], [-0.25, 0.72, 0.16, 0.16], [0.26, 0.72, -0.2, 0.16], [-0.26, 0.72, -0.2, 0.16],
-      [0.33, 0.54, -0.02, 0.16], [-0.33, 0.54, -0.02, 0.16], [0, 0.62, -0.4, 0.16], [0, 0.6, 0.34, 0.15]];
-    wool.forEach(([x, y, z, r], i) => b.add(G.sphere(r, 6, 4), i % 2 ? '#ffffff' : '#f1ece5', { p: [x, y, z] }));
+    fleece(b, [0.25, 0.27, 0.41], { p: [0, 0.44, -0.05], n: 2.5, detail: 7, spacing: 0.1, depth: 0.045, seed: 1 });
   }, [0, 0, 0]);
+  // cou : pivot dans le poitrail, il porte la tête (pièce suivante) ; collier et cloche sous la gorge
+  const axis = new THREE.Vector3(0, Math.cos(NECK), Math.sin(NECK));
+  const neck = part((b) => {
+    fleece(b, [0.12, 0.2, 0.12], { p: axis.clone().multiplyScalar(0.18).toArray(), r: [NECK, 0, 0], detail: 1, spacing: 0.09, depth: 0.02, seed: 2 });
+    collar(b, NECK, 0.2, 0.123, 0.018, 0.68);
+  }, [0, 0.38, 0.2], 'neck');
   const head = part((b) => {
-    b.add(G.sphere(0.15, 7, 5), '#f4efe8', { p: [0, 0.04, 0.12] }); // collerette de laine
-    blob(b, SLATE, [0, -0.01, 0.32], [0.15, 0.16, 0.2], { tint: 0 });
-    blob(b, '#5f5672', [0, -0.08, 0.47], [0.11, 0.09, 0.09], { tint: 0 }, 7, 5);
-    b.add(G.sphere(0.12, 7, 5), '#ffffff', { p: [0, 0.13, 0.27] }); // toupet
+    blob(b, SKIN, [0, -0.02, 0.06], [0.11, 0.12, 0.135], { tint: 0 }, 12, 9); // visage
+    blob(b, SKIN, [0, -0.075, 0.14], [0.072, 0.058, 0.068], { tint: 0 }, 10, 7); // museau
+    b.add(G.sphere(1, 8, 5), '#d98b8a', { p: [0, -0.058, 0.203], s: [0.025, 0.016, 0.009], tint: 0 }); // nez
+    // calotte de laine : couvre le dessus et l'arrière de la tête, frange jusqu'aux sourcils
+    fleece(b, [0.15, 0.115, 0.15], { p: [0, 0.05, -0.03], detail: 3, spacing: 0.065, depth: 0.022, seed: 3 });
     for (const sx of [-1, 1]) {
-      blob(b, SLATE, [sx * 0.18, 0.05, 0.26], [0.11, 0.035, 0.06], { tint: 0 }, 6, 4);
-      eye(b, sx * 0.1, 0.03, 0.43, 0.032, '#efe6da');
+      eye(b, sx * 0.058, 0.015, 0.16, 0.019, null, true);
+      // oreille rose à l'horizontale, à plat vers l'avant, intérieur plus rose
+      const eo = new THREE.Euler(0, sx * 0.3, -sx * 0.2);
+      const at = (o) => new THREE.Vector3(...o).applyEuler(eo).add(new THREE.Vector3(sx * 0.15, 0, -0.02)).toArray();
+      blob(b, SKIN, at([0, 0, 0]), [0.075, 0.035, 0.02], { r: [eo.x, eo.y, eo.z], tint: 0 }, 7, 5);
+      blob(b, '#eaa5a0', at([sx * 0.008, 0, 0.014]), [0.05, 0.022, 0.008], { r: [eo.x, eo.y, eo.z], tint: 0 }, 5, 3);
     }
-  }, [0, 0.62, 0.3], 'head');
-  // pas de queue : une boule détourée sur la laine se lisait comme un anneau
-  return [body, head, ...legs({ x: 0.17, zf: 0.28, zb: -0.3, hip: 0.43, color: SLATE, r0: 0.055, r1: 0.045, hoof: '#3a3346' })];
+  }, axis.clone().multiplyScalar(0.36).toArray(), 'head');
+  head.geo.scale(1.1, 1.1, 1.1); // tête un peu plus grosse, comme sur la planche
+  head.parent = 1;
+  // queue : touffe de laine en haut de la croupe, pendante
+  const tail = part((b) => fleece(b, [0.06, 0.09, 0.07], { p: [0, -0.09, -0.05], r: [-0.25, 0, 0], detail: 2, spacing: 0.055, depth: 0.015, seed: 4 }), [0, 0.54, -0.44], 'tail');
+  return [body, neck, head, ...legs({ x: 0.1, zf: 0.15, zb: -0.31, hip: 0.36, color: SKIN, hoof: '#c99d8c', hoofH: 0.045, hoofRound: true, radii: [0.056, 0.052, 0.047, 0.04], sides: 8,
+    front: [[0, 0, 0], [0, -0.17, 0.006], [0, -0.28, 0], [0, -0.3375, 0]], back: [[0, 0, 0], [0, -0.15, -0.03], [0, -0.28, 0], [0, -0.3375, 0]] }), tail];
 }
 
 // Chèvre : dos droit, cornes recourbées vers l'arrière, barbichette, oreilles tombantes
@@ -314,19 +394,9 @@ function vache() {
   body.shell = SHELL;
   // cou : pivot au poitrail, il porte la tête (pièce suivante) ; collier et cloche sous la gorge
   const axis = new THREE.Vector3(0, Math.cos(NECK), Math.sin(NECK));
-  const throat = new THREE.Vector3(0, -Math.sin(NECK), Math.cos(NECK));
   const neck = part((b) => {
     blob(b, CREAM, axis.clone().multiplyScalar(0.246).toArray(), [0.155, 0.27, 0.155], { r: [NECK, 0, 0], tint: 0 }, 9, 8);
-    const ring = axis.clone().multiplyScalar(0.36);
-    b.add(G.torus(0.145, 0.026, 5, 16), '#6a8fd4', { p: ring.toArray(), r: [NECK - Math.PI / 2, 0, 0], tint: 0 });
-    // cloche : profil tourné (épaule ronde, lèvre évasée), anneau au collier, bouche sombre et battant
-    const top = ring.addScaledVector(throat, 0.17);
-    const y0 = top.y - 0.1;
-    const z0 = top.z + 0.012;
-    b.add(G.lathe([[0.05, 0], [0.056, 0.006], [0.044, 0.03], [0.034, 0.06], [0.024, 0.082], [0.001, 0.09]], 8), '#e2b23e', { p: [0, y0, z0], tint: 0 });
-    b.add(G.cyl(0.046, 0.046, 0.002, 6), '#6b4f1c', { p: [0, y0 + 0.004, z0], tint: 0 });
-    b.add(G.torus(0.012, 0.004, 3, 6), '#c99a2e', { p: [0, top.y - 0.006, z0], tint: 0 });
-    b.add(G.sphere(0.016, 5, 3), '#5a4318', { p: [0, y0 - 0.01, z0], tint: 0 });
+    collar(b, NECK, 0.36, 0.145, 0.026);
   }, [0, 0.5, 0.22], 'neck', 1, 0, skin);
   const crane = surface([0, 0.02, 0.02], [0.165, 0.16, 0.165]);
   const MC = [0, -0.08, 0.19];
@@ -361,7 +431,7 @@ function vache() {
     blob(b, '#ffffff', [0, -0.42, -0.06], [0.032, 0.07, 0.032], {}, 5, 4);
     for (const sx of [-1, 1]) blob(b, '#ffffff', [sx * 0.022, -0.415, -0.06], [0.026, 0.06, 0.026], { r: [0, 0, sx * 0.35] }, 5, 4);
   }, [0, 0.7, -0.45], 'tail');
-  return [body, neck, head, ...legs({ x: 0.11, zf: 0.22, zb: -0.3, hip: 0.5, color: CREAM, hoof: '#3b3537', hoofH: 0.055, cloven: 'round', radii: [0.07, 0.064, 0.056, 0.045],
+  return [body, neck, head, ...legs({ x: 0.11, zf: 0.22, zb: -0.3, hip: 0.5, color: CREAM, hoof: '#3b3537', hoofH: 0.055, cloven: true, hoofRound: true, radii: [0.07, 0.064, 0.056, 0.045],
     front: [[0, 0, 0], [0, -0.25, 0.012], [0, -0.4, 0], [0, -0.4725, 0]], back: [[0, 0, 0], [0, -0.22, -0.05], [0, -0.4, 0], [0, -0.4725, 0]] }), tail];
 }
 
@@ -398,8 +468,8 @@ export const SPECIES = {
   // broutage (rad) de la tête, ou du cou s'il y en a un ; nod : angle de la tête portée par le cou ;
   // muzzle : bout du museau dans le repère de la tête ; top : haut de la tête (m, avant l'échelle).
   mouton: {
-    speed: 0.6, scale: 1, shadow: true, graze: 1.0, muzzle: [0, -0.1, 0.55], top: 1.0,
-    coats: [['Blanc', '#fbf7f2'], ['Noir', '#5a5160']],
+    speed: 0.6, scale: 1, shadow: true, graze: 1.5, nod: -0.7, muzzle: [0, -0.121, 0.209], top: 0.92,
+    coats: [['Crème', '#f4e9d0'], ['Blanc', '#fbf8f1'], ['Noir', '#5a5160']],
     parts: () => mouton(),
   },
   chevre: {
