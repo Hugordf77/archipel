@@ -1,7 +1,7 @@
 // Registre des modèles 3D : identifiants, constructions (non vides, sans NaN, à la taille
 // déclarée) et couverture de tout ce que le jeu construit (recensement sur des îles générées
 // et sur les tables du jeu).
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import * as THREE from 'three';
 import { installCanvasStub } from './helpers/canvas.js';
 
@@ -75,6 +75,24 @@ describe('dossiers de modèle', () => {
     const { indexGenere, INDEX } = await import('../scripts/modeles/index.mjs');
     expect(fs.readFileSync(INDEX, 'utf8')).toBe(indexGenere());
   });
+
+  it('se chargent depuis chaque point d’entrée (aucun cycle d’import cassé selon l’ordre de chargement)', async () => {
+    const fs = await import('node:fs');
+    const { dossiers } = await import('../scripts/modeles/index.mjs');
+    const entrees = [
+      '../src/models/registry.js', '../src/models/kit/fiches.js', '../src/models/kit/assemble.js',
+      '../src/entities/Sailing.js', '../src/entities/character/Character.js', '../src/gameplay/Gather.js',
+      '../src/world/islands/IslandManager.js', '../src/world/home/props.js',
+      // l'API de chaque catégorie, et le premier dossier de chacune
+      ...['arbres', 'plantes', 'rochers', 'batiments', 'ouvrages', 'monuments', 'bateaux', 'decor', 'objets', 'animaux', 'personnage']
+        .flatMap((c) => [`../src/models/${c}/index.js`, ...dossiers().filter((d) => d.startsWith(`${c}/`)).slice(0, 1).map((d) => `../src/models/${d}/index.js`)])
+        .filter((f) => fs.existsSync(new URL(f, import.meta.url))),
+    ];
+    for (const f of entrees) {
+      vi.resetModules();
+      await expect(import(f), f).resolves.toBeTruthy();
+    }
+  }, 60000);
 
   it('rangent chaque fiche dans le dossier de sa catégorie, sous src/models', async () => {
     const { FICHES } = await import('../src/models/index.gen.js');

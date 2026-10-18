@@ -1,5 +1,22 @@
 // Généré par « npm run modeles:index » (scripts/modeles/index.mjs) : ne pas modifier à la main.
 // Une entrée par dossier de modèle : sa fiche (ou celles de sa famille), avec son fichier source.
+import batiments_bibliotheque_souche from './batiments/bibliotheque-souche/index.js';
+import batiments_cabane_ermite from './batiments/cabane-ermite/index.js';
+import batiments_chaumiere from './batiments/chaumiere/index.js';
+import batiments_echoppe from './batiments/echoppe/index.js';
+import batiments_etal_marche from './batiments/etal-marche/index.js';
+import batiments_maison_village from './batiments/maison-village/index.js';
+import batiments_moulin from './batiments/moulin/index.js';
+import batiments_moulin_eau from './batiments/moulin-eau/index.js';
+import batiments_observatoire from './batiments/observatoire/index.js';
+import batiments_phare from './batiments/phare/index.js';
+import batiments_temple from './batiments/temple/index.js';
+import batiments_tour_guet from './batiments/tour-guet/index.js';
+import monuments_cercle_pierres from './monuments/cercle-pierres/index.js';
+import monuments_curiosites from './monuments/curiosites/index.js';
+import monuments_grotte from './monuments/grotte/index.js';
+import monuments_ruines from './monuments/ruines/index.js';
+import monuments_statue_geante from './monuments/statue-geante/index.js';
 import bateaux_barque from './bateaux/barque/index.js';
 import bateaux_goelette from './bateaux/goelette/index.js';
 import bateaux_radeau from './bateaux/radeau/index.js';
@@ -41,6 +58,23 @@ import personnage_tenues from './personnage/tenues/index.js';
 const avec = (f, source) => (Array.isArray(f) ? f : [f]).map((m) => ({ source, ...m }));
 
 export const FICHES = [
+  ...avec(batiments_bibliotheque_souche, 'src/models/batiments/bibliotheque-souche/index.js'),
+  ...avec(batiments_cabane_ermite, 'src/models/batiments/cabane-ermite/index.js'),
+  ...avec(batiments_chaumiere, 'src/models/batiments/chaumiere/index.js'),
+  ...avec(batiments_echoppe, 'src/models/batiments/echoppe/index.js'),
+  ...avec(batiments_etal_marche, 'src/models/batiments/etal-marche/index.js'),
+  ...avec(batiments_maison_village, 'src/models/batiments/maison-village/index.js'),
+  ...avec(batiments_moulin, 'src/models/batiments/moulin/index.js'),
+  ...avec(batiments_moulin_eau, 'src/models/batiments/moulin-eau/index.js'),
+  ...avec(batiments_observatoire, 'src/models/batiments/observatoire/index.js'),
+  ...avec(batiments_phare, 'src/models/batiments/phare/index.js'),
+  ...avec(batiments_temple, 'src/models/batiments/temple/index.js'),
+  ...avec(batiments_tour_guet, 'src/models/batiments/tour-guet/index.js'),
+  ...avec(monuments_cercle_pierres, 'src/models/monuments/cercle-pierres/index.js'),
+  ...avec(monuments_curiosites, 'src/models/monuments/curiosites/index.js'),
+  ...avec(monuments_grotte, 'src/models/monuments/grotte/index.js'),
+  ...avec(monuments_ruines, 'src/models/monuments/ruines/index.js'),
+  ...avec(monuments_statue_geante, 'src/models/monuments/statue-geante/index.js'),
   ...avec(bateaux_barque, 'src/models/bateaux/barque/index.js'),
   ...avec(bateaux_goelette, 'src/models/bateaux/goelette/index.js'),
   ...avec(bateaux_radeau, 'src/models/bateaux/radeau/index.js'),

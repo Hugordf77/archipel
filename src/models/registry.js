@@ -11,6 +11,9 @@ import { mulberry32 } from '../core/random.js';
 import { PAL } from './kit/palette.js';
 import { assembleKind, assemblePart, assembleBuilder, assembleMesh } from './kit/assemble.js';
 import { FICHES } from './index.gen.js';
+// tables du jeu : chargées pour assembler lieux et végétation seuls (kit/tables.js)
+import './structures/lieux.js';
+import './vegetation/especes.js';
 import * as ILE from './buildings/ileDepart.js';
 import { CATALOG } from './decor/catalogue.js';
 import { collectibleMesh, marineMesh } from './props/objets.js';
@@ -432,23 +435,6 @@ const ANCIENS = [
   M('ROC-010', 'rondin', 'Rondin', part('rondin'), { tags: ['bois', 'assise'] }),
 
   // --- BAT : bâtiments ------------------------------------------------------------------
-  M('BAT-001', 'maison-village', 'Maison de village', part('maison', { roof: '#f19b86', wall: '#fbf3e6' }), {
-    variants: [...v3(['Petite', 'Moyenne', 'Grande']), { label: 'Marchand', params: { v: 1, merchant: true } }],
-    params: { v: [0, 2], roof: 'color', wall: 'color', merchant: 'bool' }, tags: ['village', 'teinté'],
-  }),
-  M('BAT-002', 'chaumiere', 'Chaumière du joueur', ile('chaumiere', (b, glass) => ILE.chaumiere(b, glass, 0, 0, 0)), { tags: ['maison'] }),
-  M('BAT-003', 'bibliotheque-souche', 'Bibliothèque-souche du hibou', ile('bibliotheque', (b, glass) => ILE.bibliotheque(b, glass, 0, 0, 0)), { tags: ['hibou'] }),
-  M('BAT-004', 'moulin', 'Moulin à vent', part('moulin', { color: '#f19b86', wall: '#fbf3e6' }), { params: { color: 'color', wall: 'color' }, tags: ['village', 'animé', 'teinté'] }),
-  M('BAT-005', 'moulin-eau', 'Moulin à eau', part('moulin_eau'), { tags: ['village', 'animé', 'rivière'] }),
-  M('BAT-006', 'phare', 'Phare', part('phare'), { tags: ['falaises', 'lumineux'] }),
-  M('BAT-007', 'tour-guet', 'Tour de guet', part('tour_guet'), {
-    variants: [{ label: 'Bois', params: { stone: false } }, { label: 'Pierre', params: { stone: true } }], params: { stone: 'bool' },
-  }),
-  M('BAT-008', 'temple', 'Temple', part('temple')),
-  M('BAT-009', 'cabane-ermite', 'Cabane d\'ermite', part('cabane')),
-  M('BAT-010', 'observatoire', 'Observatoire', part('observatoire'), { tags: ['montagne'] }),
-  M('BAT-011', 'etal-marche', 'Étal du marché', part('etal'), { variants: v3(['Corail', 'Menthe', 'Beurre']), params: { v: [0, 2] }, tags: ['village'] }),
-  M('BAT-012', 'echoppe', 'Échoppe', ile('echoppe', (b) => ILE.echoppe(b, 0, 0, 0)), { tags: ['commerce'] }),
 
   // --- STR : ouvrages et aménagements ---------------------------------------------------
   M('STR-001', 'jetee', 'Jetée', part('jetee'), { params: { len: [6, 20] }, tags: ['village', 'accostage'] }),
@@ -485,14 +471,6 @@ const ANCIENS = [
   M('STR-027', 'cascade', 'Cascade', part('cascade'), { params: { w: [1, 6] }, tags: ['rivière', 'animé'] }),
 
   // --- MON : ruines et monuments --------------------------------------------------------
-  M('MON-001', 'ruines', 'Ruines', part('ruines')),
-  M('MON-002', 'ruines-ensablees', 'Ruines ensablées', part('ruines', { sand: true }), { tags: ['dunes'] }),
-  M('MON-003', 'grotte', 'Grotte', part('grotte'), { tags: ['falaises'] }),
-  M('MON-004', 'cercle-pierres', 'Cercle de pierres', part('cercle_pierres'), { params: { count: [5, 12] } }),
-  M('MON-005', 'statue-geante', 'Statue géante', part('statue'), { tags: ['repère'] }),
-  M('MON-006', 'totem', 'Totem', part('totem'), { tags: ['curiosité'] }),
-  M('MON-007', 'autel', 'Autel', part('autel'), { tags: ['curiosité'] }),
-  M('MON-008', 'cairn', 'Cairn', part('cairn'), { tags: ['curiosité'] }),
 
   // --- NAV : bateaux et épaves ----------------------------------------------------------
   M('NAV-005', 'barque-amarree', 'Barque amarrée', part('barque_amarree'), { variants: v3(['Corail', 'Menthe', 'Ciel']), params: { v: [0, 3] }, tags: ['village'] }),

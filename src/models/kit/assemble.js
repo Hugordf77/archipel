@@ -9,8 +9,7 @@ import { buildClumpGeometry } from '../../render/foliage.js';
 import { leafAtlas } from '../../render/textures.js';
 import { LAYER_SHADOW } from '../../core/globals.js';
 import { MAT } from './materials.js';
-import { kindModel, ROCKY, CAP_COLORS } from '../vegetation/especes.js';
-import { partModel, recolorPart } from '../structures/lieux.js';
+import { table } from './tables.js';
 
 let mats = null;
 export function materiaux() {
@@ -38,6 +37,7 @@ function single(geo, mat, color) {
 
 // Végétation et ressources : { roche: couleur de roche du biome, v: variante, fleur: couleur }
 export function assembleKind(kind, { roche = '#d6cbbd', v = 0, fleur = '#f7b6c8' } = {}) {
+  const { kindModel, ROCKY, CAP_COLORS } = table('vegetation');
   const md = kindModel(kind);
   const M = materiaux();
   const g = new THREE.Group();
@@ -58,6 +58,7 @@ export function assembleKind(kind, { roche = '#d6cbbd', v = 0, fleur = '#f7b6c8'
 const flat = (geo) => (geo.index ? geo.toNonIndexed() : geo);
 // Éléments de lieux (maisons, moulins, jetées…) : p comme dans un plan d'île ({ t, v, … })
 export function assemblePart(p) {
+  const { partModel, recolorPart } = table('lieux');
   const md = partModel({ x: 0, y: 0, z: 0, rot: 0, ...p });
   const M = materiaux();
   const g = new THREE.Group();

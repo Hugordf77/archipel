@@ -4,117 +4,23 @@
 //     obstacles: [[x, z, r]], decks: [{ x0, z0, x1, z1, w, y0, y1, sag }] }
 import * as THREE from 'three';
 import { Builder, G } from '../../render/builder.js';
-import { STRUCTURES } from '../buildings/gabarits.js';
+import { WOOD, WOOD_L, WOOD_D, STONE, STONE_D, MOSS, CREAM, ROPE, GLASS, bx, seg } from '../kit/lieux.js';
+import { maison } from '../batiments/maison-village/index.js';
+import { moulin } from '../batiments/moulin/index.js';
+import { moulinEau } from '../batiments/moulin-eau/index.js';
+import { etal } from '../batiments/etal-marche/index.js';
+import { tourGuet } from '../batiments/tour-guet/index.js';
+import { observatoire } from '../batiments/observatoire/index.js';
+import { phare } from '../batiments/phare/index.js';
+import { temple } from '../batiments/temple/index.js';
+import { cabane } from '../batiments/cabane-ermite/index.js';
+import { ruines } from '../monuments/ruines/index.js';
+import { grotte } from '../monuments/grotte/index.js';
+import { cerclePierres } from '../monuments/cercle-pierres/index.js';
+import { statue } from '../monuments/statue-geante/index.js';
+import { totem, autel, cairn } from '../monuments/curiosites/index.js';
 import { mulberry32 } from '../../core/random.js';
-
-const WOOD = '#c98f5f';
-const WOOD_L = '#e0b07e';
-const WOOD_D = '#9f6b48';
-const STONE = '#e6dccd';
-const STONE_D = '#cfc2b0';
-const MOSS = '#a9d4a0';
-const CREAM = '#fbf3e6';
-const ROPE = '#e9d8b4';
-const GLASS = '#ffe6a8';
-
-const UP = new THREE.Vector3(0, 1, 0);
-// boîte à arrondi simple : dix fois moins de sommets que la boîte « jouet » complète
-const bx = (w, h, d, r = 0.06) => G.box(w, h, d, r, 1);
-function seg(b, color, ax, ay, az, bx, by, bz, r0, r1 = r0, sides = 8, opts = {}) {
-  const a = new THREE.Vector3(ax, ay, az);
-  const c = new THREE.Vector3(bx, by, bz);
-  const dir = new THREE.Vector3().subVectors(c, a);
-  const len = dir.length();
-  if (len < 1e-4) return;
-  const q = new THREE.Quaternion().setFromUnitVectors(UP, dir.normalize());
-  const e = new THREE.Euler().setFromQuaternion(q);
-  b.add(G.cyl(r1, r0, len, sides), color, { p: [(ax + bx) / 2, (ay + by) / 2, (az + bz) / 2], r: [e.x, e.y, e.z], ...opts });
-}
-
-// petite maison de village (3 tailles), toit coloré, volets, fenêtres éclairées la nuit
-function maison(p) {
-  const b = new Builder();
-  const g = new Builder();
-  const v = p.v || 0;
-  const w = [3.2, 3.8, 4.6][v];
-  const d = [3.0, 3.4, 4.0][v];
-  const hgt = [2.1, 2.3, 2.6][v];
-  const W = { tint: 0.5 }; // mur : recoloré par la couleur de la maison
-  const R = { tint: 1 }; // toit et volets
-  const F = { tint: 0 }; // couleur fixe
-  b.add(bx(w + 0.4, 0.3, d + 0.4, 0.06), STONE_D, { p: [0, 0.1, 0], ...F });
-  b.add(bx(w, hgt, d, 0.08), '#ffffff', { p: [0, 0.25 + hgt / 2, 0], ...W });
-  // toit à deux pans
-  const rh = 1.3 + v * 0.2;
-  const slope = Math.atan2(rh, d / 2);
-  const pan = Math.hypot(rh, d / 2) + 0.25;
-  // chaque pan monte vers le faîtage (z = 0)
-  b.add(bx(w + 0.6, 0.16, pan, 0.05), '#ffffff', { p: [0, 0.25 + hgt + rh / 2, -d / 4 - 0.05], r: [-slope, 0, 0], ...R });
-  b.add(bx(w + 0.6, 0.16, pan, 0.05), '#ffffff', { p: [0, 0.25 + hgt + rh / 2, d / 4 + 0.05], r: [slope, 0, 0], ...R });
-  // pignons : pyramide à base carrée aplatie en x = triangle dans le plan du mur
-  for (const sx of [-1, 1]) b.add(G.cone(d / 2, rh, 4), '#ffffff', { p: [sx * (w / 2 - 0.08), 0.25 + hgt + rh / 2, 0], s: [0.1, 1, 1], ...W });
-  // porte, fenêtres et volets
-  b.add(bx(0.8, 1.35, 0.08, 0.04), WOOD_D, { p: [0, 0.25 + 0.68, d / 2 + 0.03], ...F });
-  b.add(G.sphere(0.04, 6, 4), '#f6d27a', { p: [0.25, 0.25 + 0.7, d / 2 + 0.09], ...F });
-  for (const sx of [-1, 1]) {
-    const x = sx * (w / 2 - 0.75);
-    g.add(bx(0.55, 0.55, 0.06, 0.03), GLASS, { p: [x, 0.25 + 1.3, d / 2 + 0.03] });
-    b.add(bx(0.2, 0.62, 0.05, 0.02), '#ffffff', { p: [x - 0.4, 0.25 + 1.3, d / 2 + 0.05], ...R });
-    b.add(bx(0.2, 0.62, 0.05, 0.02), '#ffffff', { p: [x + 0.4, 0.25 + 1.3, d / 2 + 0.05], ...R });
-    // jardinière fleurie sous la fenêtre
-    b.add(bx(0.62, 0.14, 0.18, 0.03), WOOD, { p: [x, 0.25 + 0.95, d / 2 + 0.12], ...F });
-    for (let k = 0; k < 3; k++) b.add(G.sphere(0.06, 6, 4), ['#f4a2b4', '#f6d27a', '#fffaf0'][k], { p: [x - 0.2 + k * 0.2, 0.25 + 1.06, d / 2 + 0.14], ...F });
-  }
-  // cheminée
-  b.add(bx(0.45, 1.0, 0.45, 0.05), STONE, { p: [w / 2 - 0.7, 0.25 + hgt + rh * 0.7, -d / 4], ...F });
-  if (p.merchant) {
-    // enseigne du marchand
-    b.add(G.cyl(0.03, 0.03, 0.9, 6), WOOD_D, { p: [w / 2 + 0.2, 0.25 + hgt - 0.2, d / 2 + 0.1], r: [0, 0, Math.PI / 2], ...F });
-    b.add(bx(0.08, 0.5, 0.7, 0.04), '#f6d27a', { p: [w / 2 + 0.55, 0.25 + hgt - 0.5, d / 2 + 0.1], ...F });
-  }
-  return { solid: b, glow: g, obstacles: [[0, 0, Math.max(w, d) * 0.55]] };
-}
-
-function moulin(p) {
-  const b = new Builder();
-  const F = { tint: 0 };
-  b.add(G.cyl(1.9, 2.3, 0.4, 16), STONE_D, { p: [0, 0.2, 0], ...F });
-  b.add(G.cyl(1.35, 1.9, 6.2, 16), CREAM, { p: [0, 3.5, 0], ...F });
-  b.add(G.cone(1.75, 1.6, 16), '#ffffff', { p: [0, 7.4, 0], tint: 1 });
-  b.add(bx(0.9, 1.5, 0.1, 0.04), WOOD_D, { p: [0, 1.05, 1.86], r: [-0.08, 0, 0], ...F });
-  b.add(bx(0.55, 0.6, 0.08, 0.03), '#ffffff', { p: [0, 4.2, 1.6], r: [-0.08, 0, 0], tint: 1 });
-  b.add(G.cyl(0.2, 0.2, 0.7, 10), WOOD_D, { p: [0, 6.6, 1.6], r: [Math.PI / 2, 0, 0], ...F });
-  // ailes (animées) : quatre bras en croix, toile crème
-  // les toiles tournent avec les bras : on décale chaque toile le long de son bras
-  const sails = new Builder();
-  sails.add(G.cyl(0.32, 0.32, 0.22, 10), WOOD_D, { r: [Math.PI / 2, 0, 0] });
-  for (let k = 0; k < 4; k++) {
-    const a = (k / 4) * Math.PI * 2 + Math.PI / 4;
-    const ux = Math.cos(a);
-    const uy = Math.sin(a);
-    sails.add(bx(0.12, 4.8, 0.08, 0.02), WOOD, { p: [ux * 2.3, uy * 2.3, 0.05], r: [0, 0, a - Math.PI / 2] });
-    sails.add(bx(0.95, 3.6, 0.04, 0.02), k % 2 ? CREAM : '#f6ead2', { p: [ux * 2.6 - uy * 0.55, uy * 2.6 + ux * 0.55, 0.1], r: [0, 0, a - Math.PI / 2] });
-  }
-  return { solid: b, anim: [{ builder: sails, pivot: [0, 6.6, 2.0], axis: 'z', speed: 0.8, wind: true }], obstacles: [[0, 0, 2.2]] };
-}
-
-function moulinEau(p) {
-  const b = new Builder();
-  b.add(bx(3.6, 0.3, 3.2, 0.06), STONE_D, { p: [0, 0.15, 0] });
-  b.add(bx(3.2, 2.4, 2.8, 0.08), STONE, { p: [0, 1.5, 0] });
-  b.add(bx(3.6, 0.16, 1.9, 0.05), '#86c6bb', { p: [0, 3.15, -0.7], r: [0.6, 0, 0] });
-  b.add(bx(3.6, 0.16, 1.9, 0.05), '#86c6bb', { p: [0, 3.15, 0.7], r: [-0.6, 0, 0] });
-  b.add(bx(0.8, 1.3, 0.08, 0.04), WOOD_D, { p: [0, 0.95, 1.43] });
-  const wheel = new Builder();
-  wheel.add(G.torus(1.3, 0.09, 6, 20), WOOD, { r: [0, Math.PI / 2, 0] });
-  wheel.add(G.cyl(0.18, 0.18, 0.7, 8), WOOD_D, { r: [0, 0, Math.PI / 2] });
-  for (let k = 0; k < 8; k++) {
-    const a = (k / 8) * Math.PI * 2;
-    wheel.add(bx(0.5, 0.06, 0.45, 0.02), WOOD_L, { p: [0, Math.sin(a) * 1.3, Math.cos(a) * 1.3], r: [a, 0, 0] });
-    wheel.add(bx(0.06, 1.25, 0.06, 0.01), WOOD_D, { p: [0, Math.sin(a) * 0.65, Math.cos(a) * 0.65], r: [a, 0, 0] });
-  }
-  return { solid: b, obstacles: [[0, 0, 2.2]], wheel };
-}
+import { TABLES } from '../kit/tables.js';
 
 function puits() {
   const b = new Builder();
@@ -124,19 +30,6 @@ function puits() {
   b.add(G.cyl(0.05, 0.05, 1.6, 6), WOOD, { p: [0, 1.85, 0], r: [0, 0, Math.PI / 2] });
   b.add(G.cone(1.1, 0.6, 4), '#f19b86', { p: [0, 2.25, 0], r: [0, Math.PI / 4, 0] });
   b.add(G.cyl(0.14, 0.11, 0.22, 8), WOOD, { p: [0, 1.4, 0] });
-  return { solid: b, obstacles: [[0, 0, 1.0]] };
-}
-
-function etal(p) {
-  const b = new Builder();
-  const awn = ['#f19b86', '#86c6bb', '#f2c86a'][(p.v || 0) % 3];
-  b.add(bx(2.0, 0.9, 0.9, 0.05), WOOD_L, { p: [0, 0.45, 0] });
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.add(G.cyl(0.05, 0.05, 2.0, 6), WOOD_D, { p: [sx * 0.95, 1.0, sz * 0.42] });
-  for (let k = 0; k < 4; k++) b.add(bx(0.5, 0.06, 1.1, 0.02), k % 2 ? awn : CREAM, { p: [-0.75 + k * 0.5, 2.05, 0.1], r: [0.25, 0, 0] });
-  const goods = [['#f39c4a', 0.12], ['#e9786f', 0.09], ['#a6d98f', 0.1], ['#f6d27a', 0.1]];
-  goods.forEach(([c, r], k) => {
-    for (let q = 0; q < 3; q++) b.add(G.sphere(r, 8, 6), c, { p: [-0.7 + k * 0.46 + (q % 2) * 0.1, 0.98 + q * 0.04, -0.1 + q * 0.12] });
-  });
   return { solid: b, obstacles: [[0, 0, 1.0]] };
 }
 
@@ -294,45 +187,6 @@ function coffre() {
   return { solid: b, glow: g, obstacles: [[0, 0, 0.5]] };
 }
 
-function tourGuet(p) {
-  const b = new Builder();
-  const stone = p.stone;
-  const c = stone ? STONE : WOOD;
-  if (stone) {
-    b.add(G.cyl(1.4, 1.8, 6.5, 12), STONE, { p: [0, 3.25, 0] });
-  } else {
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) seg(b, WOOD_D, sx * 1.5, 0, sz * 1.5, sx * 1.1, 6.4, sz * 1.1, 0.13, 0.11, 8);
-    for (const y of [2, 4.2]) b.add(bx(2.6, 0.1, 0.1, 0.02), WOOD, { p: [0, y, 1.3] });
-    // échelle
-    seg(b, WOOD_L, -0.3, 0, 1.8, -0.3, 6.4, 1.15, 0.04, 0.04, 5);
-    seg(b, WOOD_L, 0.3, 0, 1.8, 0.3, 6.4, 1.15, 0.04, 0.04, 5);
-    for (let y = 0.4; y < 6.3; y += 0.45) b.add(bx(0.62, 0.04, 0.05, 0.01), WOOD_L, { p: [0, y, 1.8 - (y / 6.4) * 0.65] });
-  }
-  b.add(bx(3.2, 0.18, 3.2, 0.05), c, { p: [0, 6.5, 0] });
-  for (const sx of [-1, 1]) b.add(bx(3.2, 0.7, 0.1, 0.03), WOOD_L, { p: [0, 6.95, sx * 1.55] });
-  for (const sx of [-1, 1]) b.add(bx(0.1, 0.7, 3.2, 0.03), WOOD_L, { p: [sx * 1.55, 6.95, 0] });
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) b.add(G.cyl(0.07, 0.07, 1.6, 6), WOOD_D, { p: [sx * 1.45, 7.4, sz * 1.45] });
-  b.add(G.cone(2.4, 1.3, 4), stone ? '#86c6bb' : '#f19b86', { p: [0, 8.8, 0], r: [0, Math.PI / 4, 0] });
-  b.add(bx(0.05, 0.7, 0.5, 0.02), '#f19b86', { p: [0, 9.9, 0.3], sway: 0.8 });
-  return { solid: b, obstacles: [[0, 0, 2.0]] };
-}
-
-function cerclePierres(p) {
-  const b = new Builder();
-  const rng = mulberry32(Math.round(p.x * 13 + p.z * 7));
-  const count = p.count || 8;
-  for (let k = 0; k < count; k++) {
-    const a = (k / count) * Math.PI * 2;
-    const h = 1.6 + rng() * 1.2;
-    b.add(bx(0.7, h, 0.45, 0.12), k % 3 ? STONE : STONE_D, { p: [Math.cos(a) * 4, h / 2 - 0.1, Math.sin(a) * 4], r: [(rng() - 0.5) * 0.12, -a, (rng() - 0.5) * 0.1] });
-    if (rng() < 0.5) b.add(G.sphere(0.35, 8, 5), MOSS, { p: [Math.cos(a) * 4, h - 0.05, Math.sin(a) * 4], s: [1, 0.3, 0.8] });
-  }
-  b.add(G.cyl(0.9, 1.0, 0.35, 12), STONE_D, { p: [0, 0.15, 0] });
-  const obs = [];
-  for (let k = 0; k < count; k++) obs.push([Math.cos((k / count) * Math.PI * 2) * 4, Math.sin((k / count) * Math.PI * 2) * 4, 0.45]);
-  return { solid: b, obstacles: obs };
-}
-
 function arche(p) {
   const b = new Builder();
   const s = p.size || 1.2;
@@ -473,33 +327,6 @@ function bassinChaud(p) {
   return { solid: b, glow: g, obstacles: [] };
 }
 
-function observatoire() {
-  const b = new Builder();
-  const g = new Builder();
-  b.add(G.cyl(2.2, 2.4, 3.0, 18), STONE, { p: [0, 1.5, 0] });
-  b.add(new THREE.SphereGeometry(2.25, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), '#9cc8ec', { p: [0, 3.0, 0] });
-  b.add(bx(0.6, 2.2, 0.3, 0.05), '#5b4a63', { p: [0, 4.0, 1.4], r: [-0.5, 0, 0] });
-  b.add(G.cyl(0.22, 0.3, 2.2, 10), '#f6d27a', { p: [0, 4.6, 1.2], r: [-0.9, 0, 0] });
-  b.add(bx(0.9, 1.5, 0.1, 0.04), WOOD_D, { p: [0, 0.75, 2.25] });
-  g.add(bx(0.5, 0.5, 0.06, 0.02), GLASS, { p: [1.3, 1.7, 1.75], r: [0, 0.6, 0] });
-  return { solid: b, glow: g, obstacles: [[0, 0, 2.5]] };
-}
-
-function statue() {
-  const b = new Builder();
-  const st = '#d6cbbd';
-  b.add(bx(3.2, 1.0, 3.2, 0.1), STONE_D, { p: [0, 0.5, 0] });
-  b.add(bx(2.4, 2.2, 1.8, 0.4), st, { p: [0, 2.1, -0.1] });
-  b.add(bx(1.0, 1.2, 1.8, 0.3), st, { p: [-0.6, 1.4, 0.7] });
-  b.add(bx(1.0, 1.2, 1.8, 0.3), st, { p: [0.6, 1.4, 0.7] });
-  b.add(G.sphere(1.0, 14, 10), st, { p: [0, 4.0, 0], s: [1, 1.1, 0.95] });
-  b.add(G.sphere(0.2, 8, 6), '#5b4a63', { p: [-0.35, 4.1, 0.85] });
-  b.add(G.sphere(0.2, 8, 6), '#5b4a63', { p: [0.35, 4.1, 0.85] });
-  b.add(G.sphere(1.1, 10, 6), MOSS, { p: [0, 4.65, -0.1], s: [1, 0.35, 1] });
-  b.add(G.sphere(0.9, 10, 6), MOSS, { p: [1.0, 2.9, 0], s: [0.4, 0.8, 0.6] });
-  return { solid: b, obstacles: [[0, 0, 2.0]] };
-}
-
 function arbreGeant(p) {
   const b = new Builder();
   const kind = p.kind || 'chene';
@@ -547,11 +374,7 @@ function cascade(p) {
 
 // --- petites découvertes ---
 const MICRO = {
-  cairn: () => {
-    const b = new Builder();
-    for (let k = 0; k < 5; k++) b.add(G.rock(0.35 - k * 0.05, 100 + k), k % 2 ? STONE : STONE_D, { p: [0, 0.2 + k * 0.32, 0], s: [1, 0.55, 1] });
-    return { solid: b, obstacles: [[0, 0, 0.4]] };
-  },
+  cairn: () => cairn(),
   banc_vue: () => banc(),
   nichoir: () => {
     const b = new Builder();
@@ -596,15 +419,7 @@ const MICRO = {
     }
     return { solid: b, obstacles: [[0.7, 0, 1.0]] };
   },
-  autel: () => {
-    const b = new Builder();
-    const g = new Builder();
-    b.add(bx(1.0, 0.7, 0.6, 0.08), STONE, { p: [0, 0.35, 0] });
-    b.add(bx(1.2, 0.1, 0.7, 0.04), STONE_D, { p: [0, 0.75, 0] });
-    g.add(G.sphere(0.14, 10, 8), '#9fdcc8', { p: [0, 0.92, 0] });
-    for (let k = 0; k < 3; k++) b.add(G.sphere(0.07, 6, 4), ['#f4a2b4', '#f6d27a', '#fffaf0'][k], { p: [-0.35 + k * 0.35, 0.86, 0.2] });
-    return { solid: b, glow: g, obstacles: [[0, 0, 0.6]] };
-  },
+  autel: () => autel(),
   fleur_geante: () => {
     const b = new Builder();
     b.add(G.cyl(0.08, 0.12, 2.2, 8), '#7fbf86', { p: [0, 1.1, 0], sway: 0.3 });
@@ -632,17 +447,7 @@ const MICRO = {
     return { solid: b, obstacles: [] };
   },
   coffre_cache: () => coffre(),
-  totem: () => {
-    const b = new Builder();
-    const cols = ['#f19b86', '#86c6bb', '#f6d27a'];
-    for (let k = 0; k < 3; k++) {
-      b.add(G.cyl(0.32, 0.34, 0.7, 10), cols[k], { p: [0, 0.35 + k * 0.7, 0] });
-      b.add(G.sphere(0.07, 6, 4), '#5b4a63', { p: [-0.12, 0.45 + k * 0.7, 0.31] });
-      b.add(G.sphere(0.07, 6, 4), '#5b4a63', { p: [0.12, 0.45 + k * 0.7, 0.31] });
-    }
-    for (const sx of [-1, 1]) b.add(bx(0.7, 0.12, 0.2, 0.04), '#f19b86', { p: [sx * 0.5, 2.0, 0], r: [0, 0, sx * 0.3] });
-    return { solid: b, obstacles: [[0, 0, 0.4]] };
-  },
+  totem: () => totem(),
   epouvantail: () => epouvantail(),
   bouee_echouee: () => {
     const b = new Builder();
@@ -703,12 +508,11 @@ export function partModel(p) {
     case 'arbre_geant': return arbreGeant(p);
     case 'recif': return recif(p);
     case 'cascade': return cascade(p);
-    case 'phare': case 'ruines': case 'temple': case 'grotte': {
-      const s = STRUCTURES[t](rng);
-      if (t === 'ruines' && p.sand) s.solid.add(G.sphere(4, 14, 8), '#f5dab8', { p: [0, -1.6, 0], s: [1.2, 0.5, 1] });
-      return s;
-    }
-    case 'cabane': return STRUCTURES.cabane(rng);
+    case 'phare': return phare(p, rng);
+    case 'ruines': return ruines(p, rng);
+    case 'temple': return temple(p, rng);
+    case 'grotte': return grotte(p, rng);
+    case 'cabane': return cabane(p, rng);
     default:
       return MICRO[t] ? MICRO[t](p) : null;
   }
@@ -732,3 +536,6 @@ export function recolorPart(p, C, T, i0, i1) {
     C[i * 3 + 2] *= c.b;
   }
 }
+
+// inscription au relais des tables (assemblage d'un lieu seul : catalogue, tests)
+TABLES.lieux = { partModel, recolorPart };

@@ -6,6 +6,7 @@ import { buildClumpGeometry } from '../../render/foliage.js';
 import { palmFrondGeometry } from '../kit/shapes.js';
 import { tuftGeometry } from '../../render/grass.js';
 import { mulberry32 } from '../../core/random.js';
+import { TABLES } from '../kit/tables.js';
 
 const UP = new THREE.Vector3(0, 1, 0);
 function segment(b, color, a, c, r0, r1, sides = 10, opts = {}) {
@@ -419,3 +420,5 @@ function flowerGeometry() {
   return b.build();
 }
 
+// inscription au relais des tables (assemblage d'une espèce seule : catalogue, tests)
+TABLES.vegetation = { kindModel, ROCKY, CAP_COLORS };

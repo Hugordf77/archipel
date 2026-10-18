@@ -7,7 +7,13 @@ import { toonMaterial } from '../../render/shaders/materials.js';
 import { PAL } from '../../models/kit/palette.js';
 import { MAT } from '../../models/kit/materials.js';
 import { rng, segment, palmFrondGeometry } from '../../models/kit/shapes.js';
-import { chaumiere, bibliotheque, pupitreHibou, bureauEtude, trunkAlong, grandArbre, grandArbreClumps, ponton, pontRiviere, echoppe, panneauPlace, bancBois, lanterneJardin } from '../../models/buildings/ileDepart.js';
+import { pupitreHibou, bureauEtude, trunkAlong, grandArbre, grandArbreClumps, ponton, pontRiviere, panneauPlace, bancBois, lanterneJardin } from '../../models/buildings/ileDepart.js';
+import { chaumiere } from '../../models/batiments/chaumiere/index.js';
+import physiqueChaumiere from '../../models/batiments/chaumiere/physique.js';
+import { bibliotheque } from '../../models/batiments/bibliotheque-souche/index.js';
+import physiqueBibliotheque from '../../models/batiments/bibliotheque-souche/physique.js';
+import { echoppe } from '../../models/batiments/echoppe/index.js';
+import physiqueEchoppe from '../../models/batiments/echoppe/physique.js';
 
 // Palette pastel chaude (couleurs « gouache »)
 export { PAL } from '../../models/kit/palette.js';
@@ -25,6 +31,10 @@ export function buildProps() {
   const lanterns = [];
   const spots = { plots: [] };
   const push = (b) => statics.push(b.build());
+  // obstacles d'un modèle (ceux de son physique.js), posé en (x, z)
+  const poser = (phys, x, z) => {
+    for (const [ox, oz, r] of phys.obstacles) obstacles.push({ x: x + ox, z: z + oz, r });
+  };
 
   // -------------------------------------------------------------------------
   // Maison du joueur : chaumière ronde au toit gonflé
@@ -35,8 +45,7 @@ export function buildProps() {
     const b = new Builder();
     chaumiere(b, glass, x, y, z);
     push(b);
-    obstacles.push({ x, z, r: 2.55 });
-    obstacles.push({ x: x - 2.0, z: z + 2.6, r: 0.3 });
+    poser(physiqueChaumiere, x, z);
     spots.house = { x, z: z + 3.1 };
   }
 
@@ -49,7 +58,7 @@ export function buildProps() {
     const b = new Builder();
     bibliotheque(b, glass, x, y, z);
     push(b);
-    obstacles.push({ x, z, r: 3.4 });
+    poser(physiqueBibliotheque, x, z);
 
     // pupitre du hibou + chariot de livres
     const o = LAYOUT.owl;
@@ -270,7 +279,7 @@ export function buildProps() {
     const b = new Builder();
     echoppe(b, x, y, z);
     push(b);
-    obstacles.push({ x, z: z - 0.6, r: 0.75 }, { x, z: z + 0.6, r: 0.75 }, { x: x + 0.3, z: z + 1.75, r: 0.45 });
+    poser(physiqueEchoppe, x, z);
     spots.shop = { x: x - 1.5, z };
   }
 
