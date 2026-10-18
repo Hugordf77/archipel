@@ -1,16 +1,16 @@
 // Relevé du registre des modèles : boîte englobante de chaque modèle (table TAILLES) et îles de
-// l'archipel qui l'emploient (table USAGE, recensée sur les plans des neuf îles). Réécrit ces deux
-// tables dans src/models/registry.js. À lancer après un changement voulu : npm run modeles:releve
+// l'archipel qui l'emploient (table USAGE, recensée sur les plans des neuf îles). Écrit les deux tables
+// dans src/models/releves.gen.js. À lancer après un changement voulu : npm run modeles:releve
 import fs from 'node:fs';
 import * as THREE from 'three';
-import { installCanvasStub } from '../tests/helpers/canvas.js';
+import { installCanvasStub } from '../../tests/helpers/canvas.js';
 
 installCanvasStub();
-const { MODELS, defaultParams } = await import('../src/models/registry.js');
-const { ISLANDS } = await import('../src/world/islands/regions.js');
-const { buildPlan } = await import('../src/world/islands/gen/plan.js');
-const { KINDS, STRIDE } = await import('../src/world/islands/gen/kinds.js');
-const { Surface, buildTile, TILE } = await import('../src/world/islands/gen/surface.js');
+const { MODELS, defaultParams } = await import('../../src/models/registry.js');
+const { ISLANDS } = await import('../../src/world/islands/regions.js');
+const { buildPlan } = await import('../../src/world/islands/gen/plan.js');
+const { KINDS, STRIDE } = await import('../../src/world/islands/gen/kinds.js');
+const { Surface, buildTile, TILE } = await import('../../src/world/islands/gen/surface.js');
 
 // tailles
 const box = new THREE.Box3();
@@ -56,9 +56,12 @@ for (const d of ISLANDS) {
 const order = new Map(ISLANDS.map((d, i) => [d.name, i]));
 const used = [...usage.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([ref, names]) => `  '${ref}': [${[...names].sort((a, b) => order.get(a) - order.get(b)).map((n) => `'${n.replace(/'/g, "\\'")}'`).join(', ')}],`);
 
-const file = new URL('../src/models/registry.js', import.meta.url);
-let src = fs.readFileSync(file, 'utf8');
-src = src.replace(/\/\/ <tailles>\n[\s\S]*?\/\/ <\/tailles>/, `// <tailles>\nconst TAILLES = {\n${sizes.join('\n')}\n};\n// </tailles>`);
-src = src.replace(/\/\/ <usage>\n[\s\S]*?\/\/ <\/usage>/, `// <usage>\nconst USAGE = {\n${used.join('\n')}\n};\n// </usage>`);
-fs.writeFileSync(file, src);
-console.log(`${sizes.length} tailles, ${used.length} références d'usage`);
+const file = new URL('../../src/models/releves.gen.js', import.meta.url);
+fs.writeFileSync(file, [
+  '// Généré par « npm run modeles:releve » (scripts/modeles/releve.mjs) : ne pas modifier à la main.',
+  '// TAILLES : boîte englobante de chaque modèle, [largeur, hauteur, profondeur] en mètres (±25 % vérifiés',
+  '// en test) ; USAGE : îles de l\'archipel qui emploient chaque référence (recensées sur leurs plans).',
+  'export const TAILLES = {', ...sizes, '};', '',
+  'export const USAGE = {', ...used, '};', '',
+].join('\n'));
+console.log(`${sizes.length} tailles, ${used.length} références d'usage → src/models/releves.gen.js`);

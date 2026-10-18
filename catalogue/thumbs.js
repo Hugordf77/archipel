@@ -13,7 +13,7 @@ const STORE = 'vignettes';
 
 // code source brut des modèles (servi par le middleware de dev, hors du graphe de modules pour
 // ne pas recharger la page à chaque retouche), pour l'empreinte des vignettes
-const COMMON = ['assemble', 'materials', 'palette', 'shapes', 'formes', 'laine', 'accessoires', 'pieces'].map((k) => `src/models/kit/${k}.js`);
+const COMMON = ['assemble', 'materials', 'palette', 'shapes', 'formes', 'laine', 'accessoires', 'pieces', 'lieux', 'vegetal', 'fiches'].map((k) => `src/models/kit/${k}.js`);
 const textCache = new Map();
 export async function sourceText(path) {
   if (!textCache.has(path)) {
@@ -32,7 +32,8 @@ function fnv(str) {
   return (h >>> 0).toString(36);
 }
 export async function fingerprint(m, params) {
-  const own = await sourceText(m.source);
+  // fichier du modèle et sa physique (certaines cotes y vivent : murs de la maison, tablier du pont…)
+  const own = (await sourceText(m.source)) + (await sourceText(m.source.replace(/index\.js$/, 'physique.js')));
   const common = await Promise.all(COMMON.map(sourceText));
   return fnv([VERSION, m.id, JSON.stringify(params), own, ...common].join('\u0000'));
 }

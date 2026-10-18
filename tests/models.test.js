@@ -102,6 +102,26 @@ describe('dossiers de modèle', () => {
     for (const k of KINDS) expect(typeof KIND_RADIUS[k], k).toBe('number');
   }, 30000);
 
+  it('ouvrent leur source à la ligne du constructeur (catalogue, « Ouvrir la source »)', async () => {
+    const fs = await import('node:fs');
+    const { ligneSource } = await import('../catalogue/source.js');
+    for (const m of R.MODELS) {
+      const text = fs.readFileSync(new URL(`../${m.source}`, import.meta.url), 'utf8');
+      expect(ligneSource(m, text), m.id).toBeGreaterThan(1);
+    }
+    // quelques constructeurs attendus
+    const ligne = (id) => {
+      const m = R.BY_ID.get(id);
+      const text = fs.readFileSync(new URL(`../${m.source}`, import.meta.url), 'utf8');
+      return text.split('\n')[ligneSource(m, text) - 1].trim();
+    };
+    expect(ligne('ANI-001')).toMatch(/^function mouton\(/);
+    expect(ligne('BAT-001')).toMatch(/^export function maison\(/);
+    expect(ligne('STR-018')).toMatch(/^export function banc\(/);
+    expect(ligne('NAV-002')).toMatch(/^export function dessin\(/);
+    expect(ligne('DEC-011')).toMatch(/^export const moulin = \{/);
+  });
+
   it('rangent chaque fiche dans le dossier de sa catégorie, sous src/models', async () => {
     const { FICHES } = await import('../src/models/index.gen.js');
     expect(FICHES.length).toBeGreaterThan(0);

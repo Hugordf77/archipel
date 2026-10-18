@@ -6,6 +6,7 @@ import './style.css';
 import { h } from '../src/ui/dom.js';
 import * as registry from '../src/models/registry.js';
 import { Thumbs, sourceText } from './thumbs.js';
+import { ligneSource } from './source.js';
 import { Viewer } from './viewer.js';
 import { fmtInt, fmtMeters, boxOf } from './scene.js';
 import { inventory, downloadCSV, downloadJSON, contactSheet } from './exports.js';
@@ -349,30 +350,7 @@ function paramControl(m, key, spec) {
 
 // ligne du constructeur dans son fichier source, pour ouvrir l'éditeur au bon endroit
 async function sourceLine(m) {
-  const text = await sourceText(m.source);
-  if (!text) return 1;
-  const [kind, key = ''] = m.ref.split(':');
-  const fn = { flotteur: 'flotteurGeometry', crayon: 'crayonGeometry', outils: 'outilGeometry', hibou: 'buildHibou', albatros: 'buildAlbatros', avatar: 'buildAvatarGeometry' }[kind];
-  const faune = { mouette: 'gullGeometry', crabe: 'crabGeometry', papillon: 'butterflyGeometry' }[key];
-  const ile = { parasol: 'parasolPlage' }[key] || key;
-  const candidates = [
-    fn && `export function ${fn}(`,
-    kind === 'ile' && `export function ${ile}(`,
-    kind === 'faune' && `export function ${faune}(`,
-    kind === 'boat' && 'export function buildBoat(',
-    kind === 'collect' && 'export function collectibleMesh(',
-    kind === 'marine' && 'export function marineMesh(',
-    kind === 'part' && `case '${key}'`,
-    kind === 'part' && `\n  ${key}(rand)`,
-    `\n  ${key}: () =>`,
-    `\n  ${key}: {`,
-    `'${key}'`,
-  ].filter(Boolean);
-  for (const c of candidates) {
-    const i = text.indexOf(c);
-    if (i >= 0) return text.slice(0, i + (c.startsWith('\n') ? 1 : 0)).split('\n').length;
-  }
-  return 1;
+  return ligneSource(m, await sourceText(m.source));
 }
 
 // statut et remarque (enregistrés dans catalogue/notes.json)

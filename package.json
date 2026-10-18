@@ -10,9 +10,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "modeles:releve": "node scripts/releve-modeles.mjs",
+    "modeles:releve": "node scripts/modeles/releve.mjs",
     "modeles:empreinte": "node scripts/modeles/empreinte.mjs",
-    "modeles:index": "node scripts/modeles/index.mjs"
+    "modeles:index": "node scripts/modeles/index.mjs",
+    "modeles:fiches": "node scripts/modeles/fiches.mjs"
   },
   "dependencies": {
     "@fontsource/fredoka": "5.1.0",

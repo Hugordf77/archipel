@@ -134,15 +134,23 @@ de génération sur les 9 îles et 45 variantes), `tests/marine.test.js`.
 `npm run catalogue` ouvre le catalogue numéroté de tous les modèles 3D du jeu (196 aujourd'hui), pour
 les voir, les comparer et les retravailler.
 
-- **Registre** : `src/models/registry.js`. Chaque modèle a un identifiant stable (préfixe de
-  catégorie et trois chiffres, jamais réattribué ; un modèle retiré passe au statut « retiré »), son
-  constructeur, ses variantes et paramètres, sa taille mesurée, les îles qui l'emploient et un
-  statut. Préfixes : ARB arbres, PLA plantes, ROC rochers et minerais, BAT bâtiments, STR ouvrages,
-  MON ruines et monuments, NAV bateaux et épaves, DEC décor achetable, OBJ objets, ANI animaux,
-  PER personnage.
-- **Règle** : tout constructeur de modèle vit dans `src/models/` (par catégorie) ; le jeu et le
-  catalogue l'importent depuis le même endroit, avec les mêmes réglages de matériaux
-  (`src/models/materials.js`).
+- **Un dossier par modèle** : `src/models/<catégorie>/<modèle>/` (ou un dossier par famille pour les
+  objets en série). On y trouve `index.js` (le constructeur et la fiche du registre, en export par
+  défaut), `physique.js` (encombrement, obstacles et planchers : données pures, lisibles par le
+  Worker), `FICHE.md` (DA retenue, écarts restants, historique) et, s'il y en a une, la planche de
+  référence `reference.png`. Les aides partagées et testées sont dans `src/models/kit/` (formes
+  lisses, laine, collier et sabots, pièces de créature, lieux, végétal, fabriques de fiches). Table
+  de correspondance avec l'ancien rangement : `docs/modeles-arborescence.md`.
+- **Registre** : `src/models/registry.js` lit les fiches de tous les dossiers (`index.gen.js`). Chaque
+  modèle a un identifiant stable (préfixe de catégorie et trois chiffres, jamais réattribué ; un
+  modèle retiré passe au statut « retiré »), son constructeur, ses variantes et paramètres, sa taille
+  mesurée, les îles qui l'emploient et un statut. Préfixes : ARB arbres, PLA plantes, ROC rochers et
+  minerais, BAT bâtiments, STR ouvrages, MON ruines et monuments, NAV bateaux et épaves, DEC décor
+  achetable, OBJ objets, ANI animaux, PER personnage.
+- **Règle** : tout constructeur de modèle vit dans son dossier ; le jeu et le catalogue l'importent
+  depuis le même endroit, avec les mêmes réglages de matériaux (`src/models/kit/materials.js`). Le jeu
+  passe par l'API de chaque catégorie (`animaux/index.js` pour `SPECIES`, `bateaux/index.js` pour
+  `BOATS`…) et par les tables `src/models/lieux.js` (lieux des îles) et `src/models/vegetation.js`.
 - **Site** : barre latérale (catégories, recherche, filtres de statut), grille de vignettes peintes
   (un seul renderer partagé, rendu paresseux, cache IndexedDB par empreinte du code source).
 - **Fiche** : vue 3D en orbite, grille au mètre, silhouette de 1,4 m, lumière jour / soir / nuit,
@@ -153,11 +161,19 @@ les voir, les comparer et les retravailler.
   (versionné) par le serveur de dev ; comparaison de 2 à 4 modèles à la même échelle ; exports CSV
   et JSON de l'inventaire, planche contact PNG d'une catégorie (rangée aussi dans `captures/`).
   Modifier un constructeur met la fiche et les vignettes à jour sans recharger la page.
-- **Relevés** : après un changement voulu d'un modèle, `npm run modeles:releve` remesure les tailles
-  et recense l'usage de chaque modèle sur les neuf îles.
+- **Commandes** :
+  - `npm run modeles:index` : après l'ajout ou le renommage d'un dossier, réécrit `index.gen.js` (les
+    fiches) et `physique.gen.js` (l'encombrement de chaque espèce, lu par la génération des îles) ;
+  - `npm run modeles:releve` : après un changement voulu d'un modèle, remesure les tailles et recense
+    l'usage de chaque modèle sur les neuf îles (`releves.gen.js`) ;
+  - `npm run modeles:empreinte` : vérifie que chaque modèle et chaque variante gardent exactement leur
+    géométrie, leur physique et leur fiche (`-- --ecrire` après un changement voulu) ;
+  - `npm run modeles:fiches` : crée le `FICHE.md` des dossiers qui n'en ont pas.
 
 Tests : `tests/models.test.js` (identifiants, constructions, tailles à ±25 %, recensement de tout
-ce que le jeu construit) et `tests/catalogue-notes.test.js`.
+ce que le jeu construit, dossiers et index générés, chargement sans cycle d'import),
+`tests/empreintes.test.js` (empreinte de chaque modèle), `tests/kit.test.js` (aides du kit) et
+`tests/catalogue-notes.test.js`.
 
 ## Rendu (shaders GLSL sur mesure)
 
@@ -190,14 +206,16 @@ src/
       gen/    relief, érosion, hydrologie, zones, lieux, chemins, végétation, faune
   entities/   joueur, personnage, locomotion, faune, bateau, hibou, vol
   gameplay/   récolte, interactions, inventaire, trésors, décor posé
-  models/     registre et constructeurs 3D par catégorie : vegetation, buildings, structures,
-              animals, boats, decor, props, character ; matériaux, palette, assemblage
+  models/     un dossier par modèle, rangés par catégorie (arbres, plantes, rochers, batiments,
+              ouvrages, monuments, bateaux, decor, objets, animaux, personnage) ; kit/ d'aides
+              partagées ; registre, tables des lieux et de la végétation, index générés
   render/     pipeline de peinture, builder, feuillage, herbe, textures, shaders
   ui/         interface du jeu et panneaux
   audio/      moteur audio procédural
   data/       objets, recettes
 catalogue/    site du catalogue des modèles (catalogue.html à la racine), notes.json
-scripts/      relevé des modèles (tailles, usage)
+scripts/      modèles : index, relevés (tailles, usage), empreintes, fiches
+docs/         arborescence des modèles
 tests/        Vitest
 ```
 

@@ -18,6 +18,7 @@ src/models/
     lieux.js            teintes des lieux (bois, pierre, mousse…), bx, seg
     vegetal.js          segment, treeTrunk, écorce : troncs de la végétation
     fiches.js           fabriques des fiches du registre (kind, part, ile, species…)
+    tables.js           relais : lieux.js et vegetation.js s'y inscrivent, l'assemblage seul les y lit
     assemble.js, materials.js, palette.js, shapes.js
   <catégorie>/<modèle>/
     index.js            le modèle : construction, robes, version allégée, fiche (export par défaut)
@@ -156,7 +157,7 @@ Anciens fichiers : `animals/especes.js` (23 espèces et aides), `animals/ileDepa
 | `bateaux/goelette/` | vedette | NAV-004 | `BOATS.goelette`, dernière branche |
 | `bateaux/canots/` | famille | NAV-005 barque amarrée, NAV-006 barque échouée | `structures/lieux.js` `barque`, `barqueEchouee` |
 | `bateaux/epaves/` | famille | NAV-007 épave, NAV-008 grande épave | `structures/lieux.js` `epave` |
-| `bateaux/mouillage/` | famille | NAV-009 ancre, NAV-010 bouée, NAV-011 bouée échouée | `MICRO.ancre`, branche `bouee` de `props/objets.js` `marineMesh`, `MICRO.bouee_echouee` |
+| `bateaux/mouillage/` | famille | NAV-009 ancre, NAV-010 bouée, NAV-011 bouée échouée | `MICRO.ancre`, `MICRO.bouee_echouee` ; la bouée qui flotte reste dessinée par `objets/mer` (`marineMesh`), sa fiche est ici |
 
 `bateaux/commun.js` garde `buildBoat` (matériaux, voiles, bôme) et la coque arrondie partagée ;
 chaque bateau apporte ses caractéristiques et son dessin.
@@ -225,11 +226,13 @@ l'assemblage des pièces par os.
 | `kit/pieces.js` | `animals/especes.js` : `part`, `quad`, `birdParts` |
 | `kit/lieux.js` | `structures/lieux.js` : teintes, `bx`, `seg` ; `buildings/gabarits.js` : teintes |
 | `kit/vegetal.js` | `vegetation/especes.js` : `segment`, `treeTrunk`, `BARK`, `col` |
-| `kit/fiches.js` | `registry.js` : fabriques `kind`, `part`, `ile`, `boat`, `decor`, `collect`, `marine`, `species`, `homeCreature`, `perso`, `outil` |
+| `kit/fiches.js` | `registry.js` : fabriques `kind`, `part`, `ile`, `species`, `homeCreature`, `outil` (et `boat` dans `bateaux/commun.js`, `decor` dans `decor/commun.js`, `collect` dans `objets/tresors/`, `marine` dans `objets/mer/`, `perso` dans `personnage/fiche.js`) |
+| `kit/tables.js` | nouveau : rompt le cycle assemblage → tables → dossiers → fiches → assemblage |
 | `kit/assemble.js`, `kit/materials.js`, `kit/palette.js`, `kit/shapes.js` | mêmes fichiers à la racine de `src/models/` |
 | `lieux.js` | `structures/lieux.js` : `partModel` (le `switch` devient une table), `rotY`, `recolorPart` |
 | `vegetation.js` | `vegetation/especes.js` : `kindModel`, `ROCKY`, `CAP_COLORS` |
-| `releves.gen.js` | `registry.js` : tables `TAILLES` et `USAGE` |
+| `releves.gen.js` | `registry.js` : tables `TAILLES` et `USAGE` (`scripts/releve-modeles.mjs` devient `scripts/modeles/releve.mjs`) |
+| `physique.gen.js` | `world/islands/gen/kinds.js` : `KIND_RADIUS`, désormais lu dans le `physique.js` de chaque espèce |
 
 Retiré : `STRUCTURES.epave` de `buildings/gabarits.js`, que rien n'appelait (l'épave des îles est
 celle de `structures/lieux.js`, aujourd'hui `bateaux/epaves/`).

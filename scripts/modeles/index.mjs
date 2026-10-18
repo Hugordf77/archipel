@@ -45,7 +45,7 @@ export function indexGenere(list = dossiers()) {
 // fiches d'un dossier (export par défaut de son index.js : une fiche, ou une liste pour une famille)
 // (sous vitest, chemin absolu : l'URL file:// encode l'espace du dossier et n'est pas résolue)
 const url = (f) => (process.env.VITEST ? f : pathToFileURL(f).href);
-async function fichesDe(d) {
+export async function fichesDe(d) {
   const f = (await import(url(path.join(MODELES, d, 'index.js')))).default;
   return { famille: Array.isArray(f), fiches: Array.isArray(f) ? f : [f] };
 }
