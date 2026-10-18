@@ -33,7 +33,7 @@ function fnv(str) {
 }
 export async function fingerprint(m, params) {
   // fichier du modèle et sa physique (certaines cotes y vivent : murs de la maison, tablier du pont…)
-  const own = (await sourceText(m.source)) + (await sourceText(m.source.replace(/index\.js$/, 'physique.js')));
+  const own = (await sourceText(m.source)) + (m.physique ? await sourceText(m.physique) : '');
   const common = await Promise.all(COMMON.map(sourceText));
   return fnv([VERSION, m.id, JSON.stringify(params), own, ...common].join('\u0000'));
 }

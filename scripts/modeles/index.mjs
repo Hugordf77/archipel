@@ -33,10 +33,11 @@ export function indexGenere(list = dossiers()) {
     '// Une entrée par dossier de modèle : sa fiche (ou celles de sa famille), avec son fichier source.',
     ...list.map((d) => `import ${nom(d)} from './${d}/index.js';`),
     '',
-    'const avec = (f, source) => (Array.isArray(f) ? f : [f]).map((m) => ({ source, ...m }));',
+    '// source : fichier de la fiche ; physique : son physique.js, quand le dossier en a un',
+    'const avec = (f, source, physique) => (Array.isArray(f) ? f : [f]).map((m) => ({ source, ...(physique && { physique }), ...m }));',
     '',
     'export const FICHES = [',
-    ...list.map((d) => `  ...avec(${nom(d)}, 'src/models/${d}/index.js'),`),
+    ...list.map((d) => `  ...avec(${nom(d)}, 'src/models/${d}/index.js'${fs.existsSync(path.join(MODELES, d, 'physique.js')) ? `, 'src/models/${d}/physique.js'` : ''}),`),
     '];',
     '',
   ].join('\n');
