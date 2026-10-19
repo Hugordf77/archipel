@@ -131,7 +131,13 @@ export async function mesurer(id) {
       });
       const patte = Math.min(...ventre) * s;
       const garrot = cb.max.y * s;
-      ligne('Pattes / garrot', `${nb((patte / garrot) * 100, 0)} % (patte ${nb(patte)} m, garrot ${nb(garrot)} m)`, patte / garrot >= 0.25 && patte / garrot <= 0.35, '25 à 35 %');
+      // fourchette de la DA (25 à 35 %), sauf exception accordée par l'utilisateur et écrite dans la fiche
+      // (exceptions: { pattes: [min, max] }) : elle est alors affichée
+      const exc = m.exceptions?.pattes;
+      const [pmin, pmax] = exc ?? [0.25, 0.35];
+      const fourchette = `${nb(pmin * 100, 0)} à ${nb(pmax * 100, 0)} %`;
+      ligne('Pattes / garrot', `${nb((patte / garrot) * 100, 0)} % (patte ${nb(patte)} m, garrot ${nb(garrot)} m)${exc ? ` · exception de la fiche : ${fourchette}` : ''}`,
+        patte / garrot >= pmin && patte / garrot <= pmax, exc ? `${fourchette} (exception de la fiche)` : fourchette);
       // jonctions : hauteur, au-dessus du dessous du corps à son aplomb, des points de patte hors du corps
       // (une patte qui sort du flanc a des points hors du corps plus hauts que le ventre)
       let jonction = 0;

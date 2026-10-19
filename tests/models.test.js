@@ -226,13 +226,14 @@ describe('usage des modèles', () => {
 describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
   // gabarit visé (L × H × P, m, échelle comprise), entrée du registre, hauteur maximale du museau en
   // broutant, budget de triangles (mouton et vache, refaits d'après leur planche, ont droit à 10 000 :
-  // boucles de laine, peaux d'un seul tenant vues de près ; au loin, une version allégée) ; exact :
+  // boucles de laine, peaux d'un seul tenant vues de près ; le cerf, repris d'après sa description, à 6 000 ;
+  // au loin, une version allégée) ; exact :
   // nombre de triangles figé (géométrie inchangée)
   const ONGULES = {
     mouton: { size: [0.5, 0.9, 1.12], id: 'ANI-001', graze: 0.12, tris: 10000 },
     chevre: { size: [0.6, 1.05, 1.2], id: 'ANI-002', graze: 0.12, tris: 1500, exact: 1096 },
     vache: { size: [0.9, 1.6, 1.85], id: 'ANI-003', graze: 0.12, tris: 10000 },
-    cerf: { size: [0.8, 2.0, 1.7], id: 'ANI-004', graze: 0.3, tris: 1500, exact: 1376 },
+    cerf: { size: [0.8, 2.0, 1.7], id: 'ANI-004', graze: 0.12, tris: 6000 },
   };
   // matrices des pièces pour une part de broutage k (0 : tête portée, 1 : museau dans l'herbe), comme
   // le jeu : la tête (ou le cou) plie jusqu'à graze, la tête portée par un cou jusqu'à nod
