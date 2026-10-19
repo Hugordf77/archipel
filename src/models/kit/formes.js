@@ -160,7 +160,10 @@ export function patch(b, surf, d, size, seed, { lift = 0.008, seg: nseg = null, 
       idx.push(a + i, c + i, c + j, a + i, c + j, a + j);
     }
   }
-  if (tol) for (let pass = 0; pass < 3; pass++) affine(idx, pos, nor, par, put, tol);
+  if (tol) {
+    const vus = { aretes: new Set(), triangles: new Set() };
+    for (let pass = 0; pass < 3; pass++) affine(idx, pos, nor, par, put, tol, vus);
+  }
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
@@ -171,8 +174,9 @@ export function patch(b, surf, d, size, seed, { lift = 0.008, seg: nseg = null, 
 // raffinement d'une tache (patch, option tol) : une arête est coupée si son milieu, reposé sur la surface,
 // s'écarte de plus de tol de la corde, et les trois arêtes d'un triangle dont le centre s'en écarte ;
 // les arêtes à couper sont toutes choisies avant de découper, si bien que deux triangles voisins restent
-// soudés (découpe en 2, 3 ou 4 selon les arêtes coupées)
-function affine(idx, pos, nor, par, put, tol) {
+// soudés (découpe en 2, 3 ou 4 selon les arêtes coupées). vus : arêtes et triangles déjà jugés assez
+// proches de la surface lors d'une passe précédente (inutile de les relancer)
+function affine(idx, pos, nor, par, put, tol, vus) {
   const m = new THREE.Vector3();
   const q = new THREE.Vector3();
   const nn = new THREE.Vector3();
@@ -195,17 +199,21 @@ function affine(idx, pos, nor, par, put, tol) {
       const i = v[e];
       const j = v[(e + 1) % 3];
       const k = key(i, j);
-      if (vu.has(k)) continue;
+      if (vu.has(k) || vus.aretes.has(k)) continue;
       vu.add(k);
       m.fromArray(pos, 3 * i).add(q.fromArray(pos, 3 * j)).multiplyScalar(0.5);
       if (ecart((par[2 * i] + par[2 * j]) / 2, (par[2 * i + 1] + par[2 * j + 1]) / 2, m.clone()) > tol) coupe.add(k);
+      else vus.aretes.add(k);
     }
+    const kt = [...v].sort((x, y) => x - y).join('|');
+    if (vus.triangles.has(kt)) continue;
     const f = new THREE.Vector3();
     for (const i of v) f.add(q.fromArray(pos, 3 * i));
     f.divideScalar(3);
     const ca = (par[2 * v[0]] + par[2 * v[1]] + par[2 * v[2]]) / 3;
     const cc = (par[2 * v[0] + 1] + par[2 * v[1] + 1] + par[2 * v[2] + 1]) / 3;
     if (ecart(ca, cc, f) > tol) for (let e = 0; e < 3; e++) coupe.add(key(v[e], v[(e + 1) % 3]));
+    else vus.triangles.add(kt);
   }
   const mids = new Map();
   const mid = (i, j) => {
@@ -343,17 +351,53 @@ export function union(formes, { centre = [0, 0, 0], rad = [1, 1, 1], pas = 0.02 
     champ,
     at(u, p, nrm) {
       dir.set(u.x * rad[0], u.y * rad[1], u.z * rad[2]).normalize();
-      // du centre vers l'extérieur jusqu'à sortir, puis dichotomie
-      let a = 0;
-      let t = pas;
-      while (t < 50 && champ(C.x + dir.x * t, C.y + dir.y * t, C.z + dir.z * t) < 0) {
-        a = t;
-        t += pas;
+      const f = (t) => champ(C.x + dir.x * t, C.y + dir.y * t, C.z + dir.z * t);
+      // départ sur l'ellipsoïde de rayons rad (proche de la peau), puis encadrement par pas de pas
+      // (une seule traversée : l'union est étoilée) et fausse position (Illinois)
+      let a = 1 / Math.hypot(dir.x / rad[0], dir.y / rad[1], dir.z / rad[2]);
+      let fa = f(a);
+      let t;
+      let ft;
+      if (fa < 0) {
+        t = a + pas;
+        ft = f(t);
+        while (ft < 0 && t < 50) {
+          a = t;
+          fa = ft;
+          t += pas;
+          ft = f(t);
+        }
+      } else {
+        t = a;
+        ft = fa;
+        a = Math.max(0, t - pas);
+        fa = f(a);
+        while (fa >= 0 && a > 0) {
+          t = a;
+          ft = fa;
+          a = Math.max(0, a - pas);
+          fa = f(a);
+        }
       }
-      for (let i = 0; i < 16; i++) {
-        const m = (a + t) / 2;
-        if (champ(C.x + dir.x * m, C.y + dir.y * m, C.z + dir.z * m) < 0) a = m;
-        else t = m;
+      let cote = 0;
+      for (let i = 0; i < 30 && t - a > 1e-7; i++) {
+        const m = (a * ft - t * fa) / (ft - fa);
+        const fm = f(m);
+        if (Math.abs(fm) < 1e-8) {
+          a = t = m;
+          break;
+        }
+        if (fm < 0) {
+          a = m;
+          fa = fm;
+          if (cote < 0) ft /= 2;
+          cote = -1;
+        } else {
+          t = m;
+          ft = fm;
+          if (cote > 0) fa /= 2;
+          cote = 1;
+        }
       }
       p.copy(C).addScaledVector(dir, (a + t) / 2);
       nrm.set(
