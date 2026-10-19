@@ -111,7 +111,11 @@ export function hull(b, color, surf, w, h, opts = {}) {
 // demi-tailles angulaires size (le long du corps, en travers), contour ondulé selon seed ; à peine
 // décollée de la surface et teintée par la robe (sommets blancs, tint 1). Une grande tache a une
 // couronne intérieure, pour épouser la courbure sans s'enfoncer
-export function patch(b, surf, d, size, seed, { lift = 0.008 } = {}) {
+// (options : seg côtés du contour, couronnes rayons relatifs des couronnes ; par défaut 12 côtés et une
+// couronne, 20 côtés et deux couronnes pour une grande tache ; tol (m) : coupe en deux, jusqu'à deux fois,
+// toute arête dont le milieu, ou tout triangle dont le centre, s'écarte de la surface de plus de tol
+// (bosse, arête du dos), sans laisser de fente)
+export function patch(b, surf, d, size, seed, { lift = 0.008, seg: nseg = null, couronnes = null, tol = null } = {}) {
   const u0 = new THREE.Vector3(...d).normalize();
   const t1 = new THREE.Vector3(0, 0, 1).addScaledVector(u0, -u0.z);
   if (t1.lengthSq() < 0.04) t1.set(0, 1, 0).addScaledVector(u0, -u0.y);
@@ -120,10 +124,12 @@ export function patch(b, surf, d, size, seed, { lift = 0.008 } = {}) {
   const lobe = (th) => 1 + 0.18 * Math.sin(2 * th + seed * 2.3) + 0.15 * Math.sin(3 * th + seed * 4.1) + 0.07 * Math.sin(4 * th + seed * 1.7);
   const pos = [];
   const nor = [];
+  const par = [];
   const u = new THREE.Vector3();
   const p = new THREE.Vector3();
   const n = new THREE.Vector3();
   const put = (a, c) => {
+    par.push(a, c);
     const rho = Math.hypot(a, c);
     u.copy(u0).multiplyScalar(Math.cos(rho));
     if (rho > 1e-6) u.addScaledVector(t1, (Math.sin(rho) * a) / rho).addScaledVector(t2, (Math.sin(rho) * c) / rho);
@@ -133,8 +139,8 @@ export function patch(b, surf, d, size, seed, { lift = 0.008 } = {}) {
     nor.push(n.x, n.y, n.z);
   };
   const big = Math.max(...size) > 0.45;
-  const rings = big ? [0.5, 1] : [1];
-  const seg = big ? 20 : 12;
+  const rings = couronnes ?? (big ? [0.5, 1] : [1]);
+  const seg = nseg ?? (big ? 20 : 12);
   put(0, 0);
   for (const k of rings) {
     for (let i = 0; i < seg; i++) {
@@ -154,11 +160,87 @@ export function patch(b, surf, d, size, seed, { lift = 0.008 } = {}) {
       idx.push(a + i, c + i, c + j, a + i, c + j, a + j);
     }
   }
+  if (tol) for (let pass = 0; pass < 3; pass++) affine(idx, pos, nor, par, put, tol);
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
   g.setIndex(idx);
   b.add(g, '#ffffff', { tint: 1 });
+}
+
+// raffinement d'une tache (patch, option tol) : une arête est coupée si son milieu, reposé sur la surface,
+// s'écarte de plus de tol de la corde, et les trois arêtes d'un triangle dont le centre s'en écarte ;
+// les arêtes à couper sont toutes choisies avant de découper, si bien que deux triangles voisins restent
+// soudés (découpe en 2, 3 ou 4 selon les arêtes coupées)
+function affine(idx, pos, nor, par, put, tol) {
+  const m = new THREE.Vector3();
+  const q = new THREE.Vector3();
+  const nn = new THREE.Vector3();
+  const key = (i, j) => (i < j ? `${i}|${j}` : `${j}|${i}`);
+  // écart à la surface du point de paramètres (a, c) face au point plat f (sommet provisoire retiré)
+  const ecart = (a, c, f) => {
+    const k = pos.length / 3;
+    put(a, c);
+    const e = Math.abs(q.fromArray(pos, 3 * k).sub(f).dot(nn.fromArray(nor, 3 * k)));
+    pos.length -= 3;
+    nor.length -= 3;
+    par.length -= 2;
+    return e;
+  };
+  const coupe = new Set();
+  const vu = new Set();
+  for (let t = 0; t < idx.length; t += 3) {
+    const v = [idx[t], idx[t + 1], idx[t + 2]];
+    for (let e = 0; e < 3; e++) {
+      const i = v[e];
+      const j = v[(e + 1) % 3];
+      const k = key(i, j);
+      if (vu.has(k)) continue;
+      vu.add(k);
+      m.fromArray(pos, 3 * i).add(q.fromArray(pos, 3 * j)).multiplyScalar(0.5);
+      if (ecart((par[2 * i] + par[2 * j]) / 2, (par[2 * i + 1] + par[2 * j + 1]) / 2, m.clone()) > tol) coupe.add(k);
+    }
+    const f = new THREE.Vector3();
+    for (const i of v) f.add(q.fromArray(pos, 3 * i));
+    f.divideScalar(3);
+    const ca = (par[2 * v[0]] + par[2 * v[1]] + par[2 * v[2]]) / 3;
+    const cc = (par[2 * v[0] + 1] + par[2 * v[1] + 1] + par[2 * v[2] + 1]) / 3;
+    if (ecart(ca, cc, f) > tol) for (let e = 0; e < 3; e++) coupe.add(key(v[e], v[(e + 1) % 3]));
+  }
+  const mids = new Map();
+  const mid = (i, j) => {
+    const k = key(i, j);
+    if (!coupe.has(k)) return -1;
+    if (!mids.has(k)) {
+      mids.set(k, pos.length / 3);
+      put((par[2 * i] + par[2 * j]) / 2, (par[2 * i + 1] + par[2 * j + 1]) / 2);
+    }
+    return mids.get(k);
+  };
+  const out = [];
+  for (let t = 0; t < idx.length; t += 3) {
+    const v = [idx[t], idx[t + 1], idx[t + 2]];
+    const c = [mid(v[0], v[1]), mid(v[1], v[2]), mid(v[2], v[0])];
+    const n = c.filter((x) => x >= 0).length;
+    if (n === 0) out.push(...v);
+    else if (n === 3) out.push(v[0], c[0], c[2], c[0], v[1], c[1], c[2], c[1], v[2], c[0], c[1], c[2]);
+    else {
+      // tourner pour que la première arête coupée soit (a, b)
+      let s = c.findIndex((x) => x >= 0);
+      if (n === 2 && c[(s + 2) % 3] >= 0) s = (s + 2) % 3;
+      const a = v[s];
+      const b2 = v[(s + 1) % 3];
+      const d = v[(s + 2) % 3];
+      const ab = c[s];
+      if (n === 1) out.push(a, ab, d, ab, b2, d);
+      else {
+        const bd = c[(s + 1) % 3];
+        out.push(a, ab, d, ab, b2, bd, ab, bd, d);
+      }
+    }
+  }
+  idx.length = 0;
+  idx.push(...out);
 }
 
 // Places réparties à intervalle régulier sur une surface (centrée à l'origine) : points tirés sur une
@@ -215,4 +297,138 @@ export function leafGeo(w, h, cup = 0.5) {
   }
   m.computeVertexNormals();
   return m;
+}
+
+// Union lisse de surfaces. Chaque forme { c, rad, n = 2, k = 0,03, r?, creux? } est une surface
+// |x|^n + |y|^n + |z|^n = 1 en coordonnées réduites (centre c, rayons rad, tournée de r) ; sa distance
+// approchée, (f − 1) / |∇f|, se raccorde aux formes précédentes par un minimum doux (cubique) de largeur
+// k (m) : une seule peau, sans pli ni bosse aux raccords. Une forme creuse (creux: true) se retranche en
+// douceur (narines). champ(x, y, z) : < 0 dedans, 0 sur la peau, > 0 dehors. at(u, p, nrm) : comme
+// surface, point de la peau vu de centre dans la direction u × rad (u : direction réduite), normale
+// tirée du gradient du champ ; l'union doit être étoilée depuis centre et sans partie plus mince que pas.
+export function union(formes, { centre = [0, 0, 0], rad = [1, 1, 1], pas = 0.02 } = {}) {
+  const F = formes.map((f) => ({
+    c: f.c, rad: f.rad, n: f.n ?? 2, k: f.k ?? 0.03, creux: !!f.creux, rmin: Math.min(...f.rad),
+    inv: f.r ? new THREE.Matrix3().setFromMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(...f.r))).invert() : null,
+  }));
+  const q = new THREE.Vector3();
+  const dist = (f, x, y, z) => {
+    q.set(x - f.c[0], y - f.c[1], z - f.c[2]);
+    if (f.inv) q.applyMatrix3(f.inv);
+    const n = f.n;
+    const ax = Math.abs(q.x) / f.rad[0];
+    const ay = Math.abs(q.y) / f.rad[1];
+    const az = Math.abs(q.z) / f.rad[2];
+    const v = (ax ** n + ay ** n + az ** n) ** (1 / n);
+    if (v < 1e-6) return -f.rmin;
+    const g = v ** (1 - n);
+    return (v - 1) / Math.hypot((g * ax ** (n - 1)) / f.rad[0], (g * ay ** (n - 1)) / f.rad[1], (g * az ** (n - 1)) / f.rad[2]);
+  };
+  const smin = (a, b, k) => {
+    const h = Math.max(k - Math.abs(a - b), 0) / k;
+    return Math.min(a, b) - (h * h * h * k) / 6;
+  };
+  const champ = (x, y, z) => {
+    let d = dist(F[0], x, y, z);
+    for (let i = 1; i < F.length; i++) {
+      const di = dist(F[i], x, y, z);
+      d = F[i].creux ? -smin(-d, di, F[i].k) : smin(d, di, F[i].k);
+    }
+    return d;
+  };
+  const C = new THREE.Vector3(...centre);
+  const dir = new THREE.Vector3();
+  const e = 1e-4;
+  return {
+    champ,
+    at(u, p, nrm) {
+      dir.set(u.x * rad[0], u.y * rad[1], u.z * rad[2]).normalize();
+      // du centre vers l'extérieur jusqu'à sortir, puis dichotomie
+      let a = 0;
+      let t = pas;
+      while (t < 50 && champ(C.x + dir.x * t, C.y + dir.y * t, C.z + dir.z * t) < 0) {
+        a = t;
+        t += pas;
+      }
+      for (let i = 0; i < 16; i++) {
+        const m = (a + t) / 2;
+        if (champ(C.x + dir.x * m, C.y + dir.y * m, C.z + dir.z * m) < 0) a = m;
+        else t = m;
+      }
+      p.copy(C).addScaledVector(dir, (a + t) / 2);
+      nrm.set(
+        champ(p.x + e, p.y, p.z) - champ(p.x - e, p.y, p.z),
+        champ(p.x, p.y + e, p.z) - champ(p.x, p.y - e, p.z),
+        champ(p.x, p.y, p.z + e) - champ(p.x, p.y, p.z - e),
+      ).normalize();
+    },
+  };
+}
+
+// Maillage d'une surface vue de son centre (surface, union…) en grille de w méridiens × h parallèles,
+// pôles sur l'axe axe (direction réduite), méridien 0 du côté de haut : avec w pair, les sommets sont
+// symétriques par rapport au plan x = 0 quand axe et haut y sont. theta(v, phi) place les parallèles (v
+// de 0, pôle +axe, à 1, pôle −axe ; par défaut θ = π v), si bien qu'un parallèle peut suivre une
+// frontière de couleur. bandes : [[i, couleur, tint], …], dans l'ordre : les triangles des parallèles
+// d'indice < i prennent cette couleur ; la frontière est nette et sans fente (sommets et normales
+// partagés). opts : options de Builder.add (id…)
+export function grille(b, surf, w, h, { axe = [0, 0, 1], haut = [0, 1, 0], theta = null, bandes = [[Infinity, '#ffffff', 0]], ...opts } = {}) {
+  const A = new THREE.Vector3(...axe).normalize();
+  const U = new THREE.Vector3(...haut).addScaledVector(A, -new THREE.Vector3(...haut).dot(A)).normalize();
+  const B = new THREE.Vector3().crossVectors(A, U);
+  const pos = [];
+  const nor = [];
+  const u = new THREE.Vector3();
+  const p = new THREE.Vector3();
+  const n = new THREE.Vector3();
+  const put = (th, ph) => {
+    u.copy(A).multiplyScalar(Math.cos(th)).addScaledVector(U, Math.sin(th) * Math.cos(ph)).addScaledVector(B, Math.sin(th) * Math.sin(ph));
+    surf.at(u, p, n);
+    pos.push(p.x, p.y, p.z);
+    nor.push(n.x, n.y, n.z);
+  };
+  put(0, 0);
+  for (let i = 1; i < h; i++) {
+    for (let j = 0; j < w; j++) {
+      const ph = (j / w) * Math.PI * 2;
+      put(theta ? theta(i / h, ph) : (Math.PI * i) / h, ph);
+    }
+  }
+  put(Math.PI, 0);
+  const last = 1 + w * (h - 1);
+  const at = (i, j) => (i === 0 ? 0 : i === h ? last : 1 + (i - 1) * w + (j % w));
+  // triangles par parallèle, chacun tourné vers l'extérieur (sens direct, vu du côté de la normale)
+  const strips = [];
+  const a = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  const d = new THREE.Vector3();
+  const tri = (out, i0, i1, i2) => {
+    if (i0 === i1 || i1 === i2 || i0 === i2) return;
+    a.fromArray(pos, i0 * 3);
+    c.fromArray(pos, i1 * 3).sub(a);
+    d.fromArray(pos, i2 * 3).sub(a);
+    c.cross(d);
+    n.fromArray(nor, i0 * 3).add(u.fromArray(nor, i1 * 3)).add(u.fromArray(nor, i2 * 3));
+    if (c.dot(n) >= 0) out.push(i0, i1, i2);
+    else out.push(i0, i2, i1);
+  };
+  for (let i = 0; i < h; i++) {
+    const out = [];
+    for (let j = 0; j < w; j++) {
+      tri(out, at(i, j), at(i + 1, j), at(i + 1, j + 1));
+      tri(out, at(i, j), at(i + 1, j + 1), at(i, j + 1));
+    }
+    strips.push(out);
+  }
+  let i0 = 0;
+  for (const [iMax, color, tint = 0] of bandes) {
+    const idx = strips.slice(i0, Math.min(h, iMax)).flat();
+    i0 = Math.min(h, iMax);
+    if (!idx.length) continue;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    g.setIndex(idx);
+    b.add(g, color, { ...opts, tint });
+  }
 }
