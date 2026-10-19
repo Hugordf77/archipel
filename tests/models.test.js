@@ -225,13 +225,13 @@ describe('usage des modèles', () => {
 
 describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
   // gabarit visé (L × H × P, m, échelle comprise), entrée du registre, hauteur maximale du museau en
-  // broutant, budget de triangles (vache et mouton, refaits d'après leur planche, ont droit à 3 500 et
-  // 10 000 : boucles de laine vues de près ; le mouton lointain passe à une version allégée) ; exact :
+  // broutant, budget de triangles (mouton et vache, refaits d'après leur planche, ont droit à 10 000 :
+  // boucles de laine, peaux d'un seul tenant vues de près ; au loin, une version allégée) ; exact :
   // nombre de triangles figé (géométrie inchangée)
   const ONGULES = {
     mouton: { size: [0.5, 0.9, 1.12], id: 'ANI-001', graze: 0.12, tris: 10000 },
     chevre: { size: [0.6, 1.05, 1.2], id: 'ANI-002', graze: 0.12, tris: 1500, exact: 1096 },
-    vache: { size: [0.9, 1.6, 1.85], id: 'ANI-003', graze: 0.12, tris: 3500 },
+    vache: { size: [0.9, 1.6, 1.85], id: 'ANI-003', graze: 0.12, tris: 10000 },
     cerf: { size: [0.8, 2.0, 1.7], id: 'ANI-004', graze: 0.3, tris: 1500, exact: 1376 },
   };
   // matrices des pièces pour une part de broutage k (0 : tête portée, 1 : museau dans l'herbe), comme
@@ -312,7 +312,9 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
     const { SPECIES } = await import('../src/models/animaux/index.js');
     const def = SPECIES.vache;
     const parts = def.parts();
-    // enveloppe du corps : tonneau, croupe et épaules ({ c, rad, n } : |x|^n + |y|^n + |z|^n = 1)
+    // enveloppe du corps : les surfaces de son union lisse (tonneau, croupe, épaules, poitrail, ventre,
+    // cuisses, avant-bras ; { c, rad, n } : |x|^n + |y|^n + |z|^n = 1). L'union lisse les contient toutes :
+    // un point hors de toutes est hors du corps ou dans un raccord, d'où un test au moins aussi strict
     const shells = parts[0].shell;
     expect(shells.length).toBeGreaterThan(0);
     const F = (e, q) => e.rad.reduce((a, r, i) => a + Math.abs((q[i] - e.c[i]) / r) ** e.n, 0);

@@ -4,6 +4,7 @@
 // (islands/gen/plan.js) à partir de ces données ; overrides les retouche à la main :
 //   pois : lieux imposés (ajoutés s'ils manquent) · removePois : lieux interdits
 //   name : nom affiché · traits : traits imposés (village, moulin, fleurs, curiosité…)
+//   faune : troupeaux posés à la main ({ sp, x, z, count, r, robes }, x et z relatifs au centre de l'île)
 // Les identifiants sont stables : ils servent aux sauvegardes, aux récoltes et au journal.
 
 export const ARCHIPEL = {
@@ -13,7 +14,7 @@ export const ARCHIPEL = {
   limit: { mist: 1200, turn: 1400 },
   home: { id: 'home', name: 'Ton île', x: 0, z: 0, r: 34 },
   islands: [
-    { id: 'village-pommeraie', name: 'Village de Pommeraie', archetype: 'village', biome: 'prairie', x: -170, z: 400, r: 80, seed: 3576918575, overrides: { traits: { village: 'Pommeraie', mill: 'rose' } } },
+    { id: 'village-pommeraie', name: 'Village de Pommeraie', archetype: 'village', biome: 'prairie', x: -170, z: 400, r: 80, seed: 3576918575, overrides: { traits: { village: 'Pommeraie', mill: 'rose' }, faune: [{ sp: 'vache', x: -12, z: -3, count: 3, r: 9, robes: [0, 1, 2] }] } },
     { id: 'ile-aux-mille-fleurs', name: 'Île aux Mille Fleurs', archetype: 'fleurs', biome: 'prairie', x: 250, z: 430, r: 66, seed: 535206036, overrides: { traits: { bloom: 'mauve' } } },
     { id: 'rocher-perce', name: 'Rocher Percé', archetype: 'curiosite', biome: 'glace', x: -320, z: -330, r: 42, seed: 1070415549, overrides: { traits: { landmark: 'arche' } } },
     { id: 'falaises-de-nacre', name: 'Falaises de Nacre', archetype: 'falaises', biome: 'tropical', x: 760, z: -160, r: 74, seed: 683123431, overrides: { pois: ['phare'], traits: { village: 'Nacre' } } },

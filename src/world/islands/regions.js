@@ -19,7 +19,7 @@ export function islandDesc(isl) {
       if (m) traits.mill = { id: m[0], label: m[1], color: m[2] };
     } else traits[k] = v;
   }
-  return { ...desc, traits, name: ov.name || isl.name, overrides: { pois: ov.pois || [], removePois: ov.removePois || [] } };
+  return { ...desc, traits, name: ov.name || isl.name, overrides: { pois: ov.pois || [], removePois: ov.removePois || [], faune: ov.faune || [] } };
 }
 
 export const ISLANDS = ARCHIPEL.islands.map(islandDesc);

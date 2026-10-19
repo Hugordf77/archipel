@@ -147,7 +147,7 @@ export const TAILLES = {
   'OBJ-023': [0.51, 2.4, 0.51],
   'ANI-001': [0.52, 0.89, 1.11],
   'ANI-002': [0.57, 0.96, 1.18],
-  'ANI-003': [0.87, 1.6, 1.86],
+  'ANI-003': [0.84, 1.59, 1.98],
   'ANI-004': [0.73, 2.15, 1.92],
   'ANI-005': [0.34, 0.63, 1.36],
   'ANI-006': [0.25, 0.45, 0.49],
@@ -299,4 +299,5 @@ export const USAGE = {
   'species:papillon': ['Île aux Mille Fleurs', 'Rocher Percé', 'Bois des Lanternes', 'Lagon Turquoise'],
   'species:perroquet': ['Falaises de Nacre'],
   'species:poisson': ['Falaises de Nacre', 'Bois des Lanternes', 'Cratère de Braise', 'Lagon Turquoise'],
+  'species:vache': ['Village de Pommeraie'],
 };

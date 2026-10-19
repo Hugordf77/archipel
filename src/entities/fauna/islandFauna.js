@@ -89,7 +89,8 @@ export class IslandFauna {
           state: 'idle', t: rng() * 3, target: null, phase: rng() * 10, speed: 0, petT: 0, hop: 0,
           angle: rng() * 6.28, radius: sp.r * (0.5 + rng() * 0.5), seed: rng(),
         };
-        an.coat = def.coats ? Math.floor(an.seed * 9973) % def.coats.length : 0;
+        // robe tirée au hasard, ou imposée par le point d'apparition (troupeau aux robes mêlées)
+        an.coat = def.coats ? (sp.robes ? sp.robes[i % sp.robes.length] : Math.floor(an.seed * 9973)) % def.coats.length : 0;
         an.y = this.groundY(an);
         list.push(an);
         this.animals.push(an);

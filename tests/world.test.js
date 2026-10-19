@@ -116,6 +116,30 @@ describe('archipel', () => {
     expect(islandDesc({ ...forest, overrides: { name: 'Bois Joli' } }).name).toBe('Bois Joli');
   });
 
+  it('pose le troupeau de vaches de Pommeraie sur un pré, robes mêlées, sans toucher au reste de la faune', async () => {
+    const { ARCHIPEL } = await import('../src/world/archipel.js');
+    const { islandDesc } = await import('../src/world/islands/regions.js');
+    const { buildPlan } = await import('../src/world/islands/gen/plan.js');
+    const { Z } = await import('../src/world/islands/gen/zones.js');
+    const isl = ARCHIPEL.islands.find((i) => i.id === 'village-pommeraie');
+    const p = buildPlan(islandDesc(isl));
+    const vaches = p.spawners.filter((s) => s.sp === 'vache');
+    expect(vaches).toHaveLength(1);
+    const [v] = vaches;
+    expect(v.count).toBe(3);
+    expect(new Set(v.robes)).toEqual(new Set([0, 1, 2]));
+    // sur le pré : terre ferme, au-dessus de l'eau, en prairie sur tout le rayon d'errance
+    const at = (x, z) => Math.round((z + p.ext) / p.s) * p.n + Math.round((x + p.ext) / p.s);
+    for (let a = 0; a < 12; a++) for (const d of [0, v.r * 0.5, v.r]) {
+      const k = at(v.x + Math.cos(a) * d, v.z + Math.sin(a) * d);
+      expect(p.H[k]).toBeGreaterThan(0.5);
+      expect([Z.PRAIRIE, Z.LISIERE, Z.VERGER]).toContain(p.Z[k]);
+    }
+    // sans le troupeau, la faune de l'île est la même (le troupeau vient après tout tirage)
+    const sans = buildPlan(islandDesc({ ...isl, overrides: { ...isl.overrides, faune: [] } }));
+    expect(p.spawners.filter((s) => s.sp !== 'vache')).toEqual(sans.spawners);
+  });
+
   it('place les éléments de la mer en eau libre, à positions fixes et identifiants uniques', async () => {
     const { ARCHIPEL } = await import('../src/world/archipel.js');
     const { MARINE_TYPES } = await import('../src/models/objets/index.js');
