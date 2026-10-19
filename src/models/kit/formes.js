@@ -476,3 +476,68 @@ export function grille(b, surf, w, h, { axe = [0, 0, 1], haut = [0, 1, 0], theta
     b.add(g, color, { ...opts, tint });
   }
 }
+
+// Grille à zones : maillage d'une surface vue de son centre, comme grille (w méridiens × h parallèles,
+// pôles sur l'axe axe, méridien 0 du côté de haut), mais les méridiens aussi se placent : phi(v, k) donne
+// l'angle du méridien k (de 0 à 1 pour un tour, croissant) sur le parallèle v (de 0, pôle +axe, à 1), par
+// défaut 2π k ; theta(v, ph) place les parallèles (par défaut π v). zone(i, j) : indice, dans zones, de la
+// case entre les parallèles i et i + 1 et les méridiens j et j + 1 ; zones : [[couleur, tint], …]. Une
+// zone suit ainsi un parallèle courbé (calotte, museau) ou un méridien courbé (ventre, gorge), à bord net
+// et sans fente (sommets et normales partagés). opts : options de Builder.add (id…)
+export function grilleZones(b, surf, w, h, { axe = [0, 0, 1], haut = [0, 1, 0], theta = null, phi = null, zone = () => 0, zones = [['#ffffff', 0]], ...opts } = {}) {
+  const A = new THREE.Vector3(...axe).normalize();
+  const U = new THREE.Vector3(...haut).addScaledVector(A, -new THREE.Vector3(...haut).dot(A)).normalize();
+  const B = new THREE.Vector3().crossVectors(A, U);
+  const pos = [];
+  const nor = [];
+  const u = new THREE.Vector3();
+  const p = new THREE.Vector3();
+  const n = new THREE.Vector3();
+  const put = (th, ph) => {
+    u.copy(A).multiplyScalar(Math.cos(th)).addScaledVector(U, Math.sin(th) * Math.cos(ph)).addScaledVector(B, Math.sin(th) * Math.sin(ph));
+    surf.at(u, p, n);
+    pos.push(p.x, p.y, p.z);
+    nor.push(n.x, n.y, n.z);
+  };
+  put(0, 0);
+  for (let i = 1; i < h; i++) {
+    const v = i / h;
+    for (let j = 0; j < w; j++) {
+      const ph = phi ? phi(v, j / w) : (j / w) * Math.PI * 2;
+      put(theta ? theta(v, ph) : Math.PI * v, ph);
+    }
+  }
+  put(Math.PI, 0);
+  const last = 1 + w * (h - 1);
+  const at = (i, j) => (i === 0 ? 0 : i === h ? last : 1 + (i - 1) * w + (j % w));
+  const a = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  const d = new THREE.Vector3();
+  // triangle tourné vers l'extérieur (sens direct, vu du côté de la normale), sauf s'il est dégénéré (pôle)
+  const tri = (out, i0, i1, i2) => {
+    if (i0 === i1 || i1 === i2 || i0 === i2) return;
+    a.fromArray(pos, i0 * 3);
+    c.fromArray(pos, i1 * 3).sub(a);
+    d.fromArray(pos, i2 * 3).sub(a);
+    c.cross(d);
+    n.fromArray(nor, i0 * 3).add(u.fromArray(nor, i1 * 3)).add(u.fromArray(nor, i2 * 3));
+    if (c.dot(n) >= 0) out.push(i0, i1, i2);
+    else out.push(i0, i2, i1);
+  };
+  const faces = zones.map(() => []);
+  for (let i = 0; i < h; i++) {
+    for (let j = 0; j < w; j++) {
+      const out = faces[zone(i, j)];
+      tri(out, at(i, j), at(i + 1, j), at(i + 1, j + 1));
+      tri(out, at(i, j), at(i + 1, j + 1), at(i, j + 1));
+    }
+  }
+  zones.forEach(([color, tint = 0], k) => {
+    if (!faces[k].length) return;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    g.setIndex(faces[k]);
+    b.add(g, color, { ...opts, tint });
+  });
+}

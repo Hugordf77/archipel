@@ -1,7 +1,7 @@
 // Accessoires des créatures : yeux brillants, collier et cloche, pattes à sabots.
 import * as THREE from 'three';
 import { G } from '../../render/builder.js';
-import { bone, limb } from './formes.js';
+import { bone, limb, skinMesh } from './formes.js';
 import { part } from './pieces.js';
 
 // couleur des yeux (jamais de noir pur)
@@ -38,6 +38,28 @@ export function collar(b, tilt, at, R, tube, k = 1) {
   b.add(G.cyl(0.046 * k, 0.046 * k, 0.002, 6), '#6b4f1c', { p: [0, y0 + 0.004 * k, z0], tint: 0 });
   b.add(G.torus(0.012 * k, 0.004 * k, 3, 6), '#c99a2e', { p: [0, top.y - 0.006 * k, z0], tint: 0 });
   b.add(G.sphere(0.016 * k, 5, 3), '#5a4318', { p: [0, y0 - 0.01 * k, z0], tint: 0 });
+}
+
+// Onglon : demi-sabot d'un pied fendu, superellipsoïde (exposant n) de rayons R = [travers, hauteur,
+// longueur], effilé vers le haut (effile : [travers, longueur], part retirée au sommet), allongé vers l'avant
+// de avant (m), à face intérieure droite contre la fente (côté s : −1 à gauche, 1 à droite de la fente) et
+// semelle plate en y = 0 ; peau lisse de w × h facettes (skinMesh). Renvoie la géométrie (sans couleur)
+export function onglonGeo(s, { R = [0.031, 0.029, 0.05], n = 2.6, effile = [0.25, 0.3], avant = 0.008, w = 10, h = 5 } = {}) {
+  let geo = null;
+  skinMesh({ add: (g) => { geo = g; } }, '#ffffff', (u, out) => {
+    const k = u.clone().normalize();
+    const q = k.clone().multiplyScalar((Math.abs(k.x) ** n + Math.abs(k.y) ** n + Math.abs(k.z) ** n) ** (-1 / n));
+    let x = q.x * R[0];
+    let y = q.y * R[1];
+    let z = q.z * R[2];
+    const t = (y / R[1] + 1) / 2;
+    x *= 1 - effile[0] * t;
+    z = z * (1 - effile[1] * t) + (z > 0 ? avant : 0);
+    if (s * x < -0.55 * R[0]) x = -s * 0.55 * R[0];
+    y = Math.max(y, -0.8 * R[1]);
+    out.set(x + s * 0.55 * R[0], y + 0.8 * R[1], z);
+  }, w, h);
+  return geo;
 }
 
 // quatre pattes (avant gauche, avant droite, arrière gauche, arrière droite, en diagonale) :

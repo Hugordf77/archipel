@@ -1,12 +1,12 @@
 // Aides du kit de modélisation (src/models/kit) : tubes des membres, laine en boucles, collier et
 // cloche, peau déformée des visages, places réparties sur une surface, union lisse de surfaces et son
-// maillage en grille, taches raffinées, anneau, cloche suisse et collier rond.
+// maillage en grille (à bandes ou à zones), taches raffinées, anneau, cloche suisse, collier rond et onglon.
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { Builder } from '../src/render/builder.js';
-import { limb, surface, scatter, skinMesh, union, grille, patch } from '../src/models/kit/formes.js';
+import { limb, surface, scatter, skinMesh, union, grille, grilleZones, patch } from '../src/models/kit/formes.js';
 import { curls } from '../src/models/kit/laine.js';
-import { collar, anneauGeo, clocheSuisse, collier } from '../src/models/kit/accessoires.js';
+import { collar, anneauGeo, clocheSuisse, collier, onglonGeo } from '../src/models/kit/accessoires.js';
 
 const v = new THREE.Vector3();
 const all = (attr, value) => Array.from(attr.array).every((x) => Math.abs(x - value) < 1e-6);
@@ -267,6 +267,60 @@ describe('kit : grille (maillage d’une surface vue de son centre)', () => {
     expect(Array.from(parts[0].g.attributes.position.array)).toEqual(Array.from(parts[1].g.attributes.position.array));
     expect(parts[0].g.index.count / 3).toBe(16 + 3 * 32);
     expect((parts[0].g.index.count + parts[1].g.index.count) / 3).toBe(2 * 16 * 9);
+  });
+});
+
+describe('kit : grilleZones (grille à zones, méridiens placés)', () => {
+  const U = union([{ c: [0, 0, 0], rad: [0.3, 0.2, 0.4], n: 2.4 }], { rad: [0.3, 0.2, 0.4] });
+  const build = (fn, o) => {
+    const parts = [];
+    fn({ add: (g, color, opts) => parts.push({ g, color, opts }) }, U, 16, 10, { axe: [0, 0, 1], ...o });
+    return parts;
+  };
+
+  it('sans placement ni zone, rend exactement la grille d’une seule bande', () => {
+    const [a] = build(grille, { bandes: [[Infinity, '#ffffff', 0]] });
+    const [z] = build(grilleZones, { zones: [['#ffffff', 0]] });
+    expect(Array.from(z.g.attributes.position.array)).toEqual(Array.from(a.g.attributes.position.array));
+    expect(Array.from(z.g.index.array)).toEqual(Array.from(a.g.index.array));
+  });
+
+  it('colore par zones de cases (bande de méridiens courbée), frontière nette et sans perte de face', () => {
+    // ventre : 4 méridiens sur ±hb autour de φ = π, hb variant le long de l'axe
+    const hb = (v) => 0.4 + 0.3 * Math.sin(Math.PI * v);
+    const phi = (v, k) => {
+      const j = k * 16;
+      if (j <= 6) return (j / 6) * (Math.PI - hb(v));
+      if (j <= 10) return Math.PI - hb(v) + ((j - 6) / 4) * 2 * hb(v);
+      return Math.PI + hb(v) + ((j - 10) / 6) * (Math.PI - hb(v));
+    };
+    const parts = build(grilleZones, { phi, zone: (i, j) => (j >= 6 && j < 10 && i >= 2 && i < 8 ? 1 : 0), zones: [['#c98f5f', 1], ['#f3e3c8', 0]] });
+    expect(parts.map((q) => q.color)).toEqual(['#c98f5f', '#f3e3c8']);
+    expect(parts.map((q) => q.opts.tint)).toEqual([1, 0]);
+    expect(Array.from(parts[0].g.attributes.position.array)).toEqual(Array.from(parts[1].g.attributes.position.array));
+    expect(parts[1].g.index.count / 3).toBe(2 * 4 * 6);
+    expect((parts[0].g.index.count + parts[1].g.index.count) / 3).toBe(2 * 16 * 9);
+    // le méridien 6 du parallèle v = 0,5 est à φ = π − hb(0,5) : sous le flanc, du côté +x… ou −x selon le repère
+    const pos = parts[0].g.attributes.position;
+    const q = new THREE.Vector3().fromBufferAttribute(pos, 1 + 4 * 16 + 6);
+    const ang = Math.atan2(Math.abs(q.x) / 0.3, q.y / 0.2);
+    expect(ang).toBeCloseTo(Math.PI - hb(0.5), 1);
+  });
+});
+
+describe('kit : onglonGeo (demi-sabot)', () => {
+  it('semelle plate au sol, face intérieure droite contre la fente, plus long que large', () => {
+    for (const s of [-1, 1]) {
+      const g = onglonGeo(s, { R: [0.022, 0.024, 0.036], w: 10, h: 5 });
+      const box = new THREE.Box3().setFromBufferAttribute(g.attributes.position);
+      expect(box.min.y).toBeCloseTo(0, 6);
+      // face intérieure : du côté −s, en x = 0
+      if (s > 0) expect(box.min.x).toBeCloseTo(0, 6);
+      else expect(box.max.x).toBeCloseTo(0, 6);
+      const size = box.getSize(new THREE.Vector3());
+      expect(size.z).toBeGreaterThan(size.x * 1.2);
+      expect(g.index.count / 3).toBe(2 * 10 * 4);
+    }
   });
 });
 
