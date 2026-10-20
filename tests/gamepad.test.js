@@ -1,7 +1,5 @@
-// Manette : zone morte des sticks, lecture des boutons (disposition standard et DualSense
-// en HID brut sous Firefox), nom affiché et navigation à la croix dans les panneaux.
 import { describe, expect, it } from 'vitest';
-import { BTN, stick, readPad, padName, pickFocus, GamepadInput } from '../src/core/Gamepad.js';
+import { BTN, stick, readPad, padName, pickFocus, GamepadInput, identifyController, PS_GLYPHS } from '../src/core/Gamepad.js';
 
 const button = (value) => ({ pressed: value > 0.5, value });
 
@@ -185,3 +183,207 @@ describe('actions en jeu', () => {
     expect(keys).not.toContain('carte');
   });
 });
+
+describe('reconnaisseur de manettes (identifyController)', () => {
+  it('détecte avec précision la DualSense PS5 en Bluetooth et USB', () => {
+    const btPad = { id: 'DualSense Wireless Controller (Vendor: 054c Product: 0ce6)' };
+    const btInfo = identifyController(btPad);
+    expect(btInfo.model).toBe('Sony DualSense (PS5)');
+    expect(btInfo.generation).toBe('PS5');
+    expect(btInfo.family).toBe('playstation');
+    expect(btInfo.isPlayStation).toBe(true);
+    expect(btInfo.isPS5).toBe(true);
+    expect(btInfo.isPS4).toBe(false);
+    expect(btInfo.connection).toBe('Bluetooth');
+    expect(btInfo.hasTouchpad).toBe(true);
+
+    const usbPad = { id: 'Sony Interactive Entertainment DualSense USB (Vendor: 054c Product: 0ce6)' };
+    const usbInfo = identifyController(usbPad);
+    expect(usbInfo.isPS5).toBe(true);
+    expect(usbInfo.connection).toBe('USB');
+  });
+
+  it('détecte la DualSense Edge PS5', () => {
+    const edgePad = { id: 'DualSense Edge Wireless Controller (Vendor: 054c Product: 0df2)' };
+    const edgeInfo = identifyController(edgePad);
+    expect(edgeInfo.model).toBe('Sony DualSense Edge (PS5)');
+    expect(edgeInfo.isPS5).toBe(true);
+  });
+
+  it('détecte la DualShock 4 (PS4)', () => {
+    const ds4 = { id: 'Wireless Controller (Vendor: 054c Product: 09cc)' };
+    const info = identifyController(ds4);
+    expect(info.model).toBe('Sony DualShock 4 (PS4)');
+    expect(info.generation).toBe('PS4');
+    expect(info.isPlayStation).toBe(true);
+    expect(info.isPS4).toBe(true);
+    expect(info.isPS5).toBe(false);
+  });
+
+  it('fournit les glyphes PlayStation officiels', () => {
+    expect(PS_GLYPHS.CROSS).toBe('✕');
+    expect(PS_GLYPHS.CIRCLE).toBe('◯');
+    expect(PS_GLYPHS.SQUARE).toBe('□');
+    expect(PS_GLYPHS.TRIANGLE).toBe('△');
+    expect(PS_GLYPHS.TOUCHPAD).toBe('Pavé tactile');
+  });
+});
+
+describe('contrôleur DualSense PS5 & haptique', () => {
+  const setupPS5 = () => {
+    globalThis.window ||= { addEventListener() {} };
+    const keys = [];
+    const rumbles = [];
+    let inventoryOpened = false;
+    let settingsOpened = false;
+    const game = {
+      ui: { panelOpen: false, toast() {} },
+      rig: { rotate() {}, zoom() {}, yaw: 0 },
+      handleKey: (code) => {
+        keys.push(code);
+        return true;
+      },
+      sailing: { aboard: false, heading: 0 },
+      airRide: { riding: false, flightPhase: 'glide' },
+      decor: null,
+      gather: null,
+      openInventory: () => { inventoryOpened = true; },
+      openJournal() {},
+      openMap: () => keys.push('carte'),
+      openSettings: () => { settingsOpened = true; },
+      state: { settings: { pad: { rumble: true } } },
+    };
+    const pad = new GamepadInput(game);
+    const mockGp = {
+      id: 'DualSense Wireless Controller (Vendor: 054c Product: 0ce6)',
+      index: 0,
+      vibrationActuator: {
+        playEffect: (type, params) => {
+          rumbles.push({ type, params });
+          return Promise.resolve();
+        },
+      },
+    };
+    try {
+      Object.defineProperty(globalThis.navigator, 'getGamepads', {
+        value: () => [mockGp],
+        configurable: true,
+        writable: true,
+      });
+    } catch {
+      globalThis.navigator.getGamepads = () => [mockGp];
+    }
+    pad.attach(mockGp);
+    const frame = (btns = [], move = [0, 0], triggers = { l: 0, r: 0 }) => {
+      pad.prev.set(pad.cur);
+      pad.cur.fill(0);
+      for (const b of btns) pad.cur[b] = 1;
+      pad.move.x = move[0];
+      pad.move.y = move[1];
+      pad.trig.l = triggers.l;
+      pad.trig.r = triggers.r;
+      pad.dispatch(1 / 60);
+    };
+    return {
+      pad,
+      keys,
+      rumbles,
+      frame,
+      game,
+      get inventoryOpened() { return inventoryOpened; },
+      get settingsOpened() { return settingsOpened; },
+    };
+  };
+
+  it('reconnaît la manette connectée comme PlayStation 5', () => {
+    const { pad } = setupPS5();
+    expect(pad.isPlayStation).toBe(true);
+    expect(pad.isPS5).toBe(true);
+    expect(pad.isPS4).toBe(false);
+  });
+
+  it('△ ouvre l’inventaire au sol et déclenche la chute libre en vol', () => {
+    const s = setupPS5();
+    s.frame([BTN.TRIANGLE]);
+    expect(s.inventoryOpened).toBe(true);
+    expect(s.keys).not.toContain('KeyF');
+
+    s.game.airRide.riding = true;
+    s.game.airRide.flightPhase = 'flying';
+    s.frame([]);
+    s.frame([BTN.TRIANGLE]);
+    expect(s.keys.at(-1)).toBe('KeyF');
+  });
+
+  it('□ rappelle l’aigle en chute libre', () => {
+    const s = setupPS5();
+    s.game.airRide.riding = true;
+    s.game.airRide.flightPhase = 'freefall';
+    s.frame([BTN.SQUARE]);
+    expect(s.keys.at(-1)).toBe('KeyG');
+  });
+
+  it('le pavé tactile ouvre la carte et Options ouvre les réglages', () => {
+    const s = setupPS5();
+    s.frame([BTN.TOUCHPAD]);
+    expect(s.keys).toContain('carte');
+
+    s.frame([]);
+    s.frame([BTN.OPTIONS]);
+    expect(s.settingsOpened).toBe(true);
+  });
+
+  it('gâchettes adaptatives : R2 enfoncé en vol déclenche le turbo, et en chute libre le piqué', () => {
+    const s = setupPS5();
+    s.game.airRide.riding = true;
+    s.game.airRide.flightPhase = 'flying';
+
+    // R2 léger : montée normale
+    s.frame([], [0, 0], { l: 0, r: 0.5 });
+    expect(s.pad.held.has('Space')).toBe(true);
+    expect(s.pad.sprint).toBe(false);
+
+    // R2 à fond (> 0.82) : turbo engagé
+    s.frame([], [0, 0], { l: 0, r: 0.9 });
+    expect(s.pad.sprint).toBe(true);
+
+    // Chute libre : R2 déclenche le piqué (ShiftLeft)
+    s.game.airRide.flightPhase = 'freefall';
+    s.frame([], [0, 0], { l: 0, r: 0.6 });
+    expect(s.pad.held.has('ShiftLeft')).toBe(true);
+  });
+
+  it('déclenche les impulsions haptiques spécialisées', () => {
+    const s = setupPS5();
+    s.rumbles.length = 0;
+    s.pad.hapticJump();
+    expect(s.rumbles.length).toBe(1);
+    expect(s.rumbles[0].params.strongMagnitude).toBeCloseTo(0.28);
+
+    s.pad.hapticRoll();
+    expect(s.rumbles.length).toBe(2);
+
+    s.pad.hapticDive();
+    expect(s.rumbles.length).toBe(3);
+
+    s.pad.hapticSplash();
+    expect(s.rumbles.length).toBe(4);
+    expect(s.rumbles[3].params.strongMagnitude).toBeCloseTo(0.7);
+  });
+
+  it('fournit des indices d’aide (hint) dynamiques avec symboles PlayStation', () => {
+    const s = setupPS5();
+    expect(s.pad.hint()).toContain('✕ : sauter / interagir');
+    expect(s.pad.hint()).toContain('Pavé tactile : carte');
+
+    s.game.airRide.riding = true;
+    s.game.airRide.flightPhase = 'flying';
+    expect(s.pad.hint()).toContain('R2/L2 : altitude');
+    expect(s.pad.hint()).toContain('△ ou ↑ : chute libre');
+
+    s.game.airRide.flightPhase = 'freefall';
+    expect(s.pad.hint()).toContain('R2/L3 : piqué');
+    expect(s.pad.hint()).toContain("□ ou ↑ : rappeler l'aigle");
+  });
+});
+

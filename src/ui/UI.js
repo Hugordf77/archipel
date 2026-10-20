@@ -1,5 +1,6 @@
 import { h, replay } from './dom.js';
 import { ICON } from './icons.js';
+import { MiniMap } from './minimap.js';
 
 // Interface « objets physiques » : panneaux de bois, feuilles de papier, tampons.
 export class UI {
@@ -40,6 +41,7 @@ export class UI {
     // --- boussole en ruban (haut, centre) et jauges de navigation ---
     this.buildCompass();
     this.sailHud = h('div', { class: 'hud sail-hud paper-tag hidden' });
+    this.minimap = new MiniMap(game);
 
     this.toasts = h('div', { class: 'toasts' });
     this.bubbleLayer = h('div', { class: 'bubble-layer' });
@@ -48,7 +50,7 @@ export class UI {
     this.panelHost.addEventListener('pointerdown', (e) => {
       if (e.target === this.panelHost && this.panel?.dismissable !== false) this.closePanel();
     });
-    root.append(this.bubbleLayer, this.floatLayer, this.prompt, this.topLeft, this.topRight, this.compass, this.sailHud, this.bottom,
+    root.append(this.bubbleLayer, this.floatLayer, this.prompt, this.topLeft, this.topRight, this.compass, this.sailHud, this.minimap.canvas, this.bottom,
       this.bottomRight, this.toasts, this.panelHost);
   }
 

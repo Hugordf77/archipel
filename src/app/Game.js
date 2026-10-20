@@ -408,6 +408,7 @@ export class Game {
     this.updatePrompt();
     this.updateOwlBubble();
     this.updateNavHud(dt);
+    this.ui.minimap.update(dt);
 
     // HUD
     this.hudTimer = (this.hudTimer || 0) - dt;
@@ -434,9 +435,15 @@ export class Game {
       const p = projectCurved(this._v2.set(this.player.pos.x, this.player.pos.y + 1.8, this.player.pos.z), this.camera, window.innerWidth, window.innerHeight, this._v);
       if (p.visible) {
         if (this.airRide.flightPhase === 'freefall') {
-          this.ui.showPrompt(this.pad.recent ? "Chute libre : stick planer · L3 piqué · ↑ rappeler l'aigle" : "Chute libre : ZQSD planer · Maj piqué · G rappeler l'aigle", p.x, p.y - 10);
+          const padPrompt = this.pad.isPlayStation
+            ? "Chute libre : stick planer · R2/L3 piqué · □ / ↑ rappeler l'aigle"
+            : "Chute libre : stick planer · L3 piqué · ↑ rappeler l'aigle";
+          this.ui.showPrompt(this.pad.recent ? padPrompt : "Chute libre : ZQSD planer · Maj piqué · G rappeler l'aigle", p.x, p.y - 10);
         } else {
-          this.ui.showPrompt(this.pad.recent ? 'Vol : stick · R2/L2 altitude · L3 turbo · ↑ chute libre · ✕ atterrir' : 'Vol : ZQSD · Espace/Ctrl altitude · Maj turbo · F chute libre · E atterrir', p.x, p.y - 10);
+          const padPrompt = this.pad.isPlayStation
+            ? 'Vol : stick · R2/L2 altitude · R2 turbo · △ chute libre · ✕ atterrir'
+            : 'Vol : stick · R2/L2 altitude · L3 turbo · ↑ chute libre · ✕ atterrir';
+          this.ui.showPrompt(this.pad.recent ? padPrompt : 'Vol : ZQSD · Espace/Ctrl altitude · Maj turbo · F chute libre · E atterrir', p.x, p.y - 10);
         }
       } else this.ui.hidePrompt();
       return;
@@ -525,7 +532,7 @@ export class Game {
     // l'aide ne s'affiche qu'aux 3 premières visites, ou si l'on reste immobile 20 s
     const idle = performance.now() - (this.input?.lastMove || 0) > 20000 && this.player.vel.lengthSq() < 0.01;
     const showHint = (this.state.launches || 0) <= 3 || idle;
-    const hint = this.pad?.recent ? this.pad.hint() : 'ZQSD : courir · Maj : sprint · Alt : marcher · Espace : sauter · C : roulade · E : interagir · M : carte · glisser : tourner';
+    const hint = this.pad?.recent ? this.pad.hint() : 'ZQSD : courir · Maj : sprint · Alt : marcher · Espace : sauter · C : roulade · V : épée · E : interagir · M : carte · glisser : tourner';
     this.ui.setHint(showHint ? hint : '');
   }
 
@@ -556,6 +563,12 @@ export class Game {
     }
     if (code === 'KeyF') {
       this.airRide.freeFall();
+      return true;
+    }
+    if (code === 'KeyV') {
+      if (this.player.locked || this.player.mode === 'action' || this.player.mode === 'seated'
+        || this.sailing.aboard || this.airRide.riding || this.player.swimming || this.decor?.placing) return true;
+      this.player.playAction('swordAttack', 0.82, () => {});
       return true;
     }
     if (this.airRide.riding) {

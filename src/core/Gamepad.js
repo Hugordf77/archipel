@@ -34,6 +34,93 @@ export function padName(id = '') {
   return 'Manette';
 }
 
+// Glyphes et symboles officiels PlayStation
+export const PS_GLYPHS = {
+  CROSS: '✕',
+  CIRCLE: '◯',
+  SQUARE: '□',
+  TRIANGLE: '△',
+  L1: 'L1',
+  R1: 'R1',
+  L2: 'L2',
+  R2: 'R2',
+  L3: 'L3',
+  R3: 'R3',
+  UP: '↑',
+  DOWN: '↓',
+  LEFT: '←',
+  RIGHT: '→',
+  CREATE: 'Create',
+  OPTIONS: 'Options',
+  PS: 'PS',
+  TOUCHPAD: 'Pavé tactile',
+};
+
+// Reconnaisseur avancé : identifie le modèle exact (DualSense PS5, DualSense Edge, DualShock 4)
+// et le type de liaison (Bluetooth sans fil ou câble USB-C).
+export function identifyController(gp) {
+  if (!gp) return null;
+  const id = (gp.id || '').toLowerCase();
+
+  // Signatures matérielles Sony
+  const isSonyVendor = /054c|sony/i.test(id);
+  const isDualSenseEdge = /0df2|dualsense edge/i.test(id);
+  const isDualSense = isDualSenseEdge || /dualsense|0ce6/i.test(id) || (isSonyVendor && /ps5/i.test(id));
+  const isDualShock4 = /dualshock|05c4|09cc|0ba0/i.test(id) || (isSonyVendor && /ps4/i.test(id));
+  const isPlayStation = isDualSense || isDualShock4 || isSonyVendor || /wireless controller/i.test(id);
+
+  let model = 'Manette';
+  let generation = 'Générique';
+  let family = 'generic';
+
+  if (isDualSenseEdge) {
+    model = 'Sony DualSense Edge (PS5)';
+    generation = 'PS5';
+    family = 'playstation';
+  } else if (isDualSense) {
+    model = 'Sony DualSense (PS5)';
+    generation = 'PS5';
+    family = 'playstation';
+  } else if (isDualShock4) {
+    model = 'Sony DualShock 4 (PS4)';
+    generation = 'PS4';
+    family = 'playstation';
+  } else if (isPlayStation) {
+    model = 'Manette PlayStation';
+    generation = 'PS5';
+    family = 'playstation';
+  } else if (/xbox|045e/i.test(id)) {
+    model = 'Manette Xbox';
+    generation = 'Xbox';
+    family = 'xbox';
+  } else if (/switch|pro controller|joy-con|057e/i.test(id)) {
+    model = 'Manette Nintendo Switch';
+    generation = 'Switch';
+    family = 'nintendo';
+  }
+
+  // Détection du mode de liaison (Bluetooth ou USB)
+  const isWireless = /wireless|bluetooth/i.test(id) || (!/usb|cable/i.test(id) && isSonyVendor);
+  const connection = isWireless ? 'Bluetooth' : 'USB';
+
+  return {
+    rawId: gp.id,
+    model,
+    generation,
+    family,
+    isPlayStation,
+    isPS5: generation === 'PS5',
+    isPS4: generation === 'PS4',
+    isDualSense,
+    isDualShock: isDualShock4,
+    connection,
+    hasTouchpad: isPlayStation,
+    hasHaptics: typeof gp?.vibrationActuator?.playEffect === 'function',
+    name: `${model} (${connection})`,
+    glyphs: PS_GLYPHS,
+  };
+}
+
 // Lecture normalisée : 18 boutons (0 à 1) dans l'ordre standard et 4 axes (stick gauche x/y,
 // stick droit x/y). Chrome, Edge et Safari donnent déjà la disposition standard ; Firefox
 // sur macOS livre la DualSense en HID brut, qu'on remet à sa place.
@@ -105,6 +192,7 @@ export class GamepadInput {
     this.game = game;
     this.index = -1;
     this.name = '';
+    this.deviceInfo = null;
     this.cur = new Float32Array(COUNT);
     this.prev = new Float32Array(COUNT);
     this.move = { x: 0, y: 0 };
@@ -131,13 +219,25 @@ export class GamepadInput {
     return this.connected && performance.now() - this.lastUse < 60000;
   }
 
+  get isPlayStation() {
+    return this.connected && (this.deviceInfo?.isPlayStation ?? false);
+  }
+
+  get isPS5() {
+    return this.connected && (this.deviceInfo?.isPS5 ?? false);
+  }
+
+  get isPS4() {
+    return this.connected && (this.deviceInfo?.isPS4 ?? false);
+  }
+
   get settings() {
     return { ...PAD_DEFAULTS, ...(this.game.state?.settings?.pad || {}) };
   }
 
-  // L3 (stick gauche enfoncé) : sprinter, comme Maj au clavier ; en vol, turbo
+  // L3 (stick gauche enfoncé) ou R2 à fond en vol : sprinter / turbo
   get run() {
-    return this.connected && this.sprint;
+    return this.connected && (this.sprint || (this.game?.airRide?.riding && this.trig.r > 0.82));
   }
 
   // ✕ maintenu : saut plus haut
@@ -155,20 +255,28 @@ export class GamepadInput {
   attach(gp) {
     if (!gp || this.index === gp.index || (this.index >= 0 && this.index !== gp.index)) return;
     this.index = gp.index;
+    this.deviceInfo = identifyController(gp);
     this.name = padName(gp.id);
     this.cur.fill(0);
     this.prev.fill(0);
     this.lastUse = performance.now();
     if (!this.announced.has(gp.id)) {
       this.announced.add(gp.id);
-      this.game.ui?.toast(`${this.name} connectée : stick gauche courir (enfoncé : sprint) · ✕ sauter / interagir · ◯ roulade · △ sac · Options réglages`, { icon: 'pad', duration: 5600 });
+      const isPS = this.deviceInfo?.isPlayStation;
+      const modelLabel = this.deviceInfo?.model || this.name;
+      const conn = this.deviceInfo?.connection || 'Sans fil';
+      const toastMsg = isPS
+        ? `${modelLabel} (${conn}) détectée : ✕ sauter · ◯ roulade · □ épée (ou outil sur une cible) · △ sac (en vol : chute libre) · L3 sprint · Pavé tactile carte`
+        : `${this.name} connectée : stick gauche courir (enfoncé : sprint) · ✕ sauter / interagir · ◯ roulade · △ sac · Options réglages`;
+      this.game.ui?.toast(toastMsg, { icon: 'pad', duration: 5800 });
     }
-    this.rumble(0.35, 0.2, 120);
+    this.rumble(0.4, 0.25, 140);
   }
 
   detach(gp) {
     if (!gp || gp.index !== this.index) return;
     this.index = -1;
+    this.deviceInfo = null;
     this.release();
     this.announced.delete(gp.id);
     this.game.ui?.toast(`${this.name} déconnectée.`, { icon: 'pad' });
@@ -202,6 +310,40 @@ export class GamepadInput {
     } catch {
       /* vibrations indisponibles dans ce navigateur */
     }
+  }
+
+  // --- Profils haptiques DualSense & DualShock 4 ---
+  hapticTap() {
+    this.rumble(0.12, 0.25, 45);
+  }
+
+  hapticJump() {
+    this.rumble(0.28, 0.45, 80);
+  }
+
+  hapticRoll() {
+    this.rumble(0.45, 0.25, 120);
+  }
+
+  hapticFlap() {
+    this.rumble(0.18, 0.35, 60);
+  }
+
+  hapticDive() {
+    this.rumble(0.35, 0.65, 180);
+  }
+
+  hapticLand(speed = 1) {
+    const k = THREE.MathUtils.clamp(speed / 10, 0.3, 1);
+    this.rumble(0.6 * k, 0.4 * k, 140);
+  }
+
+  hapticSplash() {
+    this.rumble(0.7, 0.5, 250);
+  }
+
+  hapticTool() {
+    this.rumble(0.35, 0.45, 85);
   }
 
   // Une fois par image, avant le joueur : lit la manette et déclenche les actions
@@ -266,8 +408,14 @@ export class GamepadInput {
       if (g.sailing) g.sailing.lastDrag = performance.now();
     }
     if (flying) {
-      if (this.trig.r > 0.3) this.held.add('Space');
-      if (this.trig.l > 0.3) this.held.add('ControlLeft');
+      const isFreefall = g.airRide?.flightPhase === 'freefall';
+      if (!isFreefall) {
+        if (this.trig.r > 0.25) this.held.add('Space');
+        if (this.trig.l > 0.25) this.held.add('ControlLeft');
+        if (this.trig.r > 0.82) this.sprint = true;
+      } else {
+        if (this.trig.r > 0.45 || this.down(BTN.L3)) this.held.add('ShiftLeft');
+      }
     } else {
       const z = this.trig.l - this.trig.r;
       if (Math.abs(z) > 0.05) g.rig.zoom(Math.exp(z * 1.3 * dt));
@@ -281,48 +429,116 @@ export class GamepadInput {
     // ✕ : interagir s'il y a quelque chose à portée, sinon sauter (poser l'objet en placement)
     if (this.pressed(BTN.CROSS)) {
       if (placing) g.decor.place();
-      else if (g.interactPrimary ? g.interactPrimary(false) : key('KeyE')) this.rumble(0.12, 0.3, 50);
-      else if (!aboard && !flying) this.flags.jump = true;
+      else if (flying) {
+        if (g.airRide?.flightPhase === 'freefall') {
+          key('KeyG');
+          this.hapticFlap();
+        } else {
+          key('KeyE');
+          this.hapticTap();
+        }
+      }
+      else if (g.interactPrimary ? g.interactPrimary(false) : key('KeyE')) this.hapticTap();
+      else if (!aboard && !flying) {
+        this.flags.jump = true;
+        this.hapticJump();
+      }
     }
-    // □ : utiliser l'outil tenu (récolter, creuser, pêcher)
+    // □ : coup d'épée ; conserve l'outil contextuel si une cible de récolte est visée.
+    // En chute libre, le bouton rappelle l'aigle.
     if (this.pressed(BTN.SQUARE)) {
       if (placing) g.decor.storePlacement();
+      else if (flying && g.airRide?.flightPhase === 'freefall') {
+        key('KeyG');
+        this.hapticFlap();
+      }
       else if (!aboard && !flying && g.gather?.target) {
         g.gather.act();
-        this.rumble(0.3, 0.45, 80);
-      } else if (key('KeyE')) this.rumble(0.12, 0.3, 50);
+        this.hapticTool();
+      } else if (!aboard && !flying && !g.player?.swimming) {
+        if (key('KeyV')) this.hapticTool();
+      } else if (key('KeyE')) this.hapticTap();
     }
     // L3 : le sprint s'enclenche (un clic suffit) et dure jusqu'à ce qu'on lâche le stick ;
     // un second clic l'arrête
     if (this.pressed(BTN.L3)) this.sprint = !this.sprint;
-    if (!this.move.x && !this.move.y && !this.down(BTN.L3)) this.sprint = false;
-    // ◯ : se lever ou annuler un placement en priorité, sinon roulade
+    if (!flying && !this.move.x && !this.move.y && !this.down(BTN.L3)) this.sprint = false;
+    // ◯ : se lever ou annuler un placement en priorité, sinon roulade / atterrissage
     if (this.pressed(BTN.CIRCLE)) {
       const seated = g.player?.mode === 'seated' && !g.player.locked;
-      if (seated || placing || flying || aboard) key('Escape');
-      else this.flags.roll = true;
+      if (seated || placing || aboard) key('Escape');
+      else if (flying) {
+        key('KeyE');
+        this.hapticTap();
+      }
+      else {
+        this.flags.roll = true;
+        this.hapticRoll();
+      }
     }
-    // △ : sac et atelier
-    if (this.pressed(BTN.TRIANGLE)) g.openInventory();
+    // △ : sac et atelier ; en vol : saut en chute libre !
+    if (this.pressed(BTN.TRIANGLE)) {
+      if (flying && g.airRide?.flightPhase !== 'freefall') {
+        key('KeyF');
+        this.hapticDive();
+      } else {
+        g.openInventory();
+        this.hapticTap();
+      }
+    }
     // L1 / R1 : objet précédent / suivant (tourner l'objet en placement)
     if (!aboard) {
-      if (this.pressed(BTN.L1)) placing ? g.decor.rotate() : this.hotbar(-1);
-      if (this.pressed(BTN.R1)) placing ? g.decor.rotate() : this.hotbar(1);
+      if (this.pressed(BTN.L1)) {
+        if (placing) g.decor.rotate();
+        else { this.hotbar(-1); this.hapticTap(); }
+      }
+      if (this.pressed(BTN.R1)) {
+        if (placing) g.decor.rotate();
+        else { this.hotbar(1); this.hapticTap(); }
+      }
     }
     // croix : ↑ aigle (en vol : chute libre, puis le rappeler), ↓ journal, ← → barre rapide
     if (this.pressed(BTN.UP)) {
-      if (flying && g.airRide.flightPhase !== 'freefall') key('KeyF');
-      else key('KeyG');
+      if (flying) {
+        if (g.airRide.flightPhase !== 'freefall') {
+          key('KeyF');
+          this.hapticDive();
+        } else {
+          key('KeyG');
+          this.hapticFlap();
+        }
+      } else {
+        key('KeyG');
+        this.hapticFlap();
+      }
     }
-    if (this.pressed(BTN.DOWN)) g.openJournal();
-    if (this.pressed(BTN.LEFT)) this.hotbar(-1);
-    if (this.pressed(BTN.RIGHT)) this.hotbar(1);
-    if (this.pressed(BTN.CREATE) || this.pressed(BTN.TOUCHPAD)) g.openMap();
-    if (this.pressed(BTN.OPTIONS)) g.openSettings();
+    if (this.pressed(BTN.DOWN)) {
+      g.openJournal();
+      this.hapticTap();
+    }
+    if (this.pressed(BTN.LEFT)) {
+      this.hotbar(-1);
+      this.hapticTap();
+    }
+    if (this.pressed(BTN.RIGHT)) {
+      this.hotbar(1);
+      this.hapticTap();
+    }
+    // Pavé tactile (Touchpad click) ou Create : Carte du monde
+    if (this.pressed(BTN.CREATE) || this.pressed(BTN.TOUCHPAD)) {
+      g.openMap();
+      this.hapticTap();
+    }
+    // Options ou bouton PS : Réglages / Menu
+    if (this.pressed(BTN.OPTIONS) || this.pressed(BTN.PS)) {
+      g.openSettings();
+      this.hapticTap();
+    }
     // R3 : caméra replacée derrière le personnage (ou le bateau)
     if (this.pressed(BTN.R3)) {
       const heading = aboard ? g.sailing.heading : g.player.facing;
       g.rig.yaw = heading + Math.PI;
+      this.hapticTap();
     }
     // placement d'un objet : il suit un point à 3 m devant le personnage
     if (placing) this.aimPlacement();
@@ -469,6 +685,14 @@ export class GamepadInput {
 
   // aide affichée en bas de l'écran quand la manette sert
   hint() {
-    return 'Stick gauche : courir (à moitié : marcher · enfoncé : sprint) · ✕ : sauter / interagir · ◯ : roulade · □ : outil · △ : sac · L1/R1 : objet · ↑ : aigle · stick droit : caméra';
+    if (this.isPlayStation) {
+      if (this.game?.airRide?.riding) {
+        return this.game.airRide.flightPhase === 'freefall'
+          ? "Stick gauche : planer · R2/L3 : piqué · □ ou ↑ : rappeler l'aigle · stick droit : caméra"
+          : "Stick gauche : diriger · R2/L2 : altitude · R2 fond : turbo · △ ou ↑ : chute libre · ✕ : atterrir";
+      }
+      return 'Stick gauche : courir (L3 : sprint) · ✕ : sauter / interagir · ◯ : roulade · □ : épée (ou outil sur une cible) · △ : sac · L1/R1 : inventaire · ↑ : aigle · Pavé tactile : carte';
+    }
+    return 'Stick gauche : courir (à moitié : marcher · enfoncé : sprint) · ✕ : sauter / interagir · ◯ : roulade · □ : épée (ou outil sur une cible) · △ : sac · L1/R1 : objet · ↑ : aigle · stick droit : caméra';
   }
 }

@@ -86,7 +86,7 @@ export function openSettingsPanel(game, tab = 'image') {
       ...rows,
       h('div', { class: 'row' }, h('button', { class: 'btn small', onclick: () => { game.toggleMute(); renderAll(); } }, game.audio?.muted ? 'Réactiver le son' : 'Couper le son (N)'),
         h('button', { class: 'btn small ghost', onclick: () => game.audio?.chime('end') }, 'Écouter le carillon')),
-      h('p', { class: 'muted' }, 'Tous les sons sont synthétisés en direct : vagues, vent, oiseaux le jour, grillons la nuit, pluie et petite boîte à musique.'),
+      h('p', { class: 'muted' }, 'Illumoria accompagne l’exploration en boucle. Les vagues, le vent, les oiseaux, les grillons, la pluie et les effets restent générés en direct.'),
     ];
   };
 
@@ -146,21 +146,23 @@ export function openSettingsPanel(game, tab = 'image') {
     ['Stick gauche', 'courir · incliné à moitié : marcher · enfoncé (L3) : sprinter'],
     ['Stick droit', 'tourner la caméra · R3 : la replacer derrière toi'],
     ['✕', 'interagir, parler, caresser, débarquer · sinon : sauter (maintenu : plus haut)'],
-    ['□', 'utiliser l\'outil tenu : couper, miner, creuser, pêcher'],
+    ['□', 'utiliser l\'outil tenu : couper, miner, creuser, pêcher · en chute libre : rappeler l\'aigle'],
     ['◯', 'roulade (à relancer en rythme pour gagner de la vitesse) · se lever, annuler, fermer'],
-    ['△', 'sac et atelier'],
+    ['△', 'sac et atelier · en vol : saut en chute libre'],
     ['L1 / R1', 'objet précédent / suivant · à la voile : border / choquer'],
-    ['L2 / R2', 'éloigner / rapprocher la caméra · en vol : descendre / monter'],
+    ['L2 / R2', 'éloigner / rapprocher la caméra · en vol : descendre / monter · en chute libre : piqué (R2)'],
     ['Croix', '↑ appeler l\'aigle (en vol : chute libre) · ↓ journal · ← → barre rapide'],
-    ['Options', 'réglages · Create ou pavé tactile : carte'],
+    ['Options / Pavé', 'Options : réglages · Create ou clic pavé tactile : carte du monde'],
   ];
   const renderPad = () => {
     s.pad = { ...PAD_DEFAULTS, ...(s.pad || {}) };
     const status = h('p', {}, '');
     const upd = () => {
       const pad = game.pad;
+      const dev = pad?.deviceInfo;
+      const padLabel = dev ? `${dev.model} (${dev.connection})` : pad?.name;
       status.textContent = pad?.connected
-        ? `${pad.name} connectée. Les panneaux se parcourent à la croix, ✕ valide, ◯ ferme, L1 / R1 changent d'onglet.`
+        ? `${padLabel} connectée. Les panneaux se parcourent à la croix, ✕ valide, ◯ ferme, L1 / R1 changent d'onglet.`
         : 'Aucune manette détectée. Relie-la au Mac puis appuie sur un de ses boutons, le jeu la reconnaît tout seul.';
     };
     upd();
@@ -213,6 +215,7 @@ export function openSettingsPanel(game, tab = 'image') {
           ['Maj · L3', 'sprinter (L3 : un clic, jusqu\'à ce qu\'on lâche le stick)'],
           ['Espace · ✕', 'sauter (maintenu : plus haut ; au sprint : saut long)'],
           ['C · ◯', 'roulade, à relancer en rythme pour gagner de la vitesse'],
+          ['V · □', 'coup d’épée à la manette (l’outil reste prioritaire sur une cible de récolte)'],
           ['Demi-tour', 'en pleine course : dérapage puis relance'],
           ['Attention', 'au sprint, un buisson, un rocher ou une souche percutés de face font trébucher'],
         ].flatMap(([k, what]) => [h('dt', {}, h('span', { class: 'key-badge' }, k)), h('dd', {}, what)])),

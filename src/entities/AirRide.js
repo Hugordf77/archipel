@@ -121,8 +121,12 @@ export class AirRide {
     this.velocity.y = Math.max(3, this.velocity.y + 4.5);
 
     this._birdFlyAwayTimer = 0;
+    this.game.pad?.hapticDive?.();
+    const padMsg = this.game.pad?.isPlayStation
+      ? "Chute libre ! Stick gauche pour planer · R2/L3 pour piquer · □ ou ↑ pour rappeler l'aigle"
+      : "Chute libre ! Stick gauche pour planer · L3 pour piquer · ↑ pour rappeler l'aigle";
     ui.toast(this.game.pad?.recent
-      ? "Chute libre ! Stick gauche pour planer · L3 pour piquer · ↑ pour rappeler l'aigle"
+      ? padMsg
       : "Chute libre ! ZQSD pour planer · Maj pour piquer · G pour rappeler l'aigle", { icon: 'bird', duration: 5200 });
   }
 
@@ -140,6 +144,7 @@ export class AirRide {
     this.velocity.y = Math.max(3, this.velocity.y * 0.15 + 4);
     this.game.character.setPose('glide');
     this.game.character.bounce(0.8);
+    this.game.pad?.hapticFlap?.();
     ui.toast(`L'aigle te rattrape en plein vol !`, { icon: 'bird', duration: 3200 });
   }
 
@@ -192,6 +197,11 @@ export class AirRide {
     }
     this.game.character.setPose(landingPose);
     this.game.character.bounce(landingPose === 'pickup' ? 1.4 : 0.45);
+    if (landingPose === 'swim') {
+      this.game.pad?.hapticSplash?.();
+    } else {
+      this.game.pad?.hapticLand?.(this.speed);
+    }
     if (landingPose !== 'swim') {
       ui.toast(`Tu retrouves la terre ferme.`, { icon: 'leaf' });
     }
