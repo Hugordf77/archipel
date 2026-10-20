@@ -123,3 +123,59 @@ export function buildGrass(terrain, obstacles, count = 4200) {
   mesh.name = 'grass';
   return mesh;
 }
+
+// ---------------------------------------------------------------------------
+// Herbe en tapis de l'île de départ (render/herbe/) : quatre tuiles de 64 m, au mètre, au même
+// format que celles des îles (hauteur et couleur du sol, carte d'herbe RGBA : densité, hauteur des
+// brins, sécheresse), avec les règles des touffes ci-dessus rendues continues : terrasses herbeuses,
+// ni pente forte, ni chemin, ni mare, ni potager, ni rivière, ni pied d'obstacle ; plaques plus
+// denses et plus hautes.
+const HOME_V = 65;
+const smooth = (a, b, x) => THREE.MathUtils.smoothstep(x, a, b);
+export function champsMaison(terrain, obstacles) {
+  const sample = terrainColorSampler(terrain);
+  const c = new THREE.Color();
+  const out = [];
+  for (const z0 of [-64, 0]) {
+    for (const x0 of [-64, 0]) {
+      const positions = new Float32Array(HOME_V * HOME_V * 3);
+      const colors = new Float32Array(HOME_V * HOME_V * 3);
+      const herbe = new Uint8Array(HOME_V * HOME_V * 4);
+      let any = false;
+      for (let j = 0; j < HOME_V; j++) {
+        for (let i = 0; i < HOME_V; i++) {
+          const k = j * HOME_V + i;
+          const x = x0 + i;
+          const z = z0 + j;
+          const y = heightAt(x, z);
+          positions[k * 3] = x;
+          positions[k * 3 + 1] = y;
+          positions[k * 3 + 2] = z;
+          sample(x, z, c);
+          colors[k * 3] = c.r;
+          colors[k * 3 + 1] = c.g;
+          colors[k * 3 + 2] = c.b;
+          if (Math.abs(x) > 40 || Math.abs(z) > 40) continue;
+          const terrace = smooth(0.82, 0.92, y) * (1 - smooth(1.35, 1.5, y)) + smooth(3.1, 3.2, y) * (1 - smooth(3.65, 3.8, y));
+          if (terrace <= 0 || blocked(x, z, obstacles, 0.1)) continue;
+          const patch = smooth(0.25, 0.6, vnoise(x * 0.32 + 3.1, z * 0.32 - 1.7));
+          const dens = 0.85 * terrace * (1 - smooth(0.3, 0.55, slopeAt(x, z))) * (1 - smooth(0.15, 0.35, pathMask(x, z))) * (0.45 + 0.55 * patch);
+          if (dens <= 0.01) continue;
+          herbe[k * 4] = Math.round(dens * 255);
+          herbe[k * 4 + 1] = Math.round(((0.32 + 0.18 * patch) / 1.2) * 255);
+          herbe[k * 4 + 2] = Math.round(smooth(1.1, 0.88, y) * 0.45 * 255); // plus sèche au haut de la plage
+          any = true;
+        }
+      }
+      if (!any) continue;
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      const group = new THREE.Group();
+      group.name = `herbe-maison-${x0},${z0}`;
+      out.push({ t: { x0, z0, group, mesh: { geometry: geo }, active: true }, tile: { positions, colors, herbe, x0, z0 } });
+    }
+  }
+  return out;
+}
+

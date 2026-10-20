@@ -219,3 +219,44 @@ describe('herbe en tapis : budgets et mises à jour', () => {
     ORIGIN.set(0, 0, 0);
   });
 });
+
+describe('herbe en tapis : île de départ', () => {
+  it('pré dense sur les terrasses, rien dans la mare, le potager ni sur les chemins', async () => {
+    const { installCanvasStub } = await import('./helpers/canvas.js');
+    installCanvasStub();
+    const { buildTerrain, LAYOUT, pathMask } = await import('../src/world/home/terrain.js');
+    const { buildProps } = await import('../src/world/home/props.js');
+    const { champsMaison } = await import('../src/render/grass.js');
+    const tiles = champsMaison(buildTerrain(), buildProps().obstacles);
+    expect(tiles.length).toBeGreaterThanOrEqual(2);
+    const at = (x, z) => {
+      for (const { tile } of tiles) {
+        const i = Math.round(x - tile.x0);
+        const j = Math.round(z - tile.z0);
+        if (i >= 0 && j >= 0 && i < 65 && j < 65) return tile.herbe[(j * 65 + i) * 4] / 255;
+      }
+      return 0;
+    };
+    expect(at(LAYOUT.pond.x, LAYOUT.pond.z)).toBe(0);
+    expect(at(LAYOUT.garden.x, LAYOUT.garden.z)).toBe(0);
+    // densité moyenne du pré (nœuds herbeux) et chemins
+    let sum = 0;
+    let n = 0;
+    let onPath = 0;
+    for (const { tile } of tiles) {
+      for (let k = 0; k < 65 * 65; k++) {
+        const d = tile.herbe[k * 4] / 255;
+        const x = tile.positions[k * 3];
+        const z = tile.positions[k * 3 + 2];
+        if (pathMask(x, z) > 0.5 && d > 0) onPath++;
+        if (d > 0) {
+          sum += d;
+          n++;
+        }
+      }
+    }
+    expect(onPath).toBe(0);
+    expect(n).toBeGreaterThan(1000); // plus de 1 000 m² d'herbe
+    expect(sum / n).toBeGreaterThan(0.35);
+  });
+});

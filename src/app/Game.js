@@ -19,6 +19,7 @@ import { CameraRig } from './CameraRig.js';
 import { Input } from '../core/Input.js';
 import { GamepadInput } from '../core/Gamepad.js';
 import { LocoFeedback } from '../entities/locomotion/feedback.js';
+import { champsMaison } from '../render/grass.js';
 import { Character } from '../entities/character/Character.js';
 import { Player } from '../entities/Player.js';
 import { Owl } from '../entities/Owl.js';
@@ -90,8 +91,14 @@ export class Game {
       onPoi: (e, p) => this.discoverPoi(e, p),
     });
     setWaterProvider((x, z) => this.islands.waterLevelAt(x, z));
-    // herbe en tapis : anneaux de brins autour du joueur, coupés au champ de la caméra
+    // herbe en tapis : anneaux de brins autour du joueur, coupés au champ de la caméra ; l'île de
+    // départ a ses propres tuiles (render/grass.js, champsMaison)
     this.islands.herbe.camera = this.camera;
+    const home = { desc: { x: 0, z: 0 } };
+    for (const { t, tile } of champsMaison(this.world.terrain, this.world.obstacles)) {
+      this.world.homeDetail.add(t.group);
+      this.islands.herbe.addTile(home, t, tile, this.world.terrain.userData.terrainId);
+    }
     this.relinkDiscoveries();
     for (const id of Object.keys(this.state.explorer.islands)) this.islands.discovered.add(id);
     for (const id of Object.keys(this.state.explorer.pois || {})) this.islands.seenPois.add(Number(id));
@@ -1316,6 +1323,7 @@ export class Game {
     // herbe : densité selon la qualité ; « touffes » garde l'ancienne herbe seule (comparaison)
     this.islands?.herbe.setPreset(s.quality);
     this.islands?.herbe.setEnabled(s.herbe !== 'touffes');
+    if (this.world?.grass) this.world.grass.visible = s.herbe === 'touffes';
     this.pipeline.settings.paint = s.paint > 0;
     this.pipeline.settings.paintStrength = Math.max(0.4, s.paint || 1);
     this.pipeline.settings.outline = s.outline;
