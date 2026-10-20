@@ -3,6 +3,17 @@
 // (inertie de rotation), une vitesse le long du cap et une petite glisse latérale.
 // Par-dessus : dérapage et demi-tour, roulade et enchaînement, saut, chute, pentes.
 // Pas fixe de 1/120 s avec accumulateur : même trajectoire quelle que soit la cadence d'image.
+// À chaque pas : accélérations mesurées (aLat, aLong), inclinaison physique (bank), ellipse
+// d'adhérence (gripUse) et main au sol (handDown), tous décidés au pas fixe.
+//
+// Convention de signes (monde, m, m/s, m/s², rad) :
+// - avant = (sin θ, cos θ) ; latéral + = (cos θ, −sin θ), c'est-à-dire le x local + du personnage
+//   (le modèle regarde vers son z local +) ; vitesse = avant · v + latéral · vLat.
+// - ω > 0 (cap croissant) fait tourner la vitesse vers le latéral + : l'intérieur du virage est de
+//   ce côté. aLat, bankTarget et bank ont alors le signe de ω (positifs), comme bankAngle de pose.js.
+// - handSide : +1 = main du côté latéral + (intérieur quand bank > 0 ; os HAND_R du gabarit, à
+//   x local + dans models/personnage), −1 = l'autre main, 0 hors contact.
+// - aLong > 0 en accélération, < 0 au freinage.
 import { tuningFor, SURFACES } from './tuning.js';
 
 export const H = 1 / 120;
@@ -11,6 +22,14 @@ const TAU = Math.PI * 2;
 // états au sol « libres » : même physique, l'étiquette ne sert qu'à l'animation et aux sons
 export const LOCO = new Set(['IDLE', 'WALK', 'RUN', 'SPRINT']);
 const AIR = new Set(['JUMP', 'FALL', 'TRIP']);
+// le corps se penche dans la courbe (ailleurs, consigne nulle : roulade, air, dérapage, chute…)
+const BANKING = new Set(['IDLE', 'WALK', 'RUN', 'SPRINT', 'LAND', 'ROLL_RECOVER', 'SLIDE']);
+// l'adhérence porte le corps : au-delà de l'ellipse, la vitesse s'érode et la glisse augmente
+const GRIP = new Set(['IDLE', 'WALK', 'RUN', 'SPRINT', 'LAND', 'ROLL_RECOVER']);
+// rotation sur place : la direction de la vitesse tourne sans effort latéral
+const ON_THE_SPOT = new Set(['TURN', 'PIVOT']);
+// la main ne se pose qu'au sprint
+const HAND_STATES = new Set(['SPRINT']);
 
 export const wrapAngle = (a) => {
   let r = (a + Math.PI) % TAU;
@@ -25,8 +44,9 @@ const smooth01 = (t) => t * t * (3 - 2 * t);
 const OUT = { x: 0, z: 0, hit: false, frac: 1, trip: false };
 
 export function createMotor(profile = 'realiste') {
+  const T = tuningFor(profile);
   return {
-    T: tuningFor(profile),
+    T,
     x: 0, y: 0, z: 0,
     heading: 0, omega: 0,
     v: 0, vLat: 0, vy: 0,
@@ -39,6 +59,12 @@ export function createMotor(profile = 'realiste') {
     stopOnly: false, landHeavy: false, from: 0, to: 0,
     boostT: 0, hadInput: false, inputAngle: 0, slopeAlong: 0, slopeAngle: 0,
     sprintTime: 0, dist: 0, lastImpact: 0, pacePhase: 0,
+    // accélérations mesurées (filtrées), inclinaison, adhérence, main au sol
+    aLat: 0, aLong: 0,
+    bank: 0, bankVel: 0, bankTarget: 0,
+    gripUse: 0, gripOver: 0, surfGrip: 1, aPush: T.accel0,
+    handDown: false, handSide: 0, handX: 0, handY: 0, handZ: 0, handRise: 0,
+    handHoldT: 0, handT: 0, handCool: 0,
     acc: 0,
     events: [],
   };
@@ -59,6 +85,15 @@ export function resetMotor(m, x, y, z, heading = m.heading) {
   m.grounded = true;
   m.coyote = m.airTime = m.jumpBuf = m.rollBuf = m.boostT = 0;
   m.rollQueued = m.carry = false;
+  m.aLat = m.aLong = m.bank = m.bankVel = m.bankTarget = m.gripUse = m.gripOver = 0;
+  m.aPush = m.T.accel0; // poussée disponible à l'arrêt
+  m.handDown = false;
+  m.handSide = 0;
+  m.handX = x;
+  m.handY = y;
+  m.handZ = z;
+  m.handRise = 0;
+  m.handHoldT = m.handT = m.handCool = 0;
   m.acc = 0;
   setState(m, 'IDLE');
 }
@@ -149,6 +184,20 @@ export function interpolate(m, out) {
 }
 
 function substep(m, I, env, h) {
+  // vitesse monde et état au début du pas : base des accélérations mesurées
+  const fx = Math.sin(m.heading);
+  const fz = Math.cos(m.heading);
+  const vx0 = fx * m.v + fz * m.vLat;
+  const vz0 = fz * m.v - fx * m.vLat;
+  const from = m.state;
+  stateStep(m, I, env, h);
+  const surf = SURFACES[env.surface] || SURFACES.grass;
+  measureAccel(m, I, h, surf, vx0, vz0, from);
+  bankStep(m, I, h);
+  handStep(m, I, env, h);
+}
+
+function stateStep(m, I, env, h) {
   const T = m.T;
   m.px = m.x;
   m.py = m.y;
@@ -161,6 +210,8 @@ function substep(m, I, env, h) {
   if (m.coyote > 0) m.coyote -= h;
   if (m.boostT > 0) m.boostT -= h;
   const surf = SURFACES[env.surface] || SURFACES.grass;
+  // adhérence du sol sous les pieds (rotation, glisse) ; dans l'eau profonde, celle de la nage
+  m.surfGrip = I.swim ? 1 : surf.grip;
   const has = I.mag > 0.05;
   const target = has ? Math.atan2(I.dirX, I.dirZ) : m.heading;
   const dTheta = has ? wrapAngle(target - m.heading) : 0;
@@ -241,15 +292,152 @@ function substep(m, I, env, h) {
 }
 
 // ---------------------------------------------------------------------------
+// Accélérations mesurées : variation de la vitesse monde pendant le pas, décomposée le long de
+// la vitesse moyenne (aLong) et en travers (aLat = vitesse × dérivée de sa direction, pour une
+// rotation pure). Les à-coups imposés par un changement d'état (relance après demi-tour, départ
+// de roulade, rebond, trébuchement) n'alimentent pas les filtres ; la rotation sur place non plus.
+function measureAccel(m, I, h, surf, vx0, vz0, from) {
+  const T = m.T;
+  const fx = Math.sin(m.heading);
+  const fz = Math.cos(m.heading);
+  const vx1 = fx * m.v + fz * m.vLat;
+  const vz1 = fz * m.v - fx * m.vLat;
+  const jolt = from !== m.state && !(LOCO.has(from) && LOCO.has(m.state));
+  if (!jolt) {
+    let tx = vx0 + vx1;
+    let tz = vz0 + vz1;
+    let tl = Math.hypot(tx, tz);
+    if (tl < 1e-6) {
+      tx = fx;
+      tz = fz;
+      tl = 1;
+    }
+    tx /= tl;
+    tz /= tl;
+    const ax = (vx1 - vx0) / h;
+    const az = (vz1 - vz0) / h;
+    // latéral de la vitesse moyenne : (tz, −tx), même convention que celui du cap
+    const lat = ON_THE_SPOT.has(m.state) ? 0 : ax * tz - az * tx;
+    const lon = ax * tx + az * tz;
+    const k = 1 - Math.exp(-T.accelFilter * h);
+    m.aLat += (lat - m.aLat) * k;
+    m.aLong += (lon - m.aLong) * k;
+    // poussée disponible à cette vitesse sur ce sol, filtrée comme aLong : en ligne droite,
+    // l'accélération du moteur reste ainsi dans l'ellipse
+    const push = T.accel0 * Math.exp(-Math.hypot(vx1, vz1) / T.accelFade) * surf.accel * (m.boostT > 0 ? T.relaunchBoost : 1);
+    m.aPush += (push - m.aPush) * k;
+  }
+  // ellipse d'adhérence (au sol, à pied) : gLat = grip(v) · SURFACES.grip ; gLong = gLat, ou la
+  // poussée disponible si elle est plus forte (au démarrage)
+  let gLong = 1;
+  if (m.grounded && !I.swim) {
+    const gLat = gripAt(Math.hypot(vx1, vz1), T) * m.surfGrip;
+    gLong = Math.max(gLat, m.aPush);
+    m.gripUse = Math.hypot(m.aLat / gLat, m.aLong / gLong);
+  } else m.gripUse = 0;
+  // excès dû au virage seulement : accélérer ou freiner en ligne droite ne s'érode pas
+  m.gripOver = m.grounded && !I.swim && GRIP.has(m.state) ? Math.max(0, m.gripUse - Math.max(1, Math.abs(m.aLong) / gLong)) : 0;
+}
+
+// Inclinaison : ressort amorti critique vers bankGain · atan(aLat / g), bornée à bankMax
+function bankStep(m, I, h) {
+  const T = m.T;
+  const banking = m.grounded && !I.swim && BANKING.has(m.state);
+  const target = banking ? clamp(T.bankGain * Math.atan(m.aLat / T.bankGravity), -T.bankMax, T.bankMax) : 0;
+  m.bankTarget = target;
+  const w = T.bankFreq;
+  m.bankVel += (w * w * (target - m.bank) - 2 * w * m.bankVel) * h;
+  m.bank += m.bankVel * h;
+  if (m.bank > T.bankMax) {
+    m.bank = T.bankMax;
+    if (m.bankVel > 0) m.bankVel = 0;
+  } else if (m.bank < -T.bankMax) {
+    m.bank = -T.bankMax;
+    if (m.bankVel < 0) m.bankVel = 0;
+  }
+}
+
+// Épaule intérieure pour une inclinaison beta (rad) vers son côté, corps pivotant aux pieds :
+// écart latéral depuis le plan médian des pieds et hauteur au-dessus des pieds (m).
+export function shoulderAt(beta, T, out) {
+  const c = Math.cos(beta);
+  const s = Math.sin(beta);
+  out.lateral = T.handShoulderX * c + T.handShoulderY * s;
+  out.height = T.handShoulderY * c - T.handShoulderX * s;
+  return out;
+}
+const SH = { lateral: 0, height: 0 };
+
+// Main au sol, un effleurement rare : la sonde lit le sol sous l'épaule intérieure. L'inclinaison
+// « relief compris » dépasse un seuil quand l'épaule descend, au-dessus de ce sol, à la hauteur
+// qu'elle a sur le plat à cet angle (un sol plus haut côté intérieur fait toucher plus tôt).
+// Contact : au sol, en SPRINT, hors de l'eau, au-delà de handTouchAngle pendant handHold, à au
+// moins course + handSpeed · (sprint − course), et handCooldown écoulé depuis le dernier relevé.
+// Relevé : sous handLiftAngle, ou après handMaxTime de contact.
+function handStep(m, I, env, h) {
+  const T = m.T;
+  const side = m.handDown ? m.handSide : m.bank >= 0 ? 1 : -1;
+  const beta = m.bank * side; // < 0 : le corps penche du côté opposé à la main
+  shoulderAt(Math.max(0, beta), T, SH);
+  const lateral = SH.lateral;
+  const height = T.handShoulderY * Math.cos(beta) - T.handShoulderX * Math.sin(beta);
+  m.handX = m.x + Math.cos(m.heading) * side * lateral;
+  m.handZ = m.z - Math.sin(m.heading) * side * lateral;
+  const onFoot = m.grounded && !I.swim;
+  // en l'air ou à la nage, la sonde ne lit pas le sol
+  m.handY = onFoot ? env.ground(m.handX, m.handZ) : m.y;
+  m.handRise = m.handY - m.y;
+  const can = onFoot && env.surface !== 'shallow' && HAND_STATES.has(m.state);
+  const rise = Math.min(m.handRise, T.handRiseMax);
+  if (m.handCool > 0) m.handCool -= h;
+  if (!m.handDown) {
+    const leaning = can && m.handCool <= 0 && beta > 0 && height <= shoulderAt(T.handTouchAngle, T, SH).height + rise;
+    m.handHoldT = leaning ? m.handHoldT + h : 0;
+    if (m.handHoldT >= T.handHold - 1e-9 && speedOf(m) >= T.run + T.handSpeed * (T.sprint - T.run)) {
+      m.handDown = true;
+      m.handSide = side;
+      m.handT = 0;
+      handEvent(m, env, 'handTouch', side);
+    }
+  } else {
+    m.handT += h;
+    if (!can || m.handT >= T.handMaxTime - 1e-9 || height > shoulderAt(T.handLiftAngle, T, SH).height + rise) {
+      handEvent(m, env, 'handLift', m.handSide);
+      m.handDown = false;
+      m.handSide = 0;
+      m.handHoldT = 0;
+      m.handCool = T.handCooldown;
+    }
+  }
+}
+
+// vitesse monde (cap + glisse)
+function speedOf(m) {
+  return Math.hypot(m.v, m.vLat);
+}
+
+function handEvent(m, env, type, side) {
+  // x, y, z : point de contact de la main (et non le corps) ; t : durée du contact au relevé
+  emit(m, type, { x: m.handX, y: m.handY, z: m.handZ, side, v: speedOf(m), surface: env.surface || 'grass', bank: m.bank, t: type === 'handLift' ? m.handT : 0 });
+}
+
+// ---------------------------------------------------------------------------
 // Rotation : ressort amorti vers le cap visé, accélération et vitesse angulaires bornées.
 // C'est l'inertie de rotation : à pleine vitesse le corps s'engage dans la courbe,
 // dépasse un peu l'angle visé puis se stabilise ; le rayon de virage croît avec la vitesse.
-export function turnParams(v, T, out) {
+// Adhérence latérale (m/s²) à la vitesse v, sur herbe : gripRun jusqu'à la course, puis vers gripSprint
+export function gripAt(v, T) {
+  const s = Math.abs(v);
+  return s <= T.run ? T.gripRun : lerp(T.gripRun, T.gripSprint, clamp((s - T.run) / (T.sprint - T.run), 0, 1));
+}
+
+// gripScale : adhérence de la surface (SURFACES.grip) ; le rayon minimal vaut v² / (grip · gripScale)
+export function turnParams(v, T, out, gripScale = 1) {
   const s = clamp((Math.abs(v) - T.walkMax) / (T.sprint - T.walkMax), 0, 1);
   out.wn = lerp(T.turnFreqWalk, T.turnFreqSprint, s);
   out.zeta = lerp(T.turnDampWalk, T.turnDampSprint, s);
   out.amax = lerp(T.turnAccelStill, T.turnAccelSprint, clamp(Math.abs(v) / T.sprint, 0, 1));
-  const grip = Math.abs(v) <= T.run ? T.gripRun : lerp(T.gripRun, T.gripSprint, clamp((Math.abs(v) - T.run) / (T.sprint - T.run), 0, 1));
+  const grip = gripAt(v, T) * gripScale;
   out.wmax = Math.abs(v) < 0.3 ? T.turnRateStill : Math.min(T.turnRateWalk, grip / Math.abs(v));
   return out;
 }
@@ -257,7 +445,7 @@ const TP = { wn: 0, zeta: 0, amax: 0, wmax: 0 };
 
 function steer(m, dTheta, h, rateScale = 1, wmaxOverride = 0) {
   const T = m.T;
-  turnParams(m.v, T, TP);
+  turnParams(m.v, T, TP, m.grounded ? m.surfGrip : 1);
   const wmax = (wmaxOverride || TP.wmax) * rateScale;
   const acc = clamp(TP.wn * TP.wn * dTheta - 2 * TP.zeta * TP.wn * m.omega, -TP.amax, TP.amax);
   m.omega = clamp(m.omega + acc * h, -wmax, wmax);
@@ -266,10 +454,17 @@ function steer(m, dTheta, h, rateScale = 1, wmaxOverride = 0) {
 
 // Le cap tourne de d ; au-delà de la course, la vitesse ne suit qu'une partie de la
 // rotation (glisse) : ce retard devient une vitesse latérale qui s'efface avec l'adhérence.
+// Au sol, cette part croît quand l'adhérence de la surface baisse (÷ SURFACES.grip) et avec
+// l'excès d'ellipse du pas précédent.
 function rotate(m, d) {
   const T = m.T;
   m.heading = wrapAngle(m.heading + d);
-  const slip = T.slipMax * clamp((Math.abs(m.v) - T.run * 0.8) / (T.sprint - T.run * 0.8), 0, 1);
+  let slip = T.slipMax * clamp((Math.abs(m.v) - T.run * 0.8) / (T.sprint - T.run * 0.8), 0, 1);
+  if (m.grounded) {
+    slip /= m.surfGrip;
+    if (m.gripOver > 0 && GRIP.has(m.state)) slip += m.gripOver * T.gripSlide;
+    slip = Math.min(0.9, slip);
+  }
   const lag = d * slip;
   if (lag !== 0) {
     const c = Math.cos(lag);
@@ -299,11 +494,11 @@ function longitudinal(m, V, has, h, surf, aScale) {
 function move(m, env, h, radius) {
   const fx = Math.sin(m.heading);
   const fz = Math.cos(m.heading);
-  // droite = (cos θ, −sin θ)
+  // latéral + = (cos θ, −sin θ) : x local + du personnage (voir la convention en tête)
   const vx = fx * m.v + fz * m.vLat;
   const vz = fz * m.v - fx * m.vLat;
   const T = m.T;
-  m.vLat *= Math.exp(-T.slipGrip * h);
+  m.vLat *= Math.exp(-T.slipGrip * (m.grounded ? m.surfGrip : 1) * h);
   const dx = vx * h;
   const dz = vz * h;
   if (dx === 0 && dz === 0) {
@@ -438,6 +633,8 @@ function locoStep(m, I, env, h, surf, has, dTheta, target, aScale) {
   // virage franc : on ralentit un peu pour tourner (jamais plus de 40 %)
   if (has) V *= 0.6 + 0.4 * Math.max(0, Math.cos(dTheta));
   longitudinal(m, V, has, h, surf, aScale);
+  // ellipse d'adhérence dépassée (pas précédent) : la vitesse s'érode selon l'excès
+  if (m.gripOver > 0 && m.grounded) m.v = Math.max(0, m.v - T.gripScrub * m.gripOver * gripAt(m.v, T) * m.surfGrip * h);
   const speed = m.v;
   const r = move(m, env, h, T.radius);
   // obstacle bas percuté de face, trop vite : on trébuche

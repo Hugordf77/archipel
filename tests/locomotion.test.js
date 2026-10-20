@@ -2,7 +2,7 @@
 // roulade, saut, rebords, pentes, clic pour aller) mesuré face aux cibles de réglage.
 import { describe, expect, it } from 'vitest';
 import { createMotor, stepMotor, interpolate, turnParams, climbable, arriveIntent, wrapAngle } from '../src/entities/locomotion/motor.js';
-import { tuningFor } from '../src/entities/locomotion/tuning.js';
+import { tuningFor, SURFACES } from '../src/entities/locomotion/tuning.js';
 import { locomotionPose, strideLength, advanceGaitPhase, LOCO_FAMILY, CADENCE } from '../src/entities/locomotion/pose.js';
 
 const T = tuningFor('realiste');
@@ -73,6 +73,50 @@ describe('allures', () => {
     const s = reach(intent({ sprint: true }), T.sprint);
     expect(s).toBeGreaterThanOrEqual(1.0);
     expect(s).toBeLessThanOrEqual(1.3);
+  });
+
+  it('court à 6,0 m/s et sprinte à 9,4 m/s, marche inchangée ; 90 % de la course en moins de 0,5 s', () => {
+    expect(T.walkMax).toBe(2.6);
+    for (const profile of ['realiste', 'reactif']) {
+      const P = tuningFor(profile);
+      expect(P.run).toBe(6.0);
+      expect(P.sprint).toBe(9.4);
+      const steady = (it) => {
+        const m = createMotor(profile);
+        let sum = 0;
+        let n = 0;
+        let t90 = null;
+        run(m, it, 10, flat(), 120, (mm, t) => {
+          if (t90 === null && mm.v >= 0.9 * (it.sprint ? P.sprint : P.run)) t90 = t;
+          if (t > 4) {
+            sum += mm.v;
+            n++;
+          }
+        });
+        return { mean: sum / n, t90 };
+      };
+      const r = steady(intent());
+      const s = steady(intent({ sprint: true }));
+      expect(r.mean).toBeGreaterThan(P.run * 0.97);
+      expect(r.mean).toBeLessThan(P.run * 1.03);
+      expect(s.mean).toBeGreaterThan(P.sprint * 0.97);
+      expect(s.mean).toBeLessThan(P.sprint * 1.03);
+      expect(r.t90).toBeLessThanOrEqual(0.5);
+      expect(s.t90).toBeLessThan(1.3);
+    }
+  });
+
+  it('en simple course, même relancée et sur ponton, reste sous les seuils de trébuchement et de dérapage d’arrêt', () => {
+    for (const surface of ['grass', 'wood']) {
+      const m = createMotor();
+      let top = 0;
+      run(m, intent(), 16, flat({ surface }), 120, (mm) => {
+        top = Math.max(top, mm.v);
+      });
+      expect(top).toBeLessThan(T.tripSpeed);
+      expect(top).toBeLessThan(T.stopSkidSpeed);
+    }
+    expect(T.tripSpeed).toBeLessThan(T.sprint);
   });
 
   it('marche au stick à moitié, s’arrête en ~0,35 s depuis la course', () => {
@@ -391,6 +435,280 @@ describe('clic pour aller', () => {
       expect(m.events.some((e) => e.type === 'skidStart')).toBe(false);
       expect(crossings).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe('accélérations, inclinaison et main au sol', () => {
+  // vitesse monde (avant · v + latéral · vLat, latéral = (cos θ, −sin θ))
+  const speedOf = (m) => Math.hypot(m.v, m.vLat);
+  // côté latéral du point (x, z) par rapport au corps : > 0 du côté latéral +
+  const lateralOf = (m, x, z) => (x - m.x) * Math.cos(m.heading) - (z - m.z) * Math.sin(m.heading);
+  // virage franc au sprint : 2 s en ligne droite, puis stick tourné de deg (> 0 : vers le latéral +)
+  const sprintTurn = (deg, { env = flat(), fps = 120, seconds = 1.5, profile = 'realiste', base = intent({ sprint: true }), each = null } = {}) => {
+    const m = createMotor(profile);
+    run(m, base, 2, env, fps);
+    const a = m.heading + deg * DEG;
+    const out = { m, v0: speedOf(m), bankPeak: 0, handTime: 0, touchT: null, touchBank: null, liftBank: null, aLatPeak: 0, gripPeak: 0, vMin: Infinity };
+    run(m, { ...base, dirX: Math.sin(a), dirZ: Math.cos(a) }, seconds, env, fps, (mm, t) => {
+      out.bankPeak = Math.max(out.bankPeak, Math.abs(mm.bank));
+      out.aLatPeak = Math.max(out.aLatPeak, Math.abs(mm.aLat));
+      out.gripPeak = Math.max(out.gripPeak, mm.gripUse);
+      out.vMin = Math.min(out.vMin, speedOf(mm));
+      if (mm.handDown) {
+        out.handTime += 1 / fps;
+        if (out.touchT === null) {
+          out.touchT = t;
+          out.touchBank = Math.abs(mm.bank);
+        }
+      } else if (out.touchT !== null && out.liftBank === null) out.liftBank = Math.abs(mm.bank);
+      each?.(mm, t);
+    });
+    return out;
+  };
+
+  const touchesOf = (m) => m.events.filter((e) => e.type === 'handTouch');
+  const liftsOf = (m) => m.events.filter((e) => e.type === 'handLift');
+
+  it('au sprint, un virage de 90° penche le corps d’au plus 0,6 rad et effleure le sol une seule fois, 0,1 à 0,3 s', () => {
+    for (const profile of ['realiste', 'reactif']) {
+      for (const side of [1, -1]) {
+        let sideOk = true;
+        const r = sprintTurn(90 * side, {
+          profile,
+          seconds: 2,
+          each: (mm) => {
+            if (!mm.handDown) return;
+            // main du côté où penche le corps (signe de omega), point de contact de ce côté
+            if (mm.handSide !== side || Math.sign(mm.bank) !== side || lateralOf(mm, mm.handX, mm.handZ) * side < 0.45) sideOk = false;
+          },
+        });
+        expect(r.bankPeak).toBeLessThanOrEqual(0.6 + 1e-9);
+        expect(r.bankPeak).toBeGreaterThan(T.handTouchAngle);
+        expect(sideOk).toBe(true);
+        const touches = touchesOf(r.m);
+        const lifts = liftsOf(r.m);
+        expect(touches.length).toBe(1);
+        expect(lifts.length).toBe(1);
+        expect(r.handTime).toBeGreaterThanOrEqual(0.1);
+        expect(r.handTime).toBeLessThanOrEqual(0.3 + 1e-6);
+        expect(lifts[0].t).toBeLessThanOrEqual(T.handMaxTime + 1e-6);
+        expect(touches[0]).toMatchObject({ side, surface: 'grass' });
+        expect(lifts[0]).toMatchObject({ side, surface: 'grass' });
+        expect(touches[0].v).toBeGreaterThanOrEqual(T.run + 0.5 * (T.sprint - T.run));
+        for (const k of ['x', 'y', 'z', 'v', 'bank']) expect(Number.isFinite(touches[0][k]), k).toBe(true);
+      }
+    }
+  });
+
+  it('sur le plat, pose la main après 0,08 s au-delà de 31,5° et la relève sous 30° ou après 0,3 s', () => {
+    let above = 0;
+    let atTouch = null;
+    let was = false;
+    let liftOk = null;
+    const r = sprintTurn(90, {
+      seconds: 2,
+      each: (mm) => {
+        above = Math.abs(mm.bank) >= T.handTouchAngle ? above + 1 : 0;
+        if (mm.handDown && !was) atTouch = above;
+        if (!mm.handDown && was) {
+          const lift = liftsOf(mm).at(-1);
+          liftOk = Math.abs(mm.bank) < T.handLiftAngle || lift.t >= T.handMaxTime - 1e-6;
+        }
+        was = mm.handDown;
+      },
+    });
+    expect(r.touchT).not.toBeNull();
+    expect(atTouch).toBeGreaterThanOrEqual(Math.ceil(T.handHold * 120 - 1e-6)); // 10 pas de 1/120 s
+    expect(liftOk).toBe(true);
+    expect([T.handTouchAngle, T.handLiftAngle, T.handHold, T.handMaxTime, T.handCooldown]).toEqual([0.55, 0.52, 0.08, 0.3, 1.2]);
+  });
+
+  it('aLat suit la rotation de la vitesse, bank tend vers 0,65 · atan(aLat / g), aLong a le signe de l’accélération', () => {
+    const m = createMotor();
+    let launch = 0;
+    run(m, intent({ sprint: true }), 2, flat(), 120, (mm, t) => {
+      if (t < 0.3) launch = Math.max(launch, mm.aLong);
+    });
+    expect(launch).toBeGreaterThan(10);
+    // virage établi (stick un peu devant le cap) : aLat ≈ vitesse × omega, même signe
+    run(m, (mm) => intent({ sprint: true, dirX: Math.sin(mm.heading + 0.1), dirZ: Math.cos(mm.heading + 0.1) }), 1.5);
+    expect(m.omega).toBeGreaterThan(0.5);
+    expect(m.aLat / (speedOf(m) * m.omega)).toBeGreaterThan(0.97);
+    expect(m.aLat / (speedOf(m) * m.omega)).toBeLessThan(1.03);
+    expect(m.bankTarget).toBeCloseTo(Math.min(T.bankMax, T.bankGain * Math.atan(m.aLat / 9.81)), 6);
+    expect(m.bank).toBeGreaterThan(0);
+    let stop = 0;
+    run(m, intent({ mag: 0 }), 0.3, flat(), 120, (mm) => {
+      stop = Math.min(stop, mm.aLong);
+    });
+    expect(stop).toBeLessThan(-8);
+  });
+
+  it('une courbe ordinaire en course penche de 20 à 28°, sans jamais poser la main', () => {
+    const m = createMotor();
+    run(m, intent(), 2);
+    // stick 0,1 rad devant le cap : rayon d’environ 6 m à 6 m/s
+    run(m, (mm) => intent({ dirX: Math.sin(mm.heading + 0.1), dirZ: Math.cos(mm.heading + 0.1) }), 2);
+    expect(m.state).toBe('RUN');
+    expect(m.bank).toBeGreaterThanOrEqual(20 * DEG);
+    expect(m.bank).toBeLessThanOrEqual(28 * DEG);
+    expect(touchesOf(m)).toEqual([]);
+  });
+
+  it('ne pose jamais la main en course, en marche, en ligne droite, en l’air, à la nage ni dans l’eau peu profonde', () => {
+    const never = (r) => r.handTime === 0 && touchesOf(r.m).length === 0;
+    // ligne droite au sprint : aucune inclinaison
+    const straight = createMotor();
+    let bank = 0;
+    run(straight, intent({ sprint: true }), 4, flat(), 120, (mm) => {
+      bank = Math.max(bank, Math.abs(mm.bank));
+      expect(mm.handDown).toBe(false);
+    });
+    expect(bank).toBeLessThan(1e-9);
+    for (const profile of ['realiste', 'reactif']) {
+      for (const side of [1, -1]) {
+        // course à T.run : virage de 90° et demi-tour ; marche : virage de 90°
+        expect(never(sprintTurn(90 * side, { profile, base: intent() }))).toBe(true);
+        expect(never(sprintTurn(180 * side, { profile, base: intent() }))).toBe(true);
+        expect(never(sprintTurn(90 * side, { profile, base: intent({ mag: 0.5 }) }))).toBe(true);
+      }
+    }
+    // nage et eau peu profonde
+    expect(never(sprintTurn(90, { base: intent({ sprint: true, swim: true }) }))).toBe(true);
+    expect(never(sprintTurn(90, { env: flat({ surface: 'shallow' }) }))).toBe(true);
+    // un saut pendant l’appui relève la main au décollage, avant l’atterrissage
+    const j = createMotor();
+    run(j, intent({ sprint: true }), 2);
+    const a = j.heading + Math.PI / 2;
+    let jumped = false;
+    let airborneDown = false;
+    run(j, (mm) => intent({ sprint: true, dirX: Math.sin(a), dirZ: Math.cos(a), jump: mm.handDown && !jumped && (jumped = true), jumpHeld: true }), 1.2, flat(), 120, (mm) => {
+      if (!mm.grounded && mm.handDown) airborneDown = true;
+    });
+    expect(jumped).toBe(true);
+    expect(airborneDown).toBe(false);
+    const types = j.events.map((e) => e.type);
+    expect(types.indexOf('handTouch')).toBeLessThan(types.indexOf('jump'));
+    expect(types.indexOf('handLift')).toBeGreaterThan(types.indexOf('jump'));
+    expect(types.indexOf('handLift')).toBeLessThan(types.indexOf('land'));
+    run(j, intent({ sprint: true, dirX: Math.sin(a), dirZ: Math.cos(a) }), 2);
+    expect(j.handDown).toBe(false);
+    expect(liftsOf(j).length).toBe(touchesOf(j).length);
+  });
+
+  it('en slalom au sprint (virages alternés de 0,6 s), touche au plus une fois par tranche de 1,2 s', () => {
+    for (const profile of ['realiste', 'reactif']) {
+      for (const amp of [45, 70, 90]) {
+        const m = createMotor(profile);
+        run(m, intent({ sprint: true }), 2);
+        const h0 = m.heading;
+        const times = [];
+        let was = false;
+        run(m, (mm, t) => {
+          const k = Math.floor((t - 1 / 120) / 0.6) % 2 ? -1 : 1;
+          const a = h0 + (k * amp * DEG) / 2;
+          return intent({ sprint: true, dirX: Math.sin(a), dirZ: Math.cos(a) });
+        }, 8, flat(), 120, (mm, t) => {
+          if (mm.handDown && !was) times.push(t);
+          was = mm.handDown;
+        });
+        expect(times.length).toBeGreaterThan(0); // le slalom touche bien, mais rarement
+        for (let i = 1; i < times.length; i++) expect(times[i] - times[i - 1]).toBeGreaterThanOrEqual(1.2);
+        expect(times.length).toBeLessThanOrEqual(Math.ceil(8 / 1.2));
+      }
+    }
+  });
+
+  it('donne la même inclinaison et pose la main aux mêmes pas à 30, 60 et 144 Hz', () => {
+    const scenario = (fps) => {
+      // le balayage est appelé une fois par pas fixe : on y lit l’état laissé par le pas précédent
+      let steps = 0;
+      let down = false;
+      const flips = [];
+      const env = flat({
+        sweep: (mm, dx, dz, r, o) => {
+          if (mm.handDown !== down) {
+            down = mm.handDown;
+            flips.push(steps);
+          }
+          steps++;
+          return freeSweep(mm, dx, dz, r, o);
+        },
+      });
+      const m = createMotor();
+      const banks = [];
+      for (let i = 0; i < 4 * fps; i++) {
+        // virage de 90° au sprint à 2 s (image commune aux trois cadences)
+        stepMotor(m, i >= 2 * fps ? intent({ sprint: true, dirX: 1, dirZ: 0 }) : intent({ sprint: true }), env, 1 / fps);
+        const t = (i + 1) / fps;
+        if (Math.abs(t * 6 - Math.round(t * 6)) < 1e-9) banks.push(m.bank); // images communes : k / 6 s
+      }
+      return { banks, flips };
+    };
+    const [a, b, c] = [30, 60, 144].map(scenario);
+    expect(a.flips.length).toBeGreaterThanOrEqual(2);
+    expect(a.banks.length).toBe(24);
+    for (const o of [b, c]) {
+      expect(o.banks.length).toBe(a.banks.length);
+      o.banks.forEach((v, i) => expect(Math.abs(v - a.banks[i])).toBeLessThanOrEqual(1 * DEG));
+      expect(o.flips.length).toBe(a.flips.length);
+      o.flips.forEach((s, i) => expect(Math.abs(s - a.flips[i])).toBeLessThanOrEqual(1));
+    }
+  });
+
+  it('sur le sable, tourne plus large et glisse davantage ; l’adhérence n’est dépassée que dans le virage franc', () => {
+    // rayons minimaux : v² / (grip · SURFACES.grip)
+    const R = (v, s) => v / turnParams(v, T, {}, SURFACES[s].grip).wmax;
+    expect(R(T.sprint * SURFACES.sand.speed, 'sand')).toBeGreaterThan(R(T.sprint, 'grass'));
+    const steady = (surface) => {
+      const m = createMotor();
+      const env = flat({ surface });
+      let grip = 0;
+      run(m, intent({ sprint: true }), 2, env, 120, (mm) => {
+        grip = Math.max(grip, mm.gripUse); // élan en ligne droite : dans l’ellipse
+      });
+      expect(grip).toBeLessThanOrEqual(1);
+      let slip = 0;
+      let use = 0;
+      run(m, (mm) => intent({ sprint: true, dirX: Math.sin(mm.heading + 0.35), dirZ: Math.cos(mm.heading + 0.35) }), 1.5, env, 120, (mm, t) => {
+        if (t < 0.5) return;
+        slip = Math.max(slip, Math.abs(Math.atan2(mm.vLat, mm.v)));
+        use = Math.max(use, mm.gripUse);
+      });
+      return { radius: speedOf(m) / Math.abs(m.omega), slip, use };
+    };
+    const grass = steady('grass');
+    const sand = steady('sand');
+    expect(sand.radius).toBeGreaterThan(grass.radius * 1.1);
+    expect(sand.slip).toBeGreaterThan(grass.slip * 1.2);
+    // virage établi à la limite d’adhérence : gripUse y reste (à 1 % près), sans la dépasser
+    expect(grass.use).toBeLessThanOrEqual(1.01);
+    expect(sand.use).toBeLessThanOrEqual(1.01);
+    // virage franc au sprint (freinage et virage ensemble) : dépassement voulu, plus fort sur le sable
+    const hardGrass = sprintTurn(90);
+    const hardSand = sprintTurn(90, { env: flat({ surface: 'sand' }) });
+    expect(hardSand.gripPeak).toBeGreaterThan(1.1);
+    expect(hardSand.gripPeak).toBeGreaterThan(hardGrass.gripPeak);
+  });
+
+  it('pose la main plus tôt quand le sol monte côté intérieur, plus tard ou pas du tout quand il descend', () => {
+    // sol incliné de k dans la direction latérale + du corps, plat sous les pieds
+    const lean = (k) => {
+      let m = null;
+      const env = flat({ ground: (x, z) => (m ? k * lateralOf(m, x, z) : 0) });
+      const r = sprintTurn(90, { env, each: (mm) => (m = mm) });
+      return r;
+    };
+    // le sol sous la main est relevé de la pente fois l’écart latéral de la sonde
+    const flatTurn = lean(0);
+    const up = lean(Math.tan(10 * DEG));
+    const down = lean(-Math.tan(3 * DEG));
+    expect(flatTurn.touchT).not.toBeNull();
+    expect(up.touchT).toBeLessThan(flatTurn.touchT);
+    expect(up.touchBank).toBeLessThan(flatTurn.touchBank - 2 * DEG);
+    expect(up.touchBank).toBeLessThan(T.handTouchAngle);
+    expect(touchesOf(up.m)[0].y).toBeGreaterThan(0.05); // contact sur le talus, au-dessus des pieds
+    expect(down.touchT === null || down.touchT > flatTurn.touchT).toBe(true);
   });
 });
 

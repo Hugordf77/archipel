@@ -7,8 +7,8 @@ export const BASE_TUNING = {
   walkMin: 0.6, // stick à peine incliné
   walkMax: 2.6, // stick à mi-course
   walkThreshold: 0.55, // au-delà de cette inclinaison : course
-  run: 5.4,
-  sprint: 8.2,
+  run: 6.0, // (5,4 avant le chantier de course)
+  sprint: 9.4, // (8,2 avant)
   // Variation d'effort en course soutenue : onde douce + impulsions rares, sans hasard.
   paceWaveRate: 0.9, // rad/s
   runPaceAmplitude: 0.035,
@@ -18,10 +18,12 @@ export const BASE_TUNING = {
   swimSprint: 2.4,
 
   // --- accélération longitudinale -------------------------------------------
-  // a(v) = accel0 · exp(−v / accelFade) : forte au départ, plus douce près de la vitesse visée
-  accel0: 21, // m/s² au démarrage
-  accelFade: 4.7, // m/s
-  friction: 16, // m/s², stick relâché (arrêt depuis la course ≈ 0,35 s)
+  // a(v) = accel0 · exp(−v / accelFade) : forte au départ, plus douce près de la vitesse visée.
+  // Temps pour atteindre V depuis l'arrêt : (accelFade / accel0) · (exp(V / accelFade) − 1),
+  // soit 0,46 s pour la course (90 % en 0,39 s) et 1,11 s pour le sprint (90 % en 0,89 s).
+  accel0: 25, // m/s² au démarrage
+  accelFade: 5.0, // m/s
+  friction: 17, // m/s², stick relâché (arrêt depuis la course ≈ 0,35 s)
   slowDown: 12, // m/s², quand la vitesse visée baisse (stick moins incliné)
   overspeedDecay: 1.6, // m/s², survitesse (roulade, descente) tant qu'on pousse vers l'avant
   swimAccel: 5.5,
@@ -37,12 +39,55 @@ export const BASE_TUNING = {
   turnAccelSprint: 24, // αmax au sprint
   turnRateWalk: 10, // ωmax (rad/s) en marche
   turnRateStill: 12, // ωmax sur place
-  gripRun: 16, // accélération latérale max (m/s²) en course : ωmax = gripRun / v
-  gripSprint: 13, // … au sprint (rayon ≈ 5 m)
+  // adhérence latérale (m/s²) : ωmax = grip · SURFACES.grip / v, rayon minimal v² / grip
+  gripRun: 16, // jusqu'à la course (rayon 0,42 m à walkMax, 2,25 m à la course)
+  gripSprint: 15, // … au sprint : ωmax = 1,6 rad/s comme avant (rayon ≈ 5,9 m)
   // glisse : au-delà de la course, une part de la rotation du cap ne passe pas tout de suite
-  // à la vitesse ; ce retard latéral s'efface avec l'adhérence (1/s)
+  // à la vitesse ; ce retard latéral s'efface avec l'adhérence (1/s, × SURFACES.grip au sol)
   slipMax: 0.35,
   slipGrip: 9,
+
+  // --- accélérations mesurées, inclinaison, ellipse d'adhérence --------------
+  // aLat, aLong : accélération réelle du corps (variation de la vitesse monde sur un pas fixe,
+  // décomposée le long de la vitesse et en travers), lissées par un filtre du 1er ordre (1/s).
+  accelFilter: 12,
+  bankGravity: 9.81, // m/s² : vraie gravité (et non `gravity`, réglée pour le saut)
+  // consigne = bankGain · atan(aLat / g), bornée à bankMax : un corps plus léger que le
+  // pendule pur (virage de course ordinaire vers 20 à 28°)
+  bankGain: 0.65,
+  bankFreq: 14, // rad/s, ressort amorti critique (ζ = 1) : 63 % de la consigne en ≈ 0,15 s
+  bankMax: 0.6, // rad (≈ 34°) ; lu aussi par la pose
+  // gripUse = √((aLat / gLat)² + (aLong / gLong)²), gLat = grip(v) · SURFACES.grip,
+  // gLong = max(gLat, poussée disponible accel0 · exp(−v / accelFade) · SURFACES.accel, filtrée
+  // comme aLong) : la poussée du moteur en ligne droite reste dans l'ellipse ; au sprint gLong = gLat.
+  // Au-delà de 1, l'excès dû au virage (gripUse − max(1, |aLong| / gLong)) freine
+  // (excès × gLat × gripScrub, m/s²) et ajoute de la glisse (+ excès × gripSlide à la part de
+  // rotation du cap qui ne passe pas à la vitesse).
+  gripScrub: 1,
+  gripSlide: 1,
+
+  // --- main au sol : un effleurement rare dans un virage franc au sprint --------
+  // Corps pivotant aux pieds, gabarit PER-001 au repos (models/personnage/commun.js, REST) :
+  // épaule intérieure à handShoulderX du plan médian et handShoulderY au-dessus des pieds.
+  // Penché de β, l'épaule est à (X·cos β + Y·sin β) de côté et (Y·cos β − X·sin β) de haut ;
+  // la sonde lit le sol juste sous elle. L'inclinaison « relief compris » compare la hauteur de
+  // l'épaule au-dessus de ce sol à celle qu'elle aurait sur le plat à l'angle de seuil : un sol plus
+  // haut côté intérieur fait toucher plus tôt, plus bas plus tard (au-delà de handRiseMax, rocher ou
+  // rebord : ignoré). Bras tendu (handReach), la main n'atteint le plat qu'avec le corps abaissé
+  // d'environ 19 cm à 31,5° (hauteur d'épaule 0,57 m − 0,38 m) : la pose plie buste et bassin.
+  // Contact : en SPRINT, au-delà de handTouchAngle tenu handHold, à une vitesse d'au moins
+  // course + handSpeed · (sprint − course) ; relevé sous handLiftAngle ou après handMaxTime ;
+  // puis handCooldown sans nouveau contact (un slalom ne touche pas à chaque virage).
+  handShoulderX: 0.17, // m
+  handShoulderY: 0.775, // m
+  handReach: 0.38, // m : épaule → bout des doigts, bras tendu
+  handTouchAngle: 0.55, // rad (31,5°) : sonde à 0,55 m de côté sur le plat
+  handLiftAngle: 0.52, // rad (30°) : en dessous, la paume quitte un sol plat (cinématique de la pose)
+  handHold: 0.08, // s au-delà du seuil avant le contact : un coup de stick bref ne suffit pas
+  handMaxTime: 0.3, // s de contact au plus, même si le virage continue
+  handCooldown: 1.2, // s après chaque relevé
+  handSpeed: 0.5, // part de l'écart course → sprint : 7,7 m/s au contact
+  handRiseMax: 0.15, // m
 
   // --- dérapage et demi-tour --------------------------------------------------
   skidMinSpeed: 3.8, // m/s
@@ -50,7 +95,7 @@ export const BASE_TUNING = {
   skidDecel: 24, // m/s²
   skidEndSpeed: 1.2,
   skidMaxTime: 0.45,
-  stopSkidSpeed: 6.5, // stick relâché à pleine allure : court dérapage d'arrêt
+  stopSkidSpeed: 7.3, // stick relâché à pleine allure : court dérapage d'arrêt (au-dessus de la course)
   stopSkidTime: 0.18,
   pivotTime: 0.16,
   pivotAngle: Math.PI / 2, // entrée encore à plus de 90° en fin de dérapage : demi-tour
@@ -62,14 +107,14 @@ export const BASE_TUNING = {
   turnInPlaceTime: 0.18,
 
   // --- roulade ------------------------------------------------------------------
-  rollBase: 5.2, // m/s : vitesse minimale en roulade
+  rollBase: 5.8, // m/s : vitesse minimale en roulade (≈ 0,97 × course)
   rollBonus: 1.8, // élan d'une roulade « fraîche »
   rollTime: 0.52,
   rollTurnRate: 2.5, // rad/s
   rollRadius: 0.24, // m, rayon de collision en boule
   rollWindow: [0.36, 0.52], // s : fenêtre parfaite pour enchaîner
   rollChainBonus: 1.2,
-  rollCap: 11.5,
+  rollCap: 13.2, // ≈ 1,4 × sprint
   rollFriction: 1.0, // m/s²
   rollSlopeGain: 0.6, // part de la gravité gagnée en descente
   rollRest: 0.35, // s après une roulade sans élan « frais » (seul l'enchaînement paie)
@@ -79,7 +124,7 @@ export const BASE_TUNING = {
   bonkTime: 0.5,
 
   // --- trébucher (obstacle bas percuté trop vite) -------------------------------
-  tripSpeed: 6.4, // m/s : au sprint (pas en simple course) on trébuche sur un obstacle bas
+  tripSpeed: 7.2, // m/s : au sprint (pas en simple course, ≤ 6,4 m/s avec ses relances) on trébuche
   tripHop: 3.4, // m/s : petit envol en basculant par-dessus
   tripDrag: 2.5, // m/s² en l'air
   fallenFriction: 9, // m/s² : glissade à plat ventre
@@ -135,8 +180,8 @@ export const SURFACES = {
 };
 
 const REACTIF = {
-  accel0: 34,
-  friction: 26,
+  accel0: 40, // course en 0,29 s, sprint en 0,69 s
+  friction: 29,
   turnFreqWalk: 24,
   turnFreqSprint: 15,
   turnDampWalk: 1,
@@ -145,12 +190,12 @@ const REACTIF = {
   turnAccelSprint: 45,
   turnRateWalk: 14,
   gripRun: 26,
-  gripSprint: 22,
+  gripSprint: 25, // ωmax au sprint ≈ 2,66 rad/s comme avant (rayon ≈ 3,5 m)
   slipMax: 0.12,
   skidAngle: (140 * Math.PI) / 180,
   skidDecel: 34,
   skidMaxTime: 0.3,
-  stopSkidSpeed: 9,
+  stopSkidSpeed: 10.3, // au-dessus du sprint : seulement en survitesse
 };
 
 const cache = new Map();

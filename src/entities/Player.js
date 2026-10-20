@@ -13,6 +13,9 @@ const STEPPING = new Set(['WALK', 'RUN', 'SPRINT', 'LAND', 'ROLL_RECOVER', 'IDLE
 
 // minmod : pente d'un vrai versant ; au bord d'une falaise, l'un des côtés est plat → 0
 const minmod = (a, b) => (a * b <= 0 ? 0 : Math.abs(a) < Math.abs(b) ? a : b);
+// Seuils de l'animation en fractions de la course réglée (T.run) : 3,6 et 3,3 m/s à 5,4 m/s
+const RUN_POSE_FRACTION = 3.6 / 5.4; // pose « run » au-delà
+const WALK_REF_FRACTION = 3.3 / 5.4; // référence des poses existantes et de l'intensité des pas
 
 // Contrôleur du personnage : la physique vit dans le moteur de locomotion
 // (locomotion/motor.js) ; ici on lui fournit le sol, l'eau et les collisions,
@@ -30,7 +33,6 @@ export class Player {
     this.seat = null;
     this.action = null;
     this.locked = false; // vrai pendant une session de focus
-    this.walkSpeed = 3.3; // référence de l'animation des poses existantes
     this.stepPhase = 0; // phase visuelle conservée sur deux demi-cycles
     this.stepEventPhase = 0; // phase distincte des appuis sonores et des événements
     this.actualSpeed = 0;
@@ -42,7 +44,16 @@ export class Player {
     this.motor = createMotor();
     this.events = [];
     this.intent = { dirX: 0, dirZ: 0, mag: 0, sprint: false, walk: false, jump: false, jumpHeld: false, roll: false, noSkid: false, swim: false, speed: 0 };
-    this.loco = { state: 'IDLE', t: 0, v: 0, vLat: 0, vy: 0, omega: 0, heading: 0, inputAngle: 0, grounded: true, phase: 0, stride: 0.5, sprintTime: 0, slopeAlong: 0, chain: 0, airTime: 0, impact: 0, rollT: 0, landHeavy: false, stopOnly: false, jumpLong: false, swim: false, accF: 0, accL: 0, surface: 'grass' };
+    // Instantané pour l'animation. Convention (voir locomotion/motor.js) : latéral + = (cos θ, −sin θ),
+    // x local + du personnage ; aLat, bank, bankTarget > 0 dans un virage à omega > 0 (intérieur de ce
+    // côté) ; handSide +1 = main de ce côté (os HAND_R du gabarit), −1 = l'autre, 0 hors contact ;
+    // aLong (= accF) > 0 en accélération. Unités : m, m/s², rad, coordonnées monde.
+    this.loco = {
+      state: 'IDLE', t: 0, v: 0, vLat: 0, vy: 0, omega: 0, heading: 0, inputAngle: 0, grounded: true, phase: 0, stride: 0.5, sprintTime: 0, slopeAlong: 0, chain: 0, airTime: 0, impact: 0, rollT: 0, landHeavy: false, stopOnly: false, jumpLong: false, swim: false, surface: 'grass',
+      accF: 0, // = aLong (compatibilité de pose.js et Character.js)
+      aLat: 0, aLong: 0, bank: 0, bankTarget: 0, gripUse: 0,
+      handDown: false, handSide: 0, handX: 0, handY: 0, handZ: 0, handRise: 0,
+    };
     this.env = {
       surface: 'grass',
       slopeX: 0,
@@ -52,9 +63,12 @@ export class Player {
     };
     this._view = { x: 0, y: 0, z: 0, heading: 0 };
     this._lastDist = 0;
-    this._prevV = 0;
-    this._prevLat = 0;
     this._resync = true;
+  }
+
+  // référence des poses existantes (3,3 m/s pour une course à 5,4 m/s)
+  get walkSpeed() {
+    return this.motor.T.run * WALK_REF_FRACTION;
   }
 
   setProfile(profile) {
@@ -346,7 +360,7 @@ export class Player {
       this.stepEventPhase += phaseAdvance;
       while (this.stepEventPhase >= Math.PI) {
         this.stepEventPhase -= Math.PI;
-        const intensity = Math.min(1.4, speed / 3.3);
+        const intensity = Math.min(1.4, speed / this.walkSpeed);
         this._side = -(this._side || 1);
         this.onStep?.(groundAt(this.pos.x, this.pos.z).surface, intensity, this._side * 0.25);
         this.events.push({ type: 'step', x: this.pos.x, y: this.pos.y, z: this.pos.z, heading: m.heading, v: speed, surface: E.surface, side: this._side });
@@ -361,14 +375,20 @@ export class Player {
       }
     }
 
-    // instantané pour l'animation
-    const idt = dt > 1e-4 ? 1 / dt : 0;
-    const accF = (m.v - this._prevV) * idt;
-    const accL = (m.vLat - this._prevLat) * idt;
-    this._prevV = m.v;
-    this._prevLat = m.vLat;
-    L.accF += (accF - L.accF) * damp(12, dt);
-    L.accL += (accL - L.accL) * damp(12, dt);
+    // instantané pour l'animation : accélérations, inclinaison et main au sol viennent du pas fixe
+    L.aLat = m.aLat;
+    L.aLong = m.aLong;
+    L.accF = m.aLong;
+    L.bank = m.bank;
+    L.bankTarget = m.bankTarget;
+    L.gripUse = m.gripUse;
+    L.handDown = m.handDown;
+    L.handSide = m.handSide;
+    // point visé par la main intérieure, recalé sur la position rendue, et sol dessous
+    L.handX = m.handX + (this.pos.x - m.x);
+    L.handZ = m.handZ + (this.pos.z - m.z);
+    L.handY = m.grounded && !swim ? groundAt(L.handX, L.handZ).y : this.pos.y;
+    L.handRise = L.handY - this.pos.y;
     L.state = swim ? 'SWIM' : m.state;
     L.t = m.t;
     L.v = m.v;
@@ -397,13 +417,14 @@ export class Player {
     m.events.length = 0;
 
     // poses existantes (l'animation dédiée lit this.loco)
+    const runPose = m.T.run * RUN_POSE_FRACTION;
     if (swim) {
       if (c.pose !== 'swim') c.setPose('swim');
     } else if (c.pose !== 'pickup' && c.pose !== 'celebrate' && !c.busy) {
-      const pose = speed > 3.6 ? 'run' : speed > 0.15 ? 'walk' : 'idle';
+      const pose = speed > runPose ? 'run' : speed > 0.15 ? 'walk' : 'idle';
       if (c.pose !== pose) c.setPose(pose);
     }
-    return Math.min(1, speed / (swim ? 1.8 : this.walkSpeed)) * (speed > 3.6 ? 1.15 : 1);
+    return Math.min(1, speed / (swim ? 1.8 : this.walkSpeed)) * (speed > runPose ? 1.15 : 1);
   }
 
   sync() {
