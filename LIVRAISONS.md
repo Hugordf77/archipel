@@ -122,6 +122,14 @@ et domaine concerné).
   `src/world/islands/gen/` (relief, érosion, hydrologie, zones, surface, plan, lieux, chemins, faune) ;
   `IslandManager.js` (LOD, tuiles, Worker `worldWorker.js`).
 - Carte : `src/ui/mapPanel.js`, brouillard `src/world/fog.js` ; minicarte `src/ui/minimap.js` (nouvelle).
+- **Herbe en tapis** (refonte « façon Breath of the Wild », en cours) : brins procéduraux générés par le
+  shader (`src/render/herbe/` : `placement.js` pur, `materiau.js`, `HerbeSystem.js`), trois anneaux de
+  densité autour du joueur selon la qualité (Haut 96 → 24 → 6 brins/m² jusqu'à 60 m, Moyen 64 → 16 → 4,
+  Bas 32 → 8), textures 65 × 65 par tuile au mètre (densité, hauteur et sécheresse ; hauteur et couleur
+  du sol), pied à la teinte exacte du terrain (`PAINT` de `shaders/chunks.js`, partagé avec le terrain),
+  vent avec ondes qui traversent le pré, couchée autour du joueur. Raccord : `IslandManager.js` (tuiles,
+  terrassement), `Game.js` (`state.settings.herbe` : « touffes » pour l'ancienne herbe seule). Tests :
+  `tests/herbe.test.js`.
 - Agents : `archipel-calibrateur` (corrections ciblées d'une île) et `archipel-critique` (revue).
 
 ### Manette, audio, interface

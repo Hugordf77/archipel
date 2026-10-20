@@ -90,6 +90,8 @@ export class Game {
       onPoi: (e, p) => this.discoverPoi(e, p),
     });
     setWaterProvider((x, z) => this.islands.waterLevelAt(x, z));
+    // herbe en tapis : anneaux de brins autour du joueur, coupés au champ de la caméra
+    this.islands.herbe.camera = this.camera;
     this.relinkDiscoveries();
     for (const id of Object.keys(this.state.explorer.islands)) this.islands.discovered.add(id);
     for (const id of Object.keys(this.state.explorer.pois || {})) this.islands.seenPois.add(Number(id));
@@ -1265,6 +1267,9 @@ export class Game {
     // profil de locomotion : élan réaliste ou réactif
     this.player?.setProfile(s.motion?.profile === 'reactif' ? 'reactif' : 'realiste');
     this.pipeline.setQuality(s.quality);
+    // herbe : densité selon la qualité ; « touffes » garde l'ancienne herbe seule (comparaison)
+    this.islands?.herbe.setPreset(s.quality);
+    this.islands?.herbe.setEnabled(s.herbe !== 'touffes');
     this.pipeline.settings.paint = s.paint > 0;
     this.pipeline.settings.paintStrength = Math.max(0.4, s.paint || 1);
     this.pipeline.settings.outline = s.outline;

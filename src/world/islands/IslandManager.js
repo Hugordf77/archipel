@@ -13,6 +13,7 @@ import { bloomColorOf } from './gen/zones.js';
 import { BIOMES } from './biomes.js';
 import { kindModel, CAP_COLORS, ROCKY } from '../../models/vegetation.js';
 import { GRIMPE } from '../../models/physique.gen.js';
+import { HerbeSystem } from '../../render/herbe/HerbeSystem.js';
 import { partModel, rotY, recolorPart } from '../../models/lieux.js';
 import { MAT } from '../../models/kit/materials.js';
 import { buildRivers, buildLake, buildFallFoam } from '../env/rivers.js';
@@ -201,6 +202,9 @@ export class IslandManager {
       structGlow: toonMaterial({ ...MAT.structGlow }),
       proxy: new THREE.MeshBasicMaterial(),
     };
+    // herbe en tapis des tuiles au mètre (brins procéduraux, render/herbe/)
+    this.herbe = new HerbeSystem({ id: this.terrainId });
+    this._focus = new THREE.Vector3();
     this.proxyGeo = new THREE.IcosahedronGeometry(1, 1);
     this.anims = []; // ailes de moulin, roues à aubes
 
@@ -226,6 +230,7 @@ export class IslandManager {
     }
     if (!this.depth.pending && Math.hypot(px - this.depth.cx, pz - this.depth.cz) > 220) this.requestDepth(px, pz);
     for (const e of this.entries.values()) if (e.want === 0 && e.plan) this.updateTiles(e, px, pz);
+    this.herbe.update(this._focus.set(px - ORIGIN.x, 0, pz - ORIGIN.z));
     this.smallT = (this.smallT || 0) - dt;
     if (this.smallT <= 0) {
       this.smallT = 0.3;
@@ -866,12 +871,14 @@ export class IslandManager {
     group.visible = false;
     e.group.add(group);
     e.tiles.set(key, t);
+    this.herbe.addTile(e, t, tile);
     const hidden = this.hiddenItems?.(e.desc.id);
     if (hidden && hidden.length) for (const id of hidden) if (t.idIndex.has(Number(id))) this.setTileItemVisible(t, t.idIndex.get(Number(id)), false);
     this.tryActivate(e);
   }
 
   disposeTile(e, t) {
+    this.herbe.removeTile(t);
     t.mesh.geometry.dispose();
     t.small.traverse((o) => o.isInstancedMesh && o.dispose());
     e.group.remove(t.group);
@@ -1041,6 +1048,8 @@ export class IslandManager {
         pos.needsUpdate = true;
         nor.needsUpdate = true;
         col.needsUpdate = true;
+        // l'herbe suit le sol creusé (hauteur et couleur)
+        if (t.herbe) this.herbe.readGround(t);
       }
     }
   }

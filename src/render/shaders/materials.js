@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { U, nextId } from '../../core/globals.js';
-import { NOISE, CURVE, WIND, SHADOW, TOON, MRT_OUT } from './chunks.js';
+import { NOISE, PAINT, CURVE, WIND, SHADOW, TOON, MRT_OUT } from './chunks.js';
 
 // ---------------------------------------------------------------------------
 // Matériau toon générique (décors, terrain, personnages)
@@ -82,6 +82,7 @@ void main() {
 
 const toonFrag = /* glsl */ `
 ${NOISE}
+${PAINT}
 ${SHADOW}
 ${TOON}
 ${MRT_OUT}
@@ -130,7 +131,7 @@ void main() {
   // position absolue pour les bruits (continue quand l'origine se recentre)
   vec3 wA = vWorldPos + uWorldOffset;
   // variation de pigment, comme une couche de gouache irrégulière
-  float pv = vnoise(wA.xz * 0.45 + wA.y * 0.6) * 0.65 + vnoise(wA.xz * 1.7 - wA.y) * 0.35;
+  float pv = pigmentVar(wA);
   albedo *= 1.0 + (pv - 0.5) * 0.16 * uPigment;
   #ifdef FACE
   // visage peint : bouche puis yeux (atlas prémultiplié), sur la couleur de peau
@@ -157,10 +158,8 @@ void main() {
   float ripple = sin(dot(wA.xz, vec2(0.8, 0.6)) * 6.0 + vnoise(wA.xz * 0.7) * 5.0);
   albedo *= 1.0 - sand * smoothstep(0.6, 0.95, ripple) * 0.05;
   // touches peintes sur l'herbe et strates dans la falaise
-  float patchN = vnoise(wA.xz * 0.12) * 0.7 + vnoise(wA.xz * 0.37) * 0.3;
   float grassMask = smoothstep(0.75, 0.9, N.y) * smoothstep(0.75, 0.95, vWorldPos.y);
-  albedo = mix(albedo, albedo * vec3(0.9, 1.04, 0.92), grassMask * smoothstep(0.45, 0.7, patchN));
-  albedo = mix(albedo, albedo * vec3(1.06, 1.05, 0.9), grassMask * smoothstep(0.5, 0.3, patchN) * 0.8);
+  albedo = grassTouches(albedo, wA, grassMask);
   float cliff = 1.0 - smoothstep(0.55, 0.8, N.y);
   float strata = sin(vWorldPos.y * 5.5 + vnoise(wA.xz * 0.5) * 3.0);
   albedo = mix(albedo, albedo * (0.93 + 0.08 * strata), cliff);
