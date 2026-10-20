@@ -52,7 +52,7 @@ export class AirRide {
       }
       return this.requestLanding();
     }
-    if (player.locked || player.mode === 'action' || player.mode === 'seated' || this.game.sailing.aboard) {
+    if (player.locked || player.mode === 'action' || player.mode === 'seated' || player.climbing || this.game.sailing.aboard) {
       ui.toast(`L\u2019oiseau viendra quand tu seras libre.`, { icon: 'bird' });
       return;
     }
@@ -96,7 +96,7 @@ export class AirRide {
   freeFall() {
     const { player, rig, ui } = this.game;
     if (!this.riding) {
-      if (player.locked || player.mode === 'action' || player.mode === 'seated' || this.game.sailing.aboard) {
+      if (player.locked || player.mode === 'action' || player.mode === 'seated' || player.climbing || this.game.sailing.aboard) {
         ui.toast(`Impossible de sauter pour le moment.`, { icon: 'bird' });
         return;
       }

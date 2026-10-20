@@ -3,6 +3,7 @@
 // Le personnage (Character.js) applique ces valeurs d'articulations à son squelette.
 
 import { BASE_TUNING } from './tuning.js';
+import { trunkFrame } from './trunk.js';
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
@@ -134,6 +135,12 @@ export function locomotionPose(p, T, X) {
       break;
     case 'getup':
       getupPose(p, T, X);
+      break;
+    case 'climb':
+      climbPose(p, T, X);
+      break;
+    case 'perch':
+      perchPose(p, T, X);
       break;
     default:
       groundPose(p, T, X);
@@ -458,7 +465,8 @@ function airPose(p, T, X) {
   const vy = p.vy || 0;
   const rise = clamp(vy / 7.2, 0, 1);
   const apex = 1 - clamp(Math.abs(vy) / 1.5, 0, 1);
-  const flail = p.state === 'FALL' && (p.airTime || 0) > 0.6;
+  // longue chute (au-delà de 0,6 s, fréquente depuis un arbre) : les bras se mettent à battre en 0,25 s
+  const flail = p.state === 'FALL' ? smooth(0.6, 0.85, p.airTime || 0) : 0;
   // saut : un genou levé, l'autre jambe en arrière, bras vers le ciel
   T.sy = 1 + 0.08 * rise;
   T.sx = 1 - 0.04 * rise;
@@ -480,18 +488,38 @@ function airPose(p, T, X) {
     T.thighL = T.thighR = 0.25;
     T.shinL = T.shinR = 0.6;
   }
-  if (flail) {
+  if (flail > 0) {
     // longue chute : les bras battent, les jambes pédalent
     const w = (p.airTime || 0) * 14;
-    T.armLX = -2.4 + Math.sin(w) * 0.5;
-    T.armRX = -2.4 - Math.sin(w) * 0.5;
-    T.armLZ = -0.8;
-    T.armRZ = 0.8;
-    T.thighL = Math.sin(w * 0.7) * 0.6 - 0.3;
-    T.thighR = -Math.sin(w * 0.7) * 0.6 - 0.3;
-    T.shinL = T.shinR = 0.8;
-    T.lean = 0;
-    X.expr = 'surpris';
+    const f = flail;
+    T.armLX += (-2.4 + Math.sin(w) * 0.5 - T.armLX) * f;
+    T.armRX += (-2.4 - Math.sin(w) * 0.5 - T.armRX) * f;
+    T.armLZ += (-0.8 - T.armLZ) * f;
+    T.armRZ += (0.8 - T.armRZ) * f;
+    T.thighL += (Math.sin(w * 0.7) * 0.6 - 0.3 - T.thighL) * f;
+    T.thighR += (-Math.sin(w * 0.7) * 0.6 - 0.3 - T.thighR) * f;
+    T.shinL += (0.8 - T.shinL) * f;
+    T.shinR += (0.8 - T.shinR) * f;
+    T.lean *= 1 - f;
+    if (f > 0.5) X.expr = 'surpris';
+  }
+  // saut arrière depuis un tronc : dos cambré, bras ouverts, jambes serrées, qui s'efface en l'air
+  if (p.trunkJump === 'back') {
+    const k = 1 - smooth(0.25, 0.7, p.airTime || 0);
+    T.lean += (-0.3 - T.lean) * k;
+    T.torsoX += -0.28 * k;
+    T.headX += (-0.3 - T.headX) * k;
+    T.armLX += (-0.7 - T.armLX) * k;
+    T.armRX += (-0.7 - T.armRX) * k;
+    T.armLZ += (-1.35 - T.armLZ) * k;
+    T.armRZ += (1.35 - T.armRZ) * k;
+    T.foreL += (-0.15 - T.foreL) * k;
+    T.foreR += (-0.15 - T.foreR) * k;
+    T.thighL += (0.25 - T.thighL) * k;
+    T.thighR += (0.3 - T.thighR) * k;
+    T.shinL += (0.55 - T.shinL) * k;
+    T.shinR += (0.5 - T.shinR) * k;
+    X.expr = 'joie';
   }
   const bank = bodyBank(p, Math.hypot(p.v, p.vLat));
   T.bodyRoll = -bank * 0.6;
@@ -593,6 +621,273 @@ function slidePose(p, T, X) {
   T.armRZ = 1.1 - Math.sin((p.now || 0) * 6) * 0.1;
   T.armLX = T.armRX = -0.3;
   X.expr = 'joie';
+}
+
+// ---------------------------------------------------------------------------
+// Grimpe aux arbres (CLIMB, puis CLIMB_TOP au sommet). Repère racine : pieds en 0, avant = +z,
+// face au tronc ; l'axe passe devant, à r + CLIMB_GAP de la racine (moteur), et le corps suit sa
+// tangente. Les mains montent l'une après l'autre et tiennent l'écorce (Character les y pose par
+// cinématique inverse, cibles de climbHandTarget) ; les jambes serrent puis poussent comme une
+// grenouille, une poussée par cycle des mains. Tout le cycle avance avec la position sur le tronc (s en
+// montée, climbArc autour), comme les foulées avec la distance : immobile, la pose ne bouge pas.
+// ---------------------------------------------------------------------------
+export const CLIMB_GAP = 0.22; // m : racine ↔ écorce (moteur)
+export const CLIMB = {
+  low: 0.75, // m le long du tronc au-dessus de la racine : prise la plus basse (à hauteur d'épaule)…
+  high: 0.93, // … et la plus haute, bras presque tendu (au-delà, la main n'atteint plus l'écorce)
+  grip: 0.6, // part du cycle d'une main où elle tient l'écorce (les deux mains se relaient)
+  angle: 0.42, // rad : prise tournée autour de l'axe vers l'épaule de son côté
+  arcCycle: 0.3, // m de tour (climbArc) pour le cycle latéral d'une main
+  shuffle: 0.15, // rad : amplitude de ce cycle latéral (pas chassés)
+  hugH: 0.64, // glissade : mains serrées autour du tronc, à hauteur d'épaule…
+  hugAngle: 0.75, // … et presque sur les côtés
+  handGap: 0.004, // m de jour entre la main et l'écorce
+  perchLift: 0.54, // m : pivot du poirier : retourné, l'épaule passe à 0,31 m au-dessus du sommet et
+  // la main s'y pose coude fléchi (bras tendu, le coude plierait d'un coup au retour de la bascule)
+};
+// distance de montée pour le cycle complet d'une main : pendant la prise, le corps monte d'autant
+// que la main descend dans son repère (la main ne glisse pas sur l'écorce)
+export const CLIMB_CYCLE = (CLIMB.high - CLIMB.low) / CLIMB.grip;
+const frac = (x) => x - Math.floor(x);
+// dent de scie : de hi à lo pendant la prise (part grip), retour adouci de lo à hi ensuite
+function sawGrip(u, hi, lo, grip) {
+  if (u < grip) return hi + ((lo - hi) * u) / grip;
+  return lo + (hi - lo) * smooth(0, 1, (u - grip) / (1 - grip));
+}
+
+// Inclinaison du corps qui suit l'axe, dans le repère du cap : direction bodyTangent (corde de
+// trunkChord, posée par Character), sinon la tangente du moteur (climbTangent) ; lean (autour de x,
+// + vers l'avant) et roulis du corps (Euler XYZ de applyJoints).
+export function trunkTilt(p, out = {}) {
+  const t = p.bodyTangent || p.climbTangent;
+  if (!t) {
+    out.lean = 0;
+    out.roll = 0;
+    return out;
+  }
+  const h = p.heading || 0;
+  const c = Math.cos(h);
+  const sn = Math.sin(h);
+  const lx = t[0] * c - t[2] * sn;
+  const lz = t[0] * sn + t[2] * c;
+  out.lean = Math.atan2(lz, t[1]);
+  out.roll = -Math.asin(clamp(lx, -1, 1));
+  return out;
+}
+
+// Prise d'une main (side +1 : os R, x > 0 ; −1 : os L) au cycle de la grimpe : h (m le long du
+// tronc au-dessus de la racine), a (rad autour de l'axe, + vers x +), hold (1 si elle tient).
+export function climbGrip(p, side, out = {}) {
+  const C = CLIMB;
+  const u = frac((p.climbS || 0) / CLIMB_CYCLE + (side > 0 ? 0.5 : 0));
+  out.h = sawGrip(u, C.high, C.low, C.grip);
+  out.hold = u < C.grip ? 1 : 0;
+  // pas chassés : la main tient pendant que le corps tourne, puis rattrape (climbArc croît vers x +)
+  const ua = frac((p.climbArc || 0) / C.arcCycle + (side > 0 ? 0 : 0.5));
+  out.a = side * C.angle + sawGrip(ua, C.shuffle, -C.shuffle, C.grip);
+  // glissade : mains serrées autour du tronc
+  const w = clamp(p.slideW || 0, 0, 1);
+  out.h += (C.hugH - out.h) * w;
+  out.a += (side * C.hugAngle - out.a) * w;
+  return out;
+}
+
+// Cible (repère racine) du centre de la main sur l'écorce. axisAt(ds, o) rend dans le repère racine
+// le point de l'axe à s + ds, sa tangente unitaire et son rayon : { x, y, z, tx, ty, tz, r }.
+// handR : rayon de la main (échelle du corps comprise).
+const _grip = {};
+const _ax = {};
+export function climbHandTarget(p, side, axisAt, handR, out) {
+  const g = climbGrip(p, side, _grip);
+  const A = axisAt(g.h, _ax);
+  // de l'axe vers le personnage (−z), tourné de a vers x +, puis rendu perpendiculaire à l'axe
+  let dx = Math.sin(g.a);
+  let dy = 0;
+  let dz = -Math.cos(g.a);
+  const d = dx * A.tx + dz * A.tz;
+  dx -= d * A.tx;
+  dy -= d * A.ty;
+  dz -= d * A.tz;
+  const n = Math.hypot(dx, dy, dz) || 1;
+  const R = A.r + handR + CLIMB.handGap;
+  out.x = A.x + (dx / n) * R;
+  out.y = A.y + (dy / n) * R;
+  out.z = A.z + (dz / n) * R;
+  return out;
+}
+
+// Axe du tronc (polyligne monde [x, y, z, r], du pied vers le haut) à l'abscisse curviligne s :
+// point, tangente unitaire (lissée aux coudes, comme le moteur : locomotion/trunk.js), rayon.
+const _tf = {};
+export function axisPoint(pts, s, out = {}) {
+  const f = trunkFrame(pts, s, 0, _tf);
+  out.x = f.x;
+  out.y = f.y;
+  out.z = f.z;
+  out.r = f.r;
+  out.tx = f.tx;
+  out.ty = f.ty;
+  out.tz = f.tz;
+  return out;
+}
+
+// Direction (monde, unitaire) que suit le corps sur un tronc courbe : la corde de l'axe entre les
+// pieds (s) et la plus haute prise des mains (s + CLIMB.high), pas la seule tangente aux pieds (le
+// stipe de la maison s'en écarte de 10 cm en 1 m, hors de portée des bras).
+const _ca = {};
+const _cb = {};
+export function trunkChord(pts, s, out = [0, 1, 0]) {
+  const a = axisPoint(pts, s, _ca);
+  const b = axisPoint(pts, s + CLIMB.high, _cb);
+  const x = b.x - a.x;
+  const y = b.y - a.y;
+  const z = b.z - a.z;
+  const n = Math.hypot(x, y, z);
+  if (n < 1e-6) {
+    out[0] = a.tx;
+    out[1] = a.ty;
+    out[2] = a.tz;
+  } else {
+    out[0] = x / n;
+    out[1] = y / n;
+    out[2] = z / n;
+  }
+  return out;
+}
+
+// Repère de la racine sur le tronc, comme le moteur : racine en A(s) + (r(s) + CLIMB_GAP) · n(θ),
+// θ = cap − π (le personnage regarde le tronc ; n(θ) de locomotion/trunk.js).
+export function climbRootFrame(pts, s, heading, out = {}) {
+  const f = trunkFrame(pts, s, heading - Math.PI, _tf);
+  const R = f.r + CLIMB_GAP;
+  out.x = f.x + f.nx * R;
+  out.y = f.y + f.ny * R;
+  out.z = f.z + f.nz * R;
+  out.heading = heading;
+  out.s = s;
+  out.pts = pts;
+  return out;
+}
+
+// Repère de la racine telle qu'elle est rendue (position et cap de Player : pendant les raccords du
+// moteur, elle s'écarte de sa place sur le tronc) : les mains visent l'écorce réelle, à partir de
+// l'abscisse s de la racine (interpolée comme le rendu).
+export function climbRenderFrame(pts, s, pos, heading, out = {}) {
+  out.x = pos.x;
+  out.y = pos.y;
+  out.z = pos.z;
+  out.heading = heading;
+  out.s = s;
+  out.pts = pts;
+  return out;
+}
+
+// Point de l'axe à s + ds dans le repère racine (x à droite, y en haut, z vers l'avant), d'après
+// le repère de climbRootFrame : même format que axisAt de climbHandTarget.
+export function axisInRoot(frame, ds, out = {}) {
+  const A = axisPoint(frame.pts, frame.s + ds, out);
+  const c = Math.cos(frame.heading);
+  const sn = Math.sin(frame.heading);
+  const wx = A.x - frame.x;
+  const wy = A.y - frame.y;
+  const wz = A.z - frame.z;
+  const tx = A.tx;
+  const tz = A.tz;
+  out.x = wx * c - wz * sn;
+  out.y = wy;
+  out.z = wx * sn + wz * c;
+  out.tx = tx * c - tz * sn;
+  out.tz = tx * sn + tz * c;
+  return out;
+}
+
+const _tilt = { lean: 0, roll: 0 };
+function climbPose(p, T, X) {
+  const tilt = trunkTilt(p, _tilt);
+  T.lean = tilt.lean;
+  T.bodyRoll = tilt.roll;
+  const slide = clamp(p.slideW || 0, 0, 1);
+  // jambes en grenouille : une poussée par cycle des mains (au-delà, à 1,5 m/s, elles s'affolent),
+  // repli plus court que la poussée ; le bassin monte avec
+  const legU = frac((p.climbS || 0) / CLIMB_CYCLE + 0.15);
+  const ext = legU < 0.6 ? smooth(0, 0.6, legU) : 1 - smooth(0.6, 1, legU);
+  let push = ext * (1 - slide);
+  // pas chassés en tournant autour : le buste suit, la tête regarde où l'on va, les jambes alternent
+  const arcV = (p.climbTurn || 0) * ((p.trunkR || 0.2) + CLIMB_GAP); // m/s, + vers x −  (θ croît)
+  const turn = smooth(0.05, 0.5, Math.abs(arcV)) * (1 - slide);
+  const dir = arcV > 0 ? -1 : 1; // côté (x local) vers lequel on se déplace
+  const shuffle = Math.sin(TAU * frac((p.climbArc || 0) / CLIMB.arcCycle)) * turn;
+  push *= 1 - 0.5 * turn;
+  T.thighL = -1.55 + 0.8 * push + 0.3 * shuffle;
+  T.thighR = -1.5 + 0.8 * push - 0.3 * shuffle;
+  T.shinL = 2.1 - 1.1 * push;
+  T.shinR = 2.05 - 1.1 * push;
+  T.footL = T.footR = 0.35 - 0.25 * push;
+  T.hipsZ = 0.12 * shuffle;
+  T.bodyY = -0.06 + 0.05 * push;
+  // buste contre le tronc, bras vers le haut (la cinématique inverse les pose sur l'écorce)
+  T.torsoX = 0.1 + 0.12 * slide;
+  T.lean += 0.06 * slide;
+  T.armLX = T.armRX = -2.5;
+  T.armLZ = -0.3;
+  T.armRZ = 0.3;
+  T.foreL = T.foreR = -0.6;
+  T.torsoY = dir * 0.18 * turn;
+  T.headX = -0.32 + 0.2 * slide;
+  T.headY = dir * 0.55 * turn;
+  T.neckY = dir * 0.15 * turn;
+  // glissade : jambes serrées autour du tronc
+  if (slide > 0) {
+    T.thighL += (-1.15 - T.thighL) * slide;
+    T.thighR += (-1.1 - T.thighR) * slide;
+    T.shinL += (1.75 - T.shinL) * slide;
+    T.shinR += (1.7 - T.shinR) * slide;
+    T.bodyY += (-0.02 - T.bodyY) * slide;
+  }
+  // accroche : petit écrasement à l'impact
+  const k = 1 - clamp((p.grabT ?? 1) / 0.16, 0, 1);
+  if (k > 0) {
+    T.sy *= 1 - 0.1 * k;
+    T.sx *= 1 + 0.06 * k;
+    T.bodyY -= 0.04 * k;
+  }
+  X.expr = slide > 0.5 ? 'surpris' : Math.abs(p.climbSpeed || 0) > 0.8 ? 'effort' : 'concentre';
+}
+
+// Poirier au sommet : le corps bascule par-dessus les mains (rotation de π autour de x, pivot à
+// perchLift : les mains levées au-dessus de la tête se posent sur le sommet, en racine), léger
+// balancement ; tourner sur place fait alterner les mains.
+function perchPose(p, T, X) {
+  const t = p.topT || 0;
+  X.spin = Math.PI;
+  X.lift = CLIMB.perchLift;
+  T.lean = 0.05 * Math.sin(t * 1.7);
+  T.bodyRoll = 0.05 * Math.sin(t * 1.25 + 1);
+  T.armLX = T.armRX = -3.05;
+  T.armLZ = -0.18;
+  T.armRZ = 0.18;
+  T.foreL = T.foreR = 0;
+  T.torsoX = -0.12;
+  T.thighL = 0.1 * Math.sin(t * 1.6) + 0.06;
+  T.thighR = -0.1 * Math.sin(t * 1.6) - 0.04;
+  T.shinL = 0.12;
+  T.shinR = 0.18;
+  T.footL = T.footR = 0.35;
+  T.headX = 0.25;
+  T.headY = 0.15 * Math.sin(t * 0.7);
+  // en tournant sur place, les mains se relaient
+  const hop = Math.sin(TAU * frac((p.climbArc || 0) / CLIMB.arcCycle)) * smooth(0.05, 0.4, Math.abs(p.climbTurn || 0) * 0.3);
+  T.armLZ -= 0.06 * hop;
+  T.armRZ -= 0.06 * hop;
+  X.expr = 'joie';
+}
+
+// Cible (repère racine) du centre de la main au poirier : sur le sommet, de part et d'autre de la racine.
+export function perchHandTarget(side, handR, out) {
+  out.x = side * 0.075;
+  out.y = handR + CLIMB.handGap;
+  out.z = 0;
+  return out;
 }
 
 // ---------------------------------------------------------------------------

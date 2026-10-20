@@ -8,6 +8,11 @@ import { BASE_TUNING } from './tuning.js';
 // seuils rapportés aux allures réglées (valeurs d'origine à 5,4 m/s de course)
 const RUN_DUST = BASE_TUNING.run * (3.6 / 5.4); // poussière au talon au-delà
 const TURN_DUST_BANK = 0.18; // rad : le pied extérieur pousse de la poussière
+// grimpe : rappel des commandes aux premières accroches (compte gardé dans la sauvegarde)
+const CLIMB_HELP_TIMES = 3;
+const CLIMB_HELP_KEYS = 'Sur le tronc : Z / S monter, descendre · Q / D tourner autour · Espace sauter · C lâcher';
+const CLIMB_HELP_PAD = 'Sur le tronc : stick ↑ ↓ monter, descendre · ← → tourner autour · ✕ sauter · ◯ lâcher';
+const CLIMB_STATES = new Set(['CLIMB', 'CLIMB_TOP']);
 
 export class LocoFeedback {
   constructor(game) {
@@ -18,6 +23,7 @@ export class LocoFeedback {
     this.sweatT = 0;
     this.pantT = 0;
     this.handT = 0;
+    this.barkT = 0;
   }
 
   get shakeOn() {
@@ -193,8 +199,59 @@ export class LocoFeedback {
       }
       case 'handLift':
         return;
+      case 'grab': {
+        // accroche : « toc » boisé, vibration courte, quelques copeaux sous les mains
+        const imp = e.impact || 0;
+        audio?.woodKnock(imp);
+        this.rumble(0.3 + Math.min(0.3, imp * 0.05), 0.25, 70);
+        if (imp > 4) this.shake(0.02);
+        this.chips(e, 3, 0.6);
+        this.climbHelp();
+        return;
+      }
+      case 'slideStart':
+        this.rumble(0.06, 0.2, 120);
+        this.barkT = 0;
+        return;
+      case 'slideStop':
+        this.chips(e, 2, 0.4);
+        return;
+      case 'climbTop':
+        // au sommet : bruissement des palmes, petite bouffée de feuilles
+        audio?.palmRustle();
+        this.rumble(0.05, 0.12, 60);
+        return;
+      case 'climbJump':
+        audio?.jumpSound(e.kind === 'top');
+        this.chips(e, 2, 0.8);
+        return;
+      case 'climbRelease':
+        audio?.barkRub(1.5);
+        return;
       default:
     }
+  }
+
+  // copeaux d'écorce autour du point de contact sur le tronc (e : x, y, z absolus, cap)
+  chips(e, n, speed) {
+    const fx = Math.sin(e.heading || 0);
+    const fz = Math.cos(e.heading || 0);
+    for (let i = 0; i < n; i++) {
+      const a = (Math.random() - 0.5) * 2.4;
+      const vx = -fx * speed + Math.cos(a) * fz * speed * 0.6;
+      const vz = -fz * speed - Math.cos(a) * fx * speed * 0.6;
+      this.dust(e.x + fx * 0.15, e.y + 0.5 + Math.random() * 0.4, e.z + fz * 0.15, { vx, vz, vy: 0.4, grav: 3, size: 0.06, life: 0.5, grow: 0.05 });
+    }
+  }
+
+  // Rappel des commandes de la grimpe, aux CLIMB_HELP_TIMES premières accroches (clavier ou manette)
+  climbHelp() {
+    const g = this.game;
+    const st = g.state?.player;
+    if (!st || (st.aideGrimpe || 0) >= CLIMB_HELP_TIMES) return;
+    st.aideGrimpe = (st.aideGrimpe || 0) + 1;
+    g.markDirty?.();
+    g.ui?.toast(g.pad?.recent ? CLIMB_HELP_PAD : CLIMB_HELP_KEYS, { icon: 'leaf', duration: 5200 });
   }
 
   // effets continus : traînées, souffle, sueur, halètement, champ de vision
@@ -257,6 +314,17 @@ export class LocoFeedback {
       if (this.pantT <= 0) {
         this.pantT = 0.75;
         g.audio?.pant();
+      }
+    }
+    // glissade le long du tronc : frottement d'écorce en continu, copeaux, vibration légère
+    if (moving && CLIMB_STATES.has(L.state) && L.sliding) {
+      this.barkT -= dt;
+      if (this.barkT <= 0) {
+        this.barkT = 0.09;
+        const v = Math.abs(L.climbSpeed || 0);
+        g.audio?.barkRub(v);
+        this.rumble(0.04, 0.1 + 0.03 * v, 100);
+        this.chips({ x: P.x, y: P.y, z: P.z, heading: p.facing }, 1, 0.5 + 0.1 * v);
       }
     }
     // champ de vision un peu plus large au sprint

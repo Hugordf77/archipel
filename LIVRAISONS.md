@@ -9,7 +9,7 @@ et domaine concerné).
 - Jeu : `npm run dev`, puis http://localhost:5173 (les agents utilisent la configuration `ile` de
   `.claude/launch.json`, port 5174, pour ne pas gêner la partie de l'utilisateur).
 - Catalogue des modèles : `/catalogue.html` ; tableau de bord de production : `/dashboard.html`.
-- Tests : `npm test` (16 fichiers) ; build : `npm run build`.
+- Tests : `npm test` (18 fichiers) ; build : `npm run build`.
 - Outils de développement en jeu : `window.__ile` (`tp`, `setHour`, `frame`, `look`, `settle`, `capture`,
   `game.skipSave`).
 
@@ -60,6 +60,18 @@ et domaine concerné).
   `savePosition()` (jamais sur un tronc), champs `climb*` de `loco`. Commandes : saut = s'accrocher puis
   sauter, roulade = lâcher, stick brut (`intent.stick`) haut/bas = monter/descendre, gauche/droite =
   tourner. Tests : `tests/grimpe.test.js` (23, dont l'intégration réelle `Player` + `navigation.js`).
+- **Grimper aux palmiers, pose et retours** (partie B) : familles `climb` et `perch` (`pose.js` :
+  `climbPose`, `perchPose`, cibles des mains `climbHandTarget` sur la vraie courbe de l'axe, corps
+  incliné selon la corde pieds → mains `trunkChord`) ; `Character.js` : mains sur l'écorce par
+  cinématique inverse (`reachHand` en charnière « côté » avec mémoire, `rig.js`), cycle lié à la
+  position sur le tronc (interpolée à l'image), bascule du poirier en 0,4 s, glissement des prises,
+  vitesse des bras bornée aux changements de prise, saut arrière dos cambré, vitesse verticale lissée en
+  l'air (saut relâché tôt). Caméra : `CameraRig.climbFollow` (trois quarts, tourne avec θ, recul,
+  visée relevée, en suivi seulement). Retours : `feedback.js` (toc boisé, frottement d'écorce, copeaux,
+  bruissement des palmes, vibrations), `AudioEngine.woodKnock`, `barkRub`, `palmRustle`, rappel des
+  commandes aux 3 premières accroches (`state.player.aideGrimpe`). Sur un tronc : ni épée, ni aigle, ni
+  récolte, ni interaction (`Game.js`, `Gather.js`, `AirRide.js`). Tests : `tests/grimpe-pose.test.js`
+  (7, sur le vrai personnage et le vrai moteur). Captures : `captures/grimpe-*.png` (non versionnées).
 
 ### Coup d'épée
 
@@ -121,18 +133,18 @@ et domaine concerné).
 
 ## État courant (20/10/2026)
 
-- Branche `v3-archipel`. Derniers commits : troncs grimpables, données (partie C), interface (minicarte,
-  touche V, manette PlayStation, `c77814f`), locomotion lot 2 (main au sol à la pointe d'inclinaison,
-  `35f3f7a`).
-- **En cours** : grimper aux palmiers, style Mario (parties A et B, puis lot 2 des autres arbres).
+- Branche `v3-archipel`. Derniers commits : grimper aux palmiers, partie B (pose, caméra, retours),
+  partie A (`f634eb7`, moteur), partie C (`f27dcbd`, données des troncs).
+- **Lot 2 de la grimpe à faire** : autres arbres à tronc dégagé (sommet `suspendu`), un commit par
+  espèce ; la noix de coco au sommet attend l'accord de l'utilisateur (progression).
 - **Non commité** (hors de ce chantier) : tableau de bord (`dashboard.html`, `dashboard/`,
   `vite.config.js`), agents d'équipe et skill `modele-3d`, `README.md`, chèvre, mouton et fleurs
   (PLA-015), calibration d'îles (`gen/surface.js`, `gen/zones.js`, `tests/world.test.js`),
   `tests/fixtures/empreintes.json`.
-- **Tests** : 184 sur 186. Échecs : `tests/empreintes.test.js` (personnage PER-001 à PER-003, 160
+- **Tests** : 215 sur 216. Échec : `tests/empreintes.test.js` (personnage PER-001 à PER-003, 160
   triangles de l'épée, changement voulu à valider puis `npm run modeles:empreinte -- --ecrire` ; fleurs
-  PLA-015 en cours) ; « budget du Worker » de `tests/world.test.js`, mesure de temps sensible à la charge
-  (tuile p95 à 29 ms sous la suite complète, vert seul).
+  PLA-015 en cours). « Budget du Worker » de `tests/world.test.js` : mesure de temps sensible à la
+  charge (peut échouer sous la suite complète, vert seul).
 - **Graphe du code** : construit le 20/10/2026 sur `src/` (code seul, 282 fichiers, 1 719 nœuds,
   74 communautés). Les `FICHE.md` et les planches n'y sont pas : lire les dossiers des modèles.
   Seul `graphify-out/GRAPH_REPORT.md` est versionné ; `graph.json` et `graph.html` se régénèrent avec

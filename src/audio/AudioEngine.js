@@ -603,6 +603,34 @@ export class AudioEngine {
     }
   }
 
+  // grimpe : « toc » boisé à l'accroche, plus sourd et plus fort avec la vitesse d'impact (m/s)
+  woodKnock(impact = 3) {
+    if (!this.ready) return;
+    const t0 = this.ctx.currentTime;
+    const k = Math.max(0.4, Math.min(1.2, impact / 5));
+    this.tone(420 - k * 60, { t0, type: 'triangle', peak: 0.05 + 0.03 * k, attack: 0.002, decay: 0.07, glide: 300 });
+    this.tone(180, { t0, peak: 0.04 * k, attack: 0.002, decay: 0.09, glide: 140 });
+    this.noiseBurst({ t0, freq: 1100, q: 3, peak: 0.02 * k, attack: 0.002, decay: 0.05 });
+  }
+
+  // grimpe : frottement d'écorce, rejoué par petits grains tant que l'on glisse (v en m/s)
+  barkRub(v = 2) {
+    if (!this.ready) return;
+    const t0 = this.ctx.currentTime;
+    const a = Math.max(0.3, Math.min(1, v / 4));
+    this.noiseBurst({ t0, freq: 700 + 500 * a, q: 1.4, peak: 0.016 * a, attack: 0.01, decay: 0.09, kind: 'pink' });
+    this.noiseBurst({ t0: t0 + 0.02, type: 'highpass', freq: 2600, q: 0.7, peak: 0.006 * a, attack: 0.005, decay: 0.05 });
+  }
+
+  // grimpe : bruissement des palmes au sommet
+  palmRustle() {
+    if (!this.ready) return;
+    const t0 = this.ctx.currentTime;
+    for (let i = 0; i < 3; i++) {
+      this.noiseBurst({ t0: t0 + i * 0.07, type: 'highpass', freq: 3200 - i * 400, q: 0.6, peak: 0.014, attack: 0.03, decay: 0.22, sweep: 1600, kind: 'pink' });
+    }
+  }
+
   hop(long = false) {
     if (!this.ready) return;
     const t0 = this.ctx.currentTime;

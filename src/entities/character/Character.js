@@ -4,8 +4,9 @@ import { LAYER_SHADOW, U } from '../../core/globals.js';
 import { SMOKE_VERT, SMOKE_FRAG } from '../../world/World.js';
 import { defaultAvatar, sanitizeAvatar, SKINS, HAIR_COLORS } from './avatar.js';
 import { FaceAtlas, faceGeometry, EXPRESSIONS, BLINKABLE, EYE, cellUV } from './face.js';
-import { locomotionPose, LOCO_FAMILY, FAMILY_HALFLIFE, createArmDynamics, stepArmDynamics, handWeightTarget } from '../locomotion/pose.js';
-import { applyJoints, reachHand, shoulderInRoot, HAND_RADIUS, HAND_BRUSH_GAP } from '../locomotion/rig.js';
+import { locomotionPose, LOCO_FAMILY, FAMILY_HALFLIFE, createArmDynamics, stepArmDynamics, handWeightTarget, climbRootFrame, axisInRoot, climbHandTarget, perchHandTarget, trunkChord, CLIMB, CLIMB_GAP, climbRenderFrame } from '../locomotion/pose.js';
+import { H as MOTOR_STEP } from '../locomotion/motor.js';
+import { applyJoints, reachHand, shoulderInRoot, handInRoot, HAND_RADIUS, HAND_BRUSH_GAP } from '../locomotion/rig.js';
 import { HC, B, PARENT, REST, ID, tint, HAIR_STYLES, buildAvatarGeometry } from '../../models/personnage/index.js';
 import { crayonGeometry } from '../../models/personnage/index.js';
 export { HAIR_STYLES };
@@ -118,6 +119,15 @@ const BASE = {
   thighL: 0, thighR: 0, shinL: 0, shinR: 0, footL: 0, footR: 0,
 };
 const FIDGETS = ['etire', 'ciel', 'tape', 'gratte'];
+// grimpe : durée (s) du glissement des cibles des mains à l'accroche et entre tronc et poirier
+const CLIMB_BLEND = 0.25;
+// grimpe : durée (s) du retour des mains à l'animation, une fois revenues à leur pose en quittant le tronc
+const CLIMB_RELEASE = 0.12;
+// grimpe : vitesse de rotation maximale (rad/s) des os des bras, et ces os
+const ARM_RATE = 30;
+const ARM_BONES = [B.ARM_L, B.FORE_L, B.HAND_L, B.ARM_R, B.FORE_R, B.HAND_R];
+// poirier : durée (s) de la bascule par-dessus les mains, à l'aller et au retour
+const PERCH_FLIP = 0.4;
 
 export class Character {
   constructor(avatar = defaultAvatar()) {
@@ -250,6 +260,34 @@ export class Character {
     this._handTarget = new THREE.Vector3();
     this.handContact = new THREE.Vector3();
     this.handContactOk = false;
+    // grimpe : poids des mains sur l'écorce, glissade (bras et jambes serrés), temps depuis l'accroche,
+    // repère de la racine sur le tronc et dernières cibles des mains (repère racine)
+    this.climbW = 0;
+    this.vyPose = 0;
+    this.slideW = 0;
+    this.grabT = 1;
+    this.climbFam = null;
+    this.climbGap = 0;
+    this.perchSpin = false;
+    this.flipT = 0;
+    this._climbFrame = {};
+    this._climbAxis = {};
+    this._climbTgt = { [1]: new THREE.Vector3(), [-1]: new THREE.Vector3() };
+    this._climbFrom = { [1]: new THREE.Vector3(), [-1]: new THREE.Vector3() };
+    this._climbTo = new THREE.Vector3();
+    // orientation des os des bras à l'image précédente (vitesse bornée sur le tronc)
+    this._armQ = [];
+    for (const bi of ARM_BONES) this._armQ[bi] = new THREE.Quaternion();
+    this._armQOk = false;
+    // charnière du coude de chaque bras sur le tronc (repère du buste), gardée d'une image à l'autre
+    this._climbHinge = { [1]: new THREE.Vector3(), [-1]: new THREE.Vector3() };
+    this.climbSrc = null;
+    this.climbBlendT = 1;
+    this.blendByFlip = false;
+    this._chord = [0, 1, 0];
+    this._renderPos = null;
+    this._renderFacing = undefined;
+    this._axisAt = (ds, o) => axisInRoot(this._climbFrame, ds, o);
 
     this.setAvatar(avatar);
   }
@@ -373,8 +411,14 @@ export class Character {
     const walk = Math.min(1, sp * 1.4);
 
     const L = motion?.loco;
+    // position et cap rendus (Player, interpolés entre les pas du moteur) : la grimpe s'y cale
+    this._renderPos = motion?.pos || null;
+    this._renderFacing = motion?.facing;
     const useLoco = !!L && (this.pose === 'walk' || this.pose === 'run' || this.pose === 'idle');
-    if (!useLoco) this.handW = Math.max(0, this.handW - dt * 8);
+    if (!useLoco) {
+      this.handW = Math.max(0, this.handW - dt * 8);
+      this.climbW = Math.max(0, this.climbW - dt * 8);
+    }
     if (useLoco) expr = this.locoPose(T, L, dt, now) || expr;
     else switch (this.pose) {
       case 'walk':
@@ -855,21 +899,35 @@ export class Character {
     }
     // roulade : rotation autour du centre du corps ; hors roulade, retour par le plus court
     const X = this.lx;
-    if (useLoco && LOCO_FAMILY[L.state] === 'roll') this.spinCur = X.spin;
-    else if (this.spinCur !== 0) {
+    const perch = useLoco && LOCO_FAMILY[L.state] === 'perch';
+    if (useLoco && LOCO_FAMILY[L.state] === 'roll') {
+      this.spinCur = X.spin;
+      this.flipT = 0;
+      this.perchSpin = false;
+    } else if (perch || this.flipT > 0) {
+      // poirier : le corps bascule par-dessus les mains en PERCH_FLIP s, lisse aux deux bouts, et
+      // revient de même (saut du sommet, redescente)
+      this.flipT = THREE.MathUtils.clamp(this.flipT + (perch ? dt : -dt) / PERCH_FLIP, 0, 1);
+      this.spinCur = Math.PI * THREE.MathUtils.smoothstep(this.flipT, 0, 1);
+      this.perchSpin = this.flipT > 0;
+    } else if (this.spinCur !== 0) {
       let d = this.spinCur % (Math.PI * 2);
       if (d > Math.PI) d -= Math.PI * 2;
       if (d < -Math.PI) d += Math.PI * 2;
       this.spinCur = Math.abs(d) < 0.01 ? 0 : d * Math.exp(-26 * dt);
     }
     const liftT = useLoco ? X.lift : 0;
-    this.liftCur += (liftT - this.liftCur) * damp(30, dt);
+    // poirier : le pivot est posé d'emblée à hauteur de poitrine et y reste jusqu'au retour complet de
+    // la bascule (sans rotation, la hauteur du pivot ne déplace rien) ; ailleurs, il suit la pose
+    if (this.perchSpin) this.liftCur = CLIMB.perchLift;
+    else this.liftCur += (liftT - this.liftCur) * damp(30, dt);
     this.spin.position.y = this.liftCur;
     this.spin.rotation.x = this.spinCur;
 
     const bn = this.bones;
-    // à pied, l'inclinaison pivote sous le pied intérieur (locomotion/rig.js)
-    applyJoints(this.body, bn, j, this.liftCur, useLoco);
+    // à pied, l'inclinaison pivote sous le pied intérieur (locomotion/rig.js) ; sur un tronc, aux pieds
+    const onTrunk = useLoco && (LOCO_FAMILY[L.state] === 'climb' || LOCO_FAMILY[L.state] === 'perch');
+    applyJoints(this.body, bn, j, this.liftCur, useLoco && !onTrunk);
     // main au sol : le bras intérieur va chercher le sol sous l'épaule (cinématique inverse) ;
     // la hauteur du sol vient de la sonde de Player (handRise), pour suivre le relief
     this.handGap = 0;
@@ -882,6 +940,63 @@ export class Character {
       this.handContact.set(this._handTarget.x, this.handRise, this._handTarget.z);
       this.handContactOk = true;
       if (this.handW > 1e-3) this.handGap = reachHand(this._rig, j, side, this._handTarget, this.handW);
+    }
+    // grimpe : les mains tiennent l'écorce (cibles du cycle, sur la vraie courbe de l'axe), ou le
+    // sommet au poirier. À l'accroche, la cible glisse en CLIMB_BLEND s depuis la main ; entre tronc
+    // et poirier, au rythme de la bascule ; en quittant le tronc, vers la main de la pose animée, puis
+    // les mains sont rendues à l'animation (un fondu de poids basculerait d'un coup quand les deux
+    // rotations du bras s'opposent). Pendant ces changements, les os des bras tournent au plus à
+    // ARM_RATE : aux bascules, le bras ne claque jamais d'une image à l'autre.
+    this.climbGap = 0;
+    const climbFam = useLoco ? LOCO_FAMILY[L.state] : null;
+    const src = climbFam === 'perch' ? 'perch' : climbFam === 'climb' && L.trunk ? 'climb' : null;
+    if (src || (useLoco && this.climbW > 1e-3)) {
+      const handR = HAND_RADIUS * j.sy;
+      // repère de la racine : telle que rendue (position de Player), sinon sa place sur le tronc
+      if (src === 'climb') {
+        if (this._renderPos) climbRenderFrame(L.trunk.pts, this.lp.climbS, this._renderPos, this._renderFacing ?? L.heading, this._climbFrame);
+        else climbRootFrame(L.trunk.pts, L.climbS, L.heading, this._climbFrame);
+      }
+      if (src !== this.climbSrc) {
+        for (const sd of [1, -1]) {
+          if (this.climbSrc) this._climbFrom[sd].copy(this._climbTgt[sd]);
+          else handInRoot(this._rig, sd, this._climbFrom[sd]);
+        }
+        this.climbBlendT = 0;
+        // entre tronc et poirier, les cibles suivent la bascule du corps (sinon, hors de portée)
+        this.blendByFlip = !!src && (src === 'perch' || this.climbSrc === 'perch');
+        this.climbSrc = src;
+      }
+      this.climbBlendT += dt;
+      const flip = THREE.MathUtils.smoothstep(this.flipT, 0, 1);
+      const k = this.blendByFlip ? (src === 'perch' ? flip : 1 - flip) : THREE.MathUtils.smoothstep(this.climbBlendT, 0, CLIMB_BLEND);
+      // poids : pris à l'accroche (locoPose), rendu à l'animation une fois la main revenue à sa pose
+      if (!src && k >= 1) this.climbW = Math.max(0, this.climbW - dt / CLIMB_RELEASE);
+      for (const sd of [1, -1]) {
+        const tgt = this._climbTgt[sd];
+        if (src === 'perch') perchHandTarget(sd, handR, this._climbTo);
+        else if (src === 'climb') climbHandTarget(this.lp, sd, this._axisAt, handR, this._climbTo);
+        else handInRoot(this._rig, sd, this._climbTo);
+        tgt.copy(this._climbFrom[sd]).lerp(this._climbTo, k);
+        if (this.climbW > 1e-3) this.climbGap = Math.max(this.climbGap, reachHand(this._rig, j, sd, tgt, this.climbW, 'cote', this._climbHinge[sd]));
+      }
+      // pendant un changement de prise (glissement, bascule, lâcher), vitesse de rotation bornée des
+      // os des bras depuis l'image précédente ; en prise, les mains restent exactement sur l'écorce
+      const changing = k < 1 || !src || (this.flipT > 0 && this.flipT < 1);
+      const step = ARM_RATE * dt;
+      for (const bi of ARM_BONES) {
+        const q = this.bones[bi].quaternion;
+        const prev = this._armQ[bi];
+        if (changing && this._armQOk) q.copy(prev.rotateTowards(q, step));
+        prev.copy(q);
+      }
+      this._armQOk = true;
+    } else this._armQOk = false;
+    if (!src && this.climbW <= 1e-3) {
+      this.climbW = 0;
+      this.climbSrc = null;
+      this._climbHinge[1].set(0, 0, 0);
+      this._climbHinge[-1].set(0, 0, 0);
     }
 
     // -------------------------------------------------------------------------
@@ -1113,12 +1228,42 @@ export class Character {
     this.handW += (handT - this.handW) * damp(handT > this.handW ? 24 : 14, dt);
     if (L.handDown && L.handSide) this.handSide = L.handSide;
     if (Number.isFinite(L.handRise)) this.handRise += (L.handRise - this.handRise) * damp(30, dt);
+    // grimpe : mains sur l'écorce (poids), glissade, temps depuis l'accroche (pas au retour du sommet)
+    const famNow = LOCO_FAMILY[L.state] || 'sol';
+    const trunkFam = famNow === 'climb' || famNow === 'perch';
+    const prevFam = this.climbFam;
+    if (famNow === 'climb' && prevFam !== 'climb' && prevFam !== 'perch') this.grabT = 0;
+    else this.grabT += dt;
+    this.climbFam = famNow;
+    // les mains prennent l'écorce vite ; le lâcher se règle avec les cibles (update)
+    if (trunkFam) this.climbW += (1 - this.climbW) * damp(20, dt);
+    const slideT = famNow === 'climb' && L.sliding ? 1 : 0;
+    this.slideW += (slideT - this.slideW) * damp(12, dt);
     const p = this.lp;
     Object.assign(p, L);
     p.now = now;
     p.startT = this.startT;
     p.breath = this.breath;
     p.handW = this.handW;
+    p.slideW = this.slideW;
+    p.grabT = this.grabT;
+    // en l'air, la pose lit une vitesse verticale lissée : le saut relâché tôt (jumpCut) la coupe de
+    // moitié d'un pas à l'autre, et l'écrasement comme les bras sauteraient avec elle
+    // (au décollage, le changement de famille lisse déjà la pose : on part de la vraie vitesse)
+    if (famNow === 'air' && prevFam === 'air') {
+      this.vyPose += ((L.vy || 0) - this.vyPose) * damp(30, dt);
+      p.vy = this.vyPose;
+    } else this.vyPose = L.vy || 0;
+    // Le moteur avance au pas fixe (1/120 s) et rend l'état de fin de pas ; le rendu (position
+    // interpolée) en est à la part interp du pas : l'abscisse et l'arc reculent d'autant, sinon la pose
+    // avance par à-coups au-delà de 120 Hz.
+    if (famNow === 'climb' && Number.isFinite(L.interp)) {
+      const late = (1 - L.interp) * MOTOR_STEP;
+      p.climbS = L.climbS - (L.climbSpeed || 0) * late;
+      p.climbArc = L.climbArc + (L.climbTurn || 0) * ((L.trunkR || 0) + CLIMB_GAP) * late;
+    }
+    // sur un tronc courbe, le corps suit la corde de l'axe des pieds aux mains
+    p.bodyTangent = famNow === 'climb' && L.trunk ? trunkChord(L.trunk.pts, p.climbS, this._chord) : null;
     this.phase = L.phase;
     locomotionPose(p, T, this.lx);
     // bras vivants : retard des bras sur l'accélération, à-coups à la réception et au contact

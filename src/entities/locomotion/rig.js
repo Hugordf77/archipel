@@ -1,5 +1,6 @@
 // Squelette du personnage côté animation : application des articulations aux os, pivot de
-// l'inclinaison sous le pied intérieur, et cinématique inverse du bras qui va au sol.
+// l'inclinaison sous le pied intérieur, et cinématique inverse du bras (main au sol, mains sur
+// un tronc).
 // Utilise THREE (matrices) mais ni le DOM ni le maillage : Character.js et les tests partagent
 // exactement le même calcul.
 //
@@ -107,7 +108,15 @@ export function shoulderInRoot(rig, side, out) {
 // x > 0 ; −1 : os L) vers `target` (repère racine), mélangée à la pose animée par `w` (0 à 1).
 // Le coude plie vers l'avant (charnière en x, comme l'animation). Rend la distance restante
 // entre la main et la cible (0 si atteinte, quelques millimètres bras presque tendu).
-export function reachHand(rig, j, side, target, w) {
+// hinge : 'avant' (défaut, main vers le sol) prend pour charnière avant × direction de la cible ;
+// 'cote' (bras levés : grimpe, poirier) prend l'axe x du buste projeté perpendiculairement à la
+// direction, qui ne se retourne pas quand la cible passe au-dessus de l'épaule. memo (vecteur gardé
+// par le personnage, nul au départ) : la charnière précédente, tirée à chaque appel vers la préférée
+// en proportion de la netteté de celle-ci ; quand la cible passe à côté de l'épaule (direction ≈ x,
+// préférée dégénérée), la charnière ne bascule pas d'un coup.
+const HINGE_PULL = 0.25;
+const _pm = new THREE.Vector3();
+export function reachHand(rig, j, side, target, w, hinge = 'avant', memo = null) {
   const S = ARM[side];
   if (w <= 1e-4) return 0;
   const bones = rig.bones;
@@ -140,9 +149,16 @@ export function reachHand(rig, j, side, target, w) {
   _c.crossVectors(_ax, _h);
   _mA.makeBasis(_ax, _h, _c);
   _u.copy(_d).normalize();
-  _x2.crossVectors(FORWARD, _u);
+  if (hinge === 'cote') {
+    _x2.set(1, 0, 0).addScaledVector(_u, -_u.x);
+    if (memo && memo.lengthSq() > 0.25) {
+      _pm.copy(memo).addScaledVector(_u, -memo.dot(_u));
+      _x2.multiplyScalar(HINGE_PULL).addScaledVector(_pm, 1 - HINGE_PULL);
+    }
+  } else _x2.crossVectors(FORWARD, _u);
   if (_x2.lengthSq() < 1e-8) _x2.set(1, 0, 0);
   _x2.normalize();
+  if (memo) memo.copy(_x2);
   _c.crossVectors(_x2, _u);
   _mB.makeBasis(_x2, _u, _c);
   _mA.transpose();

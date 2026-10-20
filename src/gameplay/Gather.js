@@ -83,7 +83,8 @@ export class Gather {
     this.scanT -= dt;
     if (this.scanT <= 0) {
       this.scanT = 0.15;
-      this.target = this.busy || this.fishing || g.sailing?.aboard && this.selectedItem()?.tool !== 'canne' ? null : this.findTarget();
+      // sur un tronc, rien à récolter (l'arbre grimpé n'est pas une cible)
+      this.target = this.busy || this.fishing || g.player?.climbing || g.sailing?.aboard && this.selectedItem()?.tool !== 'canne' ? null : this.findTarget();
     }
   }
 

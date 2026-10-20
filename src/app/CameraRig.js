@@ -4,6 +4,17 @@ import { computeHorizonDip } from '../world/env/sky.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
 
+const wrapAngle = (a) => a - Math.PI * 2 * Math.round(a / (Math.PI * 2));
+// écart d'azimut caméra / personnage sur un tronc (rad) : trois quarts, jamais derrière le tronc
+const CLIMB_MIN = 0.45;
+const CLIMB_MAX = 1.15;
+// sur le tronc : caméra plus basse (rad), recul (part de la distance), visée relevée (m) ; au sommet
+const CLIMB_PITCH = -0.16;
+const CLIMB_BACK = 0.12;
+const CLIMB_LOOK = 0.9;
+const TOP_PITCH = -0.06;
+const TOP_LOOK = 0.4;
+
 function lerpAngle(a, b, t) {
   let d = ((b - a + Math.PI) % (Math.PI * 2)) - Math.PI;
   if (d < -Math.PI) d += Math.PI * 2;
@@ -45,6 +56,34 @@ export class CameraRig {
     this.bobV = 0;
     this.sway = 0;
     this.swayV = 0;
+    // grimpe : la caméra tourne avec le personnage autour du tronc (azimut θ du corps), recule un
+    // peu et vise plus haut ; mélange 0 → 1 (transition douce à l'accroche et au saut)
+    this.climbTheta = null;
+    this.climbTop = false;
+    this.climbK = 0;
+    this.climbTopK = 0;
+  }
+
+  // Appelé à chaque image : on = sur un tronc, theta = azimut du corps autour de l'axe (le
+  // personnage regarde le tronc : la caméra derrière lui est à l'azimut θ), top = au sommet.
+  // La caméra suit θ en gardant l'écart choisi par le joueur, de trois quarts (entre CLIMB_MIN et
+  // CLIMB_MAX de part et d'autre), jamais derrière le tronc.
+  climbFollow(on, theta = 0, top = false) {
+    // seulement en suivi : un cadrage fixe (contemplation, portrait, vue de capture) garde son angle
+    if (!on || this.mode !== 'follow') {
+      this.climbTheta = null;
+      this.climbTop = false;
+      return;
+    }
+    const prev = this.climbTheta;
+    if (prev !== null) this.yaw += wrapAngle(theta - prev);
+    const off = wrapAngle(this.yaw - theta);
+    const side = off >= 0 ? 1 : -1;
+    // à l'accroche, on se met de trois quarts ; ensuite, seul l'écart maximal est tenu
+    if (prev === null && Math.abs(off) < CLIMB_MIN) this.yaw = theta + side * CLIMB_MIN;
+    else if (Math.abs(off) > CLIMB_MAX) this.yaw = theta + side * CLIMB_MAX;
+    this.climbTheta = theta;
+    this.climbTop = top;
   }
 
   shake(amount) {
@@ -121,19 +160,28 @@ export class CameraRig {
     this.cur.pitch += (this.pitch - this.cur.pitch) * damp(rate, dt);
     this.cur.distance += (this.distance - this.cur.distance) * damp(rate, dt);
 
+    // grimpe : mélange doux vers la caméra du tronc (et retour au saut)
+    const climbOn = this.mode === 'follow' && this.climbTheta !== null;
+    this.climbK += ((climbOn ? 1 : 0) - this.climbK) * damp(climbOn ? 3.5 : 2.5, dt);
+    const ck = this.climbK;
+    this.climbTopK += ((this.climbTop ? 1 : 0) - this.climbTopK) * damp(3, dt);
+    const tk = this.climbTopK;
+    const climbPitch = ck * (CLIMB_PITCH + (TOP_PITCH - CLIMB_PITCH) * tk);
+    const climbLook = ck * (CLIMB_LOOK + (TOP_LOOK - CLIMB_LOOK) * tk);
     // évitement du relief : on relève d'abord l'angle, puis on se rapproche
     let extra = 0;
     let distMul = 1;
     if (this.groundFn) {
-      while (extra < 0.75 && this.blocked(this.cur.yaw, this.cur.pitch + extra, this.cur.distance)) extra += 0.05;
-      while (distMul > 0.45 && this.blocked(this.cur.yaw, this.cur.pitch + extra, this.cur.distance * distMul)) distMul -= 0.05;
+      const p0 = this.cur.pitch + climbPitch;
+      while (extra < 0.75 && this.blocked(this.cur.yaw, p0 + extra, this.cur.distance)) extra += 0.05;
+      while (distMul > 0.45 && this.blocked(this.cur.yaw, p0 + extra, this.cur.distance * distMul)) distMul -= 0.05;
     }
     this.occPitch += (extra - this.occPitch) * damp(extra > this.occPitch ? 9 : 1.8, dt);
     this.occDist += (distMul - this.occDist) * damp(distMul < this.occDist ? 9 : 1.8, dt);
     const yaw = this.cur.yaw;
-    const pitch = Math.min(1.3, this.cur.pitch + this.occPitch);
+    const pitch = Math.max(0.12, Math.min(1.3, this.cur.pitch + this.occPitch + climbPitch));
     const speedZoom = this.mode === 'follow' && !this.followWater ? Math.min(1.8, this.followSpeed * 0.12) : 0;
-    const distance = (this.cur.distance + speedZoom) * this.occDist;
+    const distance = (this.cur.distance + speedZoom) * this.occDist * (1 + CLIMB_BACK * ck);
     const cp = Math.cos(pitch);
     // la cible est en coordonnées absolues ; la caméra vit en coordonnées locales
     const fx = this.focus.x - ORIGIN.x;
@@ -170,7 +218,7 @@ export class CameraRig {
       this.camera.fov = fov;
       this.camera.updateProjectionMatrix();
     }
-    this.camera.lookAt(fx + this.lookOffset.x, this.focus.y + this.lookOffset.y, fz + this.lookOffset.z);
+    this.camera.lookAt(fx + this.lookOffset.x, this.focus.y + this.lookOffset.y + climbLook, fz + this.lookOffset.z);
     if (this.tilt) this.camera.rotation.z += this.tilt;
     this.camera.updateMatrixWorld();
 

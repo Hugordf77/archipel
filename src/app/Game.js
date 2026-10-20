@@ -355,6 +355,10 @@ export class Game {
     this.rig.followVelocity.copy(this.player.vel);
     this.rig.followSpeed = this.player.actualSpeed;
     this.rig.followWater = this.player.swimming;
+    // sur un tronc : la caméra tourne avec le personnage autour de l'axe
+    const L = this.player.loco;
+    const onTrunk = !this.airRide.riding && (L.state === 'CLIMB' || L.state === 'CLIMB_TOP');
+    this.rig.climbFollow(onTrunk, L.climbTheta, L.state === 'CLIMB_TOP');
     this.gather?.update(dt);
     this.islands.fauna?.update(dt, this.player);
     if (this.player.swimming) this.swimCurrent(dt);
@@ -422,8 +426,10 @@ export class Game {
     this.pipeline.render(this.world.scene, this.camera, this.overlayScene);
 
     // sauvegarde différée
-    st.player.x = this.player.pos.x;
-    st.player.z = this.player.pos.z;
+    // jamais une position sur un tronc : Player donne alors le pied de l'arbre
+    const sp = this.player.savePosition ? this.player.savePosition(this._savePos ||= { x: 0, z: 0 }) : this.player.pos;
+    st.player.x = sp.x;
+    st.player.z = sp.z;
     this.saveTimer -= dt;
     if (this.dirty && this.saveTimer <= 0) this.saveNow();
   }
@@ -465,9 +471,11 @@ export class Game {
       else this.ui.hidePrompt();
       return;
     }
-    if (this.ui.panelOpen || this.decor?.placing || this.player.mode === 'seated' || this.player.mode === 'action') {
+    // sur un tronc : ni objet, ni animal, ni récolte à portée (✕ saute du tronc, □ ne coupe pas l'arbre)
+    if (this.ui.panelOpen || this.decor?.placing || this.player.mode === 'seated' || this.player.mode === 'action' || this.player.climbing) {
       this.ui.hidePrompt();
       this.nearItem = null;
+      this.nearAnimal = null;
       return;
     }
     const it = this.interactions.nearest(this.player.pos, this.player.facing);
@@ -566,7 +574,7 @@ export class Game {
       return true;
     }
     if (code === 'KeyV') {
-      if (this.player.locked || this.player.mode === 'action' || this.player.mode === 'seated'
+      if (this.player.locked || this.player.mode === 'action' || this.player.mode === 'seated' || this.player.climbing
         || this.sailing.aboard || this.airRide.riding || this.player.swimming || this.decor?.placing) return true;
       this.player.playAction('swordAttack', 0.82, () => {});
       return true;
@@ -662,11 +670,15 @@ export class Game {
   // Intention de déplacement de l'image : direction (relative à la caméra), allure,
   // appuis de saut et de roulade (clavier ou manette)
   buildIntent() {
-    const I = (this._intent ||= { move: new THREE.Vector3(), sprint: false, walk: false, jump: false, jumpHeld: false, roll: false });
+    const I = (this._intent ||= { move: new THREE.Vector3(), stick: { x: 0, y: 0 }, sprint: false, walk: false, jump: false, jumpHeld: false, roll: false });
     const input = this.input;
     const blocked = this.ui.panelOpen || this.sailing.aboard;
     if (blocked) I.move.set(0, 0, 0);
     else input.moveVector(this.rig.forward, I.move);
+    // axes bruts, indépendants de la caméra : sur un tronc, haut / bas = monter / descendre
+    const ax = blocked ? null : input.axes();
+    I.stick.x = ax ? ax.x : 0;
+    I.stick.y = ax ? ax.y : 0;
     const k = input.keys;
     I.sprint = !blocked && input.run;
     I.walk = !blocked && (k.has('AltLeft') || k.has('AltRight'));
