@@ -75,8 +75,9 @@ export const BASE_TUNING = {
   // haut côté intérieur fait toucher plus tôt, plus bas plus tard (au-delà de handRiseMax, rocher ou
   // rebord : ignoré). Bras tendu (handReach), la main n'atteint le plat qu'avec le corps abaissé
   // d'environ 19 cm à 31,5° (hauteur d'épaule 0,57 m − 0,38 m) : la pose plie buste et bassin.
-  // Contact : en SPRINT, au-delà de handTouchAngle tenu handHold, à une vitesse d'au moins
-  // course + handSpeed · (sprint − course) ; relevé sous handLiftAngle ou après handMaxTime ;
+  // Contact : en SPRINT, au-delà de handTouchAngle tenu handHold, avec un élan (vitesse maximale
+  // des handSpeedWindow dernières secondes) d'au moins course + handSpeed · (sprint − course), et
+  // près de la pointe d'inclinaison ; relevé sous handLiftAngle ou après handMaxTime ;
   // puis handCooldown sans nouveau contact (un slalom ne touche pas à chaque virage).
   handShoulderX: 0.17, // m
   handShoulderY: 0.775, // m
@@ -86,7 +87,11 @@ export const BASE_TUNING = {
   handHold: 0.08, // s au-delà du seuil avant le contact : un coup de stick bref ne suffit pas
   handMaxTime: 0.3, // s de contact au plus, même si le virage continue
   handCooldown: 1.2, // s après chaque relevé
-  handSpeed: 0.5, // part de l'écart course → sprint : 7,7 m/s au contact
+  handSpeed: 0.5, // part de l'écart course → sprint : élan d'au moins 7,7 m/s
+  handSpeedWindow: 0.6, // s : l'élan est la vitesse maximale sur cette durée (le virage la fait plonger)
+  handPeakSlack: (1.5 * Math.PI) / 180, // rad : contact seulement pendant que |bank| monte ou reste
+  // à moins de cet écart de sa pointe en cours, jamais quand le corps se redresse…
+  handPeakLate: 0.05, // s : … et au plus tant après que |bank| a cessé de monter (ou d'être à sa borne)
   handRiseMax: 0.15, // m
 
   // --- dérapage et demi-tour --------------------------------------------------

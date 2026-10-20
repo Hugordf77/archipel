@@ -99,18 +99,51 @@ describe('Player : accélérations, inclinaison et main au sol au pas fixe', () 
     expect(b.handRise).toBeGreaterThan(0.05);
   });
 
-  it('sur un talus fixe que le virage gravit, la sonde voit le relief mais le ralentissement retarde le contact', () => {
-    // limite connue : en montée, la vitesse passe sous course + 0,5 · (sprint − course) et le seuil de
-    // vitesse l'emporte sur l'avance donnée par le relief
+  it('sur un talus fixe que le virage gravit, la main touche aussi plus tôt malgré le ralentissement', () => {
+    // l'élan (vitesse maximale des 0,6 dernières secondes) compte, pas la vitesse instantanée qui
+    // plonge en montée : avant, le contact attendait que la vitesse remonte (image 42 contre 28)
     const flat = sprintTurn().frames;
     const ramp = sprintTurn({ ramp: 12 }).frames;
     const a = flat.find((f) => f.handDown);
     const b = ramp.find((f) => f.handDown);
-    expect(Math.max(...ramp.slice(0, 30).map((f) => f.handRise))).toBeGreaterThan(0.08);
-    if (b) {
-      expect(ramp.indexOf(b)).toBeGreaterThanOrEqual(flat.indexOf(a));
-      expect(Math.hypot(b.v, b.vLat)).toBeGreaterThanOrEqual(T.run + T.handSpeed * (T.sprint - T.run) - 1e-9);
+    expect(a && b).toBeTruthy();
+    expect(ramp.indexOf(b)).toBeLessThan(flat.indexOf(a));
+    expect(b.handRise).toBeGreaterThan(0.05);
+  });
+
+  it('île de départ, plage : la main se pose à la pointe d’inclinaison, pas quand le corps se redresse', () => {
+    // cas vu en jeu : tp(0, 4.5), sprint 2 s vers +z, puis stick vers +x, 60 Hz ; la vitesse plonge
+    // à 6,6–7,5 m/s (sous course + 0,5 · (sprint − course)) pendant la pointe d'inclinaison
+    setObstacles([]);
+    setGroundProvider(null);
+    const p = new Player(stubCharacter());
+    p.place(0, 4.5, 0);
+    for (let i = 0; i < 120; i++) p.update(1 / 60, { move: new THREE.Vector3(0, 0, 1), sprint: true });
+    const frames = [];
+    for (let i = 0; i < 90; i++) {
+      p.update(1 / 60, { move: new THREE.Vector3(1, 0, 0), sprint: true });
+      frames.push({ ...p.loco });
     }
+    const speed = (f) => Math.hypot(f.v, f.vLat);
+    const peakAt = frames.reduce((k, f, i) => (Math.abs(f.bank) > Math.abs(frames[k].bank) ? i : k), 0);
+    const touchAt = frames.findIndex((f) => f.handDown);
+    expect(speed(frames[peakAt])).toBeLessThan(T.run + T.handSpeed * (T.sprint - T.run)); // la vitesse a plongé
+    // avant : contact à l'image 41, 0,1 s après la pointe, pendant la redescente ; ici la pointe
+    // (28,7°, sous 31,5°) ne suffit qu'avec le relief, atteint trop tard : pas de contact
+    if (touchAt >= 0) {
+      expect(touchAt).toBeLessThanOrEqual(peakAt + 3); // avant la pointe, ou au plus 0,05 s après
+      let peak = 0;
+      for (let i = 0; i <= touchAt; i++) peak = Math.max(peak, Math.abs(frames[i].bank));
+      expect(Math.abs(frames[touchAt].bank)).toBeGreaterThan(peak - (2 * Math.PI) / 180);
+    }
+    // jamais de contact qui commence après que |bank| a perdu plus de 2° depuis sa pointe
+    for (let i = 1; i < frames.length; i++) {
+      if (!frames[i].handDown || frames[i - 1].handDown) continue;
+      let peak = 0;
+      for (let j = 0; j <= i; j++) peak = Math.max(peak, Math.abs(frames[j].bank));
+      expect(Math.abs(frames[i].bank)).toBeGreaterThan(peak - (2 * Math.PI) / 180);
+    }
+    expect(frames.filter((f) => f.handDown).length / 60).toBeLessThanOrEqual(T.handMaxTime + 1 / 60);
   });
 
   it('garde les mêmes contacts à 30, 60 et 144 Hz dans le jeu réel', () => {

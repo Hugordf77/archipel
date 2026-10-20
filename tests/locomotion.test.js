@@ -691,6 +691,41 @@ describe('accélérations, inclinaison et main au sol', () => {
     expect(hardSand.gripPeak).toBeGreaterThan(hardGrass.gripPeak);
   });
 
+  it('quand la vitesse plonge dans le virage, l’élan suffit : la main se pose à la pointe d’inclinaison, jamais en se redressant', () => {
+    // virage de 90° au sprint sur le sable, dévers de 10° côté intérieur : la vitesse tombe sous
+    // course + 0,5 · (sprint − course) pendant que le corps se penche (lot 1 : contact à 0,825 s,
+    // sur le palier d’inclinaison, quand la vitesse remontait)
+    const threshold = T.run + T.handSpeed * (T.sprint - T.run);
+    for (const [surface, deg] of [['sand', 10], ['grass', 10], ['grass', 0]]) {
+      let m = null;
+      const k = Math.tan(deg * DEG);
+      const banks = [];
+      let touch = null;
+      let touchSpeed = null;
+      const env = flat({ surface, ground: (x, z) => (m ? k * lateralOf(m, x, z) : 0) });
+      sprintTurn(90, {
+        env,
+        seconds: 2,
+        each: (mm) => {
+          m = mm;
+          banks.push(Math.abs(mm.bank));
+          if (mm.handDown && touch === null) {
+            touch = banks.length - 1;
+            touchSpeed = speedOf(mm);
+          }
+        },
+      });
+      expect(touch, `${surface} ${deg}°`).not.toBeNull();
+      if (surface === 'sand') {
+        expect(touchSpeed).toBeLessThan(threshold);
+        expect((touch + 1) / 120).toBeLessThan(0.7);
+      }
+      const peakAt = banks.indexOf(Math.max(...banks));
+      expect(touch).toBeLessThanOrEqual(peakAt + 6); // avant la pointe, ou au plus 0,05 s après
+      expect(banks[touch]).toBeGreaterThan(Math.max(...banks.slice(0, touch + 1)) - 2 * DEG);
+    }
+  });
+
   it('pose la main plus tôt quand le sol monte côté intérieur, plus tard ou pas du tout quand il descend', () => {
     // sol incliné de k dans la direction latérale + du corps, plat sous les pieds
     const lean = (k) => {

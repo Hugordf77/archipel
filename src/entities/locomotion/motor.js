@@ -65,6 +65,8 @@ export function createMotor(profile = 'realiste') {
     gripUse: 0, gripOver: 0, surfGrip: 1, aPush: T.accel0,
     handDown: false, handSide: 0, handX: 0, handY: 0, handZ: 0, handRise: 0,
     handHoldT: 0, handT: 0, handCool: 0,
+    // élan : vitesses des derniers pas (fenêtre handSpeedWindow), pointe d'inclinaison en cours
+    speedHist: new Float64Array(Math.max(1, Math.round(T.handSpeedWindow / H))), speedIdx: 0, bankPeak: 0, bankPeakSide: 1, bankPeakT: 0, bankLean: 0,
     acc: 0,
     events: [],
   };
@@ -94,6 +96,11 @@ export function resetMotor(m, x, y, z, heading = m.heading) {
   m.handZ = z;
   m.handRise = 0;
   m.handHoldT = m.handT = m.handCool = 0;
+  m.speedHist.fill(0);
+  m.speedIdx = 0;
+  m.bankPeak = 0;
+  m.bankPeakSide = 1;
+  m.bankPeakT = m.bankLean = 0;
   m.acc = 0;
   setState(m, 'IDLE');
 }
@@ -371,8 +378,11 @@ const SH = { lateral: 0, height: 0 };
 // Main au sol, un effleurement rare : la sonde lit le sol sous l'épaule intérieure. L'inclinaison
 // « relief compris » dépasse un seuil quand l'épaule descend, au-dessus de ce sol, à la hauteur
 // qu'elle a sur le plat à cet angle (un sol plus haut côté intérieur fait toucher plus tôt).
-// Contact : au sol, en SPRINT, hors de l'eau, au-delà de handTouchAngle pendant handHold, à au
-// moins course + handSpeed · (sprint − course), et handCooldown écoulé depuis le dernier relevé.
+// Contact : au sol, en SPRINT, hors de l'eau, au-delà de handTouchAngle pendant handHold, avec un
+// élan (vitesse maximale des handSpeedWindow dernières secondes : le virage fait plonger la vitesse
+// instantanée) d'au moins course + handSpeed · (sprint − course), pendant que |bank| monte, ou reste
+// à moins de handPeakSlack de sa pointe en cours et l'a quittée depuis au plus handPeakLate, et
+// handCooldown écoulé depuis le dernier relevé.
 // Relevé : sous handLiftAngle, ou après handMaxTime de contact.
 function handStep(m, I, env, h) {
   const T = m.T;
@@ -390,10 +400,26 @@ function handStep(m, I, env, h) {
   const can = onFoot && env.surface !== 'shallow' && HAND_STATES.has(m.state);
   const rise = Math.min(m.handRise, T.handRiseMax);
   if (m.handCool > 0) m.handCool -= h;
+  // élan : vitesse maximale sur la fenêtre glissante (un échantillon par pas fixe)
+  const hist = m.speedHist;
+  hist[m.speedIdx] = speedOf(m);
+  m.speedIdx = (m.speedIdx + 1) % hist.length;
+  let momentum = 0;
+  for (let i = 0; i < hist.length; i++) if (hist[i] > momentum) momentum = hist[i];
+  // pointe d'inclinaison de la courbe en cours (remise à zéro au changement de côté ou redressé),
+  // et temps depuis que |bank| a cessé de monter (ou de rester à sa borne)
+  const lean = Math.abs(m.bank);
+  if (lean < 0.05 || m.bank * m.bankPeakSide <= 0) {
+    m.bankPeak = lean;
+    m.bankPeakSide = m.bank >= 0 ? 1 : -1;
+  } else if (lean > m.bankPeak) m.bankPeak = lean;
+  m.bankPeakT = lean > m.bankLean || lean >= T.bankMax - 1e-9 ? 0 : m.bankPeakT + h;
+  m.bankLean = lean;
   if (!m.handDown) {
     const leaning = can && m.handCool <= 0 && beta > 0 && height <= shoulderAt(T.handTouchAngle, T, SH).height + rise;
     m.handHoldT = leaning ? m.handHoldT + h : 0;
-    if (m.handHoldT >= T.handHold - 1e-9 && speedOf(m) >= T.run + T.handSpeed * (T.sprint - T.run)) {
+    const nearPeak = lean >= m.bankPeak - T.handPeakSlack && m.bankPeakT <= T.handPeakLate + 1e-9;
+    if (m.handHoldT >= T.handHold - 1e-9 && nearPeak && momentum >= T.run + T.handSpeed * (T.sprint - T.run)) {
       m.handDown = true;
       m.handSide = side;
       m.handT = 0;
