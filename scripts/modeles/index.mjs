@@ -1,7 +1,8 @@
 // Index des modèles : recense les dossiers de modèle (src/models/<catégorie>/<dossier>/index.js) et écrit
 //   src/models/index.gen.js     toutes les fiches, avec leur fichier source (lu par le registre)
 //   src/models/physique.gen.js  l'encombrement de chaque espèce de la végétation, lu dans le physique.js de
-//                               son dossier (module pur : le Worker le lit par world/islands/gen/kinds.js)
+//                               son dossier (module pur : le Worker le lit par world/islands/gen/kinds.js),
+//                               et le tronc grimpable (grimpe) des espèces qui en ont un
 //   npm run modeles:index                        réécrit les deux fichiers
 //   node scripts/modeles/index.mjs --verifier    vérifie qu'ils sont à jour (code de sortie 1 sinon)
 import fs from 'node:fs';
@@ -51,7 +52,8 @@ export async function fichesDe(d) {
   return { famille: Array.isArray(f), fiches: Array.isArray(f) ? f : [f] };
 }
 
-// encombrement des espèces : pour chaque fiche « kind:espèce » d'un dossier qui a un physique.js
+// encombrement des espèces : pour chaque fiche « kind:espèce » d'un dossier qui a un physique.js ;
+// tronc grimpable : pour celles dont le physique.js a une entrée grimpe
 export async function physiqueGeneree(list = dossiers()) {
   if (!globalThis.document) {
     const { installCanvasStub } = await import(url(path.join(RACINE, 'tests/helpers/canvas.js')));
@@ -60,15 +62,23 @@ export async function physiqueGeneree(list = dossiers()) {
   const lignes = [];
   const imports = [];
   const especes = [];
+  const grimpes = [];
   for (const d of list) {
     if (!fs.existsSync(path.join(MODELES, d, 'physique.js'))) continue;
     const { famille, fiches } = await fichesDe(d);
     const kinds = fiches.filter((m) => m.ref?.startsWith('kind:')).map((m) => [m.id, m.ref.slice(5)]);
     if (!kinds.length) continue;
+    const phys = (await import(url(path.join(MODELES, d, 'physique.js')))).default;
     imports.push(`import ${nom(d)} from './${d}/physique.js';`);
-    for (const [id, k] of kinds) especes.push([id, `  ${k}: ${nom(d)}${famille ? `.${k}` : ''}.encombrement,`]);
+    for (const [id, k] of kinds) {
+      const acces = `${nom(d)}${famille ? `.${k}` : ''}`;
+      especes.push([id, `  ${k}: ${acces}.encombrement,`]);
+      if ((famille ? phys[k] : phys)?.grimpe) grimpes.push([id, `  ${k}: ${acces}.grimpe,`]);
+    }
   }
-  especes.sort(([a], [b]) => (CATEGORIES.indexOf(PREF[a.slice(0, 3)]) - CATEGORIES.indexOf(PREF[b.slice(0, 3)])) || a.localeCompare(b));
+  const ordre = ([a], [b]) => (CATEGORIES.indexOf(PREF[a.slice(0, 3)]) - CATEGORIES.indexOf(PREF[b.slice(0, 3)])) || a.localeCompare(b);
+  especes.sort(ordre);
+  grimpes.sort(ordre);
   lignes.push(
     '// Généré par « npm run modeles:index » (scripts/modeles/index.mjs) : ne pas modifier à la main.',
     '// Encombrement (m) de chaque espèce de la végétation, lu dans le physique.js de son dossier. Module pur,',
@@ -77,6 +87,12 @@ export async function physiqueGeneree(list = dossiers()) {
     '',
     'export const ENCOMBREMENT = {',
     ...especes.map(([, l]) => l),
+    '};',
+    '',
+    '// Tronc grimpable des espèces qui en ont un (grimpe de leur physique.js) : axe en polyligne [x, y, z, r]',
+    '// dans le repère du modèle (pied en 0) et sommet { y, pose } (format : docs/modeles-arborescence.md).',
+    'export const GRIMPE = {',
+    ...grimpes.map(([, l]) => l),
     '};',
     '',
   );

@@ -27,6 +27,23 @@ const UP = new THREE.Vector3(0, 1, 0);
 
 export { palmFrondGeometry } from '../../models/kit/shapes.js';
 
+// Stipe des palmiers de la plage, au format grimpe des physique.js (docs/modeles-arborescence.md) :
+// repère d'un palmier, pied en 0, +x vers l'extérieur de l'île ; penché de t² · 1,8 m sur 4,3 m de
+// haut, rayon 0,30 → 0,17 (t = k / 6, comme les six tronçons de buildProps). Sommet : sous la boule
+// des palmes, où l'on fait le poirier.
+export const PALMIER_MAISON = {
+  tronc: [
+    [0, 0, 0, 0.3],
+    [0.05, 0.7167, 0, 0.2783],
+    [0.2, 1.4333, 0, 0.2567],
+    [0.45, 2.15, 0, 0.235],
+    [0.8, 2.8667, 0, 0.2133],
+    [1.25, 3.5833, 0, 0.1917],
+    [1.8, 4.3, 0, 0.17],
+  ],
+  sommet: { y: 4.3, pose: 'poirier' },
+};
+
 export function buildProps() {
   const statics = [];
   const glass = new Builder(nextId());
@@ -227,7 +244,8 @@ export function buildProps() {
       fl.add(frond, k % 2 ? PAL.palm : '#93d38f', { p: [top.x, top.y + 0.1, top.z], r: [0, -a, 0.15 + (k % 3) * 0.12], s: 1.05 - (k % 2) * 0.15 });
     }
     statics.push(fl.build());
-    obstacles.push({ x, z, r: 0.4 });
+    // tronc grimpable : le repère du palmier tourne +x vers l'extérieur (out)
+    obstacles.push({ x, z, r: 0.4, grimpe: { kind: 'palmier_maison', x, y, z, rot: Math.atan2(-out.z, out.x), sc: 1, def: PALMIER_MAISON } });
   });
 
   // -------------------------------------------------------------------------

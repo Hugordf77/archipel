@@ -9,7 +9,7 @@ et domaine concerné).
 - Jeu : `npm run dev`, puis http://localhost:5173 (les agents utilisent la configuration `ile` de
   `.claude/launch.json`, port 5174, pour ne pas gêner la partie de l'utilisateur).
 - Catalogue des modèles : `/catalogue.html` ; tableau de bord de production : `/dashboard.html`.
-- Tests : `npm test` (13 fichiers) ; build : `npm run build`.
+- Tests : `npm test` (16 fichiers) ; build : `npm run build`.
 - Outils de développement en jeu : `window.__ile` (`tp`, `setHour`, `frame`, `look`, `settle`, `capture`,
   `game.skipSave`).
 
@@ -45,6 +45,13 @@ et domaine concerné).
   `tests/water-physics.test.js`, `tests/collisions.test.js`.
 - **Agent** : `locomotion-physique` (défauts reproductibles de déplacement, saut, chute, roulade, pente,
   collision ; ne touche pas aux modèles).
+- **Grimper aux arbres, données des troncs** (partie C) : `grimpe: { tronc: [[x, y, z, r], …], sommet }`
+  dans le `physique.js` des espèces grimpables (palmier pour l'instant), table `GRIMPE` de
+  `physique.gen.js` ; l'obstacle de chaque arbre d'île porte `grimpe: { kind, x, y, z, rot, sc, def }`
+  (`IslandManager.js`, `buildKind`), les 6 palmiers de la maison aussi (`world/home/props.js`,
+  `PALMIER_MAISON`) ; `troncMonde()` (`world/navigation.js`) donne l'axe en coordonnées du monde. Format :
+  `docs/modeles-arborescence.md`. Tests : `tests/troncs.test.js` (polyligne à moins de 1 cm du maillage :
+  5,2 mm pour le palmier d'île, 3,7 mm pour la maison ; tronc qui disparaît avec son obstacle).
 
 ### Coup d'épée
 
@@ -106,14 +113,18 @@ et domaine concerné).
 
 ## État courant (20/10/2026)
 
-- Branche `v3-archipel`. Derniers commits : cerf (`7252b94`), kit à zones et onglons (`51fca44`),
-  vache (`0fbb0fe`).
-- **Non commité** : physique et locomotion du joueur, épée, sauvegarde et réglages, audio, manette,
-  minicarte (`src/ui/minimap.js`, non suivi), tableau de bord (`dashboard.html`, `dashboard/`, `public/`),
-  agents d'équipe, chèvre et mouton, calibration d'îles (`gen/surface.js`, `gen/zones.js`).
-- **Tests** : 147 sur 148. Seul échec : `tests/empreintes.test.js`, parce que le personnage (PER-001 à
-  PER-003) a pris 160 triangles avec l'épée. Changement voulu : une fois validé,
-  `npm run modeles:empreinte -- --ecrire`.
+- Branche `v3-archipel`. Derniers commits : troncs grimpables, données (partie C), interface (minicarte,
+  touche V, manette PlayStation, `c77814f`), locomotion lot 2 (main au sol à la pointe d'inclinaison,
+  `35f3f7a`).
+- **En cours** : grimper aux palmiers, style Mario (parties A et B, puis lot 2 des autres arbres).
+- **Non commité** (hors de ce chantier) : tableau de bord (`dashboard.html`, `dashboard/`,
+  `vite.config.js`), agents d'équipe et skill `modele-3d`, `README.md`, chèvre, mouton et fleurs
+  (PLA-015), calibration d'îles (`gen/surface.js`, `gen/zones.js`, `tests/world.test.js`),
+  `tests/fixtures/empreintes.json`.
+- **Tests** : 184 sur 186. Échecs : `tests/empreintes.test.js` (personnage PER-001 à PER-003, 160
+  triangles de l'épée, changement voulu à valider puis `npm run modeles:empreinte -- --ecrire` ; fleurs
+  PLA-015 en cours) ; « budget du Worker » de `tests/world.test.js`, mesure de temps sensible à la charge
+  (tuile p95 à 29 ms sous la suite complète, vert seul).
 - **Graphe du code** : construit le 20/10/2026 sur `src/` (code seul, 282 fichiers, 1 719 nœuds,
   74 communautés). Les `FICHE.md` et les planches n'y sont pas : lire les dossiers des modèles.
   Seul `graphify-out/GRAPH_REPORT.md` est versionné ; `graph.json` et `graph.html` se régénèrent avec

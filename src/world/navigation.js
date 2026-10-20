@@ -123,6 +123,17 @@ function near(x, z, fn) {
   return false;
 }
 
+// Tronc grimpable porté par un obstacle (o.grimpe = { kind, x, y, z, rot, sc, def }, def au format grimpe
+// des physique.js : docs/modeles-arborescence.md) en coordonnées du monde : axe [x, y, z, r] du pied
+// vers le haut, hauteur du sommet et pose. Même passage du modèle au monde que les instances d'îles
+// (rotation rot autour de y, puis échelle sc, pied en (x, y, z)).
+export function troncMonde(g) {
+  const c = Math.cos(g.rot);
+  const s = Math.sin(g.rot);
+  const pts = g.def.tronc.map(([x, y, z, r]) => [g.x + (x * c + z * s) * g.sc, g.y + y * g.sc, g.z + (-x * s + z * c) * g.sc, r * g.sc]);
+  return { kind: g.kind, pts, sommetY: g.y + g.def.sommet.y * g.sc, pose: g.def.sommet.pose };
+}
+
 // Peut-on se tenir en (x, z) en venant d'une hauteur fromY, après un pas de longueur dist ?
 export function canStand(x, z, fromY, dist) {
   const g = groundAt(x, z);

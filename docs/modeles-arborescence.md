@@ -29,7 +29,8 @@ src/models/
   lieux.js              table type → constructeur des lieux (partModel, rotY, recolorPart)
   vegetation.js         table espèce → constructeur de la végétation (kindModel, ROCKY, CAP_COLORS)
   index.gen.js          généré (npm run modeles:index) : toutes les fiches, avec leur source
-  physique.gen.js       généré (npm run modeles:index) : encombrement par espèce, pour le Worker
+  physique.gen.js       généré (npm run modeles:index) : encombrement par espèce (ENCOMBREMENT), pour le
+                        Worker ; tronc des espèces grimpables (GRIMPE)
   releves.gen.js        généré (npm run modeles:releve) : TAILLES et USAGE
   registry.js           CATEGORIES, STATUTS, MODELS (lus dans index.gen.js)
 ```
@@ -54,6 +55,22 @@ Deux anciens chemins restent, réduits à une ligne de réexport, parce que des 
   aucun import. Quand l'emprise dépend des paramètres (taille de maison, longueur de jetée), les
   valeurs sont des fonctions pures de ces paramètres, que le constructeur appelle. Une famille indexe
   ces données par type : `{ pin: { encombrement: 0.5 }, … }`.
+- Tronc grimpable (espèce de la végétation qu'on peut escalader) : `grimpe` à côté de `encombrement`,
+  en données pures :
+  `grimpe: { tronc: [[x, y, z, r], …], sommet: { y, pose: 'poirier' | 'suspendu' } }`.
+  - `tronc` : polyligne de l'axe du tronc dans le repère du modèle (pied en 0, y vers le haut, le modèle
+    n'étant ni tourné ni mis à l'échelle ; z est nul pour un tronc courbé dans un seul plan, comme le
+    stipe du palmier, pas pour `treeTrunk`), du pied vers le haut, avec le rayon `r` de l'écorce à chaque
+    point (entre deux points, axe et rayon varient linéairement). Elle suit le maillage à 1 cm près :
+    `tests/troncs.test.js` la compare aux tronçons réels.
+  - `sommet.y` : hauteur (repère du modèle) où s'arrête la prise des mains ; au-delà, l'état de sommet.
+    Pour un arbre feuillu, sous le feuillage (première branche).
+  - `sommet.pose` : `poirier` (équilibre sur les mains au haut du tronc, palmier) ou `suspendu` (accroché
+    sous le feuillage, sans poirier dans les feuilles).
+  - `npm run modeles:index` l'exporte dans la table `GRIMPE` de `physique.gen.js` ; le jeu pose
+    `grimpe: { kind, x, y, z, rot, sc, def }` sur l'obstacle de chaque arbre (`IslandManager.js`), si bien
+    qu'un tronc disparaît avec son obstacle (île déchargée, arbre coupé, objet caché). Les palmiers de
+    l'île de départ (`world/home/props.js`) ont leur propre stipe, au même format (`PALMIER_MAISON`).
 - Statuts et notes restent dans `catalogue/notes.json` ; tailles et usages restent relevés
   (`npm run modeles:releve`).
 
@@ -232,7 +249,7 @@ l'assemblage des pièces par os.
 | `lieux.js` | `structures/lieux.js` : `partModel` (le `switch` devient une table), `rotY`, `recolorPart` |
 | `vegetation.js` | `vegetation/especes.js` : `kindModel`, `ROCKY`, `CAP_COLORS` |
 | `releves.gen.js` | `registry.js` : tables `TAILLES` et `USAGE` (`scripts/releve-modeles.mjs` devient `scripts/modeles/releve.mjs`) |
-| `physique.gen.js` | `world/islands/gen/kinds.js` : `KIND_RADIUS`, désormais lu dans le `physique.js` de chaque espèce |
+| `physique.gen.js` | `world/islands/gen/kinds.js` : `KIND_RADIUS`, désormais lu dans le `physique.js` de chaque espèce ; `GRIMPE` (troncs grimpables) est nouveau |
 
 Retiré : `STRUCTURES.epave` de `buildings/gabarits.js`, que rien n'appelait (l'épave des îles est
 celle de `structures/lieux.js`, aujourd'hui `bateaux/epaves/`).

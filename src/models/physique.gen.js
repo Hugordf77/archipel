@@ -64,3 +64,9 @@ export const ENCOMBREMENT = {
   bois_mort: rochers_bois.bois_mort.encombrement,
   corail: objets_lagon.corail.encombrement,
 };
+
+// Tronc grimpable des espèces qui en ont un (grimpe de leur physique.js) : axe en polyligne [x, y, z, r]
+// dans le repère du modèle (pied en 0) et sommet { y, pose } (format : docs/modeles-arborescence.md).
+export const GRIMPE = {
+  palmier: arbres_palmier.grimpe,
+};

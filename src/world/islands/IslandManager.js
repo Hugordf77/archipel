@@ -12,6 +12,7 @@ import { Surface, TILE } from './gen/surface.js';
 import { bloomColorOf } from './gen/zones.js';
 import { BIOMES } from './biomes.js';
 import { kindModel, CAP_COLORS, ROCKY } from '../../models/vegetation.js';
+import { GRIMPE } from '../../models/physique.gen.js';
 import { partModel, rotY, recolorPart } from '../../models/lieux.js';
 import { MAT } from '../../models/kit/materials.js';
 import { buildRivers, buildLake, buildFallFoam } from '../env/rivers.js';
@@ -659,6 +660,7 @@ export class IslandManager {
     const grass = model.grassGeo ? add(model.grassGeo, this.mats.grass) : null;
     const flower = model.flowerGeo ? add(model.flowerGeo, this.mats.flower) : null;
     const rad = KIND_RADIUS[kind] || 0;
+    const grimpe = GRIMPE[kind];
     if (first) ctx.kinds.set(ki, { meshes, grass: !!grass });
     const t0 = performance.now();
     let i = st.i;
@@ -687,6 +689,9 @@ export class IslandManager {
       if (flower) flower.setColorAt(i, flowers[Math.floor(vr * 997) % flowers.length]);
       if (rad > 0) {
         const o = { x: e.desc.x + x, z: e.desc.z + z, r: rad * sc, low: LOW_KINDS.has(kind) && sc < 1.15 };
+        // tronc grimpable : pied du modèle (4 cm sous le sol, comme composeItem), rotation et échelle ;
+        // il disparaît avec l'obstacle (île déchargée, arbre coupé)
+        if (grimpe) o.grimpe = { kind, x: o.x, y: y - 0.04, z: o.z, rot, sc, def: grimpe };
         ctx.obstacles.push(o);
         ctx.idxObs ||= new Map();
         ctx.idxObs.set(idx, o);
