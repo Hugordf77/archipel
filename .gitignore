@@ -2,3 +2,8 @@ node_modules
 dist
 captures
 .DS_Store
+
+# Graphify : seul le rapport est versionné ; graphe, vue et manifeste se régénèrent
+# (/graphify src --update)
+graphify-out/*
+!graphify-out/GRAPH_REPORT.md
