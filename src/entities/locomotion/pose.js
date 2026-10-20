@@ -148,9 +148,38 @@ export function locomotionPose(p, T, X) {
   return T;
 }
 
-// inclinaison dans la courbe (radians, positive = virage à gauche)
+// inclinaison dans la courbe (radians, positive = virage à gauche) estimée sur la vitesse
+// angulaire : repli quand le moteur ne fournit pas sa propre inclinaison (loco.bank)
 export function bankAngle(speed, omega) {
   return clamp(Math.atan((speed * omega) / 9.81) * 0.8, -0.35, 0.35);
+}
+
+// Inclinaison appliquée au corps : celle du moteur (filtrée au pas fixe), bornée ; sinon l'estimation.
+export const BANK_MAX = BASE_TUNING.bankMax ?? 0.8; // même plafond que le moteur
+export function bodyBank(p, speed) {
+  return typeof p.bank === 'number' ? clamp(p.bank, -BANK_MAX, BANK_MAX) : bankAngle(speed, p.omega || 0);
+}
+
+// Abaissement du bassin selon l'inclinaison : rien sous 0,2 rad, 10 cm au plafond (« juste
+// légèrement » : le corps s'abaisse à peine dans un virage ordinaire).
+export const BANK_DROP = 0.1; // m : bassin abaissé au plus fort de l'inclinaison
+export function bankDrop(bank) {
+  return BANK_DROP * smooth(0.2, BANK_MAX, Math.abs(bank));
+}
+// main au sol : pli latéral du buste et penchée en avant (rad), abaissement supplémentaire (m)
+const HAND_SIDE_BEND = 0.34;
+const HAND_LEAN = 0.12;
+const HAND_EXTRA_DROP = 0.06;
+
+// Fatigue du sprint (0 à 1) : celle du moteur si elle existe, sinon déduite du temps de sprint.
+function fatigueOf(p) {
+  if (typeof p.fatigue === 'number') return clamp(p.fatigue, 0, 1);
+  return clamp(((p.sprintTime || 0) - 4) / 6, 0, 1);
+}
+
+// Main au sol voulue par l'état du moteur : seulement au sol, en course ou au sprint.
+export function handWeightTarget(p) {
+  return p && p.handDown && p.grounded !== false && (p.state === 'RUN' || p.state === 'SPRINT') && !p.swim ? 1 : 0;
 }
 
 function groundPose(p, T, X) {
@@ -182,13 +211,27 @@ function groundPose(p, T, X) {
   const up = (1 - r) * (1 - Math.abs(sn)) + r * Math.abs(sn);
   T.bodyY = g.bounce * walk * up;
   T.sy = 1 + breathe * 0.012 * still + Math.cos(ph * 2) * (0.014 + 0.012 * r) * walk;
+  // accélération longitudinale : celle du moteur au pas fixe (aLong), sinon l'ancienne (accF)
+  const aLong = p.aLong ?? p.accF ?? 0;
   // penchée : allure + accélération (on se jette en avant, on se retient au freinage) + pente
-  T.lean = g.lean * walk + clamp((p.accF || 0) * 0.03, -0.18, 0.15) + clamp((p.slopeAlong || 0) * 0.35, -0.1, 0.2);
-  // inertie de rotation visible : le corps se penche dans la courbe, la tête garde l'horizon
-  const bank = bankAngle(s, p.omega || 0);
+  T.lean = g.lean * walk + clamp(aLong * 0.03, -0.18, 0.15) + clamp((p.slopeAlong || 0) * 0.35, -0.1, 0.2);
+  // Inclinaison dans la courbe, pivot aux pieds (Character) : le corps entier penche, le buste
+  // un peu plus quand la main va au sol, et la tête compense pour garder l'horizon (≈ 10 % restant).
+  const bank = bodyBank(p, s);
+  const ab = Math.abs(bank);
+  const hw = clamp(p.handW || 0, 0, 1);
   T.bodyRoll = -bank;
-  T.headZ = bank * 0.6 + Math.sin((p.now || 0) * 0.9) * 0.04 * still;
-  T.neckZ = bank * 0.2;
+  // main au sol : le buste se plie vers l'intérieur et se penche un peu en avant pour
+  // descendre l'épaule
+  const side = Math.sign(bank);
+  T.lean += HAND_LEAN * hw;
+  const torsoBank = bank * 0.1 - side * HAND_SIDE_BEND * hw;
+  T.neckZ = bank * 0.3 + side * 0.1 * hw;
+  T.headZ = bank * 0.5 + side * (HAND_SIDE_BEND - 0.1) * hw + Math.sin((p.now || 0) * 0.9) * 0.04 * still;
+  // le bassin s'abaisse et les genoux plient avec l'inclinaison, un peu plus main au sol
+  // (15 cm au plus, main au sol)
+  const drop = Math.min(BANK_DROP + HAND_EXTRA_DROP, bankDrop(bank) + HAND_EXTRA_DROP * hw) * walk;
+  T.bodyY -= drop;
   // Cycle de jambe : poussée avant → extension arrière en appui → retour rapide genou plié.
   // Le cosinus garde la pose et sa vitesse continues aux transitions appui/vol.
   const kneeBase = 0.2 + 0.1 * r + 0.12 * sp;
@@ -205,13 +248,29 @@ function groundPose(p, T, X) {
   // La cible est l'orientation globale du pied ; on la convertit en rotation de cheville.
   T.footL = (footPitch(leftStance, leftProgress, g.foot) - thighL - shinL) * walk;
   T.footR = (footPitch(rightStance, rightProgress, g.foot) - thighR - shinR) * walk;
-  // bras en balancier opposé, avant-bras pliés (≈ 95° au sprint), qui pompent
-  const armDrive = clamp((p.accF || 0) * 0.012, -0.12, 0.16);
-  T.armLX = (-thighL * g.arm / g.thigh + g.armOff + armDrive) * walk;
-  T.armRX = (-thighR * g.arm / g.thigh + g.armOff + armDrive) * walk;
+  // genoux pliés pour l'abaissement (hanche → cheville : 0,30 m) : cuisse en avant, tibia
+  // replié deux fois plus, pied gardé dans son orientation
+  if (drop > 1e-5) {
+    const knee = Math.acos(clamp(1 - drop / 0.3, -1, 1)) * 0.85;
+    T.thighL -= knee;
+    T.thighR -= knee;
+    T.shinL += 2 * knee;
+    T.shinR += 2 * knee;
+    T.footL -= knee;
+    T.footR -= knee;
+  }
+  // bras en balancier opposé, avant-bras pliés (≈ 95° au sprint), qui pompent ; l'effort
+  // (sprint, accélération) les pompe davantage, la fatigue du sprint les relâche
+  const fat = fatigueOf(p) * sp;
+  const effort = clamp(sp + Math.max(0, aLong) / 10, 0, 1.3);
+  const swingGain = 1 + 0.12 * effort - 0.25 * fat;
+  const foreGain = 1 + 0.15 * effort - 0.35 * fat;
+  const armDrive = clamp(aLong * 0.012, -0.12, 0.16);
+  T.armLX = (-thighL * g.arm / g.thigh * swingGain + g.armOff + armDrive) * walk;
+  T.armRX = (-thighR * g.arm / g.thigh * swingGain + g.armOff + armDrive) * walk;
   // L'ouverture varie entre bras semi-repliés et presque horizontaux. Des rythmes
   // secondaires déphasés donnent des écarts spontanés sans introduire d'aléatoire.
-  const armSpread = 0.18 * walk + 0.58 * r + 0.34 * sp;
+  const armSpread = (0.18 * walk + 0.58 * r + 0.34 * sp) * (1 + 0.2 * fat);
   const armExpress = clamp(r + sp * 0.3, 0, 1);
   const openL = clamp(0.52 + 0.3 * Math.sin(ph * 0.5 + 0.4) + 0.18 * Math.sin(ph * 2.3 + 0.9), 0, 1);
   const openR = clamp(0.52 + 0.3 * Math.sin(ph * 0.5 + 2.2) + 0.18 * Math.sin(ph * 2.7 + 3.0), 0, 1);
@@ -221,27 +280,41 @@ function groundPose(p, T, X) {
   T.armRZ = 0.2 + spreadR;
   const elbowL = armExpress * (0.12 * Math.sin(ph * 1.7 + 0.3) + 0.08 * Math.sin(ph * 3.1 + 0.8));
   const elbowR = armExpress * (0.12 * Math.sin(ph * 1.9 + 2.1) + 0.08 * Math.sin(ph * 2.7 + 0.2));
-  T.foreL = -(0.15 + g.fore * walk + Math.max(0, -sn) * 0.14 * r) + elbowL;
-  T.foreR = -(0.15 + g.fore * walk + Math.max(0, sn) * 0.14 * r) + elbowR;
+  T.foreL = -(0.15 + g.fore * walk * foreGain + Math.max(0, -sn) * 0.14 * r) + elbowL;
+  T.foreR = -(0.15 + g.fore * walk * foreGain + Math.max(0, sn) * 0.14 * r) + elbowR;
   T.wristLX = -0.04 - Math.max(0, sn) * 0.05 * r;
   T.wristRX = -0.04 - Math.max(0, -sn) * 0.05 * r;
-  // torsion du buste opposée au bassin
+  // torsion du buste opposée au bassin ; le bassin contre-tourne davantage avec la vitesse
   T.torsoY = -sn * g.torso * walk;
-  T.torsoZ = -sn * 0.025 * r * walk + bank * 0.3;
+  T.hipsY = sn * (0.02 + 0.03 * r + 0.05 * sp) * walk;
+  T.torsoZ = -sn * 0.025 * r * walk + torsoBank;
   T.hipsZ = sn * g.hips * walk + Math.sin((p.now || 0) * 1.05) * 0.035 * still;
   // la tête suit la course : elle accompagne la penchée (sans la compenser tout à fait),
   // hoche à chaque appui, roule avec les hanches et traîne un peu à l'accélération
   const nod = Math.cos(ph * 2) * (0.035 + 0.05 * r + 0.035 * sp) * walk;
   T.neckX = -T.lean * 0.1 + nod * 0.4;
-  T.headX = -T.lean * 0.25 + nod - clamp((p.accF || 0) * 0.012, -0.12, 0.14);
+  T.headX = -T.lean * 0.25 + nod - clamp(aLong * 0.012, -0.12, 0.14);
   T.headZ += Math.sin(ph) * (0.03 + 0.04 * r) * walk;
   T.neckZ += Math.sin(ph) * 0.02 * walk;
   const look = clamp((p.inputAngle || 0) * 0.8, -0.7, 0.7);
   T.headY = look + Math.sin(ph) * 0.05 * r * walk;
   T.torsoY += clamp((p.inputAngle || 0) * 0.4, -0.35, 0.35);
-  // bras extérieur écarté dans un virage serré
-  if (bank > 0) T.armRZ += bank * 0.8;
-  else T.armLZ += bank * 0.8;
+  // Virage : le bras extérieur s'ouvre et se lève un peu pour l'équilibre, l'intérieur s'écarte
+  // vers le sol (Character l'y amène par cinématique inverse quand la main touche).
+  // Os R côté +x : intérieur d'un virage à gauche (bank > 0).
+  const outerOpen = 0.9 * ab;
+  const innerReach = 0.45 * ab;
+  if (bank > 0) {
+    T.armRZ += innerReach;
+    T.armLZ -= outerOpen;
+    T.armLX -= 0.25 * ab;
+    T.foreL += 0.25 * ab;
+  } else if (bank < 0) {
+    T.armLZ -= innerReach;
+    T.armRZ += outerOpen;
+    T.armRX -= 0.25 * ab;
+    T.foreR += 0.25 * ab;
+  }
   // départ : petite compression avant de s'élancer
   if (p.startT !== undefined && p.startT < 0.14) {
     const k = Math.sin((p.startT / 0.14) * Math.PI);
@@ -251,8 +324,8 @@ function groundPose(p, T, X) {
     T.armRX -= 0.15 * k;
   }
   // freinage : les bras partent en avant
-  if ((p.accF || 0) < -4) {
-    const k = clamp((-(p.accF || 0) - 4) * 0.05, 0, 0.35);
+  if (aLong < -4) {
+    const k = clamp((-aLong - 4) * 0.05, 0, 0.35);
     T.armLX -= k;
     T.armRX -= k;
   }
@@ -420,7 +493,7 @@ function airPose(p, T, X) {
     T.lean = 0;
     X.expr = 'surpris';
   }
-  const bank = bankAngle(Math.hypot(p.v, p.vLat), p.omega || 0);
+  const bank = bodyBank(p, Math.hypot(p.v, p.vLat));
   T.bodyRoll = -bank * 0.6;
 }
 
@@ -508,7 +581,7 @@ function getupPose(p, T, X) {
 
 function slidePose(p, T, X) {
   // glissade sur la pente : surf, bras en balancier, un pied devant
-  const bank = bankAngle(Math.hypot(p.v, p.vLat), p.omega || 0);
+  const bank = bodyBank(p, Math.hypot(p.v, p.vLat));
   T.lean = -0.2;
   T.bodyY = -0.1;
   T.bodyRoll = -bank;
@@ -520,6 +593,78 @@ function slidePose(p, T, X) {
   T.armRZ = 1.1 - Math.sin((p.now || 0) * 6) * 0.1;
   T.armLX = T.armRX = -0.3;
   X.expr = 'joie';
+}
+
+// ---------------------------------------------------------------------------
+// Bras vivants : un ressort amorti par bras, entraîné par l'inertie du corps.
+// x : balancier (positif = vers l'arrière), z : écart (positif = vers +x, pour les deux bras).
+// À l'accélération les bras traînent en arrière, au freinage ils partent en avant ; en virage
+// ils sont chassés vers l'extérieur ; la réception et la main qui touche donnent un à-coup.
+// La fatigue du sprint amortit moins (bras plus lâches). Pas fixe de 1/240 s : mêmes valeurs
+// à 30, 60 et 240 Hz aux images communes.
+// ---------------------------------------------------------------------------
+export const ARM_DYN = {
+  freq: 12, // rad/s (période ≈ 0,5 s)
+  damp: 0.45, // dépassement ≈ 20 %
+  dampTired: 0.28,
+  long: 0.02, // rad par m/s² d'accélération longitudinale
+  lat: 0.028, // rad par m/s² d'accélération latérale
+  cap: 0.5, // rad
+  land: 0.2, // rad/s d'à-coup par m/s d'impact
+  touch: 2.4, // rad/s : le bras extérieur chassé quand la main touche
+  step: 1 / 240,
+};
+
+export function createArmDynamics() {
+  return { lx: 0, lvx: 0, lz: 0, lvz: 0, rx: 0, rvx: 0, rz: 0, rvz: 0, acc: 0, state: null, hand: false };
+}
+
+export function stepArmDynamics(s, p, dt, out = {}) {
+  const C = ARM_DYN;
+  const aLong = clamp(p.aLong ?? p.accF ?? 0, -25, 25);
+  const aLat = clamp(p.aLat ?? 0, -20, 20);
+  const fat = fatigueOf(p) * (p.state === 'SPRINT' ? 1 : 0.6);
+  // à-coups : réception (selon l'impact) : les bras descendent et se rapprochent du corps
+  if (p.state === 'LAND' && s.state !== 'LAND') {
+    const k = clamp((p.impact || 0) * C.land, 0, 2.6);
+    s.lvx += k;
+    s.rvx += k;
+    s.lvz += k * 0.6;
+    s.rvz -= k * 0.6;
+  }
+  // main qui touche le sol : le bras extérieur est chassé vers l'extérieur
+  const hand = !!p.handDown;
+  if (hand && !s.hand) {
+    if ((p.handSide || 0) > 0) s.lvz -= C.touch;
+    else if ((p.handSide || 0) < 0) s.rvz += C.touch;
+  }
+  s.hand = hand;
+  s.state = p.state;
+  const gain = 1 + 0.3 * fat;
+  const ex = clamp(C.long * aLong * gain, -C.cap, C.cap);
+  const ez = clamp(-C.lat * aLat * gain, -C.cap, C.cap);
+  const wn = C.freq;
+  const z = C.damp + (C.dampTired - C.damp) * fat;
+  const kk = wn * wn;
+  const cc = 2 * z * wn;
+  const h = C.step;
+  s.acc += Math.min(Math.max(dt, 0), 0.1);
+  while (s.acc >= h - 1e-9) {
+    s.acc -= h;
+    s.lvx += (kk * (ex - s.lx) - cc * s.lvx) * h;
+    s.rvx += (kk * (ex - s.rx) - cc * s.rvx) * h;
+    s.lvz += (kk * (ez - s.lz) - cc * s.lvz) * h;
+    s.rvz += (kk * (ez - s.rz) - cc * s.rvz) * h;
+    s.lx += s.lvx * h;
+    s.rx += s.rvx * h;
+    s.lz += s.lvz * h;
+    s.rz += s.rvz * h;
+  }
+  out.armLX = clamp(s.lx, -C.cap, C.cap);
+  out.armRX = clamp(s.rx, -C.cap, C.cap);
+  out.armLZ = clamp(s.lz, -C.cap, C.cap);
+  out.armRZ = clamp(s.rz, -C.cap, C.cap);
+  return out;
 }
 
 export { clamp };

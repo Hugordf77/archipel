@@ -4,7 +4,8 @@ import { LAYER_SHADOW, U } from '../../core/globals.js';
 import { SMOKE_VERT, SMOKE_FRAG } from '../../world/World.js';
 import { defaultAvatar, sanitizeAvatar, SKINS, HAIR_COLORS } from './avatar.js';
 import { FaceAtlas, faceGeometry, EXPRESSIONS, BLINKABLE, EYE, cellUV } from './face.js';
-import { locomotionPose, LOCO_FAMILY, FAMILY_HALFLIFE } from '../locomotion/pose.js';
+import { locomotionPose, LOCO_FAMILY, FAMILY_HALFLIFE, createArmDynamics, stepArmDynamics, handWeightTarget } from '../locomotion/pose.js';
+import { applyJoints, reachHand, shoulderInRoot, HAND_RADIUS, HAND_BRUSH_GAP } from '../locomotion/rig.js';
 import { HC, B, PARENT, REST, ID, tint, HAIR_STYLES, buildAvatarGeometry } from '../../models/personnage/index.js';
 import { crayonGeometry } from '../../models/personnage/index.js';
 export { HAIR_STYLES };
@@ -109,7 +110,7 @@ class PuffPool {
 }
 
 const BASE = {
-  bodyY: 0, lean: 0, bodyRoll: 0, sx: 1, sy: 1, hipsZ: 0, torsoX: 0, torsoY: 0, torsoZ: 0,
+  bodyY: 0, lean: 0, bodyRoll: 0, sx: 1, sy: 1, hipsY: 0, hipsZ: 0, torsoX: 0, torsoY: 0, torsoZ: 0,
   neckX: 0, neckY: 0, neckZ: 0,
   headX: 0, headY: 0, headZ: 0,
   armLX: 0, armLZ: -0.2, armRX: 0, armRZ: 0.2, foreL: -0.15, foreR: -0.15,
@@ -237,6 +238,18 @@ export class Character {
     this.moving = false;
     this.startT = 1;
     this.breath = 0;
+    // bras vivants (ressorts secondaires) et main au sol (poids mélangé, côté, cible)
+    this.armDyn = createArmDynamics();
+    this.armOut = { armLX: 0, armLZ: 0, armRX: 0, armRZ: 0 };
+    this.handW = 0;
+    this.handSide = 0;
+    this.handRise = 0;
+    this.handGap = 0;
+    this._rig = { spin: this.spin, body: this.body, mesh: this.mesh, bones: this.bones };
+    this._shoulder = new THREE.Vector3();
+    this._handTarget = new THREE.Vector3();
+    this.handContact = new THREE.Vector3();
+    this.handContactOk = false;
 
     this.setAvatar(avatar);
   }
@@ -361,6 +374,7 @@ export class Character {
 
     const L = motion?.loco;
     const useLoco = !!L && (this.pose === 'walk' || this.pose === 'run' || this.pose === 'idle');
+    if (!useLoco) this.handW = Math.max(0, this.handW - dt * 8);
     if (useLoco) expr = this.locoPose(T, L, dt, now) || expr;
     else switch (this.pose) {
       case 'walk':
@@ -854,25 +868,21 @@ export class Character {
     this.spin.rotation.x = this.spinCur;
 
     const bn = this.bones;
-    this.body.position.y = j.bodyY - this.liftCur;
-    this.body.rotation.set(j.lean, 0, j.bodyRoll);
-    this.body.scale.set(j.sx, j.sy, j.sx);
-    bn[B.HIPS].rotation.set(0, -j.torsoY * 0.4, j.hipsZ);
-    bn[B.TORSO].rotation.set(j.torsoX, j.torsoY, j.torsoZ - j.hipsZ * 0.7);
-    bn[B.NECK].rotation.set(j.neckX, j.neckY, j.neckZ);
-    bn[B.HEAD].rotation.set(j.headX, j.headY, j.headZ);
-    bn[B.ARM_L].rotation.set(j.armLX, 0, j.armLZ);
-    bn[B.FORE_L].rotation.set(j.foreL, 0, 0);
-    bn[B.HAND_L].rotation.set(j.wristLX, 0, j.wristLZ);
-    bn[B.ARM_R].rotation.set(j.armRX, 0, j.armRZ);
-    bn[B.FORE_R].rotation.set(j.foreR, 0, 0);
-    bn[B.HAND_R].rotation.set(j.wristRX, 0, j.wristRZ);
-    bn[B.THIGH_L].rotation.set(j.thighL, 0, -j.hipsZ);
-    bn[B.SHIN_L].rotation.set(j.shinL, 0, 0);
-    bn[B.FOOT_L].rotation.set(j.footL, 0, 0);
-    bn[B.THIGH_R].rotation.set(j.thighR, 0, -j.hipsZ);
-    bn[B.SHIN_R].rotation.set(j.shinR, 0, 0);
-    bn[B.FOOT_R].rotation.set(j.footR, 0, 0);
+    // à pied, l'inclinaison pivote sous le pied intérieur (locomotion/rig.js)
+    applyJoints(this.body, bn, j, this.liftCur, useLoco);
+    // main au sol : le bras intérieur va chercher le sol sous l'épaule (cinématique inverse) ;
+    // la hauteur du sol vient de la sonde de Player (handRise), pour suivre le relief
+    this.handGap = 0;
+    this.handContactOk = false;
+    const side = this.handSide || (L?.handDown ? L.handSide : 0);
+    if (useLoco && side && (this.handW > 1e-3 || L.handDown)) {
+      const sh = shoulderInRoot(this._rig, side, this._shoulder);
+      this._handTarget.set(sh.x, this.handRise + HAND_RADIUS * j.sy + HAND_BRUSH_GAP, sh.z + 0.04);
+      // point de contact au sol (repère du personnage), lu par les retours (poussière)
+      this.handContact.set(this._handTarget.x, this.handRise, this._handTarget.z);
+      this.handContactOk = true;
+      if (this.handW > 1e-3) this.handGap = reachHand(this._rig, j, side, this._handTarget, this.handW);
+    }
 
     // -------------------------------------------------------------------------
     // Dynamique physique 3D des cheveux et des vêtements au vent
@@ -930,8 +940,8 @@ export class Character {
 
     const airSpeed = Math.hypot(totalWindX, totalWindY, totalWindZ);
     // inertie : au freinage cheveux et écharpe partent en avant, à l'accélération ils traînent
-    const accF = THREE.MathUtils.clamp(motion?.loco?.accF || 0, -30, 30);
-    const accL = THREE.MathUtils.clamp((motion?.loco?.omega || 0) * Math.hypot(motion?.loco?.v || 0, 0), -15, 15);
+    const accF = THREE.MathUtils.clamp(motion?.loco?.aLong ?? motion?.loco?.accF ?? 0, -30, 30);
+    const accL = THREE.MathUtils.clamp(motion?.loco?.aLat ?? (motion?.loco?.omega || 0) * (motion?.loco?.v || 0), -15, 15);
     const tilt = j.headX + j.lean + j.torsoX;
     const sway = Math.sin(this.phase) * 0.06 * walk;
     const hairStyle = this.avatar?.hair || 'queue';
@@ -1097,13 +1107,29 @@ export class Character {
     this.startT += dt;
     if (L.state === 'SPRINT') this.breath = Math.max(this.breath, Math.min(1, L.sprintTime / 4));
     else this.breath = Math.max(0, this.breath - dt / 2.5);
+    // main au sol : le poids monte vite au contact et redescend un peu plus doucement ; le côté
+    // reste celui du dernier contact pendant que la main se relève
+    const handT = handWeightTarget(L);
+    this.handW += (handT - this.handW) * damp(handT > this.handW ? 24 : 14, dt);
+    if (L.handDown && L.handSide) this.handSide = L.handSide;
+    if (Number.isFinite(L.handRise)) this.handRise += (L.handRise - this.handRise) * damp(30, dt);
     const p = this.lp;
     Object.assign(p, L);
     p.now = now;
     p.startT = this.startT;
     p.breath = this.breath;
+    p.handW = this.handW;
     this.phase = L.phase;
     locomotionPose(p, T, this.lx);
+    // bras vivants : retard des bras sur l'accélération, à-coups à la réception et au contact
+    const dyn = stepArmDynamics(this.armDyn, p, dt, this.armOut);
+    const fam = LOCO_FAMILY[L.state] || 'sol';
+    if (fam === 'sol' || fam === 'land' || fam === 'air') {
+      T.armLX += dyn.armLX;
+      T.armRX += dyn.armRX;
+      T.armLZ += dyn.armLZ;
+      T.armRZ += dyn.armRZ;
+    }
     let expr = this.lx.expr;
     // au repos : le regard flâne, puis de petites occupations après 20 s
     const still = L.state === 'IDLE' && speed < 0.1;

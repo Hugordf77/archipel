@@ -2,7 +2,12 @@
 // de la manette et caméra (champ de vision au sprint, secousses), à partir des événements
 // du moteur (player.events) et de son état continu (player.loco).
 import { ORIGIN } from '../../core/globals.js';
-import { bankAngle } from './pose.js';
+import { bodyBank } from './pose.js';
+import { BASE_TUNING } from './tuning.js';
+
+// seuils rapportés aux allures réglées (valeurs d'origine à 5,4 m/s de course)
+const RUN_DUST = BASE_TUNING.run * (3.6 / 5.4); // poussière au talon au-delà
+const TURN_DUST_BANK = 0.18; // rad : le pied extérieur pousse de la poussière
 
 export class LocoFeedback {
   constructor(game) {
@@ -12,6 +17,7 @@ export class LocoFeedback {
     this.breathT = 0;
     this.sweatT = 0;
     this.pantT = 0;
+    this.handT = 0;
   }
 
   get shakeOn() {
@@ -33,6 +39,28 @@ export class LocoFeedback {
 
   rumble(strong, weak, ms) {
     this.game.pad?.rumble(strong, weak, ms);
+  }
+
+  // Point où la main touche le sol (coordonnées absolues) : celui visé par le bras du
+  // personnage, sinon la sonde de Player, sinon l'événement.
+  handPoint(e, out) {
+    const g = this.game;
+    const c = g.character;
+    const p = g.player;
+    if (c?.handContactOk) {
+      const f = p.facing;
+      const lx = c.handContact.x;
+      const lz = c.handContact.z;
+      out.x = p.pos.x + Math.cos(f) * lx + Math.sin(f) * lz;
+      out.z = p.pos.z - Math.sin(f) * lx + Math.cos(f) * lz;
+      out.y = p.pos.y + c.handContact.y;
+      return out;
+    }
+    const L = p.loco;
+    out.x = Number.isFinite(L.handX) ? L.handX : e?.x ?? p.pos.x;
+    out.z = Number.isFinite(L.handZ) ? L.handZ : e?.z ?? p.pos.z;
+    out.y = Number.isFinite(L.handY) ? L.handY : e?.y ?? p.pos.y;
+    return out;
   }
 
   shake(amount) {
@@ -68,7 +96,7 @@ export class LocoFeedback {
           for (let i = 0; i < 3; i++) this.foam(e.x, e.y + 0.05, e.z, { vx: (Math.random() - 0.5) * 1.5, vz: (Math.random() - 0.5) * 1.5, vy: 1.4, grav: 5, size: 0.08, life: 0.45, grow: 0.08 });
           return;
         }
-        if (e.v < 3.6) return;
+        if (e.v < RUN_DUST) return;
         // poussière au talon, côté du pied qui pousse
         const sx = -fz * 0.09 * e.side;
         const sz = fx * 0.09 * e.side;
@@ -147,6 +175,24 @@ export class LocoFeedback {
         audio?.splash(Math.min(1.5, 0.4 + (e.v || 0) / 8));
         this.ring(e, 8, 1.6, 0.12, true);
         return;
+      case 'handTouch': {
+        // la main effleure le sol dans le virage : frottement discret, petite traînée, vibration légère
+        const surface = e.surface || g.player.loco.surface;
+        audio?.handBrush?.(surface, e.v || 0);
+        this.rumble(0.05, 0.18, 70);
+        this.handT = 0.05;
+        const h = this.handPoint(e, this._hp || (this._hp = { x: 0, y: 0, z: 0 }));
+        const hx = Math.sin(e.heading ?? g.player.facing);
+        const hz = Math.cos(e.heading ?? g.player.facing);
+        if (surface === 'shallow') {
+          for (let i = 0; i < 3; i++) this.foam(h.x, h.y + 0.04, h.z, { vx: -hx * 1.2 + (Math.random() - 0.5) * 0.6, vz: -hz * 1.2 + (Math.random() - 0.5) * 0.6, vy: 1.1, grav: 5, size: 0.07, life: 0.4, grow: 0.08 });
+          return;
+        }
+        for (let i = 0; i < 3; i++) this.dust(h.x - hx * 0.08 * i, h.y + 0.03, h.z - hz * 0.08 * i, { size: 0.1 + i * 0.02, vx: -hx * 0.9, vz: -hz * 0.9, vy: 0.3, life: 0.45, grow: 0.3 });
+        return;
+      }
+      case 'handLift':
+        return;
       default:
     }
   }
@@ -170,9 +216,18 @@ export class LocoFeedback {
         else this.dust(P.x + fx * 0.25, P.y + 0.04, P.z + fz * 0.25, { size: 0.22 + speed * 0.02, vx: fx * speed * 0.25, vz: fz * speed * 0.25, vy: 0.45, life: 0.6, grow: 0.4 });
       }
     }
-    // virage serré : le pied extérieur pousse
-    const bank = bankAngle(speed, L.omega || 0);
-    if (moving && L.grounded && (L.state === 'RUN' || L.state === 'SPRINT') && Math.abs(bank) > 0.18) {
+    // main au sol : petite traînée de poussière (ou d'écume) sous la main tant qu'elle frôle
+    if (moving && L.handDown && L.surface !== 'shallow') {
+      this.handT -= dt;
+      if (this.handT <= 0) {
+        this.handT = 0.05;
+        const h = this.handPoint(null, this._hp || (this._hp = { x: 0, y: 0, z: 0 }));
+        this.dust(h.x, h.y + 0.03, h.z, { size: 0.09 + speed * 0.006, vx: -fx * speed * 0.12, vz: -fz * speed * 0.12, vy: 0.25, life: 0.4, grow: 0.3 });
+      }
+    }
+    // virage serré : le pied extérieur pousse (inclinaison du moteur au-delà de 0,18 rad)
+    const bank = bodyBank(L, speed);
+    if (moving && L.grounded && (L.state === 'RUN' || L.state === 'SPRINT') && Math.abs(bank) > TURN_DUST_BANK) {
       this.turnT -= dt;
       if (this.turnT <= 0) {
         this.turnT = 0.12;
@@ -206,6 +261,7 @@ export class LocoFeedback {
     }
     // champ de vision un peu plus large au sprint
     const rig = g.rig;
-    if (rig) rig.fovKick = moving && L.state === 'SPRINT' ? 6 * Math.min(1, Math.max(0, (speed - 5.4) / 2.8)) : 0;
+    const T = BASE_TUNING;
+    if (rig) rig.fovKick = moving && L.state === 'SPRINT' ? 6 * Math.min(1, Math.max(0, (speed - T.run) / (T.sprint - T.run))) : 0;
   }
 }

@@ -587,6 +587,22 @@ export class AudioEngine {
     if (chain > 0) this.tone(520 * up, { t0, type: 'triangle', peak: 0.025, attack: 0.004, decay: 0.12, glide: 880 * up });
   }
 
+  // main qui effleure le sol dans un virage serré : frottement bref et discret
+  handBrush(surface = 'grass', v = 6) {
+    if (!this.ready) return;
+    const t0 = this.ctx.currentTime;
+    const a = Math.max(0.4, Math.min(1, v / 9));
+    if (surface === 'shallow') {
+      this.noiseBurst({ t0, type: 'highpass', freq: 1800, q: 0.6, peak: 0.022 * a, attack: 0.01, decay: 0.16 });
+    } else if (surface === 'sand') {
+      this.noiseBurst({ t0, type: 'highpass', freq: 3000, q: 0.7, peak: 0.024 * a, attack: 0.012, decay: 0.2, sweep: 1800 });
+    } else if (surface === 'wood') {
+      this.noiseBurst({ t0, freq: 1600, q: 2.2, peak: 0.018 * a, attack: 0.008, decay: 0.12 });
+    } else {
+      this.noiseBurst({ t0, freq: 2400, q: 0.9, peak: 0.02 * a, attack: 0.012, decay: 0.18, sweep: 1200, kind: 'pink' });
+    }
+  }
+
   hop(long = false) {
     if (!this.ready) return;
     const t0 = this.ctx.currentTime;
