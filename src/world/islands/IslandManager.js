@@ -231,6 +231,7 @@ export class IslandManager {
     if (!this.depth.pending && Math.hypot(px - this.depth.cx, pz - this.depth.cz) > 220) this.requestDepth(px, pz);
     for (const e of this.entries.values()) if (e.want === 0 && e.plan) this.updateTiles(e, px, pz);
     this.herbe.update(this._focus.set(px - ORIGIN.x, 0, pz - ORIGIN.z));
+    this.herbe.regrow(dt);
     this.smallT = (this.smallT || 0) - dt;
     if (this.smallT <= 0) {
       this.smallT = 0.3;

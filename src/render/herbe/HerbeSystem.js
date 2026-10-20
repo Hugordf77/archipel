@@ -4,7 +4,8 @@
 // anneau, qui partagent le même patch de brins et ne diffèrent que par le nombre de brins dessinés
 // par cellule (drawRange) et la liste de leurs cellules (attribut d'instance aCell). Les listes ne
 // sont recalculées que si le joueur ou la caméra bouge de plus de MOVE m, ou si la caméra tourne de
-// plus de TURN rad.
+// plus de TURN rad. Herbe couchée par des pousseurs (joueur, animaux, aigle) et fauchée à l'épée
+// (masque par tuile qui repousse).
 import * as THREE from 'three';
 import { ORIGIN } from '../../core/globals.js';
 import { herbeMaterial } from './materiau.js';
@@ -14,6 +15,17 @@ const V = 65; // nœuds par côté d'une tuile (TILE + 1)
 const MOVE = 0.25;
 const TURN = (1 * Math.PI) / 180;
 const WIDTH = 0.045; // m, largeur d'un brin dans l'anneau le plus dense
+// herbe fauchée : masque de 129 × 129 sur la tuile (au demi-mètre), qui repousse en REGROW s
+const CUT_N = 129;
+const CUT_STEP = 0.5;
+const REGROW = 120;
+const PUSHERS = 8;
+// masque vide partagé par les tuiles jamais fauchées
+const NO_CUT = (() => {
+  const tex = new THREE.DataTexture(new Uint8Array([0]), 1, 1, THREE.RedFormat, THREE.UnsignedByteType);
+  tex.needsUpdate = true;
+  return tex;
+})();
 
 // patch : BLADES brins de 7 sommets (côté, hauteur relative, rang du brin) et 5 triangles ; un
 // anneau dessine les n premiers brins (drawRange de n × 15 indices)
@@ -73,7 +85,9 @@ export class HerbeSystem {
       uRings: { value: new THREE.Vector4() },
       uCounts: { value: new THREE.Vector4() },
       uWidth: { value: WIDTH },
+      uPushers: { value: Array.from({ length: PUSHERS }, () => new THREE.Vector4()) },
     };
+    this.regrowT = 0;
     this.applyPreset();
     this.tiles = new Set();
     this.lastFocus = new THREE.Vector3(Infinity, 0, Infinity);
@@ -114,7 +128,7 @@ export class HerbeSystem {
     const sol = new Uint8Array(V * V * 4);
     const hautTex = dataTexture(haut, THREE.RedFormat, THREE.FloatType, THREE.NearestFilter);
     const solTex = dataTexture(sol, THREE.RGBAFormat, THREE.UnsignedByteType, THREE.LinearFilter);
-    const material = herbeMaterial({ id: this.id, shared: this.shared, champ, sol: solTex, haut: hautTex, x0: t.x0, z0: t.z0 });
+    const material = herbeMaterial({ id: this.id, shared: this.shared, champ, sol: solTex, haut: hautTex, coupe: NO_CUT, x0: t.x0, z0: t.z0 });
     const rings = [0, 1, 2].map((r) => {
       const geo = new THREE.InstancedBufferGeometry();
       geo.setAttribute('position', this.patch.position);
@@ -130,7 +144,7 @@ export class HerbeSystem {
       t.group.add(mesh);
       return { mesh, geo, cells };
     });
-    t.herbe = { e, champ, hautTex, solTex, haut, sol, material, rings };
+    t.herbe = { e, champ, champData: champ.image.data, hautTex, solTex, haut, sol, material, rings, coupe: null, coupeTex: null };
     this.readGround(t);
     this.tiles.add(t);
     this.dirty = true;
@@ -160,11 +174,89 @@ export class HerbeSystem {
       r.geo.dispose();
     }
     H.material.dispose();
+    H.coupeTex?.dispose();
     H.champ.dispose();
     H.hautTex.dispose();
     H.solTex.dispose();
     t.herbe = null;
     this.tiles.delete(t);
+  }
+
+  // Pousseurs de l'image : liste de { x, z (absolus), r (m), s (0 à 1) }, PUSHERS au plus
+  setPushers(list) {
+    const P = this.shared.uPushers.value;
+    for (let k = 0; k < PUSHERS; k++) {
+      const p = list[k];
+      if (p) P[k].set(p.x - ORIGIN.x, p.z - ORIGIN.z, p.r, p.s);
+      else P[k].set(0, 0, 0, 0);
+    }
+  }
+
+  // Fauche l'herbe dans un disque (x, z absolus, rayon r) : rend la part de l'herbe touchée qui
+  // était haute (0 si le disque ne touche que du sol nu ou de l'herbe déjà fauchée).
+  cut(x, z, r) {
+    let cells = 0;
+    let grass = 0;
+    for (const t of this.tiles) {
+      if (!t.active) continue;
+      const H = t.herbe;
+      const lx = x - H.e.desc.x - t.x0;
+      const lz = z - H.e.desc.z - t.z0;
+      if (lx < -r || lz < -r || lx > V - 1 + r || lz > V - 1 + r) continue;
+      if (!H.coupe) {
+        H.coupe = new Uint8Array(CUT_N * CUT_N);
+        H.coupeTex = new THREE.DataTexture(H.coupe, CUT_N, CUT_N, THREE.RedFormat, THREE.UnsignedByteType);
+        H.coupeTex.unpackAlignment = 1;
+        H.coupeTex.magFilter = H.coupeTex.minFilter = THREE.LinearFilter;
+        H.material.uniforms.uCoupe.value = H.coupeTex;
+      }
+      const i0 = Math.max(0, Math.floor((lx - r) / CUT_STEP));
+      const i1 = Math.min(CUT_N - 1, Math.ceil((lx + r) / CUT_STEP));
+      const j0 = Math.max(0, Math.floor((lz - r) / CUT_STEP));
+      const j1 = Math.min(CUT_N - 1, Math.ceil((lz + r) / CUT_STEP));
+      for (let j = j0; j <= j1; j++) {
+        for (let i = i0; i <= i1; i++) {
+          const d = Math.hypot(i * CUT_STEP - lx, j * CUT_STEP - lz);
+          if (d > r) continue;
+          const k = j * CUT_N + i;
+          const v = Math.round(255 * Math.min(1, (r - d) / 0.4));
+          const ci = Math.min(V - 1, Math.round(i * CUT_STEP));
+          const cj = Math.min(V - 1, Math.round(j * CUT_STEP));
+          const dens = H.champData[(cj * V + ci) * 4] / 255;
+          cells++;
+          grass += dens * (1 - H.coupe[k] / 255);
+          if (v > H.coupe[k]) H.coupe[k] = v;
+        }
+      }
+      H.coupeTex.needsUpdate = true;
+    }
+    return cells ? grass / cells : 0;
+  }
+
+  // Repousse de l'herbe fauchée (appelée à chaque image, travail une fois par seconde)
+  regrow(dt) {
+    this.regrowT += dt;
+    if (this.regrowT < 1) return;
+    const step = Math.max(1, Math.round((255 * this.regrowT) / REGROW));
+    this.regrowT = 0;
+    for (const t of this.tiles) {
+      const H = t.herbe;
+      if (!H.coupe) continue;
+      let any = false;
+      const c = H.coupe;
+      for (let k = 0; k < c.length; k++) {
+        if (!c[k]) continue;
+        c[k] = c[k] > step ? c[k] - step : 0;
+        if (c[k]) any = true;
+      }
+      if (any) H.coupeTex.needsUpdate = true;
+      else {
+        H.coupeTex.dispose();
+        H.coupe = null;
+        H.coupeTex = null;
+        H.material.uniforms.uCoupe.value = NO_CUT;
+      }
+    }
   }
 
   // Une fois par image : focus = joueur (coordonnées de la scène)

@@ -622,6 +622,15 @@ export class AudioEngine {
     this.noiseBurst({ t0: t0 + 0.02, type: 'highpass', freq: 2600, q: 0.7, peak: 0.006 * a, attack: 0.005, decay: 0.05 });
   }
 
+  // herbe fauchée à l'épée : bruissement bref, plus fourni quand l'herbe était haute (amount 0 à 1)
+  grassCut(amount = 1) {
+    if (!this.ready) return;
+    const t0 = this.ctx.currentTime;
+    const a = Math.max(0.3, Math.min(1, amount));
+    this.noiseBurst({ t0, type: 'highpass', freq: 2600, q: 0.7, peak: 0.03 * a, attack: 0.006, decay: 0.14, sweep: 4200, kind: 'pink' });
+    this.noiseBurst({ t0: t0 + 0.04, freq: 1500, q: 1.2, peak: 0.014 * a, attack: 0.01, decay: 0.1 });
+  }
+
   // grimpe : bruissement des palmes au sommet
   palmRustle() {
     if (!this.ready) return;

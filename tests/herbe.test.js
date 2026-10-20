@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { describe, it, expect } from 'vitest';
 import { CELL, BLADES, HERBE_PRESETS, bladesAt, r2, ringOf, cellsForTile, bladesDrawn } from '../src/render/herbe/placement.js';
 import { HerbeSystem, champDeSecours } from '../src/render/herbe/HerbeSystem.js';
+import { ORIGIN } from '../src/core/globals.js';
 
 const V = 65;
 
@@ -185,5 +186,36 @@ describe('herbe en tapis : budgets et mises à jour', () => {
     expect(c[8]).toBe(0);
     expect(c[12]).toBe(0);
     expect(BLADES).toBe(384);
+  });
+
+  it('l’épée fauche l’herbe d’un disque, qui ne se fauche pas deux fois et repousse en deux minutes', () => {
+    const { H } = system('medium');
+    const first = H.cut(10, 12, 1.3);
+    expect(first).toBeGreaterThan(0.5); // prairie de secours, densité 0,7
+    const tile = [...H.tiles].find((t) => t.x0 === 0 && t.z0 === 0);
+    expect(tile.herbe.coupe).not.toBeNull();
+    expect(tile.herbe.material.uniforms.uCoupe.value).toBe(tile.herbe.coupeTex);
+    expect(tile.herbe.coupe[24 * 129 + 20]).toBe(255); // centre du disque (10 ; 12)
+    expect(H.cut(10, 12, 1.3)).toBeLessThan(first * 0.35); // déjà fauchée (seul le bord doux reste)
+    // à cheval sur deux tuiles (0,0 déjà fauchée et 1,0) : les deux sont fauchées
+    H.cut(64, 30, 1.3);
+    const cutTiles = [...H.tiles].filter((t) => t.herbe.coupe).map((t) => `${t.x0},${t.z0}`);
+    expect(cutTiles.sort()).toEqual(['0,0', '64,0']);
+    for (let s = 0; s < 60; s++) H.regrow(1);
+    expect(tile.herbe.coupe).not.toBeNull();
+    for (let s = 0; s < 70; s++) H.regrow(1);
+    expect(tile.herbe.coupe).toBeNull();
+    expect(H.cut(10, 12, 1.3)).toBeGreaterThan(0.5);
+  });
+
+  it('les pousseurs passent en coordonnées de la scène, les places libres sont éteintes', () => {
+    const { H } = system('low');
+    ORIGIN.set(100, 0, -50);
+    H.setPushers([{ x: 103, z: -48, r: 1, s: 1 }, { x: 90, z: -40, r: 0.9, s: 0.5 }]);
+    const P = H.shared.uPushers.value;
+    expect(P[0].toArray()).toEqual([3, 2, 1, 1]);
+    expect(P[1].toArray()).toEqual([-10, 10, 0.9, 0.5]);
+    for (let k = 2; k < 8; k++) expect(P[k].z).toBe(0);
+    ORIGIN.set(0, 0, 0);
   });
 });

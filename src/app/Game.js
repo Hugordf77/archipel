@@ -354,6 +354,7 @@ export class Game {
     else this.player.update(dt, intent);
     this.consumeLocoEvents();
     this.locoFx?.update(dt);
+    this.updateGrass(dt);
     this.rig.followVelocity.copy(this.player.vel);
     this.rig.followSpeed = this.player.actualSpeed;
     this.rig.followWater = this.player.swimming;
@@ -579,6 +580,8 @@ export class Game {
       if (this.player.locked || this.player.mode === 'action' || this.player.mode === 'seated' || this.player.climbing
         || this.sailing.aboard || this.airRide.riding || this.player.swimming || this.decor?.placing) return true;
       this.player.playAction('swordAttack', 0.82, () => {});
+      // l'épée fauche l'herbe au moment de la frappe (0,3 s après l'élan)
+      this.grassCutT = 0.3;
       return true;
     }
     if (this.airRide.riding) {
@@ -691,6 +694,49 @@ export class Game {
     I.jumpHeld = k.has('Space') || this.pad.jumpHeld;
     input.taps.clear();
     return I;
+  }
+
+  // Herbe en tapis : couchée sous le joueur, les animaux proches et le souffle de l'aigle qui vole
+  // bas ; fauchée par l'épée (sans rien donner : la fibre reste aux touffes à récolter)
+  updateGrass(dt) {
+    const H = this.islands.herbe;
+    const pool = (this._pushers ||= Array.from({ length: 8 }, () => ({ x: 0, z: 0, r: 0, s: 0 })));
+    const list = (this._pushList ||= []);
+    list.length = 0;
+    const P = this.player.pos;
+    const add = (x, z, r, s) => {
+      const p = pool[list.length];
+      p.x = x;
+      p.z = z;
+      p.r = r;
+      p.s = s;
+      list.push(p);
+    };
+    if (this.airRide.riding) {
+      const alt = P.y - groundAt(P.x, P.z).y;
+      if (alt < 10) add(P.x, P.z, 3.5, 1 - alt / 10);
+    } else if (!this.sailing.aboard) add(P.x, P.z, 1.0, 1);
+    const near = (this._nearAnimals ||= []);
+    near.length = 0;
+    for (const an of this.islands.fauna?.animals || []) {
+      if (an.def.fly || an.def.insect || an.def.fish) continue;
+      const d = Math.hypot(an.x - P.x, an.z - P.z);
+      if (d < 25) near.push([d, an]);
+    }
+    near.sort((a, b) => a[0] - b[0]);
+    for (const [, an] of near) {
+      if (list.length >= pool.length) break;
+      add(an.x, an.z, 0.45 + (an.def.scale ?? 1) * 0.45, 1);
+    }
+    H.setPushers(list);
+    if (this.grassCutT > 0) {
+      this.grassCutT -= dt;
+      if (this.grassCutT <= 0) {
+        const f = this.player.facing;
+        const amount = H.cut(P.x + Math.sin(f) * 0.9, P.z + Math.cos(f) * 0.9, 1.3);
+        if (amount > 0.15) this.audio?.grassCut?.(amount);
+      }
+    }
   }
 
   // Événements de locomotion de l'image (sons, poussière, vibrations, caméra)

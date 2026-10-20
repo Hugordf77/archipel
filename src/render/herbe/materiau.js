@@ -2,9 +2,9 @@
 // de son indice (position.z), de sa place dans le brin (position.xy : côté, hauteur relative) et de
 // l'origine de sa cellule (attribut d'instance aCell, coordonnées de l'île). Les textures de la tuile
 // donnent la densité, la hauteur et la sécheresse (carte d'herbe du Worker), la hauteur du sol
-// (mêmes triangles que le maillage) et sa couleur. Brins pliés par le vent, avec des ondes qui
-// traversent le pré, couchés autour du joueur, plus bas près de la caméra ; ni ombre portée ni
-// contour (identifiant du terrain).
+// (mêmes triangles que le maillage) et sa couleur, et l'herbe fauchée. Brins pliés par le vent, avec
+// des ondes qui traversent le pré, couchés sous les pousseurs (joueur, animaux, aigle), plus bas près
+// de la caméra ; ni ombre portée ni contour (identifiant du terrain).
 import * as THREE from 'three';
 import { U } from '../../core/globals.js';
 import { NOISE, PAINT, CURVE, WIND, SHADOW, TOON, MRT_OUT } from '../shaders/chunks.js';
@@ -26,7 +26,10 @@ uniform vec4 uRings;
 uniform vec4 uCounts;
 uniform float uWidth;
 uniform vec3 uTipColor;
-uniform vec3 uPlayerPos;
+// pousseurs (x, z de la scène, rayon, force) : joueur, animaux, souffle de l'aigle
+uniform vec4 uPushers[8];
+// herbe fauchée (0 à 1) au demi-mètre, 129 × 129 sur la tuile
+uniform sampler2D uCoupe;
 varying vec3 vWorldPos;
 varying vec3 vNormalW;
 varying vec3 vAlbedo;
@@ -91,7 +94,8 @@ void main() {
   float r2 = hash12(cellId * 1.13 - i * 0.4142135 + 5.0);
   float camD = distance(cameraPosition.xz, base.xz);
   float lod = mix(0.45, 1.0, smoothstep(2.0, 7.0, camD));
-  float hgt = champ.g * 1.2 * (0.7 + 0.6 * r1) * keep * lod;
+  float cut = texture(uCoupe, lt / 64.0 * (128.0 / 129.0) + 0.5 / 129.0).r;
+  float hgt = champ.g * 1.2 * (0.7 + 0.6 * r1) * keep * lod * mix(1.0, 0.15, cut);
   if (hgt < 0.01) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
@@ -113,10 +117,20 @@ void main() {
   float wave = smoothstep(0.42, 0.85, vnoise(wA.xz * 0.09 - wdir * uTime * 0.55)) * uWindStrength;
   wp.xz += wdir * wave * hgt * 0.45 * t * t;
   wp.y -= wave * hgt * 0.15 * t * t;
-  // couchée autour du joueur (ses pieds restent visibles)
-  vec2 dp = base.xz - uPlayerPos.xz;
-  float push = smoothstep(1.0, 0.0, length(dp));
-  wp.xz += normalize(dp + 0.0001) * push * hgt * 0.8 * t;
+  // couchée sous le joueur (ses pieds restent visibles), les animaux et le souffle de l'aigle
+  vec2 pushV = vec2(0.0);
+  float push = 0.0;
+  for (int k = 0; k < 8; k++) {
+    vec4 P = uPushers[k];
+    if (P.z <= 0.0) continue;
+    vec2 dp = base.xz - P.xy;
+    float pk = smoothstep(P.z, 0.0, length(dp)) * P.w;
+    pushV += normalize(dp + 0.0001) * pk;
+    push = max(push, pk);
+  }
+  float pl = length(pushV);
+  if (pl > 1.0) pushV /= pl;
+  wp.xz += pushV * hgt * 0.8 * t;
   wp.y -= push * hgt * 0.55 * t;
   // couleur : pied à la teinte exacte du sol (même peinture que le terrain), pointe plus claire,
   // sèche vers la paille, éclaircie par l'onde de vent
@@ -131,6 +145,8 @@ void main() {
   vec3 blade = sol * (0.9 + 0.2 * r2);
   blade = mix(blade, blade * vec3(1.08, 1.04, 0.82), step(0.8, hue));
   vec3 tip = mix(blade, uTipColor, 0.6) * 1.1 + vec3(0.08, 0.08, 0.04) * wave;
+  // chaume fauché : coupe nette, plus jaune
+  tip = mix(tip, blade * vec3(1.1, 1.02, 0.75), cut);
   vAlbedo = mix(blade * 0.78, tip, smoothstep(0.0, 1.0, t));
   // normale proche de celle du sol (sinon le contour dessine des plis d'encre sur le terrain)
   vec3 bn = vec3(bendDir.x, 0.0, bendDir.y);
@@ -168,7 +184,7 @@ void main() {
 
 // shared : uniformes communs à toutes les tuiles (joueur, anneaux, nombres de brins, largeur), par
 // référence ; les textures et l'origine de la tuile sont propres à chaque matériau.
-export function herbeMaterial({ id, shared, champ, sol, haut, x0, z0, tipColor = 0xe4f0bc }) {
+export function herbeMaterial({ id, shared, champ, sol, haut, coupe, x0, z0, tipColor = 0xe4f0bc }) {
   return new THREE.ShaderMaterial({
     name: 'herbe',
     glslVersion: THREE.GLSL3,
@@ -180,6 +196,7 @@ export function herbeMaterial({ id, shared, champ, sol, haut, x0, z0, tipColor =
       uChamp: { value: champ },
       uSol: { value: sol },
       uHaut: { value: haut },
+      uCoupe: { value: coupe },
       uTile: { value: new THREE.Vector2(x0, z0) },
     },
     vertexShader: herbeVert,
