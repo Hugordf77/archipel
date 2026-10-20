@@ -1,348 +1,344 @@
 # Graph Report - src  (2026-10-20)
 
 ## Corpus Check
-- 282 files · ~244,925 words
+- 284 files · ~261,734 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1719 nodes · 5356 edges · 74 communities (58 shown, 16 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 85 edges (avg confidence: 0.77)
+- 1840 nodes · 5280 edges · 90 communities (80 shown, 10 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 76 edges (avg confidence: 0.76)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- Lieux et ouvrages (modèles)
-- Moteur de locomotion du joueur
-- Végétation et Builder
-- Décor et objets posés (modèles)
-- Fiches et index des modèles
-- Faune de départ et hibou
-- Moteur audio procédural
-- Manette DualSense
-- Bateaux et navigation à voile
-- Matériaux toon et aléatoire
-- Cerf (modèle)
-- Relief de l'île de départ
-- Pose et retours de locomotion
-- Vache (modèle)
-- Plan d'île : lieux, chemins, apparitions
-- Avatar, miroir et boutique
-- Surface et tuiles des îles
-- Fleurs de l'île de départ
-- Récolte et filet
-- Monde, eau et feuillage
-- Carte, minicarte et régions
-- Boucle de jeu et sauvegarde
-- Physique des modèles (encombrement)
-- Gestionnaire d'îles : végétation
-- Interface (UI, DOM)
-- Personnage : corps et coupes
-- Pipeline de rendu peint
-- Saisons, archipel et limites
-- Navigation et obstacles
-- Gestionnaire d'îles : activation
-- Terrain, hydrologie, érosion
-- Outils de récolte
-- Zones et bruit
-- Vol de l'aigle (AirRide)
-- Personnage (Character)
-- Réglages et écriture de sauvegarde
-- Objets et inventaire (UI)
-- Mouton et laine
-- Ciel, textures et caméra
-- Visage du personnage
-- Inventaire (logique)
-- Kit : accessoires (yeux, pattes)
-- État de sauvegarde (state)
-- Relief des îles
-- Bateaux échoués et étals
-- Registre et relevés
-- Cycle jour et nuit
-- Kit : formes (taches, grilles)
-- Faune des îles
-- Petite végétation
-- Caméra (CameraRig)
-- Interactions et visée
-- Décor posé (logique)
+- Lieux et bâtiments
+- Arbres de la végétation
+- Îles, obstacles et troncs
+- Petite faune (modèles)
+- Moteur audio
+- Jeu (Game)
+- Récolte et objets
+- Faune de l’île de départ
+- Manette
+- Cerf et formes
+- Rendu du monde et de l’eau
+- Pose de locomotion
+- Carte, brouillard, minicarte
+- Apparence du joueur
+- Personnage et visage
+- Personnage animé
+- Terrain et détails
+- Raccord Player et moteur
+- Vache
+- Fleurs et faune des îles
+- Squelette et cinématique inverse
+- Récolte en jeu
+- Sauvegarde et réglages
+- Vol en aigle
+- Mouton
+- Grand arbre et palmier
+- Moteur : saut, chute, réception
+- Navigation à voile
+- Espèces et surface des îles
+- Ateliers
+- Hydrologie et chemins
+- Démarrage et outils de dev
+- Zones, bruit et flore
+- Moteur : états et inclinaison
+- Interface (DOM)
+- Pipeline de rendu
 - Assemblage des modèles
-- Worker du monde et biomes
-- Entrées clavier
+- Lieux et apparitions
+- Bateaux
+- Végétation lointaine et biomes
+- Objets marins
+- Objets à collecter
+- Chèvre
+- Caméra
+- Faune des îles
+- Retours de locomotion
+- Registre des modèles
+- Cycle du jour
+- Interactions
+- Décoration
+- Accroche aux troncs
+- Relief
+- Clavier et souris
+- Hibou
+- Saisons
 - Atlas du visage
-- Rivières et LOD des tuiles
-- Pièces de lieux et planchers
+- Grimpe : pas sur le tronc
+- Surface d’île
+- Réglages de locomotion
+- Moteur : rotation et pente
+- Textures peintes
 - Météo
-- Géométrie accumulée des îles
-- Préchargement des modèles
-- Brouillard de la carte
-- Barre d'outils
-- Tenues et accessoires du personnage
+- Grille
 - Budgets des modèles
-- Pièces communes du personnage
-- Visibilité des objets d'île
-- Point d'entrée
 
 ## God Nodes (most connected - your core abstractions)
 1. `fiche()` - 102 edges
-2. `G` - 102 edges
+2. `G` - 101 edges
 3. `lire()` - 87 edges
-4. `Builder` - 76 edges
+4. `Builder` - 75 edges
 5. `Game` - 59 edges
-6. `AudioEngine` - 49 edges
+6. `AudioEngine` - 53 edges
 7. `bx()` - 48 edges
-8. `toonMaterial()` - 43 edges
-9. `groundAt()` - 43 edges
-10. `h()` - 42 edges
+8. `groundAt()` - 43 edges
+9. `IslandManager` - 39 edges
+10. `h()` - 37 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `partModel()` --calls--> `mulberry32()`  [EXTRACTED]
+  models/lieux.js → core/random.js
 - `buildAvatarGeometry()` --references--> `W`  [EXTRACTED]
   models/personnage/corps/index.js → data/harvest.js
 - `vache()` --indirect_call--> `h()`  [INFERRED]
   models/animaux/vache/index.js → ui/dom.js
 - `construire()` --indirect_call--> `h()`  [INFERRED]
   models/bateaux/commun.js → ui/dom.js
-- `buildProps()` --indirect_call--> `col()`  [INFERRED]
-  world/home/props.js → models/kit/vegetal.js
 - `flowerGeometry()` --indirect_call--> `h()`  [INFERRED]
   models/plantes/fleurs/index.js → ui/dom.js
 
 ## Import Cycles
-- 3-file cycle: `entities/character/Character.js -> models/personnage/index.js -> models/personnage/corps/index.js -> entities/character/Character.js`
-- 3-file cycle: `entities/character/Character.js -> models/personnage/index.js -> models/personnage/coupes/index.js -> entities/character/Character.js`
-- 4-file cycle: `entities/character/Character.js -> models/personnage/index.js -> models/personnage/crayon/index.js -> models/personnage/coupes/index.js -> entities/character/Character.js`
-- 4-file cycle: `entities/character/Character.js -> models/personnage/index.js -> models/personnage/corps/index.js -> models/personnage/coupes/index.js -> entities/character/Character.js`
+- None detected.
 
-## Communities (74 total, 16 thin omitted)
+## Communities (90 total, 10 thin omitted)
 
-### Community 0 - "Lieux et ouvrages (modèles)"
+### Community 0 - "Lieux et bâtiments"
 Cohesion: 0.06
-Nodes (57): arbreGeant(), epave(), ancre(), boueeEchouee(), cabane(), moulinEau(), moulin(), observatoire() (+49 more)
+Nodes (74): arbreGeant(), barque(), barqueAmarree(), barqueEchouee(), epave(), ancre(), boueeEchouee(), cabane() (+66 more)
 
-### Community 1 - "Moteur de locomotion du joueur"
+### Community 1 - "Arbres de la végétation"
 Cohesion: 0.07
-Nodes (62): AIR, airStep(), arriveIntent(), bonk(), bonkStep(), canJump(), clamp(), climbable() (+54 more)
+Nodes (54): arbreFruitier(), arbrePompon(), bambou(), bouleau(), arbreCerisier(), champiGeant(), pin(), pine() (+46 more)
 
-### Community 2 - "Végétation et Builder"
-Cohesion: 0.09
-Nodes (51): arbreFruitier(), arbrePompon(), bambou(), bouleau(), arbreCerisier(), champiGeant(), pin(), pine() (+43 more)
+### Community 2 - "Îles, obstacles et troncs"
+Cohesion: 0.06
+Nodes (28): ENCOMBREMENT, GRIMPE, ACC_ATTRS, _bc, BLOOMS, _bp, _c, composeItem() (+20 more)
 
-### Community 3 - "Décor et objets posés (modèles)"
+### Community 3 - "Petite faune (modèles)"
+Cohesion: 0.12
+Nodes (14): fiche(), outil(), PREFIXES, species(), birdParts(), part(), quad(), colonnes (+6 more)
+
+### Community 4 - "Moteur audio"
+Cohesion: 0.08
+Nodes (6): AudioEngine, CHANNEL_LABELS, CHANNELS, midiToHz(), PENTA, rand()
+
+### Community 6 - "Récolte et objets"
 Cohesion: 0.07
-Nodes (44): grandArbre(), grandArbreClumps(), trunkAlong(), bibliotheque(), chaumiere(), echoppe(), chantier, couture (+36 more)
+Nodes (19): HARVEST, TIER_NAMES, TOOL_NAMES, W, BUGS, FISH, FLOWER_COLORS, itemIcon() (+11 more)
 
-### Community 4 - "Fiches et index des modèles"
-Cohesion: 0.13
-Nodes (19): fiche(), ILE_DEPART, outil(), PREFIXES, species(), birdParts(), part(), quad() (+11 more)
+### Community 7 - "Faune de l’île de départ"
+Cohesion: 0.07
+Nodes (36): Fauna, makeButterfly(), makeCrab(), makeGull(), Parts, rand(), skeleton(), _zero (+28 more)
 
-### Community 5 - "Faune de départ et hibou"
-Cohesion: 0.05
-Nodes (41): Fauna, makeButterfly(), makeCrab(), makeGull(), Parts, rand(), skeleton(), _zero (+33 more)
-
-### Community 6 - "Moteur audio procédural"
-Cohesion: 0.10
-Nodes (3): AudioEngine, midiToHz(), rand()
-
-### Community 7 - "Manette DualSense"
+### Community 8 - "Manette"
 Cohesion: 0.08
 Nodes (13): _aim, BTN, center(), GamepadInput, identifyController(), PAD_DEFAULTS, padName(), pickFocus() (+5 more)
 
-### Community 8 - "Bateaux et navigation à voile"
-Cohesion: 0.08
-Nodes (25): damp(), idealTrim(), lerpAngle(), pointOfSail(), Sailing, smoothDamp(), caracteristiques, dessin() (+17 more)
+### Community 9 - "Cerf et formes"
+Cohesion: 0.05
+Nodes (46): ANDOUILLERS, ARRIERE, AVANT, avec(), AXE_TETE, axis, C0, CC (+38 more)
 
-### Community 9 - "Matériaux toon et aléatoire"
-Cohesion: 0.11
-Nodes (21): nextId(), hashString(), mulberry32(), damp(), _zero, Collectibles, seeded(), SPECIES (+13 more)
-
-### Community 10 - "Cerf (modèle)"
-Cohesion: 0.06
-Nodes (41): ANDOUILLERS, ARRIERE, AVANT, avec(), AXE_TETE, axis, C0, CC (+33 more)
-
-### Community 11 - "Relief de l'île de départ"
-Cohesion: 0.14
-Nodes (34): parasolPlage(), transat(), blocked(), buildGrass(), rng(), slopeAt(), terrainColorSampler(), tuftGeometry() (+26 more)
-
-### Community 12 - "Pose et retours de locomotion"
-Cohesion: 0.12
-Nodes (25): LocoFeedback, airPose(), bankAngle(), blendGait(), bonkPose(), clamp(), crouchPose(), fallenPose() (+17 more)
-
-### Community 13 - "Vache (modèle)"
-Cohesion: 0.07
-Nodes (36): ARRIERE, AVANT, AXE_TETE, axis, CC, COL, CORPS, CR (+28 more)
-
-### Community 14 - "Plan d'île : lieux, chemins, apparitions"
-Cohesion: 0.12
-Nodes (30): weighted(), islandTraits(), placeFlora(), bilinear(), stableId(), sealLakes(), buildPaths(), costGrid() (+22 more)
-
-### Community 15 - "Avatar, miroir et boutique"
-Cohesion: 0.13
-Nodes (27): CLOTH_COLORS, CLOTH_NAMES, defaultAvatar(), EYES, HAIR_COLORS, HAIRS, index(), pick() (+19 more)
-
-### Community 16 - "Surface et tuiles des îles"
-Cohesion: 0.12
-Nodes (28): FOREST_TREES, SLOPE_MAX, ZONE_TABLE, KIND_INDEX, KIND_RADIUS, KINDS, SMALL, TREES (+20 more)
-
-### Community 17 - "Fleurs de l'île de départ"
-Cohesion: 0.11
-Nodes (12): MAT, archeGlycine(), lavandeGeante(), C, Flowers, Grid, pickWeighted(), rng() (+4 more)
-
-### Community 19 - "Monde, eau et feuillage"
-Cohesion: 0.15
-Nodes (16): buildClumpGeometry(), buildShadowProxies(), rng(), buildLake(), buildOcean(), buildPond(), buildRiver(), buildWaterfall() (+8 more)
-
-### Community 20 - "Carte, minicarte et régions"
-Cohesion: 0.15
-Nodes (20): pick(), fmtKm(), openLogbookPanel(), islandShape(), openMapPanel(), shapeCache, contexts, MiniMap (+12 more)
-
-### Community 23 - "Gestionnaire d'îles : végétation"
+### Community 10 - "Rendu du monde et de l’eau"
 Cohesion: 0.09
-Nodes (21): CAP_COLORS, ROCKY, ACC_ATTRS, _bc, bloomColor(), BLOOMS, _bp, _c (+13 more)
+Nodes (26): ORIGIN, U, buildClumpGeometry(), buildShadowProxies(), rng(), buildLake(), buildRivers(), riverMaterial() (+18 more)
 
-### Community 24 - "Interface (UI, DOM)"
+### Community 11 - "Pose de locomotion"
+Cohesion: 0.10
+Nodes (43): airPose(), ARM_DYN, _ax, bankAngle(), bankDrop(), blendGait(), bodyBank(), bonkPose() (+35 more)
+
+### Community 12 - "Carte, brouillard, minicarte"
+Cohesion: 0.09
+Nodes (33): pick(), KINDS, fmtKm(), openCartographerPanel(), openLogbookPanel(), islandShape(), openMapPanel(), shapeCache (+25 more)
+
+### Community 13 - "Apparence du joueur"
+Cohesion: 0.11
+Nodes (29): CLOTH_COLORS, CLOTH_NAMES, defaultAvatar(), EYES, HAIR_COLORS, index(), PIECES, piecesOf() (+21 more)
+
+### Community 14 - "Personnage et visage"
+Cohesion: 0.10
+Nodes (26): CHAR_IDS, HAIRS, BLINKABLE, EXPRESSIONS, EYE, FACE, MOUTH, SHAPES (+18 more)
+
+### Community 15 - "Personnage animé"
+Cohesion: 0.09
+Nodes (18): ARM_BONES, BASE, buildDust(), Character, damp(), FIDGETS, PuffPool, axisInRoot() (+10 more)
+
+### Community 16 - "Terrain et détails"
+Cohesion: 0.14
+Nodes (32): parasolPlage(), transat(), kindModel(), blocked(), buildGrass(), rng(), slopeAt(), terrainColorSampler() (+24 more)
+
+### Community 17 - "Raccord Player et moteur"
+Cohesion: 0.10
+Nodes (18): arriveIntent(), climbable(), createMotor(), interpolate(), resetMotor(), setProfile(), stepMotor(), advanceGaitPhase() (+10 more)
+
+### Community 18 - "Vache"
+Cohesion: 0.07
+Nodes (34): ARRIERE, AVANT, AXE_TETE, axis, CC, COL, CORPS, CR (+26 more)
+
+### Community 19 - "Fleurs et faune des îles"
+Cohesion: 0.10
+Nodes (14): _zero, SPECIES, MAT, archeGlycine(), lavandeGeante(), C, Flowers, Grid (+6 more)
+
+### Community 20 - "Squelette et cinématique inverse"
+Cohesion: 0.08
+Nodes (28): applyJoints(), ARM, _ax, boneToRoot(), _c, _chain, clamp(), _d (+20 more)
+
+### Community 22 - "Sauvegarde et réglages"
+Cohesion: 0.13
+Nodes (23): exportSave(), loadSave(), openDB(), readImportFile(), writeSave(), createDefaultState(), dayKeyOf(), LEGACY_KEYS (+15 more)
+
+### Community 23 - "Vol en aigle"
+Cohesion: 0.15
+Nodes (12): AirRide, damp(), POSE, toolCache, toolMesh(), canStand(), groundAt(), isHome() (+4 more)
+
+### Community 24 - "Mouton"
+Cohesion: 0.11
+Nodes (26): CURL_COAT, CURL_COAT_LITE, EAR, EAR_IN, EAR_IN_LITE, EAR_LITE, espece, mouton() (+18 more)
+
+### Community 25 - "Grand arbre et palmier"
+Cohesion: 0.13
+Nodes (12): grandArbre(), trunkAlong(), palmier(), ile(), PAL, palmFrondGeometry(), rng(), segment() (+4 more)
+
+### Community 26 - "Moteur : saut, chute, réception"
+Cohesion: 0.22
+Nodes (28): airStep(), bonk(), bonkStep(), emit(), fallenStep(), gaitSpeed(), land(), locoStep() (+20 more)
+
+### Community 27 - "Navigation à voile"
+Cohesion: 0.12
+Nodes (11): damp(), idealTrim(), lerpAngle(), pointOfSail(), Sailing, smoothDamp(), BOAT_ORDER, BOATS (+3 more)
+
+### Community 28 - "Espèces et surface des îles"
+Cohesion: 0.14
+Nodes (25): KIND_INDEX, KIND_RADIUS, KINDS, SMALL, TREES, reliefContext(), BLOOM_RGB, buildDepthWindow() (+17 more)
+
+### Community 29 - "Ateliers"
+Cohesion: 0.13
+Nodes (20): chantier, couture, etabli, four, article(), decor(), arche, fontaine (+12 more)
+
+### Community 30 - "Hydrologie et chemins"
+Cohesion: 0.15
+Nodes (20): hydraulic(), thermal(), MinHeap, accumulate(), carveRivers(), chaikin(), DI, DJ (+12 more)
+
+### Community 31 - "Démarrage et outils de dev"
+Cohesion: 0.12
+Nodes (19): JOURS, MOIS, game, addObstacle(), addObstacles(), bridgeY(), cellKey(), _co (+11 more)
+
+### Community 32 - "Zones, bruit et flore"
+Cohesion: 0.15
+Nodes (22): fbm(), GX, GY, makeNoise(), FOREST_TREES, placeFlora(), SLOPE_MAX, ZONE_TABLE (+14 more)
+
+### Community 33 - "Moteur : états et inclinaison"
+Cohesion: 0.12
+Nodes (24): AIR, BANKING, bankStep(), BASE, canJump(), CLIMBING, exitStep(), GRIP (+16 more)
+
+### Community 34 - "Interface (DOM)"
 Cohesion: 0.15
 Nodes (3): h(), replay(), UI
 
-### Community 25 - "Personnage : corps et coupes"
-Cohesion: 0.20
-Nodes (18): CHAR_IDS, FACE, B, box(), ID, mixHex(), PARENT, tint() (+10 more)
-
-### Community 26 - "Pipeline de rendu peint"
+### Community 35 - "Pipeline de rendu"
 Cohesion: 0.12
 Nodes (7): fsCam, fsGeo, FSPass, makeRT(), Pipeline, QUALITY, SunShadow
 
-### Community 27 - "Saisons, archipel et limites"
-Cohesion: 0.13
-Nodes (17): JOURS, MOIS, KINDS, openCartographerPanel(), smooth(), worldLimit(), applySeason(), AUTUMN (+9 more)
-
-### Community 28 - "Navigation et obstacles"
-Cohesion: 0.17
-Nodes (18): ORIGIN, addObstacle(), addObstacles(), blockedByObstacle(), canStand(), cellKey(), _co, _d (+10 more)
-
-### Community 30 - "Terrain, hydrologie, érosion"
+### Community 36 - "Assemblage des modèles"
 Cohesion: 0.20
-Nodes (15): hydraulic(), thermal(), MinHeap, accumulate(), carveRivers(), chaikin(), DI, DJ (+7 more)
+Nodes (18): nextId(), assembleBuilder(), assembleCreature(), assembleKind(), assembleMesh(), assemblePart(), flat(), _id (+10 more)
 
-### Community 31 - "Outils de récolte"
-Cohesion: 0.15
-Nodes (16): flowerItemFor(), HARVEST, rollBug(), rollDrops(), rollFish(), strikeTime(), TIER_NAMES, TOOL_NAMES (+8 more)
-
-### Community 32 - "Zones et bruit"
-Cohesion: 0.18
-Nodes (17): fbm(), GX, GY, makeNoise(), distanceField(), slopeAt(), BLOOM, BLOOM_COLORS (+9 more)
-
-### Community 33 - "Vol de l'aigle (AirRide)"
-Cohesion: 0.24
-Nodes (5): AirRide, damp(), bridgeY(), groundAt(), pickGround()
-
-### Community 34 - "Personnage (Character)"
-Cohesion: 0.19
-Nodes (4): Character, damp(), REST, crayonGeometry()
-
-### Community 36 - "Réglages et écriture de sauvegarde"
-Cohesion: 0.23
-Nodes (13): CHANNEL_LABELS, CHANNELS, PENTA, exportSave(), loadSave(), openDB(), readImportFile(), writeSave() (+5 more)
-
-### Community 37 - "Objets et inventaire (UI)"
-Cohesion: 0.17
-Nodes (11): BUGS, FISH, itemIcon(), ITEMS, SHAPES, STATION_NAMES, TIERS, TOOLS (+3 more)
-
-### Community 38 - "Mouton et laine"
+### Community 37 - "Lieux et apparitions"
 Cohesion: 0.16
-Nodes (15): CURL_COAT, CURL_COAT_LITE, EAR, EAR_IN, EAR_IN_LITE, EAR_LITE, espece, _up (+7 more)
+Nodes (19): mulberry32(), weighted(), bilinear(), stableId(), FALLBACK, GENERIC, MICRO, placeMicro() (+11 more)
 
-### Community 39 - "Ciel, textures et caméra"
-Cohesion: 0.24
-Nodes (11): U, canvas(), cloudAtlas(), leafAtlas(), paperTexture(), rng(), tileNoise(), buildClouds() (+3 more)
-
-### Community 40 - "Visage du personnage"
-Cohesion: 0.17
-Nodes (11): BASE, buildDust(), FIDGETS, PuffPool, BLINKABLE, cellUV(), EXPRESSIONS, EYE (+3 more)
-
-### Community 42 - "Kit : accessoires (yeux, pattes)"
-Cohesion: 0.23
-Nodes (15): chevre(), mouton(), anneauGeo(), BELL, clocheSuisse(), collar(), collier(), eye() (+7 more)
-
-### Community 43 - "État de sauvegarde (state)"
-Cohesion: 0.19
-Nodes (14): createDefaultState(), dayKeyOf(), LEGACY_KEYS, LEGACY_SETTINGS, legacyHours(), MARINE_IDS, migrate(), randomSeed() (+6 more)
-
-### Community 44 - "Relief des îles"
-Cohesion: 0.30
-Nodes (12): ridged(), bicubic(), clamp(), cr(), smooth(), baseGrid(), baseHeight(), cache (+4 more)
-
-### Community 45 - "Bateaux échoués et étals"
+### Community 38 - "Bateaux"
 Cohesion: 0.18
-Nodes (7): barque(), barqueAmarree(), barqueEchouee(), etal(), maison(), MURS, v3()
+Nodes (14): caracteristiques, dessin(), boat(), construire(), hull(), materials(), sailGeometry(), caracteristiques (+6 more)
 
-### Community 46 - "Registre et relevés"
+### Community 39 - "Végétation lointaine et biomes"
+Cohesion: 0.20
+Nodes (11): BIOMES, buildFarVeg(), hex(), SHAPES, slopeAt(), sealLakes(), buildPlan(), applyStamps() (+3 more)
+
+### Community 40 - "Objets marins"
+Cohesion: 0.22
+Nodes (8): hashString(), marine(), MARINE_TYPES, marineMesh(), DRIFTING, LABELS, MarineManager, markerFor()
+
+### Community 41 - "Objets à collecter"
+Cohesion: 0.23
+Nodes (8): Collectibles, seeded(), halo(), mesh(), glowMaterial(), toonMaterial(), coastRadius(), blockedByObstacle()
+
+### Community 42 - "Chèvre"
+Cohesion: 0.28
+Nodes (13): chevre(), espece, anneauGeo(), BELL, clocheSuisse(), collier(), eye(), legs() (+5 more)
+
+### Community 43 - "Caméra"
+Cohesion: 0.19
+Nodes (4): CameraRig, damp(), lerpAngle(), wrapAngle()
+
+### Community 46 - "Registre des modèles"
 Cohesion: 0.18
 Nodes (9): FICHES, BY_ID, CATEGORIES, categoryOf(), MODELS, ORDRE, STATUTS, TAILLES (+1 more)
 
-### Community 47 - "Cycle jour et nuit"
+### Community 47 - "Cycle du jour"
 Cohesion: 0.18
 Nodes (10): canonicalHour(), COLOR_FIELDS, DayCycle, grey, KEYS, MOON_LIGHT, MOON_SKY, PREPARED (+2 more)
 
-### Community 48 - "Kit : formes (taches, grilles)"
-Cohesion: 0.18
-Nodes (11): queue(), rejoue(), rejoue(), affine(), blob(), grille(), grilleZones(), leafGeo() (+3 more)
+### Community 50 - "Accroche aux troncs"
+Cohesion: 0.32
+Nodes (11): climbBase(), grab(), trunkLimits(), tryGrab(), CACHE, geo(), trunkClosest(), trunkFrame() (+3 more)
 
-### Community 50 - "Petite végétation"
+### Community 51 - "Relief"
+Cohesion: 0.38
+Nodes (10): ridged(), clamp(), smooth(), baseGrid(), baseHeight(), cache, interior(), landness() (+2 more)
+
+### Community 53 - "Hibou"
+Cohesion: 0.27
+Nodes (5): damp(), Owl, build(), buildHibou(), ILE_DEPART
+
+### Community 54 - "Saisons"
 Cohesion: 0.22
-Nodes (3): Grid, smallVegetation(), Surface
+Nodes (7): applySeason(), AUTUMN, BLOSSOM, cellHash(), SEASONS, WARM, WINTER
 
-### Community 51 - "Caméra (CameraRig)"
-Cohesion: 0.18
-Nodes (3): CameraRig, damp(), lerpAngle()
-
-### Community 54 - "Assemblage des modèles"
-Cohesion: 0.36
-Nodes (11): assembleBuilder(), assembleCreature(), assembleKind(), assemblePart(), flat(), _id, materiaux(), shadowed() (+3 more)
-
-### Community 55 - "Worker du monde et biomes"
-Cohesion: 0.23
-Nodes (7): BIOMES, buildFarVeg(), hex(), SHAPES, keyOf(), planOf(), plans
-
-### Community 59 - "Rivières et LOD des tuiles"
+### Community 56 - "Grimpe : pas sur le tronc"
 Cohesion: 0.28
-Nodes (4): buildFallFoam(), buildRivers(), riverMaterial(), meshGeometry()
+Nodes (9): approach(), clearClimb(), climbStep(), leaveTrunk(), rebase(), snapStep(), stickAxis(), trunkJump() (+1 more)
 
-### Community 60 - "Pièces de lieux et planchers"
-Cohesion: 0.29
-Nodes (6): DIRX, DIRZ, partModel(), rotY(), flat(), partGeometries()
+### Community 58 - "Réglages de locomotion"
+Cohesion: 0.33
+Nodes (5): CLIMB_STATES, BASE_TUNING, cache, REACTIF, SURFACES
+
+### Community 59 - "Moteur : rotation et pente"
+Cohesion: 0.48
+Nodes (7): clamp(), gripAt(), lerp(), rotate(), slopeFactor(), steer(), turnParams()
+
+### Community 60 - "Textures peintes"
+Cohesion: 0.67
+Nodes (6): canvas(), cloudAtlas(), leafAtlas(), paperTexture(), rng(), tileNoise()
 
 ### Community 61 - "Météo"
-Cohesion: 0.39
+Cohesion: 0.38
 Nodes (3): makePrecip(), seeded(), Weather
 
-### Community 62 - "Géométrie accumulée des îles"
+### Community 62 - "Grille"
 Cohesion: 0.33
-Nodes (3): RECOLOR, recolorPart(), GeoAcc
-
-### Community 63 - "Préchargement des modèles"
-Cohesion: 0.29
-Nodes (3): flowerGeometry(), kindModel(), islandsInRange()
-
-### Community 64 - "Brouillard de la carte"
-Cohesion: 0.38
-Nodes (6): boundFog(), FOG_TOTAL, inBounds(), regionBits(), reveal(), revealedCount()
+Nodes (3): bicubic(), cr(), Grid
 
 ## Knowledge Gaps
-- **214 isolated node(s):** `JOURS`, `MOIS`, `game`, `PENTA`, `BTN` (+209 more)
+- **260 isolated node(s):** `game`, `BTN`, `_aim`, `PS_GLYPHS`, `MOVE` (+255 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `GamepadInput` connect `Manette DualSense` to `Saisons, archipel et limites`, `Interactions et visée`?**
-  _High betweenness centrality (0.058) - this node is a cross-community bridge._
-- **Why does `IslandManager` connect `Gestionnaire d'îles : activation` to `Visibilité des objets d'île`, `Saisons, archipel et limites`, `Matériaux toon et aléatoire`, `Gestionnaire d'îles : végétation`, `Rivières et LOD des tuiles`, `Pièces de lieux et planchers`, `Géométrie accumulée des îles`, `Préchargement des modèles`?**
-  _High betweenness centrality (0.058) - this node is a cross-community bridge._
-- **Why does `Game` connect `Boucle de jeu et sauvegarde` to `Clics et caresses`, `Jeu : coffres, coquillages, outils dev`, `Point d'entrée`, `Interactions et visée`, `Jeu : touches et panneaux`, `Saisons, archipel et limites`?**
-  _High betweenness centrality (0.047) - this node is a cross-community bridge._
-- **What connects `JOURS`, `MOIS`, `game` to the rest of the system?**
-  _214 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Lieux et ouvrages (modèles)` be split into smaller, more focused modules?**
-  _Cohesion score 0.05660377358490566 - nodes in this community are weakly interconnected._
-- **Should `Moteur de locomotion du joueur` be split into smaller, more focused modules?**
-  _Cohesion score 0.07205452775073028 - nodes in this community are weakly interconnected._
-- **Should `Végétation et Builder` be split into smaller, more focused modules?**
-  _Cohesion score 0.08982456140350877 - nodes in this community are weakly interconnected._
+- **Why does `groundAt()` connect `Vol en aigle` to `Jeu (Game)`, `Manette`, `Objets à collecter`, `Rendu du monde et de l’eau`, `Apparence du joueur`, `Interactions`, `Raccord Player et moteur`, `Décoration`, `Récolte en jeu`, `Démarrage et outils de dev`?**
+  _High betweenness centrality (0.088) - this node is a cross-community bridge._
+- **Why does `mulberry32()` connect `Lieux et apparitions` to `Zones, bruit et flore`, `Lieux et bâtiments`, `Arbres de la végétation`, `Assemblage des modèles`, `Objets marins`, `Faune des îles`, `Carte, brouillard, minicarte`, `Fleurs et faune des îles`, `Relief`, `Espèces et surface des îles`, `Hydrologie et chemins`?**
+  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+- **Why does `AudioEngine` connect `Moteur audio` to `Démarrage et outils de dev`?**
+  _High betweenness centrality (0.055) - this node is a cross-community bridge._
+- **What connects `game`, `BTN`, `_aim` to the rest of the system?**
+  _260 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Lieux et bâtiments` be split into smaller, more focused modules?**
+  _Cohesion score 0.05732390215148836 - nodes in this community are weakly interconnected._
+- **Should `Arbres de la végétation` be split into smaller, more focused modules?**
+  _Cohesion score 0.07367737747484583 - nodes in this community are weakly interconnected._
+- **Should `Îles, obstacles et troncs` be split into smaller, more focused modules?**
+  _Cohesion score 0.05555555555555555 - nodes in this community are weakly interconnected._

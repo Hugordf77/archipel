@@ -145,8 +145,8 @@ et domaine concerné).
   triangles de l'épée, changement voulu à valider puis `npm run modeles:empreinte -- --ecrire` ; fleurs
   PLA-015 en cours). « Budget du Worker » de `tests/world.test.js` : mesure de temps sensible à la
   charge (peut échouer sous la suite complète, vert seul).
-- **Graphe du code** : construit le 20/10/2026 sur `src/` (code seul, 282 fichiers, 1 719 nœuds,
-  74 communautés). Les `FICHE.md` et les planches n'y sont pas : lire les dossiers des modèles.
+- **Graphe du code** : mis à jour le 20/10/2026 après la grimpe sur `src/` (code seul, 284 fichiers,
+  1 840 nœuds, 90 communautés). Les `FICHE.md` et les planches n'y sont pas : lire les dossiers des modèles.
   Seul `graphify-out/GRAPH_REPORT.md` est versionné ; `graph.json` et `graph.html` se régénèrent avec
   `/graphify src --update` (ou `/graphify src` sur un clone neuf).
 
