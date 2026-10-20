@@ -20,6 +20,8 @@ const CUT_N = 129;
 const CUT_STEP = 0.5;
 const REGROW = 120;
 const PUSHERS = 8;
+// préréglages du plus léger au plus dense
+const PRESET_ORDER = ['low', 'medium', 'high'];
 // masque vide partagé par les tuiles jamais fauchées
 const NO_CUT = (() => {
   const tex = new THREE.DataTexture(new Uint8Array([0]), 1, 1, THREE.RedFormat, THREE.UnsignedByteType);
@@ -78,6 +80,7 @@ export class HerbeSystem {
     this.enabled = true;
     this.preset = HERBE_PRESETS.medium;
     this.presetName = 'medium';
+    this.wanted = 'medium';
     this.camera = null;
     // uniformes communs à toutes les tuiles (par référence)
     this.shared = {
@@ -108,11 +111,36 @@ export class HerbeSystem {
     this.dirty = true;
   }
 
+  // préréglage voulu (qualité du jeu) ; la résolution adaptative peut descendre en dessous (stepDown)
   setPreset(name) {
-    if (!HERBE_PRESETS[name] || name === this.presetName) return;
+    if (!HERBE_PRESETS[name]) return;
+    this.wanted = name;
+    this.use(name);
+  }
+
+  use(name) {
+    if (name === this.presetName) return;
     this.presetName = name;
     this.preset = HERBE_PRESETS[name];
     this.applyPreset();
+  }
+
+  // Le jeu ralentit : un cran d'herbe en moins (rend false s'il n'y en a plus à enlever)
+  stepDown() {
+    if (!this.enabled) return false;
+    const i = PRESET_ORDER.indexOf(this.presetName);
+    if (i <= 0) return false;
+    this.use(PRESET_ORDER[i - 1]);
+    return true;
+  }
+
+  // Le jeu a de la marge : un cran de plus, sans dépasser la qualité choisie
+  stepUp() {
+    const i = PRESET_ORDER.indexOf(this.presetName);
+    const max = PRESET_ORDER.indexOf(this.wanted || 'medium');
+    if (i >= max) return false;
+    this.use(PRESET_ORDER[i + 1]);
+    return true;
   }
 
   setEnabled(on) {

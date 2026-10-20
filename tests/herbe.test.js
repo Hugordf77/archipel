@@ -208,6 +208,24 @@ describe('herbe en tapis : budgets et mises à jour', () => {
     expect(H.cut(10, 12, 1.3)).toBeGreaterThan(0.5);
   });
 
+  it('quand le jeu ralentit, l’herbe baisse d’un cran à la fois, puis remonte sans dépasser la qualité choisie', () => {
+    const { H } = system('high');
+    expect(H.presetName).toBe('high');
+    expect(H.stepDown()).toBe(true);
+    expect(H.presetName).toBe('medium');
+    expect(H.shared.uCounts.value.x).toBe(HERBE_PRESETS.medium.blades[0]);
+    expect(H.stepDown()).toBe(true);
+    expect(H.stepDown()).toBe(false); // déjà au plus léger : la résolution prend le relais
+    expect(H.stepUp()).toBe(true);
+    expect(H.stepUp()).toBe(true);
+    expect(H.stepUp()).toBe(false);
+    expect(H.presetName).toBe('high');
+    H.setPreset('medium');
+    expect(H.stepUp()).toBe(false);
+    H.setEnabled(false);
+    expect(H.stepDown()).toBe(false); // herbe en touffes : rien à alléger ici
+  });
+
   it('les pousseurs passent en coordonnées de la scène, les places libres sont éteintes', () => {
     const { H } = system('low');
     ORIGIN.set(100, 0, -50);

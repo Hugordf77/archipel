@@ -231,8 +231,15 @@ export class Pipeline {
     if (this.adaptT < 2.5) return;
     this.adaptT = 0;
     let next = this.dynScale;
-    if (this.adaptAvg > 18.2) next = Math.max(0.7, this.dynScale - 0.1);
-    else if (this.adaptAvg < 15.2 && this.dynScale < 1) next = Math.min(1, this.dynScale + 0.05);
+    // trop lent : d'abord moins d'herbe (onSlow rend true s'il a allégé), puis la résolution ;
+    // de la marge : la résolution d'abord, puis l'herbe (onFast)
+    if (this.adaptAvg > 18.2) {
+      if (this.onSlow?.()) return;
+      next = Math.max(0.7, this.dynScale - 0.1);
+    } else if (this.adaptAvg < 15.2) {
+      if (this.dynScale < 1) next = Math.min(1, this.dynScale + 0.05);
+      else this.onFast?.();
+    }
     if (Math.abs(next - this.dynScale) > 0.001) {
       this.dynScale = next;
       this.setSize(this.width, this.height);

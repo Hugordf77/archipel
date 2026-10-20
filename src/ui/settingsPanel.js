@@ -65,6 +65,13 @@ export function openSettingsPanel(game, tab = 'image') {
       }),
       h('p', { class: 'muted' }, 'Bas : peinture simple en demi-résolution. Moyen : Kuwahara anisotrope en demi-résolution. Haut : Kuwahara anisotrope plus fin, résolution Retina.'),
       h('p', { class: 'muted' }, 'Fluidité actuelle : ', fps),
+      h('div', { class: 'section-label' }, 'Herbe'),
+      choice([['tapis', 'Prés denses'], ['touffes', 'Touffes clairsemées']], s.herbe === 'touffes' ? 'touffes' : 'tapis', (v) => {
+        s.herbe = v;
+        game.applySettings();
+        save();
+      }),
+      h('p', { class: 'muted' }, 'Prés denses : des milliers de brins autour de toi, qui ondulent au vent, se couchent sur ton passage et se fauchent à l’épée ; leur densité suit la qualité et baisse d’elle-même si le jeu ralentit.'),
       h('div', { class: 'section-label' }, 'Rendu peint'),
       slider('Effet peinture', s.paint, { min: 0, max: 1.6, onInput: (v) => { s.paint = v; game.applySettings(); save(); }, fmt: (v) => (v === 0 ? 'désactivé' : `${Math.round(v * 100)} %`) }),
       slider('Contours encrés', s.outline, { min: 0, max: 1.5, onInput: (v) => { s.outline = v; game.applySettings(); save(); } }),

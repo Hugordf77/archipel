@@ -94,6 +94,8 @@ export class Game {
     // herbe en tapis : anneaux de brins autour du joueur, coupés au champ de la caméra ; l'île de
     // départ a ses propres tuiles (render/grass.js, champsMaison)
     this.islands.herbe.camera = this.camera;
+    this.pipeline.onSlow = () => this.islands.herbe.stepDown();
+    this.pipeline.onFast = () => this.islands.herbe.stepUp();
     const home = { desc: { x: 0, z: 0 } };
     for (const { t, tile } of champsMaison(this.world.terrain, this.world.obstacles)) {
       this.world.homeDetail.add(t.group);
