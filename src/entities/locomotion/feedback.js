@@ -130,7 +130,7 @@ export class LocoFeedback {
         this.ring({ ...e, x: e.x + fx * 0.4, z: e.z + fz * 0.4 }, 4, 0.8, 0.14);
         return;
       case 'jump':
-        audio?.hop(e.long);
+        audio?.jumpSound(e.long);
         this.ring(e, 3, 0.8, 0.12);
         return;
       case 'land': {

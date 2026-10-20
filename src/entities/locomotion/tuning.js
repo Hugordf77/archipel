@@ -9,6 +9,11 @@ export const BASE_TUNING = {
   walkThreshold: 0.55, // au-delà de cette inclinaison : course
   run: 5.4,
   sprint: 8.2,
+  // Variation d'effort en course soutenue : onde douce + impulsions rares, sans hasard.
+  paceWaveRate: 0.9, // rad/s
+  runPaceAmplitude: 0.035,
+  sprintPaceAmplitude: 0.025,
+  paceSurgeAmplitude: 0.035,
   swim: 1.8,
   swimSprint: 2.4,
 

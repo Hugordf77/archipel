@@ -38,7 +38,7 @@ export function createMotor(profile = 'realiste') {
     rollBuf: 0, rollQueued: false, chain: 0, sinceRoll: 10, carry: false,
     stopOnly: false, landHeavy: false, from: 0, to: 0,
     boostT: 0, hadInput: false, inputAngle: 0, slopeAlong: 0, slopeAngle: 0,
-    sprintTime: 0, dist: 0, lastImpact: 0,
+    sprintTime: 0, dist: 0, lastImpact: 0, pacePhase: 0,
     acc: 0,
     events: [],
   };
@@ -55,6 +55,7 @@ export function resetMotor(m, x, y, z, heading = m.heading) {
   m.z = m.pz = z;
   m.heading = m.pHeading = heading;
   m.omega = m.v = m.vLat = m.vy = 0;
+  m.pacePhase = 0;
   m.grounded = true;
   m.coyote = m.airTime = m.jumpBuf = m.rollBuf = m.boostT = 0;
   m.rollQueued = m.carry = false;
@@ -372,6 +373,20 @@ function land(m, gy, impact) {
   setState(m, 'LAND');
 }
 
+// Petite variation d'effort au train de course : une onde lente, plus quelques
+// relances courtes. L'horloge avance au pas fixe et s'arrête hors course soutenue.
+function runningPaceVariation(m, I, T, baseSpeed, h) {
+  if (!m.grounded || !LOCO.has(m.state) || I.walk || I.speed > 0 || I.mag < T.walkThreshold) return 0;
+  // Ne pas perturber l'accélération initiale ni les transitions marche/course/sprint.
+  if (m.v < baseSpeed * 0.985) return 0;
+  m.pacePhase += h * T.paceWaveRate;
+  const phase = m.pacePhase;
+  const wave = 0.7 * Math.sin(phase) + 0.3 * Math.sin(phase * 2.37 + 0.8);
+  const burst = Math.pow(Math.max(0, Math.sin(phase * 0.65 - 0.45)), 4);
+  const amplitude = I.sprint ? T.sprintPaceAmplitude : T.runPaceAmplitude;
+  return amplitude * wave + T.paceSurgeAmplitude * (burst - 0.18);
+}
+
 function setLoco(m, has) {
   const T = m.T;
   let s;
@@ -419,6 +434,7 @@ function locoStep(m, I, env, h, surf, has, dTheta, target, aScale) {
   }
   steer(m, dTheta, h);
   let V = gaitSpeed(I, T) * surf.speed * slopeFactor(m.slopeAlong, T);
+  V *= 1 + runningPaceVariation(m, I, T, V, h);
   // virage franc : on ralentit un peu pour tourner (jamais plus de 40 %)
   if (has) V *= 0.6 + 0.4 * Math.max(0, Math.cos(dTheta));
   longitudinal(m, V, has, h, surf, aScale);

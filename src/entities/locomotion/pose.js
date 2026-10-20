@@ -4,9 +4,9 @@
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
-// Longueur d'un pas (m) selon la vitesse : 0,55 en marche, 0,9 en course, 1,25 au sprint.
-// La phase des jambes avance de π par pas : distance / pas → les pieds suivent le sol.
-const STRIDE = [[0, 0.32], [2.6, 0.55], [5.4, 0.9], [8.2, 1.25], [12, 1.5]];
+// Distance entre appuis alternés (m). La cadence reste plausible aux vitesses de course
+// et de sprint, et chaque appui correspond à la distance réellement parcourue.
+const STRIDE = [[0, 0.38], [2.6, 1.05], [5.4, 1.65], [8.2, 2.35], [12, 2.7]];
 export function strideLength(v) {
   const s = Math.max(0, v);
   for (let i = 1; i < STRIDE.length; i++) {
@@ -19,10 +19,29 @@ export function strideLength(v) {
   return STRIDE[STRIDE.length - 1][1];
 }
 
+// La pose a besoin des deux demi-cycles pour alterner les jambes ; la phase d'événements
+// (sons de pas) est maintenue séparément par Player.
+export function advanceGaitPhase(phase, distance, stride) {
+  const next = phase + (Math.PI * Math.max(0, distance)) / Math.max(stride, 1e-6);
+  return next % (Math.PI * 2);
+}
+
 const smooth = (a, b, x) => {
   const t = clamp((x - a) / (b - a), 0, 1);
   return t * t * (3 - 2 * t);
 };
+// Bascule du pied : talon légèrement relevé au contact, déroulé vers la pointe,
+// puis pointe relevée pendant le retour de la jambe.
+function footPitch(inStance, progress, amplitude) {
+  const heelStrike = -amplitude * 0.35;
+  const toeOff = amplitude * 1.1;
+  const toeClearance = -amplitude * 1.15;
+  if (inStance) {
+    return heelStrike + smooth(0.08, 0.95, progress) * (toeOff - heelStrike);
+  }
+  const lift = toeOff + smooth(0, 0.4, progress) * (toeClearance - toeOff);
+  return lift + smooth(0.78, 1, progress) * (heelStrike - toeClearance);
+}
 const TAU = Math.PI * 2;
 
 // Familles de poses : on ne lisse (inertialise) qu'aux changements de famille ;
@@ -38,8 +57,8 @@ export const FAMILY_HALFLIFE = { roll: 0.06, pivot: 0.07, land: 0.07, skid: 0.08
 // Allures : amplitudes des membres, penchée, rebond, part de phase aérienne
 const GAITS = {
   walk: { lean: 0.07, thigh: 0.5, shin: 0.75, foot: 0.18, arm: 0.5, armOff: 0, fore: 0.3, bounce: 0.035, torso: 0.09, hips: 0.03 },
-  run: { lean: 0.2, thigh: 0.78, shin: 1.15, foot: 0.24, arm: 0.85, armOff: -0.05, fore: 1.05, bounce: 0.05, torso: 0.14, hips: 0.03 },
-  sprint: { lean: 0.42, thigh: 0.95, shin: 1.6, foot: 0.3, arm: 1.0, armOff: -0.12, fore: 1.65, bounce: 0.06, torso: 0.2, hips: 0.025 },
+  run: { lean: 0.2, thigh: 0.95, shin: 1.15, foot: 0.3, arm: 0.85, armOff: -0.05, fore: 0.55, bounce: 0.05, torso: 0.14, hips: 0.03 },
+  sprint: { lean: 0.42, thigh: 1.15, shin: 1.6, foot: 0.4, arm: 1.0, armOff: -0.12, fore: 0.7, bounce: 0.06, torso: 0.2, hips: 0.025 },
 };
 const G = { ...GAITS.walk };
 function blendGait(r, sp) {
@@ -123,6 +142,20 @@ function groundPose(p, T, X) {
   const ph = p.phase || 0;
   const sn = Math.sin(ph);
   const cs = Math.cos(ph);
+  // Chaque demi-cycle est un pas : appui contrôlé (62 %) puis retour plus rapide.
+  // Le déplacement du bassin pendant l'appui annule ainsi mieux la translation du pied.
+  const cycle = ((ph / Math.PI) % 2 + 2) % 2;
+  const stanceShare = 0.62;
+  const leftPhase = cycle;
+  const leftCycle = leftPhase / 2;
+  const leftStance = leftCycle < stanceShare;
+  const leftProgress = leftStance ? leftCycle / stanceShare : (leftCycle - stanceShare) / (1 - stanceShare);
+  const leftSwing = leftStance ? 0 : Math.sin(leftProgress * Math.PI);
+  const rightPhase = (cycle + 1) % 2;
+  const rightCycle = rightPhase / 2;
+  const rightStance = rightCycle < stanceShare;
+  const rightProgress = rightStance ? rightCycle / stanceShare : (rightCycle - stanceShare) / (1 - stanceShare);
+  const rightSwing = rightStance ? 0 : Math.sin(rightProgress * Math.PI);
   const breathe = Math.sin((p.now || 0) * (Math.PI * 2 / 3));
   // rebond : la marche est haute au passage des jambes, la course en suspension
   const up = (1 - r) * (1 - Math.abs(sn)) + r * Math.abs(sn);
@@ -135,20 +168,40 @@ function groundPose(p, T, X) {
   T.bodyRoll = -bank;
   T.headZ = bank * 0.6 + Math.sin((p.now || 0) * 0.9) * 0.04 * still;
   T.neckZ = bank * 0.2;
-  // jambes : la cuisse avance et recule, le genou se plie pendant le retour (talon haut au sprint)
-  T.thighL = sn * g.thigh * walk;
-  T.thighR = -T.thighL;
-  T.shinL = (Math.max(0, -cs) * g.shin + 0.08) * walk;
-  T.shinR = (Math.max(0, cs) * g.shin + 0.08) * walk;
-  T.footL = (Math.max(0, sn) * g.foot - Math.max(0, -sn) * g.foot * 0.8) * walk;
-  T.footR = (Math.max(0, -sn) * g.foot - Math.max(0, sn) * g.foot * 0.8) * walk;
+  // Cycle de jambe : poussée avant → extension arrière en appui → retour rapide genou plié.
+  // Le cosinus garde la pose et sa vitesse continues aux transitions appui/vol.
+  const kneeBase = 0.2 + 0.1 * r + 0.12 * sp;
+  const kneePeak = Math.max(kneeBase, 0.72 + g.shin * 0.55);
+  const thighL = (leftStance ? -Math.cos(Math.PI * leftProgress) : Math.cos(Math.PI * leftProgress)) * g.thigh;
+  const thighR = (rightStance ? -Math.cos(Math.PI * rightProgress) : Math.cos(Math.PI * rightProgress)) * g.thigh;
+  const shinL = kneeBase + leftSwing * (kneePeak - kneeBase);
+  const shinR = kneeBase + rightSwing * (kneePeak - kneeBase);
+  T.thighL = thighL * walk;
+  T.thighR = thighR * walk;
+  T.shinL = shinL * walk;
+  T.shinR = shinR * walk;
+  // Le pied déroule l'appui puis relève nettement la pointe pendant son retour.
+  // La cible est l'orientation globale du pied ; on la convertit en rotation de cheville.
+  T.footL = (footPitch(leftStance, leftProgress, g.foot) - thighL - shinL) * walk;
+  T.footR = (footPitch(rightStance, rightProgress, g.foot) - thighR - shinR) * walk;
   // bras en balancier opposé, avant-bras pliés (≈ 95° au sprint), qui pompent
-  T.armLX = (-sn * g.arm + g.armOff) * walk;
-  T.armRX = (sn * g.arm + g.armOff) * walk;
-  T.armLZ = -0.2 - 0.035 * walk + 0.04 * r;
-  T.armRZ = 0.2 + 0.035 * walk - 0.04 * r;
-  T.foreL = -(0.15 + g.fore * walk + Math.max(0, -sn) * 0.14 * r);
-  T.foreR = -(0.15 + g.fore * walk + Math.max(0, sn) * 0.14 * r);
+  const armDrive = clamp((p.accF || 0) * 0.012, -0.12, 0.16);
+  T.armLX = (-thighL * g.arm / g.thigh + g.armOff + armDrive) * walk;
+  T.armRX = (-thighR * g.arm / g.thigh + g.armOff + armDrive) * walk;
+  // L'ouverture varie entre bras semi-repliés et presque horizontaux. Des rythmes
+  // secondaires déphasés donnent des écarts spontanés sans introduire d'aléatoire.
+  const armSpread = 0.18 * walk + 0.58 * r + 0.34 * sp;
+  const armExpress = clamp(r + sp * 0.3, 0, 1);
+  const openL = clamp(0.52 + 0.3 * Math.sin(ph * 0.5 + 0.4) + 0.18 * Math.sin(ph * 2.3 + 0.9), 0, 1);
+  const openR = clamp(0.52 + 0.3 * Math.sin(ph * 0.5 + 2.2) + 0.18 * Math.sin(ph * 2.7 + 3.0), 0, 1);
+  const spreadL = armSpread * (1 - armExpress * (0.65 * (1 - openL)));
+  const spreadR = armSpread * (1 - armExpress * (0.65 * (1 - openR)));
+  T.armLZ = -0.2 - spreadL;
+  T.armRZ = 0.2 + spreadR;
+  const elbowL = armExpress * (0.12 * Math.sin(ph * 1.7 + 0.3) + 0.08 * Math.sin(ph * 3.1 + 0.8));
+  const elbowR = armExpress * (0.12 * Math.sin(ph * 1.9 + 2.1) + 0.08 * Math.sin(ph * 2.7 + 0.2));
+  T.foreL = -(0.15 + g.fore * walk + Math.max(0, -sn) * 0.14 * r) + elbowL;
+  T.foreR = -(0.15 + g.fore * walk + Math.max(0, sn) * 0.14 * r) + elbowR;
   T.wristLX = -0.04 - Math.max(0, sn) * 0.05 * r;
   T.wristRX = -0.04 - Math.max(0, -sn) * 0.05 * r;
   // torsion du buste opposée au bassin

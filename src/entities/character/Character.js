@@ -128,6 +128,34 @@ export class Character {
     this.spin = new THREE.Group();
     this.root.add(this.spin);
     this.spin.add(this.body);
+    // Épée décorative portée dans le dos, indépendante des os et de l'inventaire.
+    // Elle suit le corps pendant la marche et les roulades sans modifier le modèle catalogue.
+    this.backSword = new THREE.Group();
+    this.backSword.name = 'épée de dos';
+    this.backSword.position.set(0.015, 0.12, -0.255);
+    this.backSword.rotation.z = 0.16;
+    const bladeShape = new THREE.Shape();
+    bladeShape.moveTo(0, -0.35);
+    bladeShape.lineTo(0.032, -0.27);
+    bladeShape.lineTo(0.032, 0.028);
+    bladeShape.lineTo(-0.032, 0.028);
+    bladeShape.lineTo(-0.032, -0.27);
+    bladeShape.closePath();
+    const blade = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(bladeShape, { depth: 0.018, bevelEnabled: true, bevelThickness: 0.005, bevelSize: 0.005, bevelSegments: 1 }),
+      toonMaterial({ color: '#b9d4d7', rim: 0.75, pigment: 0.2 }),
+    );
+    blade.position.z = -0.012;
+    this.backSword.add(blade);
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.035, 0.055), toonMaterial({ color: '#d8a95f', rim: 0.45, pigment: 0.1 }));
+    guard.position.set(0, 0.04, -0.005);
+    this.backSword.add(guard);
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.031, 0.19, 8), toonMaterial({ color: '#76513f', rim: 0.35, pigment: 0.15 }));
+    grip.position.set(0, 0.135, 0);
+    this.backSword.add(grip);
+    const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), toonMaterial({ color: '#d8a95f', rim: 0.45, pigment: 0.1 }));
+    pommel.position.set(0, 0.245, 0);
+    this.backSword.add(pommel);
     // contour « doux » : l'encre suit les frontières entre masses, pas chaque mèche
     this.mat = toonMaterial({ vertexColors: true, aId: true, outline: 0.5, rim: 1.25, pigment: 0.35, character: true });
 
@@ -136,6 +164,9 @@ export class Character {
     this.restLocal = REST.map(() => new THREE.Vector3());
     this.mesh = new THREE.SkinnedMesh(new THREE.BufferGeometry(), this.mat);
     this.bones.forEach((b, i) => (PARENT[i] < 0 ? this.mesh : this.bones[PARENT[i]]).add(b));
+    // Accrochée au torse plutôt qu'au pivot global : elle suit ses inclinaisons et reste
+    // plaquée au dos malgré les poses et les mouvements du personnage.
+    this.bones[B.TORSO].add(this.backSword);
     this.skeleton = new THREE.Skeleton(this.bones);
     this.mesh.frustumCulled = false;
     this.mesh.layers.enable(LAYER_SHADOW);
@@ -245,11 +276,42 @@ export class Character {
 
   setPose(name) {
     if (this.pose === name) return;
+    if (this.pose === 'swordAttack') this.stowSword();
+    if (name === 'swordAttack') this.drawSword();
     if (this.pose === 'study' && this.held === this._pencil) this.holdItem(null);
     this.previousPose = this.pose;
     this.pose = name;
     this.poseTime = 0;
     if (name === 'study' && !this.held) this.holdItem(this.pencil());
+  }
+
+  drawSword() {
+    if (this._swordHome) return;
+    this._swordHome = {
+      parent: this.backSword.parent,
+      position: this.backSword.position.clone(),
+      rotation: this.backSword.rotation.clone(),
+      scale: this.backSword.scale.clone(),
+      held: this.held,
+      heldVisible: this.held?.visible,
+    };
+    if (this.held) this.held.visible = false;
+    this._swordHome.parent.remove(this.backSword);
+    this.hand.add(this.backSword);
+    this.backSword.position.set(0, -0.015, 0.02);
+    this.backSword.rotation.set(-Math.PI / 2, 0, 0);
+  }
+
+  stowSword() {
+    const home = this._swordHome;
+    if (!home) return;
+    this.backSword.parent?.remove(this.backSword);
+    home.parent.add(this.backSword);
+    this.backSword.position.copy(home.position);
+    this.backSword.rotation.copy(home.rotation);
+    this.backSword.scale.copy(home.scale);
+    if (home.held) home.held.visible = home.heldVisible;
+    this._swordHome = null;
   }
 
   // petit rebond squash & stretch (interactions, joie)
@@ -684,6 +746,27 @@ export class Character {
         T.foreL = -0.5;
         T.torsoX = 0.2;
         T.headX = 0.2;
+        break;
+      }
+      case 'swordAttack': {
+        expr = 'concentre';
+        const rise = THREE.MathUtils.clamp(t / 0.2, 0, 1);
+        const cut = THREE.MathUtils.clamp((t - 0.2) / 0.16, 0, 1);
+        const ease = cut * cut * (3 - 2 * cut);
+        const lift = t < 0.2 ? rise * rise * (3 - 2 * rise) : 1 - ease;
+        T.armRX = -0.28 - lift * 2.05;
+        T.foreR = -0.3 - lift * 0.25;
+        T.armRZ = 0.18 - lift * 0.42;
+        T.wristRX = -0.12 - (1 - lift) * 0.2;
+        T.wristRZ = 0.18 - (1 - lift) * 0.38;
+        T.armLX = -0.75;
+        T.foreL = -0.4;
+        T.armLZ = -0.22;
+        T.torsoX = 0.08 - (1 - lift) * 0.18;
+        T.torsoY = 0.08 + (1 - lift) * 0.3;
+        T.thighL = -0.12;
+        T.thighR = 0.08;
+        T.headX = 0.1;
         break;
       }
       case 'carry': {

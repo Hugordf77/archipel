@@ -3,7 +3,7 @@ import { groundAt, obstacleAt, waterDepth, pushOut } from '../world/navigation.j
 import { U, ORIGIN } from '../core/globals.js';
 import { waterSurfaceAt } from '../world/env/water.js';
 import { createMotor, stepMotor, resetMotor, interpolate, climbable, arriveIntent, setProfile } from './locomotion/motor.js';
-import { strideLength } from './locomotion/pose.js';
+import { strideLength, advanceGaitPhase } from './locomotion/pose.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
 // glissement le long d'un obstacle : directions déviées essayées tour à tour
@@ -31,7 +31,8 @@ export class Player {
     this.action = null;
     this.locked = false; // vrai pendant une session de focus
     this.walkSpeed = 3.3; // référence de l'animation des poses existantes
-    this.stepPhase = 0;
+    this.stepPhase = 0; // phase visuelle conservée sur deux demi-cycles
+    this.stepEventPhase = 0; // phase distincte des appuis sonores et des événements
     this.actualSpeed = 0;
     this.targetSpeed = 0;
     this.onStep = null;
@@ -340,18 +341,22 @@ export class Player {
     const speed = this.actualSpeed;
     const stride = strideLength(speed);
     if (m.grounded && !swim && STEPPING.has(m.state) && speed > 0.12) {
-      this.stepPhase += (Math.PI * dDist) / stride;
-      while (this.stepPhase >= Math.PI) {
-        this.stepPhase -= Math.PI;
+      const phaseAdvance = (Math.PI * dDist) / stride;
+      this.stepPhase = advanceGaitPhase(this.stepPhase, dDist, stride);
+      this.stepEventPhase += phaseAdvance;
+      while (this.stepEventPhase >= Math.PI) {
+        this.stepEventPhase -= Math.PI;
         const intensity = Math.min(1.4, speed / 3.3);
         this._side = -(this._side || 1);
         this.onStep?.(groundAt(this.pos.x, this.pos.z).surface, intensity, this._side * 0.25);
         this.events.push({ type: 'step', x: this.pos.x, y: this.pos.y, z: this.pos.z, heading: m.heading, v: speed, surface: E.surface, side: this._side });
       }
     } else if (swim && speed > 0.12) {
-      this.stepPhase += dt * (3.8 + speed * 2.5);
-      while (this.stepPhase >= Math.PI) {
-        this.stepPhase -= Math.PI;
+      const phaseAdvance = dt * (3.8 + speed * 2.5);
+      this.stepPhase = (this.stepPhase + phaseAdvance) % (Math.PI * 2);
+      this.stepEventPhase += phaseAdvance;
+      while (this.stepEventPhase >= Math.PI) {
+        this.stepEventPhase -= Math.PI;
         this.onStep?.('water', speed / 1.8);
       }
     }

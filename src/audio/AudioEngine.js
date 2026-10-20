@@ -1,9 +1,9 @@
-// Moteur audio 100 % procédural (Web Audio, aucun fichier) :
+// Moteur audio Web Audio : ambiance et effets procéduraux, musique et certains sons en fichiers :
 //   ambiance  : vagues, vent, cascade
 //   nature    : oiseaux le jour, mouettes, grillons la nuit
 //   météo     : pluie
 //   effets    : « pop », coquillages, carillons, pas, arrosoir
-//   musique   : boîte à musique générative, très douce
+//   musique   : piste Illumoria en boucle (boîte à musique de secours si le fichier est absent)
 // Chaque canal a son propre volume, plus un volume général.
 
 export const CHANNELS = ['master', 'ambience', 'nature', 'weather', 'sfx', 'music'];
@@ -29,6 +29,13 @@ export class AudioEngine {
     this.timers = { bird: 2, gull: 12, cricket: 1, note: 1, pad: 2, drop: 0, step: 0 };
     this.wavePhase = 0;
     this.waveCrash = 0;
+    this.grassFootstepBuffer = null;
+    this.grassFootstepLoading = false;
+    this.backgroundMusicBuffer = null;
+    this.backgroundMusicSource = null;
+    this.backgroundMusicLoading = false;
+    this.jumpBuffer = null;
+    this.jumpSoundLoading = false;
   }
 
   get ready() {
@@ -38,7 +45,8 @@ export class AudioEngine {
   // Doit être appelé depuis un geste utilisateur (politique d'autoplay)
   resume() {
     if (!this.ctx) this.init();
-    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().then(() => this.startBackgroundMusic());
+    else this.startBackgroundMusic();
   }
 
   init() {
@@ -74,6 +82,76 @@ export class AudioEngine {
     this.noise = { white: this.makeNoise('white'), pink: this.makeNoise('pink'), brown: this.makeNoise('brown') };
     this.buildAmbience();
     this.applyVolumes();
+    this.loadGrassFootstep();
+    this.loadBackgroundMusic();
+    this.loadJumpSound();
+  }
+
+  async loadJumpSound() {
+    if (!this.ctx || this.jumpBuffer || this.jumpSoundLoading) return;
+    const ctx = this.ctx;
+    this.jumpSoundLoading = true;
+    try {
+      const response = await fetch('/audio/jump.m4a');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const encoded = await response.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(encoded);
+      if (this.ctx === ctx) this.jumpBuffer = decoded;
+    } catch (error) {
+      console.warn('Son de saut indisponible ; utilisation du son synthétique de secours.', error);
+    } finally {
+      this.jumpSoundLoading = false;
+    }
+  }
+
+  async loadBackgroundMusic() {
+    if (!this.ctx || this.backgroundMusicBuffer || this.backgroundMusicLoading) return;
+    const ctx = this.ctx;
+    this.backgroundMusicLoading = true;
+    try {
+      const response = await fetch('/audio/Illumoria.mp3');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const encoded = await response.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(encoded);
+      if (this.ctx !== ctx) return;
+      this.backgroundMusicBuffer = decoded;
+      this.startBackgroundMusic();
+    } catch (error) {
+      console.warn('Musique de fond indisponible ; utilisation de la boîte à musique de secours.', error);
+    } finally {
+      this.backgroundMusicLoading = false;
+    }
+  }
+
+  startBackgroundMusic() {
+    if (!this.ctx || !this.backgroundMusicBuffer || this.backgroundMusicSource) return;
+    const source = this.ctx.createBufferSource();
+    source.buffer = this.backgroundMusicBuffer;
+    source.loop = true;
+    source.connect(this.bus.music);
+    source.onended = () => {
+      if (this.backgroundMusicSource === source) this.backgroundMusicSource = null;
+    };
+    source.start();
+    this.backgroundMusicSource = source;
+  }
+
+  async loadGrassFootstep() {
+    if (!this.ctx || this.grassFootstepBuffer || this.grassFootstepLoading) return;
+    const ctx = this.ctx;
+    this.grassFootstepLoading = true;
+    try {
+      const response = await fetch('/audio/walking-grass.mp3');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const encoded = await response.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(encoded);
+      if (this.ctx === ctx) this.grassFootstepBuffer = decoded;
+    } catch (error) {
+      // Le pas synthétique reste disponible si le fichier manque ou si le navigateur ne le décode pas.
+      console.warn('Son de pas dans l’herbe indisponible ; utilisation du son de secours.', error);
+    } finally {
+      this.grassFootstepLoading = false;
+    }
   }
 
   makeNoise(kind, seconds = 4) {
@@ -253,12 +331,12 @@ export class AudioEngine {
     T.note -= dt;
     if (T.note <= 0) {
       T.note = rand(0.7, 1.6) * (I.night > 0.5 ? 1.5 : 1);
-      if (this.vol('music') > 0.001) this.musicNote();
+      if (!this.backgroundMusicBuffer && this.vol('music') > 0.001) this.musicNote();
     }
     T.pad -= dt;
     if (T.pad <= 0) {
       T.pad = 9;
-      if (this.vol('music') > 0.001) this.musicPad();
+      if (!this.backgroundMusicBuffer && this.vol('music') > 0.001) this.musicPad();
     }
   }
 
@@ -516,6 +594,19 @@ export class AudioEngine {
     this.noiseBurst({ t0, type: 'lowpass', freq: 900, peak: 0.025, decay: 0.06, kind: 'pink' });
   }
 
+  jumpSound(long = false) {
+    if (!this.ready) return;
+    if (!this.jumpBuffer) {
+      this.hop(long);
+      return;
+    }
+    const source = this.ctx.createBufferSource();
+    source.buffer = this.jumpBuffer;
+    source.playbackRate.value = long ? 1.04 : 1;
+    source.connect(this.bus.sfx);
+    source.start();
+  }
+
   // « poc » d'atterrissage, plus sourd et plus fort avec l'impact
   land(impact = 5, surface = 'grass') {
     if (!this.ready) return;
@@ -555,6 +646,24 @@ export class AudioEngine {
     const v = 0.5 + speed * 0.5;
     if (surface === 'water') {
       this.noiseBurst({ t0, type: 'lowpass', freq: 900, q: 0.6, peak: 0.03 * v, attack: 0.02, decay: 0.2, kind: 'pink' });
+      return;
+    }
+    if (surface === 'grass' && this.grassFootstepBuffer) {
+      const source = this.ctx.createBufferSource();
+      source.buffer = this.grassFootstepBuffer;
+      source.playbackRate.value = Math.max(0.92, Math.min(1.08, 0.96 + Math.random() * 0.06 + Math.min(1.4, speed) * 0.025));
+      const gain = this.ctx.createGain();
+      const amount = Math.max(0, Math.min(1, speed / 1.4));
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.11 + amount * 0.07, t0 + 0.008);
+      let node = source.connect(gain);
+      if (pan && this.ctx.createStereoPanner) {
+        const panner = this.ctx.createStereoPanner();
+        panner.pan.value = pan;
+        node = node.connect(panner);
+      }
+      node.connect(this.bus.sfx);
+      source.start(t0);
       return;
     }
     if (surface === 'wood') {

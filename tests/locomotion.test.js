@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { createMotor, stepMotor, interpolate, turnParams, climbable, arriveIntent, wrapAngle } from '../src/entities/locomotion/motor.js';
 import { tuningFor } from '../src/entities/locomotion/tuning.js';
-import { locomotionPose, strideLength, LOCO_FAMILY } from '../src/entities/locomotion/pose.js';
+import { locomotionPose, strideLength, advanceGaitPhase, LOCO_FAMILY } from '../src/entities/locomotion/pose.js';
 
 const T = tuningFor('realiste');
 const DEG = Math.PI / 180;
@@ -88,6 +88,35 @@ describe('allures', () => {
     expect(stop).toBeGreaterThan(0.25);
     expect(stop).toBeLessThan(0.42);
     expect(m.state).toBe('IDLE');
+  });
+});
+
+describe('variation naturelle de la course', () => {
+  it('ajoute des relances et de petits ralentissements après la phase d’accélération', () => {
+    const m = createMotor();
+    const speeds = [];
+    run(m, intent(), 16, flat(), 120, (mm) => {
+      if (mm.v > T.run * 0.97) speeds.push(mm.v);
+    });
+    const low = Math.min(...speeds);
+    const high = Math.max(...speeds);
+    expect(high - low).toBeGreaterThan(0.18);
+    expect(low).toBeGreaterThan(T.run * 0.95);
+    expect(high).toBeLessThan(T.run * 1.08);
+  });
+
+  it('garde les mêmes variations à 30, 60 et 120 Hz', () => {
+    const simulate = (fps) => {
+      const m = createMotor();
+      run(m, intent(), 14, flat(), fps);
+      return m;
+    };
+    const motors = [30, 60, 120].map(simulate);
+    for (const m of motors.slice(1)) {
+      expect(Math.hypot(m.x - motors[0].x, m.z - motors[0].z)).toBeLessThan(0.02);
+      expect(m.v).toBeCloseTo(motors[0].v, 4);
+      expect(m.pacePhase).toBeCloseTo(motors[0].pacePhase, 8);
+    }
   });
 });
 
@@ -380,10 +409,44 @@ describe('pose de locomotion', () => {
     return { T, X };
   };
 
-  it('suit des pas de 0,55 m en marche, 0,9 m en course et 1,25 m au sprint', () => {
-    expect(strideLength(T.walkMax)).toBeCloseTo(0.55, 5);
-    expect(strideLength(T.run)).toBeCloseTo(0.9, 5);
-    expect(strideLength(T.sprint)).toBeCloseTo(1.25, 5);
+  it('conserve la phase des deux jambes au-delà des événements de pas', () => {
+    const oneStep = advanceGaitPhase(0, 1.65, 1.65);
+    const twoSteps = advanceGaitPhase(oneStep, 1.65, 1.65);
+    expect(oneStep).toBeCloseTo(Math.PI, 8);
+    expect(twoSteps).toBeCloseTo(0, 8);
+    const lead = pose({ v: T.run, phase: oneStep }).T;
+    const nextLead = pose({ v: T.run, phase: twoSteps }).T;
+    expect(lead.thighR).toBeLessThan(0);
+    expect(nextLead.thighL).toBeLessThan(0);
+  });
+
+  it('adapte la distance entre appuis alternés à une cadence crédible', () => {
+    expect(strideLength(T.walkMax)).toBeCloseTo(1.05, 5);
+    expect(strideLength(T.run)).toBeCloseTo(1.65, 5);
+    expect(strideLength(T.sprint)).toBeCloseTo(2.35, 5);
+    expect(T.sprint / strideLength(T.sprint)).toBeLessThan(4);
+  });
+
+  it('alterne les appuis et garde le pied en extension contrôlée pendant le contact', () => {
+    const contact = pose({ v: T.run, phase: 0 }).T;
+    const opposite = pose({ v: T.run, phase: Math.PI }).T;
+    const drive = pose({ v: T.run, phase: Math.PI * 1.15 }).T;
+    const swing = pose({ v: T.run, phase: Math.PI * 1.6 }).T;
+    const touchdown = pose({ v: T.run, phase: Math.PI * 1.98 }).T;
+    const sprintSwing = pose({ v: T.sprint, phase: Math.PI * 1.6 }).T;
+    expect(contact.thighL).toBeLessThan(0); // genou/cuisse projettent la jambe vers l’avant à l’appui
+    expect(opposite.thighR).toBeLessThan(0);
+    expect(contact.thighL).toBeCloseTo(opposite.thighR, 5);
+    expect(contact.thighR).toBeCloseTo(opposite.thighL, 5);
+    expect(contact.shinL).toBeGreaterThan(0.25);
+    expect(swing.shinL).toBeGreaterThan(contact.shinL + 0.6);
+    expect(sprintSwing.shinL).toBeLessThan(1.8);
+    expect(contact.thighL + contact.shinL + contact.footL).toBeLessThan(-0.07); // pointe relevée au contact
+    expect(drive.thighL).toBeGreaterThan(0.7);
+    expect(contact.thighL).toBeLessThan(-0.7);
+    expect(drive.thighL + drive.shinL + drive.footL).toBeGreaterThan(0.2); // poussée sur la pointe
+    expect(swing.thighL + swing.shinL + swing.footL).toBeLessThan(-0.25); // pointe dégagée en l'air
+    expect(touchdown.thighL + touchdown.shinL + touchdown.footL).toBeLessThan(-0.07); // prépare le contact suivant
   });
 
   it('reste finie et continue quand la vitesse et la phase évoluent (aucun saut de pose)', () => {
@@ -403,6 +466,31 @@ describe('pose de locomotion', () => {
       prev = cur;
     }
     expect(worst).toBeLessThan(0.15);
+  });
+
+  it('fait varier les bras de façon expressive, bornée et déterministe', () => {
+    const walk = pose({ v: T.walkMax }).T;
+    let minSpread = Infinity;
+    let maxSpread = -Infinity;
+    let minElbow = Infinity;
+    let maxElbow = -Infinity;
+    for (let k = 0; k < 96; k++) {
+      const phase = (k / 96) * Math.PI * 2;
+      const run = pose({ v: T.run, phase }).T;
+      const repeated = pose({ v: T.run, phase }).T;
+      expect(run.armLZ).toBe(repeated.armLZ);
+      expect(run.foreR).toBe(repeated.foreR);
+      minSpread = Math.min(minSpread, Math.abs(run.armLZ), Math.abs(run.armRZ));
+      maxSpread = Math.max(maxSpread, Math.abs(run.armLZ), Math.abs(run.armRZ));
+      minElbow = Math.min(minElbow, Math.abs(run.foreL), Math.abs(run.foreR));
+      maxElbow = Math.max(maxElbow, Math.abs(run.foreL), Math.abs(run.foreR));
+    }
+    expect(Math.abs(walk.armLZ)).toBeLessThan(minSpread);
+    expect(minSpread).toBeGreaterThan(0.45);
+    expect(maxSpread).toBeLessThan(1.3);
+    expect(maxSpread - minSpread).toBeGreaterThan(0.25);
+    expect(minElbow).toBeGreaterThan(0.25);
+    expect(maxElbow - minElbow).toBeGreaterThan(0.1);
   });
 
   it('se penche davantage et pompe plus des bras au sprint qu’en course', () => {
