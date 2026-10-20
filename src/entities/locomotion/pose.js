@@ -2,11 +2,32 @@
 // effort du sprint, inclinaison en virage, regard anticipé, dérapage, roulade, saut…
 // Le personnage (Character.js) applique ces valeurs d'articulations à son squelette.
 
+import { BASE_TUNING } from './tuning.js';
+
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
-// Distance entre appuis alternés (m). La cadence reste plausible aux vitesses de course
-// et de sprint, et chaque appui correspond à la distance réellement parcourue.
-const STRIDE = [[0, 0.38], [2.6, 1.05], [5.4, 1.65], [8.2, 2.35], [12, 2.7]];
+// Cadences visées (appuis par seconde) aux allures de référence : la longueur d'appui
+// en découle, et suit les vitesses de course et de sprint réglées dans tuning.js.
+export const CADENCE = { run: 5.4 / 1.65, sprint: 8.2 / 2.35 }; // ≈ 3,27 et 3,49 appuis/s
+// Distance entre appuis alternés (m), interpolée entre les allures de référence.
+// Chaque appui correspond à la distance réellement parcourue.
+const strideTable = (T) => [
+  [0, 0.38],
+  [T.walkMax, 1.05],
+  [T.run, T.run / CADENCE.run],
+  [T.sprint, T.sprint / CADENCE.sprint],
+  [(T.sprint * 12) / 8.2, ((T.sprint / CADENCE.sprint) * 2.7) / 2.35],
+];
+const STRIDE = strideTable(BASE_TUNING);
+
+// Mélanges d'allures rapportés aux vitesses réglées : course de 44 à 93 % de T.run,
+// sprint de 7 à 93 % de l'écart entre course et sprint.
+const RUN_BLEND = [(BASE_TUNING.run * 2.4) / 5.4, (BASE_TUNING.run * 5.0) / 5.4];
+const SPRINT_BLEND = [
+  BASE_TUNING.run + ((BASE_TUNING.sprint - BASE_TUNING.run) * 0.2) / 2.8,
+  BASE_TUNING.run + ((BASE_TUNING.sprint - BASE_TUNING.run) * 2.6) / 2.8,
+];
+
 export function strideLength(v) {
   const s = Math.max(0, v);
   for (let i = 1; i < STRIDE.length; i++) {
@@ -136,8 +157,8 @@ function groundPose(p, T, X) {
   const s = Math.hypot(p.v, p.vLat);
   const walk = clamp(s / 1.2, 0, 1);
   const still = 1 - walk;
-  const r = smooth(2.4, 5.0, s);
-  const sp = smooth(5.6, 8.0, s);
+  const r = smooth(RUN_BLEND[0], RUN_BLEND[1], s);
+  const sp = smooth(SPRINT_BLEND[0], SPRINT_BLEND[1], s);
   const g = blendGait(r, sp);
   const ph = p.phase || 0;
   const sn = Math.sin(ph);

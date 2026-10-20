@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { createMotor, stepMotor, interpolate, turnParams, climbable, arriveIntent, wrapAngle } from '../src/entities/locomotion/motor.js';
 import { tuningFor } from '../src/entities/locomotion/tuning.js';
-import { locomotionPose, strideLength, advanceGaitPhase, LOCO_FAMILY } from '../src/entities/locomotion/pose.js';
+import { locomotionPose, strideLength, advanceGaitPhase, LOCO_FAMILY, CADENCE } from '../src/entities/locomotion/pose.js';
 
 const T = tuningFor('realiste');
 const DEG = Math.PI / 180;
@@ -421,9 +421,12 @@ describe('pose de locomotion', () => {
   });
 
   it('adapte la distance entre appuis alternés à une cadence crédible', () => {
+    // Longueurs rapportées aux allures réglées : cadence ≈ 3,27 appuis/s en course, 3,49 au sprint
+    // (soit 1,65 m et 2,35 m d'appui à 5,4 et 8,2 m/s).
     expect(strideLength(T.walkMax)).toBeCloseTo(1.05, 5);
-    expect(strideLength(T.run)).toBeCloseTo(1.65, 5);
-    expect(strideLength(T.sprint)).toBeCloseTo(2.35, 5);
+    expect(T.run / strideLength(T.run)).toBeCloseTo(CADENCE.run, 5);
+    expect(T.sprint / strideLength(T.sprint)).toBeCloseTo(CADENCE.sprint, 5);
+    expect(strideLength(T.sprint)).toBeGreaterThan(strideLength(T.run));
     expect(T.sprint / strideLength(T.sprint)).toBeLessThan(4);
   });
 
