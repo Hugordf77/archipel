@@ -298,7 +298,7 @@ export function buildLOD2(desc) {
 // petite végétation au mètre carré (tuiles LOD0) : herbe dense, vraies nappes de fleurs
 const SMALL_TABLE = {
   [Z.PRAIRIE]: [['herbe', 0.32], ['fleur_champ', 0.05]],
-  [Z.FLEURS]: [['fleur_champ', 1.1], ['herbe', 0.12]],
+  [Z.FLEURS]: [['fleur_champ', 3.2], ['herbe', 0.04]],
   [Z.CLAIRIERE]: [['herbe', 0.26], ['fleur_champ', 0.1]],
   [Z.LISIERE]: [['herbe', 0.16], ['fleur_champ', 0.02]],
   [Z.VILLAGE]: [['herbe', 0.1], ['fleur_champ', 0.03]],
@@ -522,12 +522,20 @@ function smallVegetation(plan, surf, x0, z0, T, Hb, W, pathW, V) {
       if (zn === Z.LAC) table = [['nenuphar', 0.03]];
       if (!table) continue;
       for (const [kind, dens] of table) {
-        let count = Math.floor(dens) + (rng() < dens - Math.floor(dens) ? 1 : 0);
+        const patch = kind === 'fleur_champ' && zn === Z.FLEURS
+          ? smooth(-0.3, 0.3, nb(cx / 15, cz / 15))
+          : 0;
+        const localDensity = kind === 'fleur_champ' && zn === Z.FLEURS
+          ? dens * (0.7 + patch * 0.6)
+          : dens;
+        let count = Math.floor(localDensity) + (rng() < localDensity - Math.floor(localDensity) ? 1 : 0);
         while (count-- > 0) {
           const x = cx + rng();
           const z = cz + rng();
           const rot = rng() * Math.PI * 2;
-          const sc = 0.75 + rng() * 0.6;
+          const sc = kind === 'fleur_champ' && zn === Z.FLEURS
+            ? 0.9 + rng() * 0.5
+            : 0.75 + rng() * 0.6;
           let vr = rng();
           let y = hAt(x, z);
           if (kind === 'nenuphar') {

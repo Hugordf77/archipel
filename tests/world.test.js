@@ -437,6 +437,70 @@ describe('identifiants', () => {
   }, 30000);
 });
 
+describe('champs de fleurs', () => {
+  it('forme des nappes denses, colorées et stables sur l’île aux Mille Fleurs', async () => {
+    const { ISLANDS } = await import('../src/world/islands/regions.js');
+    const { buildPlan } = await import('../src/world/islands/gen/plan.js');
+    const { Surface, buildTile, TILE } = await import('../src/world/islands/gen/surface.js');
+    const { KINDS, STRIDE } = await import('../src/world/islands/gen/kinds.js');
+    const { Z } = await import('../src/world/islands/gen/zones.js');
+    const { fieldFlowerGeometry } = await import('../src/models/plantes/fleurs/index.js');
+    const plan = buildPlan(ISLANDS.find((d) => d.archetype === 'fleurs'));
+    const surf = new Surface(plan);
+    const flowerKind = KINDS.indexOf('fleur_champ');
+    const nt = Math.ceil(plan.ext / TILE);
+    const hues = new Set();
+    let flowerCount = 0;
+    let flowerArea = 0;
+    const flowersPerTile = [];
+    const fieldShares = [];
+    for (const zone of plan.Z) if (zone === Z.FLEURS) flowerArea += plan.s * plan.s;
+    const center = buildTile(plan, surf, 0, 0);
+    const repeated = buildTile(plan, surf, 0, 0);
+    expect(hash(repeated.items)).toBe(hash(center.items));
+    expect(hash(repeated.ids)).toBe(hash(center.ids));
+    const tileCoords = [];
+    for (let tz = -nt; tz < nt; tz++) for (let tx = -nt; tx < nt; tx++) tileCoords.push([tx, tz]);
+    for (const [tx, tz] of tileCoords) buildTile(plan, surf, tx, tz);
+    const flowerGeometry = fieldFlowerGeometry();
+    const trianglesPerTuft = Math.round((flowerGeometry.index ? flowerGeometry.index.count : flowerGeometry.attributes.position.count) / 3);
+    for (const [tx, tz] of tileCoords) {
+      const tile = buildTile(plan, surf, tx, tz);
+      let flowersInTile = 0;
+      for (let k = 0; k < tile.items.length; k += STRIDE) {
+        if (tile.items[k] !== flowerKind) continue;
+        flowersInTile++;
+        const x = Math.floor(tile.items[k + 1]);
+        const z = Math.floor(tile.items[k + 3]);
+        const zi = Math.max(0, Math.min(plan.n - 1, Math.round((z + plan.ext) / plan.s)));
+        const xi = Math.max(0, Math.min(plan.n - 1, Math.round((x + plan.ext) / plan.s)));
+        if (plan.Z[zi * plan.n + xi] === Z.FLEURS) flowerCount++;
+      }
+      flowersPerTile.push(flowersInTile);
+      for (const group of tile.groups) {
+        if (group.ki !== flowerKind) continue;
+        for (let k = 0; k < group.cols.length; k += 3) hues.add(`${group.cols[k].toFixed(2)},${group.cols[k + 1].toFixed(2)},${group.cols[k + 2].toFixed(2)}`);
+      }
+    }
+    expect(flowerCount / flowerArea).toBeCloseTo(2.94, 1);
+    expect(hues.size).toBeGreaterThanOrEqual(4);
+    expect(Math.max(...flowersPerTile) * trianglesPerTuft).toBeLessThan(800_000);
+
+    for (const island of ISLANDS) {
+      const islandPlan = island.id === plan.id ? plan : buildPlan(island);
+      let open = 0;
+      let blooms = 0;
+      for (const zone of islandPlan.Z) {
+        if (zone === Z.PRAIRIE || zone === Z.FLEURS) open++;
+        if (zone === Z.FLEURS) blooms++;
+      }
+      if (open) fieldShares.push(blooms / open);
+    }
+    expect(fieldShares).toHaveLength(ISLANDS.length);
+    expect(Math.min(...fieldShares)).toBeGreaterThan(0.06);
+  }, 30000);
+});
+
 describe('budget du Worker', () => {
   it('construit plan + LOD1 en moins de 60 ms en moyenne, 120 ms pour la grande île, une tuile en moins de 15 ms', async () => {
     const { ISLANDS } = await import('../src/world/islands/regions.js');

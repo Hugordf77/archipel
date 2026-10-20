@@ -12,7 +12,8 @@ export const Z = {
 export const ZONE_NAMES = Object.keys(Z);
 
 const FOREST = { foret: 0.68, montagne: 0.42, village: 0.2, fleurs: 0.1, falaises: 0.3, cratere: 0.22, jumelles: 0.34, curiosite: 0.18, dunes: 0.02, lagon: 0.12 };
-const BLOOM = { fleurs: 0.55, village: 0.12, foret: 0.04, montagne: 0.08, falaises: 0.1, jumelles: 0.14, curiosite: 0.1, cratere: 0.04, dunes: 0.03, lagon: 0.05 };
+// part visée des prés ouverts réellement convertie en fleurs, distincte par archétype
+const BLOOM = { fleurs: 0.5, village: 0.18, foret: 0.18, montagne: 0.07, falaises: 0.16, jumelles: 0.16, curiosite: 0.14, cratere: 0.12, dunes: 0.12, lagon: 0.13 };
 
 // seuil tel qu'une fraction « frac » des valeurs soit au-dessus
 function quantile(values, frac) {
@@ -37,6 +38,7 @@ export function computeZones(T, desc) {
   const bloomN = new Float32Array(N);
   const cand = [];
   const bcand = [];
+  let openCells = 0;
   const hRef = Math.max(12, hmax);
   // première passe : eau, plages, roche, altitude
   for (let j = 0; j < n; j++) {
@@ -95,16 +97,20 @@ export function computeZones(T, desc) {
   for (let j = 0; j < n; j++) {
     for (let i = 0; i < n; i++) {
       const k = j * n + i;
-      if (zone[k] !== Z.PRAIRIE || slope[k] > 0.28) continue;
+      if (zone[k] !== Z.PRAIRIE) continue;
+      openCells++;
+      if (slope[k] > 0.28) continue;
       const x = -ext + i * s;
       const z = -ext + j * s;
       bloomN[k] = fbm(nf, x / 55 - 5, z / 55 + 13, 3);
       bcand.push(bloomN[k]);
     }
   }
-  // les îles de prairie ont toujours un vrai champ de fleurs (au moins 14 % des prés en pente douce)
-  const meadow = biome === 'prairie' || biome === 'champignons';
-  const bq = quantile(bcand, meadow ? Math.max(0.14, (BLOOM[arch] ?? 0.08) * 1.4) : (BLOOM[arch] ?? 0.08) * 0.8);
+  // Convertit la part visée des prés ouverts en quantile des seules cellules assez
+  // douces pour recevoir un champ. Ainsi une île pentue ne perd pas ses fleurs.
+  const bloomShare = BLOOM[arch] ?? 0.12;
+  const candidateShare = bcand.length ? Math.min(1, bloomShare * openCells / bcand.length) : 0;
+  const bq = quantile(bcand, candidateShare);
   for (let k = 0; k < N; k++) if (zone[k] === Z.PRAIRIE && slope[k] <= 0.28 && bloomN[k] >= bq && bloomN[k] !== 0) zone[k] = Z.FLEURS;
   return { zone, slope, coastDist, wetDist };
 }
@@ -112,13 +118,15 @@ export function computeZones(T, desc) {
 // ---------------------------------------------------------------------------
 // Couleurs peintes par zone
 const hex = (h) => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
-export const BLOOM_COLORS = { rose: '#f4b4c6', jaune: '#f3d27c', bleue: '#a9c8ee', blanche: '#fbf6ee', mauve: '#c9b2e6' };
+export const BLOOM_COLORS = { rose: '#ed78a5', jaune: '#ffd34f', bleue: '#72b5ed', blanche: '#fff8e8', mauve: '#b887e8' };
 const BLOOM_ORDER = ['rose', 'jaune', 'bleue', 'blanche', 'mauve'];
 
 // couleur (indice) de la bande de fleurs à cet endroit : bandes orientées par le vent
 export function bloomBand(traits, x, z, nb) {
   const a = traits.windAngle;
-  const k = (x * -Math.sin(a) + z * Math.cos(a)) / 13 + nb(x / 40, z / 40) * 1.4;
+  const alongWind = x * -Math.sin(a) + z * Math.cos(a);
+  const curved = alongWind + nb(x / 48, z / 48) * 7.5;
+  const k = curved / 22;
   const idx = Math.floor(k);
   const main = BLOOM_ORDER.indexOf(traits.bloom);
   // une bande sur deux reprend la couleur dominante de l'île
@@ -178,7 +186,7 @@ export function zoneColors(P, desc) {
         case Z.DUNE: mix(sand, c, 0.12 * patch, c); c[0] *= 1.02; break;
         case Z.FLEURS: {
           const band = hex(bloomColorOf(bloomBand(P.traits, x, z, nb)));
-          mix(c, band, 0.42 + 0.12 * patch, c);
+          mix(c, band, 0.7 + 0.1 * patch, c);
           break;
         }
         case Z.VERGER: mix(c, orchard, 0.5, c); break;
