@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { groundAt, obstacleAt, waterDepth, pushOut } from '../world/navigation.js';
+import { groundAt, obstacleAt, waterDepth, pushOut, troncsProches } from '../world/navigation.js';
 import { U, ORIGIN } from '../core/globals.js';
 import { waterSurfaceAt } from '../world/env/water.js';
-import { createMotor, stepMotor, resetMotor, interpolate, climbable, arriveIntent, setProfile } from './locomotion/motor.js';
+import { createMotor, stepMotor, resetMotor, interpolate, climbable, arriveIntent, setProfile, H } from './locomotion/motor.js';
 import { strideLength, advanceGaitPhase } from './locomotion/pose.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
@@ -13,6 +13,9 @@ const STEPPING = new Set(['WALK', 'RUN', 'SPRINT', 'LAND', 'ROLL_RECOVER', 'IDLE
 
 // minmod : pente d'un vrai versant ; au bord d'une falaise, l'un des côtés est plat → 0
 const minmod = (a, b) => (a * b <= 0 ? 0 : Math.abs(a) < Math.abs(b) ? a : b);
+// troncs grimpables cherchés autour du personnage : pied à moins de 4 m (stipe penché de 1,8 m au plus,
+// plus la portée d'accroche)
+const TRUNK_SEARCH = 4;
 // Seuils de l'animation en fractions de la course réglée (T.run) : 3,6 et 3,3 m/s à 5,4 m/s
 const RUN_POSE_FRACTION = 3.6 / 5.4; // pose « run » au-delà
 const WALK_REF_FRACTION = 3.3 / 5.4; // référence des poses existantes et de l'intensité des pas
@@ -43,7 +46,8 @@ export class Player {
     // moteur de locomotion et ce qu'il a produit pendant l'image
     this.motor = createMotor();
     this.events = [];
-    this.intent = { dirX: 0, dirZ: 0, mag: 0, sprint: false, walk: false, jump: false, jumpHeld: false, roll: false, noSkid: false, swim: false, speed: 0 };
+    // stick : axes bruts { x, y } indépendants de la caméra (sur un tronc) ; carry : porte un objet
+    this.intent = { dirX: 0, dirZ: 0, mag: 0, sprint: false, walk: false, jump: false, jumpHeld: false, roll: false, noSkid: false, swim: false, speed: 0, stick: null, carry: false };
     // Instantané pour l'animation. Convention (voir locomotion/motor.js) : latéral + = (cos θ, −sin θ),
     // x local + du personnage ; aLat, bank, bankTarget > 0 dans un virage à omega > 0 (intérieur de ce
     // côté) ; handSide +1 = main de ce côté (os HAND_R du gabarit), −1 = l'autre, 0 hors contact ;
@@ -53,6 +57,14 @@ export class Player {
       accF: 0, // = aLong (compatibilité de pose.js et Character.js)
       aLat: 0, aLong: 0, bank: 0, bankTarget: 0, gripUse: 0,
       handDown: false, handSide: 0, handX: 0, handY: 0, handZ: 0, handRise: 0,
+      // Tronc (états CLIMB, CLIMB_TOP ; géométrie dans locomotion/trunk.js) : racine en
+      // A(climbS) + (trunkR + trunkGap) · n(climbTheta), cap climbTheta + π. climbTangent : tangente
+      // unitaire monde en climbS ; climbSpeed : m/s le long de l'axe (+ en montée) ; climbTurn : dθ/dt ;
+      // climbDist : distance cumulée sur le tronc (montée, descente, arc) ; climbArc : abscisse latérale
+      // continue (θ déroulé × (r + trunkGap), + vers le x local +) ; trunk : tronc grimpé (troncMonde) ;
+      // topT : temps au sommet ; trunkJump : 'back' | 'top' depuis le saut d'un tronc jusqu'à la réception.
+      climbS: 0, climbTheta: 0, climbTangent: [0, 1, 0], trunkR: 0, climbSpeed: 0, onTop: false, sliding: false,
+      climbTurn: 0, climbDist: 0, climbArc: 0, trunk: null, topT: 0, trunkJump: null, interp: 1,
     };
     this.env = {
       surface: 'grass',
@@ -60,8 +72,12 @@ export class Player {
       slopeZ: 0,
       ground: (x, z) => groundAt(x, z).y,
       sweep: (m, dx, dz, r, out) => this.sweep(m, dx, dz, r, out),
+      // troncs grimpables proches (même objet d'une image à l'autre tant que l'arbre existe)
+      trunks: (x, z) => troncsProches(x, z, TRUNK_SEARCH, this._trunks),
     };
+    this._trunks = [];
     this._view = { x: 0, y: 0, z: 0, heading: 0 };
+    this._climbView = { x: 0, y: 0, z: 0 };
     this._lastDist = 0;
     this._resync = true;
   }
@@ -73,6 +89,29 @@ export class Player {
 
   setProfile(profile) {
     setProfile(this.motor, profile);
+  }
+
+  // sur un tronc (CLIMB ou CLIMB_TOP)
+  get climbing() {
+    return !!this.motor.trunk;
+  }
+
+  // Position à sauvegarder { x, z } : la position courante, ou sur un tronc le pied de l'arbre, repoussé
+  // hors de son obstacle du côté du corps ; jamais dans un obstacle (le tronc qu'on vient de quitter compris).
+  savePosition(out = { x: 0, z: 0 }) {
+    const m = this.motor;
+    const tr = m.trunk;
+    if (tr) {
+      const foot = tr.pts[0];
+      const d = (tr.encombrement ?? foot[3] + 0.2) + this.radius + 0.05;
+      out.x = foot[0] + Math.sin(m.climbTheta) * d;
+      out.z = foot[2] + Math.cos(m.climbTheta) * d;
+    } else {
+      out.x = this.pos.x;
+      out.z = this.pos.z;
+    }
+    pushOut(out, this.radius);
+    return out;
   }
 
   place(x, z, facing = this.facing) {
@@ -173,7 +212,8 @@ export class Player {
   }
 
   free(m, x, z, dist, r, ux, uz, fromY) {
-    const o = obstacleAt(x, z, r * 0.9);
+    // le tronc qu'on vient de quitter ne retient pas (on sort de son obstacle)
+    const o = obstacleAt(x, z, r * 0.9, m.trunkExit?.obstacle || null);
     // en basculant par-dessus un obstacle bas, on ne s'y cogne pas
     if (o && !(o.low && m.state === 'TRIP')) {
       this._block = o;
@@ -237,15 +277,18 @@ export class Player {
     const moving = this.mode === 'free' || this.mode === 'goto';
     const turnRate = moving ? THREE.MathUtils.clamp(this.motor.omega, -5, 5) : THREE.MathUtils.clamp(angleDelta(this.previousFacing, this.facing) / Math.max(dt, 1e-4), -5, 5);
     this.previousFacing = this.facing;
-    c.update(dt, speed01, { turnRate, vel: this.vel, facing: this.facing, loco: moving ? L : null });
+    c.update(dt, speed01, { turnRate, vel: this.vel, facing: this.facing, pos: this.pos, loco: moving ? L : null });
     this.sync();
   }
 
   updateMotor(dt, intent) {
     const m = this.motor;
     const c = this.character;
+    // sur un tronc, pos suit exactement le moteur : s'il a bougé sans lui (vol, bateau, siège), on recale
+    const cv = this._climbView;
+    const moved = m.trunk && (this.pos.x !== cv.x || this.pos.y !== cv.y || this.pos.z !== cv.z);
     // le jeu a déplacé le personnage (téléportation, sortie de bateau, de vol, de siège) : on recale
-    if (this._resync || Math.hypot(this.pos.x - m.x, this.pos.z - m.z) > 0.75) {
+    if (this._resync || moved || Math.hypot(this.pos.x - m.x, this.pos.z - m.z) > 0.75) {
       const gy = groundAt(this.pos.x, this.pos.z).y;
       resetMotor(m, this.pos.x, this.swimming ? this.pos.y : gy, this.pos.z, this.facing);
       this._resync = false;
@@ -254,7 +297,8 @@ export class Player {
     const I = this.intent;
     const move = intent?.move;
     const hasMove = !!move && move.lengthSq() > 0.0025 && !this.locked;
-    if (this.mode === 'goto' && (hasMove || intent?.jump || intent?.roll)) {
+    // sur un tronc, le clic pour aller est ignoré
+    if (this.mode === 'goto' && (hasMove || intent?.jump || intent?.roll || m.trunk)) {
       this.mode = 'free';
       this.target = null;
     }
@@ -292,6 +336,8 @@ export class Player {
     I.jump = !this.locked && !!intent?.jump;
     I.jumpHeld = !!intent?.jumpHeld;
     I.roll = !this.locked && !!intent?.roll;
+    I.stick = !this.locked && intent?.stick ? intent.stick : null;
+    I.carry = !!intent?.carry;
 
     // eau : on nage dès qu'elle monte à la poitrine ; en l'air, seulement en l'atteignant
     const g = groundAt(m.x, m.z);
@@ -314,9 +360,10 @@ export class Player {
     }
 
     // posé dans un obstacle (téléportation, objet apparu) : on en sort avant d'avancer
+    // (sur un tronc, jamais ; en le quittant, son obstacle ne repousse pas : le moteur en sort)
     const ox = m.x;
     const oz = m.z;
-    pushOut(m, this.radius);
+    if (!m.trunk) pushOut(m, this.radius, m.trunkExit?.obstacle || null);
     if (m.x !== ox || m.z !== oz) {
       m.px += m.x - ox;
       m.pz += m.z - oz;
@@ -342,9 +389,11 @@ export class Player {
     }
 
     // vitesse monde (caméra, faune) et dynamique pour l'animation
+    const climbing = !!m.trunk;
     const fx = Math.sin(m.heading);
     const fz = Math.cos(m.heading);
-    this.vel.set(fx * m.v + fz * m.vLat, m.grounded ? 0 : m.vy, fz * m.v - fx * m.vLat);
+    if (climbing) this.vel.set(m.cvx, m.cvy, m.cvz);
+    else this.vel.set(fx * m.v + fz * m.vLat, m.grounded ? 0 : m.vy, fz * m.v - fx * m.vLat);
     this.actualSpeed = Math.hypot(this.vel.x, this.vel.z);
     this.targetSpeed = I.mag > 0.05 ? m.v : 0;
 
@@ -411,6 +460,27 @@ export class Player {
     L.jumpLong = m.jumpLong;
     L.swim = swim;
     L.surface = E.surface;
+    L.climbS = m.climbS;
+    L.climbTheta = m.climbTheta;
+    L.climbTangent[0] = m.climbTX;
+    L.climbTangent[1] = m.climbTY;
+    L.climbTangent[2] = m.climbTZ;
+    L.trunkR = m.trunkR;
+    L.climbSpeed = m.climbSpeed;
+    L.onTop = m.state === 'CLIMB_TOP';
+    L.sliding = m.sliding;
+    L.climbTurn = m.climbTurn;
+    L.climbDist = m.climbDist;
+    L.climbArc = m.climbArc;
+    L.trunk = m.trunk;
+    L.topT = m.topT;
+    L.trunkJump = m.trunkJump;
+    // part du pas en cours que montre le rendu (pos, facing interpolés) : les valeurs du moteur
+    // ci-dessus sont celles de la fin du pas, en avance de (1 − interp) pas sur l'image
+    L.interp = Math.min(1, Math.max(0, m.acc / H));
+    cv.x = this.pos.x;
+    cv.y = this.pos.y;
+    cv.z = this.pos.z;
 
     // événements du moteur vers le jeu (sons, poussière, vibrations, caméra)
     for (const e of m.events) this.events.push(e);
@@ -420,6 +490,10 @@ export class Player {
     const runPose = m.T.run * RUN_POSE_FRACTION;
     if (swim) {
       if (c.pose !== 'swim') c.setPose('swim');
+    } else if (climbing) {
+      // sur un tronc, l'animation dédiée lit this.loco
+      if (c.pose !== 'idle' && c.pose !== 'pickup' && c.pose !== 'celebrate' && !c.busy) c.setPose('idle');
+      return 0;
     } else if (c.pose !== 'pickup' && c.pose !== 'celebrate' && !c.busy) {
       const pose = speed > runPose ? 'run' : speed > 0.15 ? 'walk' : 'idle';
       if (c.pose !== pose) c.setPose(pose);

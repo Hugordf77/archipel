@@ -14,7 +14,17 @@
 // - handSide : +1 = main du côté latéral + (intérieur quand bank > 0 ; os HAND_R du gabarit, à
 //   x local + dans models/personnage), −1 = l'autre main, 0 hors contact.
 // - aLong > 0 en accélération, < 0 au freinage.
+//
+// Troncs (CLIMB, CLIMB_TOP) : env.trunks(x, z, y) donne les troncs grimpables proches, polylignes monde
+// { pts: [[x, y, z, r]…], sommetY, encombrement? } (troncMonde de world/navigation.js, même objet d'un pas
+// à l'autre tant que l'arbre existe) ; géométrie dans locomotion/trunk.js. Sur le tronc, climbS (abscisse
+// de la racine le long de l'axe depuis le pied, m) et climbTheta (azimut monde du corps autour de l'axe) :
+// racine en A(s) + (r(s) + trunkGap) · n(θ), au sommet en haut de l'axe ; cap θ + π. Commande au stick
+// brut I.stick = { x, y } (indépendant de la caméra ; absent : nul) : y monte ou descend, x tourne
+// (x > 0 : θ croît, vers la droite de l'écran caméra derrière). Le tronc quitté (trunkExit) doit être
+// ignoré par env.sweep tant que le corps n'est pas sorti de son encombrement.
 import { tuningFor, SURFACES } from './tuning.js';
+import { trunkFrame, trunkClosest, trunkSAtY, trunkLength } from './trunk.js';
 
 export const H = 1 / 120;
 const TAU = Math.PI * 2;
@@ -30,6 +40,8 @@ const GRIP = new Set(['IDLE', 'WALK', 'RUN', 'SPRINT', 'LAND', 'ROLL_RECOVER']);
 const ON_THE_SPOT = new Set(['TURN', 'PIVOT']);
 // la main ne se pose qu'au sprint
 const HAND_STATES = new Set(['SPRINT']);
+// sur un tronc
+export const CLIMBING = new Set(['CLIMB', 'CLIMB_TOP']);
 
 export const wrapAngle = (a) => {
   let r = (a + Math.PI) % TAU;
@@ -67,6 +79,17 @@ export function createMotor(profile = 'realiste') {
     handHoldT: 0, handT: 0, handCool: 0,
     // élan : vitesses des derniers pas (fenêtre handSpeedWindow), pointe d'inclinaison en cours
     speedHist: new Float64Array(Math.max(1, Math.round(T.handSpeedWindow / H))), speedIdx: 0, bankPeak: 0, bankPeakSide: 1, bankPeakT: 0, bankLean: 0,
+    // tronc : tronc grimpé (ou null), abscisse, azimut, vitesses le long de l'axe (+ en montée) et autour
+    // (dθ/dt), distances cumulées (montée + descente + arc ; arc latéral signé, + vers le x local +),
+    // tangente et rayon en s, glissade, temps au sommet, dernier saut depuis un tronc ('back' | 'top')
+    trunk: null, climbS: 0, climbTheta: 0, climbSpeed: 0, climbTurn: 0, climbDist: 0, climbArc: 0,
+    climbTX: 0, climbTY: 1, climbTZ: 0, trunkR: 0, sliding: false, slideHold: 0, topT: 0, trunkJump: null,
+    // vitesse monde du corps sur le tronc (pas fixe) et décalage de raccord amorti (position, vitesse, cap)
+    cvx: 0, cvy: 0, cvz: 0,
+    snapX: 0, snapY: 0, snapZ: 0, snapVX: 0, snapVY: 0, snapVZ: 0, snapH: 0, snapVH: 0,
+    // tronc quitté (ignoré par le balayage jusqu'à en être sorti) ; pas de nouvelle accroche à noGrab
+    // pendant noGrabT, ni en l'air si noGrabAir (lâcher : jusqu'au sol)
+    trunkExit: null, trunkExitT: 0, noGrab: null, noGrabT: 0, noGrabAir: false,
     acc: 0,
     events: [],
   };
@@ -101,6 +124,11 @@ export function resetMotor(m, x, y, z, heading = m.heading) {
   m.bankPeak = 0;
   m.bankPeakSide = 1;
   m.bankPeakT = m.bankLean = 0;
+  clearClimb(m);
+  m.trunkJump = null;
+  m.trunkExit = m.noGrab = null;
+  m.trunkExitT = m.noGrabT = 0;
+  m.noGrabAir = false;
   m.acc = 0;
   setState(m, 'IDLE');
 }
@@ -198,6 +226,7 @@ function substep(m, I, env, h) {
   const vz0 = fz * m.v - fx * m.vLat;
   const from = m.state;
   stateStep(m, I, env, h);
+  if (m.trunkExit) exitStep(m, env, h);
   const surf = SURFACES[env.surface] || SURFACES.grass;
   measureAccel(m, I, h, surf, vx0, vz0, from);
   bankStep(m, I, h);
@@ -216,6 +245,7 @@ function stateStep(m, I, env, h) {
   if (m.rollBuf > 0) m.rollBuf -= h;
   if (m.coyote > 0) m.coyote -= h;
   if (m.boostT > 0) m.boostT -= h;
+  if (m.noGrabT > 0) m.noGrabT -= h;
   const surf = SURFACES[env.surface] || SURFACES.grass;
   // adhérence du sol sous les pieds (rotation, glisse) ; dans l'eau profonde, celle de la nage
   m.surfGrip = I.swim ? 1 : surf.grip;
@@ -232,15 +262,18 @@ function stateStep(m, I, env, h) {
   m.sprintTime = m.state === 'SPRINT' ? m.sprintTime + h : Math.max(0, m.sprintTime - h * 2);
 
   if (I.swim) {
+    // jamais à la nage : on lâche le tronc
+    if (m.trunk) leaveTrunk(m, 'interdit');
     swimStep(m, I, env, h, has, dTheta);
     m.hadInput = has;
     return;
   }
   if (m.state === 'SWIM') setState(m, 'IDLE');
 
-  // appuis mémorisés : saut puis roulade
-  if (m.jumpBuf > 0 && (m.grounded || m.coyote > 0) && canJump(m)) startJump(m);
-  else if (m.rollBuf > 0 && m.grounded) tryRoll(m, I, has, dTheta);
+  // appuis mémorisés : saut (contre un tronc, il accroche directement) puis roulade
+  if (m.jumpBuf > 0 && (m.grounded || m.coyote > 0) && canJump(m)) {
+    if (!(m.grounded && tryGrab(m, I, env, true))) startJump(m);
+  } else if (m.rollBuf > 0 && m.grounded) tryRoll(m, I, has, dTheta);
 
   switch (m.state) {
     case 'SKID':
@@ -261,6 +294,12 @@ function stateStep(m, I, env, h) {
     case 'JUMP':
     case 'FALL':
       airStep(m, I, env, h, surf, has, dTheta);
+      // en l'air (saut ou chute), le corps qui passe près d'un tronc s'y accroche
+      if ((m.state === 'JUMP' || m.state === 'FALL') && !m.grounded) tryGrab(m, I, env, false);
+      break;
+    case 'CLIMB':
+    case 'CLIMB_TOP':
+      climbStep(m, I, env, h);
       break;
     case 'SLIDE':
       slideStep(m, I, env, h, has, target);
@@ -575,6 +614,9 @@ function land(m, gy, impact) {
   m.vy = 0;
   m.grounded = true;
   m.lastImpact = impact;
+  // de retour au sol : le tronc lâché redevient saisissable, le saut depuis un tronc est fini
+  m.noGrabAir = false;
+  m.trunkJump = null;
   const airTime = m.airTime;
   m.airTime = 0;
   if (m.state === 'TRIP') {
@@ -944,6 +986,9 @@ function swimStep(m, I, env, h, has, dTheta) {
     m.grounded = true;
     m.vy = 0;
     m.vLat = 0;
+    m.trunkExit = null;
+    m.trunkJump = null;
+    m.noGrabAir = false;
   }
   m.jumpBuf = 0;
   m.rollBuf = 0;
@@ -952,4 +997,366 @@ function swimStep(m, I, env, h, has, dTheta) {
   if (m.v < V) m.v = Math.min(V, m.v + T.swimAccel * h);
   else m.v = Math.max(V, m.v - T.swimDrag * h);
   move(m, env, h, T.radius);
+}
+
+// ---------------------------------------------------------------------------
+// Troncs : s'accrocher, grimper (CLIMB), sommet (CLIMB_TOP), repartir.
+// Sur le tronc, la racine visée est en A(s) + (r(s) + trunkGap) · n(θ) (au sommet : haut de l'axe, le
+// point le plus haut de pts) et le cap vaut θ + π. Les raccords (accroche, arrivée au sommet, retour du
+// sommet) partent de la position et de la vitesse du corps et passent par un décalage amorti critique
+// (trunkSnapFreq) : la position ne saute jamais, la vitesse non plus (sauf l'impact de l'accroche, dont
+// le corps garde trunkGrabCarry).
+const TF = { s: 0, x: 0, y: 0, z: 0, r: 0, tx: 0, ty: 1, tz: 0, nx: 0, ny: 0, nz: 1 };
+const TC = { s: 0, d: 0, r: 0, x: 0, y: 0, z: 0 };
+const BASE = { x: 0, y: 0, z: 0 };
+const LIM = { low: 0, max: 0, top: 0 };
+
+const approach = (v, target, d) => (v < target ? Math.min(target, v + d) : Math.max(target, v - d));
+
+// commande d'un axe du stick : 0 dans la zone morte, ±1 au-delà de trunkDead + trunkSpan
+export function stickAxis(v, T) {
+  const a = Math.abs(v || 0);
+  if (a <= T.trunkDead) return 0;
+  return Math.sign(v) * Math.min(1, (a - T.trunkDead) / T.trunkSpan);
+}
+
+// bornes de la racine sur un tronc (abscisses) : au plus bas à l'accroche (trunkLowH au-dessus du pied),
+// au plus haut quand les mains (trunkHands plus haut) atteignent sommetY ; top : haut de l'axe
+export function trunkLimits(tr, T, out = LIM) {
+  const pts = tr.pts;
+  out.top = trunkLength(pts);
+  out.low = Math.min(trunkSAtY(pts, pts[0][1] + T.trunkLowH), out.top);
+  out.max = trunkSAtY(pts, tr.sommetY) - T.trunkHands;
+  return out;
+}
+
+function clearClimb(m) {
+  m.trunk = null;
+  m.climbS = m.climbTheta = m.climbSpeed = m.climbTurn = 0;
+  m.climbTX = m.climbTZ = 0;
+  m.climbTY = 1;
+  m.trunkR = 0;
+  m.sliding = false;
+  m.slideHold = m.topT = 0;
+  m.cvx = m.cvy = m.cvz = 0;
+  m.snapX = m.snapY = m.snapZ = m.snapVX = m.snapVY = m.snapVZ = m.snapH = m.snapVH = 0;
+}
+
+// le tronc grimpé existe-t-il encore (obstacle présent) ?
+function trunkListed(m, env) {
+  const list = env.trunks ? env.trunks(m.x, m.z, m.y) : null;
+  if (list) for (let i = 0; i < list.length; i++) if (list[i] === m.trunk) return true;
+  return false;
+}
+
+// S'accrocher au tronc le plus proche à portée : jamais en portant ni à la nage ; en l'air, racine entre
+// trunkGrabMinH et sommetY au-dessus du pied ; centre du corps (racine + trunkProbeY) à moins de
+// r + radius + trunkGrabReach de l'axe ; sans entrée, ou stick tourné vers le tronc (à moins de 75°).
+function tryGrab(m, I, env, fromGround) {
+  const T = m.T;
+  if (I.carry || I.swim || !env.trunks) return false;
+  const list = env.trunks(m.x, m.z, m.y);
+  if (!list || !list.length) return false;
+  const has = I.mag > 0.05;
+  const py = m.y + T.trunkProbeY;
+  let best = null;
+  let bestEdge = Infinity;
+  let bestS = 0;
+  for (let i = 0; i < list.length; i++) {
+    const tr = list[i];
+    if (tr === m.noGrab && (m.noGrabT > 0 || m.noGrabAir)) continue;
+    if (!fromGround && (m.y - tr.pts[0][1] < T.trunkGrabMinH - 1e-9 || m.y > tr.sommetY)) continue;
+    const L = trunkLimits(tr, T);
+    if (L.max < L.low) continue; // trop court pour y tenir
+    trunkClosest(tr.pts, m.x, py, m.z, TC);
+    const edge = TC.d - TC.r - T.radius;
+    if (edge > T.trunkGrabReach + 1e-9 || edge >= bestEdge) continue;
+    if (has) {
+      const ux = TC.x - m.x;
+      const uz = TC.z - m.z;
+      const ul = Math.hypot(ux, uz);
+      if (ul > 1e-6 && (I.dirX * ux + I.dirZ * uz) / ul < T.trunkGrabCos) continue;
+    }
+    best = tr;
+    bestEdge = edge;
+    bestS = TC.s - T.trunkProbeY;
+  }
+  if (!best) return false;
+  grab(m, best, bestS);
+  return true;
+}
+
+// racine visée (BASE) sur le tronc grimpé, et repère en s (tangente, rayon) gardé pour l'animation
+function climbBase(m, top, L) {
+  const T = m.T;
+  trunkFrame(m.trunk.pts, top ? L.top : m.climbS, m.climbTheta, TF);
+  m.climbTX = TF.tx;
+  m.climbTY = TF.ty;
+  m.climbTZ = TF.tz;
+  m.trunkR = TF.r;
+  if (top) {
+    BASE.x = TF.x;
+    BASE.y = TF.y;
+    BASE.z = TF.z;
+  } else {
+    const D = TF.r + T.trunkGap;
+    BASE.x = TF.x + D * TF.nx;
+    BASE.y = TF.y + D * TF.ny;
+    BASE.z = TF.z + D * TF.nz;
+  }
+  return BASE;
+}
+
+// le décalage de raccord repart de la position courante vers la nouvelle racine visée b, à la vitesse
+// (vx, vy, vz) du corps
+function rebase(m, b, vx, vy, vz) {
+  m.snapX = m.x - b.x;
+  m.snapY = m.y - b.y;
+  m.snapZ = m.z - b.z;
+  m.snapVX = vx;
+  m.snapVY = vy;
+  m.snapVZ = vz;
+}
+
+// ressort amorti critique du décalage (position et cap), au pas fixe
+function snapStep(m, h) {
+  const w = m.T.trunkSnapFreq;
+  const k = w * w;
+  const c = 2 * w;
+  m.snapVX += (-k * m.snapX - c * m.snapVX) * h;
+  m.snapVY += (-k * m.snapY - c * m.snapVY) * h;
+  m.snapVZ += (-k * m.snapZ - c * m.snapVZ) * h;
+  m.snapVH += (-k * m.snapH - c * m.snapVH) * h;
+  m.snapX += m.snapVX * h;
+  m.snapY += m.snapVY * h;
+  m.snapZ += m.snapVZ * h;
+  m.snapH += m.snapVH * h;
+  const left = Math.abs(m.snapX) + Math.abs(m.snapY) + Math.abs(m.snapZ) + Math.abs(m.snapH);
+  const vel = Math.abs(m.snapVX) + Math.abs(m.snapVY) + Math.abs(m.snapVZ) + Math.abs(m.snapVH);
+  if (left < 1e-6 && vel < 1e-5) m.snapX = m.snapY = m.snapZ = m.snapH = m.snapVX = m.snapVY = m.snapVZ = m.snapVH = 0;
+}
+
+function grab(m, tr, s) {
+  const T = m.T;
+  const L = trunkLimits(tr, T);
+  // vitesse réelle du corps à l'arrivée (déplacement de ce pas, obstacle compris ; nulle au sol, l'accroche
+  // passant avant le mouvement) : l'impact, dont il garde trunkGrabCarry
+  const vx = (m.x - m.px) / H;
+  const vz = (m.z - m.pz) / H;
+  const vy = m.grounded ? 0 : m.vy;
+  const impact = Math.hypot(vx, vy, vz);
+  const fromGround = m.grounded;
+  clearClimb(m);
+  m.trunk = tr;
+  m.climbS = clamp(s, L.low, L.max);
+  trunkFrame(tr.pts, m.climbS, 0, TF);
+  const dx = m.x - TF.x;
+  const dz = m.z - TF.z;
+  m.climbTheta = Math.hypot(dx, dz) > 1e-6 ? Math.atan2(dx, dz) : wrapAngle(m.heading + Math.PI);
+  const k = T.trunkGrabCarry;
+  rebase(m, climbBase(m, false, L), vx * k, vy * k, vz * k);
+  m.snapH = wrapAngle(m.heading - (m.climbTheta + Math.PI));
+  m.snapVH = m.omega;
+  m.cvx = vx * k;
+  m.cvy = vy * k;
+  m.cvz = vz * k;
+  m.v = m.vLat = m.vy = m.omega = 0;
+  m.grounded = false;
+  m.coyote = m.airTime = m.jumpBuf = m.rollBuf = 0;
+  m.jumpCutDone = true;
+  m.carry = false;
+  m.trunkJump = null;
+  m.trunkExit = m.noGrab = null;
+  m.noGrabT = 0;
+  m.noGrabAir = false;
+  setState(m, 'CLIMB');
+  emit(m, 'grab', { impact, kind: tr.kind, fromGround });
+}
+
+function climbStep(m, I, env, h) {
+  const T = m.T;
+  // tronc disparu (île déchargée, arbre coupé) : chute propre ; jamais en portant
+  if (!trunkListed(m, env)) return leaveTrunk(m, 'disparu');
+  if (I.carry) return leaveTrunk(m, 'interdit');
+  // saut : dos au tronc (ou du sommet) ; roulade : lâcher prise
+  if (m.jumpBuf > 0) return trunkJump(m, I, m.state === 'CLIMB_TOP' ? 'top' : 'back');
+  if (m.rollBuf > 0) return leaveTrunk(m, 'lacher');
+  const st = I.stick;
+  const sx = st ? st.x || 0 : 0;
+  const sy = st ? st.y || 0 : 0;
+  const ax = stickAxis(sx, T);
+  const ay = stickAxis(sy, T);
+  const L = trunkLimits(m.trunk, T);
+  const x0 = m.x;
+  const y0 = m.y;
+  const z0 = m.z;
+  // autour du tronc (stick droit : θ croît, vers la droite de l'écran caméra derrière)
+  m.climbTurn = approach(m.climbTurn, ax * T.trunkTurn, T.trunkTurnAccel * h);
+  const dTh = m.climbTurn * h;
+  m.climbTheta = wrapAngle(m.climbTheta + dTh);
+  let top = m.state === 'CLIMB_TOP';
+  if (top && ay < 0) {
+    // stick bas au sommet : on redescend, depuis la racine où les mains tiennent le haut
+    setState(m, 'CLIMB');
+    top = false;
+    m.climbS = L.max;
+    m.climbSpeed = 0;
+    rebase(m, climbBase(m, false, L), m.cvx, m.cvy, m.cvz);
+  }
+  const s0 = m.climbS;
+  if (top) {
+    m.topT += h;
+    m.climbSpeed = 0;
+  } else {
+    // glissade : stick bas franc tenu trunkSlideHold ; elle cesse dès que le stick n'est plus franc
+    m.slideHold = sy <= -T.trunkSlideStick ? m.slideHold + h : 0;
+    if (!m.sliding && m.slideHold > T.trunkSlideHold - 1e-9) {
+      m.sliding = true;
+      emit(m, 'slideStart', { v: -m.climbSpeed });
+    } else if (m.sliding && m.slideHold === 0) {
+      m.sliding = false;
+      emit(m, 'slideStop', { v: -m.climbSpeed });
+    }
+    // vitesse le long de l'axe : montée, descente ou glissade ; sans entrée, arrêt amorti puis immobile
+    const v = m.climbSpeed;
+    let target;
+    let acc;
+    if (m.sliding) {
+      target = -T.trunkSlideSpeed;
+      acc = v > target ? T.trunkSlideAccel : T.trunkBrake;
+    } else {
+      target = ay > 0 ? ay * T.trunkUp : ay * T.trunkDown;
+      acc = target * v >= 0 && Math.abs(target) > Math.abs(v) ? T.trunkAccel : T.trunkBrake;
+    }
+    m.climbSpeed = approach(v, target, acc * h);
+    m.climbS = clamp(s0 + m.climbSpeed * h, 0, L.max);
+  }
+  // position : racine visée + décalage amorti ; cap face au tronc
+  snapStep(m, h);
+  const b = climbBase(m, top, L);
+  m.x = b.x + m.snapX;
+  m.y = b.y + m.snapY;
+  m.z = b.z + m.snapZ;
+  m.heading = wrapAngle(m.climbTheta + Math.PI + m.snapH);
+  m.cvx = (m.x - x0) / h;
+  m.cvy = (m.y - y0) / h;
+  m.cvz = (m.z - z0) / h;
+  m.vy = m.cvy;
+  // distances au pas fixe : le long de l'axe et en arc ; arc latéral + vers le x local + (soit −dθ)
+  const D = m.trunkR + T.trunkGap;
+  m.climbDist += Math.abs(m.climbS - s0) + Math.abs(dTh) * D;
+  m.climbArc -= dTh * D;
+  if (!top && m.climbS >= L.max - 1e-9 && m.climbSpeed > 0) {
+    // les mains atteignent sommetY : poirier au haut de l'axe
+    if (m.sliding) emit(m, 'slideStop', { v: -m.climbSpeed });
+    m.sliding = false;
+    m.slideHold = 0;
+    m.climbSpeed = 0;
+    m.topT = 0;
+    setState(m, 'CLIMB_TOP');
+    rebase(m, climbBase(m, true, L), m.cvx, m.cvy, m.cvz);
+    emit(m, 'climbTop');
+    return;
+  }
+  // pieds au sol en descendant (ou bas de l'axe) : on quitte le tronc
+  if (!top && m.climbSpeed < 0 && (m.climbS <= 0 || m.y - env.ground(m.x, m.z) <= T.trunkDropH)) leaveTrunk(m, 'pied');
+}
+
+// Quitter le tronc vers le bas (lâcher, pieds au sol, tronc disparu, interdit) : chute (FALL) avec la
+// vitesse du corps (glissade comprise), en s'écartant du tronc de trunkPushOff ; ce tronc est ignoré par
+// le balayage jusqu'à être sorti de son encombrement, et ne se saisit plus avant d'avoir touché le sol.
+function leaveTrunk(m, cause) {
+  const T = m.T;
+  const tr = m.trunk;
+  if (m.sliding) emit(m, 'slideStop', { v: -m.climbSpeed });
+  emit(m, 'climbRelease', { cause, kind: tr.kind });
+  const fx = Math.sin(m.heading);
+  const fz = Math.cos(m.heading);
+  const vx = m.cvx;
+  const vy = m.cvy;
+  const vz = m.cvz;
+  clearClimb(m);
+  // cap face au tronc : s'en écarter, c'est reculer
+  m.v = fx * vx + fz * vz - (cause === 'disparu' ? 0 : T.trunkPushOff);
+  m.vLat = fz * vx - fx * vz;
+  m.vy = vy;
+  m.omega = 0;
+  m.grounded = false;
+  m.coyote = m.airTime = m.jumpBuf = m.rollBuf = 0;
+  m.jumpCutDone = true;
+  m.carry = false;
+  if (cause !== 'disparu') {
+    m.trunkExit = tr;
+    m.trunkExitT = 0;
+    m.noGrab = tr;
+    m.noGrabT = T.regrabDelay;
+    m.noGrabAir = true;
+  }
+  setState(m, 'FALL');
+}
+
+// Sauter du tronc : 'back' dos au tronc, orientable de ±trunkJumpSpread au stick x ; 'top' du sommet, plus
+// haut, vers le stick (direction monde de l'intention), sinon droit devant (cap θ + π, le tronc dans le dos)
+function trunkJump(m, I, kind) {
+  const T = m.T;
+  const tr = m.trunk;
+  let dir;
+  if (kind === 'back') dir = m.climbTheta + stickAxis(I.stick ? I.stick.x : 0, T) * T.trunkJumpSpread;
+  else dir = I.mag > 0.05 ? Math.atan2(I.dirX, I.dirZ) : m.climbTheta + Math.PI;
+  if (m.sliding) emit(m, 'slideStop', { v: -m.climbSpeed });
+  clearClimb(m);
+  m.heading = wrapAngle(dir);
+  m.omega = 0;
+  m.v = T.trunkJumpH;
+  m.vLat = 0;
+  m.vy = T.jumpSpeed * (kind === 'top' ? T.trunkTopJump : 1);
+  m.grounded = false;
+  m.coyote = m.airTime = m.jumpBuf = m.rollBuf = 0;
+  m.jumpCutDone = false;
+  m.jumpLong = false;
+  m.carry = false;
+  m.trunkJump = kind;
+  m.trunkExit = tr;
+  m.trunkExitT = 0;
+  m.noGrab = tr;
+  m.noGrabT = T.regrabDelay;
+  m.noGrabAir = false;
+  setState(m, 'JUMP');
+  emit(m, 'climbJump', { kind });
+}
+
+// Sortie de l'encombrement du tronc quitté : en l'air, il reste ignoré ; au sol, on s'en écarte au moins
+// à trunkPushOff (en plus du mouvement propre) jusqu'à en être sorti, trunkExitTime au plus.
+function exitStep(m, env, h) {
+  const T = m.T;
+  const tr = m.trunkExit;
+  if (m.trunk || m.state === 'SWIM') {
+    m.trunkExit = null;
+    return;
+  }
+  if (!m.grounded) return;
+  const foot = tr.pts[0];
+  const clear = (tr.encombrement ?? foot[3] + 0.2) + T.radius;
+  let ux = m.x - foot[0];
+  let uz = m.z - foot[2];
+  const d = Math.hypot(ux, uz);
+  if (d >= clear - 1e-6 || m.trunkExitT >= T.trunkExitTime) {
+    m.trunkExit = null;
+    return;
+  }
+  m.trunkExitT += h;
+  if (d > 1e-6) {
+    ux /= d;
+    uz /= d;
+  } else {
+    ux = -Math.sin(m.heading);
+    uz = -Math.cos(m.heading);
+  }
+  const moved = (m.x - m.px) * ux + (m.z - m.pz) * uz;
+  const step = Math.min(clear - d, T.trunkPushOff * h - moved);
+  if (step <= 1e-9) return;
+  OUT.trip = false;
+  env.sweep(m, ux * step, uz * step, T.radius, OUT);
+  m.x = OUT.x;
+  m.z = OUT.z;
 }

@@ -70,10 +70,10 @@ const TAU = Math.PI * 2;
 export const LOCO_FAMILY = {
   IDLE: 'sol', WALK: 'sol', RUN: 'sol', SPRINT: 'sol', ROLL_RECOVER: 'sol', LAND: 'land',
   TURN: 'turn', SKID: 'skid', PIVOT: 'pivot', ROLL: 'roll', BONK: 'bonk', JUMP: 'air', FALL: 'air', SLIDE: 'slide',
-  TRIP: 'trip', FALLEN: 'fallen', GETUP: 'getup',
+  TRIP: 'trip', FALLEN: 'fallen', GETUP: 'getup', CLIMB: 'climb', CLIMB_TOP: 'perch',
 };
 // demi-vie (s) de la transition vers chaque famille
-export const FAMILY_HALFLIFE = { roll: 0.06, pivot: 0.07, land: 0.07, skid: 0.08, air: 0.1, bonk: 0.09, turn: 0.08, slide: 0.12, sol: 0.12, trip: 0.07, fallen: 0.06, getup: 0.1 };
+export const FAMILY_HALFLIFE = { roll: 0.06, pivot: 0.07, land: 0.07, skid: 0.08, air: 0.1, bonk: 0.09, turn: 0.08, slide: 0.12, sol: 0.12, trip: 0.07, fallen: 0.06, getup: 0.1, climb: 0.08, perch: 0.14 };
 
 // Allures : amplitudes des membres, penchée, rebond, part de phase aérienne
 const GAITS = {

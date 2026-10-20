@@ -134,6 +134,39 @@ export function troncMonde(g) {
   return { kind: g.kind, pts, sommetY: g.y + g.def.sommet.y * g.sc, pose: g.def.sommet.pose };
 }
 
+// Tronc monde d'un obstacle grimpable, calculé une fois et gardé sur son objet grimpe (propriété non
+// énumérable _monde) : même identité d'une image à l'autre tant que l'obstacle existe (il revient avec
+// lui à la repousse). En plus de troncMonde : l'obstacle et son rayon (encombrement, m), dont le
+// personnage sort en quittant le tronc.
+function troncDe(o) {
+  const g = o.grimpe;
+  let t = g._monde;
+  if (!t) {
+    t = troncMonde(g);
+    t.obstacle = o;
+    t.encombrement = o.r;
+    Object.defineProperty(g, '_monde', { value: t, configurable: true });
+  }
+  return t;
+}
+
+// Troncs grimpables des obstacles présents dont le pied est à moins de rayon (m, ≤ 8) de (x, z) :
+// remplit out (vidé d'abord) avec leurs troncs monde (troncDe) et le renvoie. Un tronc disparaît avec son
+// obstacle (île déchargée, arbre coupé).
+export function troncsProches(x, z, rayon, out = []) {
+  out.length = 0;
+  const r2 = rayon * rayon;
+  near(x, z, (o) => {
+    if (o.grimpe) {
+      const dx = o.x - x;
+      const dz = o.z - z;
+      if (dx * dx + dz * dz < r2) out.push(troncDe(o));
+    }
+    return false;
+  });
+  return out;
+}
+
 // Peut-on se tenir en (x, z) en venant d'une hauteur fromY, après un pas de longueur dist ?
 export function canStand(x, z, fromY, dist) {
   const g = groundAt(x, z);
@@ -143,9 +176,10 @@ export function canStand(x, z, fromY, dist) {
   return true;
 }
 
-// Repousse un cercle (joueur) hors des obstacles
-export function pushOut(pos, radius = 0.32) {
+// Repousse un cercle (joueur) hors des obstacles (sauf ignore : le tronc que le joueur vient de quitter)
+export function pushOut(pos, radius = 0.32, ignore = null) {
   near(pos.x, pos.z, (o) => {
+    if (o === ignore) return false;
     const dx = pos.x - o.x;
     const dz = pos.z - o.z;
     const r = o.r + radius;
@@ -159,11 +193,12 @@ export function pushOut(pos, radius = 0.32) {
   });
 }
 
-// Premier obstacle qui chevauche le cercle (x, z, radius), ou null
+// Premier obstacle qui chevauche le cercle (x, z, radius), ou null (ignore : obstacle à ne pas compter)
 let found = null;
-export function obstacleAt(x, z, radius = 0.32) {
+export function obstacleAt(x, z, radius = 0.32, ignore = null) {
   found = null;
   near(x, z, (o) => {
+    if (o === ignore) return false;
     const dx = x - o.x;
     const dz = z - o.z;
     const r = o.r + radius;

@@ -173,6 +173,48 @@ export const BASE_TUNING = {
   slideCap: 9,
   slideControl: 0.35,
 
+  // --- grimper aux troncs (palmiers) : CLIMB et CLIMB_TOP --------------------------
+  // Sur le tronc (locomotion/trunk.js) : racine en A(s) + (r(s) + trunkGap) · n(θ), cap θ + π (face au
+  // tronc), s le long de l'axe depuis le pied. Mains à trunkHands au-dessus de la racine le long de
+  // l'axe : quand elles atteignent sommetY, CLIMB_TOP (racine au haut de l'axe).
+  trunkGap: 0.22, // m : de l'écorce à la racine
+  trunkHands: 1.1, // m : épaule 0,775 + bras 0,38 (handShoulderY, handReach), moins le buste plié
+  trunkUp: 1.5, // m/s le long de l'axe, stick haut
+  trunkDown: 1.8, // m/s, stick bas
+  trunkAccel: 8, // m/s² : mise en route (0 → 1,5 m/s en 0,19 s, 0 → 1,8 m/s en 0,23 s)
+  trunkBrake: 12, // m/s² : arrêt ou retournement (1,8 → 0 en 0,15 s, glissade 4 → 0 en 0,33 s)
+  trunkTurn: 2.4, // rad/s autour de l'axe, stick gauche/droite
+  trunkTurnAccel: 16, // rad/s² (pleine vitesse en 0,15 s)
+  trunkDead: 0.2, // stick : zone morte de chaque axe…
+  trunkSpan: 0.5, // … pleine commande à trunkDead + trunkSpan (0,7 ; le clavier donne 1 ou 0,71)
+  trunkSlideStick: 0.8, // stick bas « franc » : y ≤ −0,8 (la diagonale du clavier, −0,71, n'en est pas)
+  trunkSlideHold: 0.3, // s tenu avant la glissade
+  trunkSlideSpeed: 4, // m/s
+  trunkSlideAccel: 6, // m/s² (1,8 → 4 m/s en 0,37 s)
+  // Accroche : le point du corps à trunkProbeY au-dessus de la racine passe à moins de trunkGrabReach
+  // de l'écorce, distance mesurée au bord du corps (rayon `radius`) : centre à moins de
+  // r + radius + trunkGrabReach de l'axe (0,95 m au pied d'un palmier de rayon 0,2). L'obstacle de
+  // l'arbre (0,4 · échelle) plus 0,27 (balayage) tient le centre à 0,67 m au moins de l'axe au pied :
+  // contre le tronc, on est toujours à portée ; à plus de 0,95 m, jamais. En l'air (saut ou chute),
+  // racine entre trunkGrabMinH et sommetY au-dessus du pied ; au sol, un saut contre le tronc accroche
+  // directement. Sans entrée, ou stick à moins de 75° du tronc (cos > trunkGrabCos).
+  trunkGrabReach: 0.45, // m
+  trunkGrabMinH: 0.3, // m
+  trunkProbeY: 0.5, // m : milieu du corps
+  trunkGrabCos: 0.26,
+  trunkLowH: 0.45, // m : racine au plus bas à l'accroche, au-dessus du pied
+  trunkGrabCarry: 0.3, // part de la vitesse d'arrivée que garde le corps à l'accroche (le reste : impact)
+  // raccords (accroche, arrivée au sommet, retour du sommet) : décalage amorti critique, 95 % en 0,47 s
+  trunkSnapFreq: 10, // rad/s
+  trunkDropH: 0.2, // m : en descendant, racine à moins de cette hauteur du sol : pieds au sol
+  trunkPushOff: 1.2, // m/s : en quittant le tronc vers le bas, on s'en écarte au moins à cette vitesse
+  // jusqu'à sortir de son encombrement (balayage du tronc quitté ignoré jusque-là)
+  trunkExitTime: 1, // s au sol au plus, ensuite le jeu repousse hors de l'obstacle
+  trunkJumpH: 4.5, // m/s à l'horizontale : saut arrière (dos au tronc) et saut du sommet
+  trunkJumpSpread: Math.PI / 3, // rad : saut arrière orientable de ±60° au stick x
+  trunkTopJump: 1.15, // × jumpSpeed à la verticale, saut du sommet
+  regrabDelay: 0.35, // s sans nouvelle accroche au même tronc après un saut (lâcher : jusqu'au sol)
+
   radius: 0.3,
 };
 
