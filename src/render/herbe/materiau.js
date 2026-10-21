@@ -41,6 +41,7 @@ varying vec3 vAlbedo;
 varying float vShadow;
 varying vec3 vLantern;
 varying float vViewDist;
+varying float vT;
 
 // même calcul que bladesAt (render/herbe/placement.js)
 float bladesAt(float d) {
@@ -68,7 +69,7 @@ float groundH(vec2 l, out vec3 n) {
   return he + (hd - he) * (1.0 - f.x) + (hb - he) * (1.0 - f.y);
 }
 
-// ombre du soleil en une seule lecture (au pied du brin)
+// ombre du soleil en une seule lecture (à mi-hauteur du brin)
 float shadow1(vec3 wp) {
   if (uShadowOn < 0.5) return 1.0;
   vec4 sc = uShadowMatrix * vec4(wp, 1.0);
@@ -166,10 +167,13 @@ void main() {
   blade *= 1.0 + 0.15 * wave * t;
   // chaume fauché : coupe nette, plus jaune
   vAlbedo = mix(blade, mil * vec3(1.1, 1.02, 0.75), cut * step(0.5, t));
+  // occlusion au pied : le cœur du tapis reste sombre (× 0,55)
+  vAlbedo *= mix(0.55, 1.0, smoothstep(0.0, 0.7, t));
+  vT = t;
   // normale proche de celle du sol (sinon le contour dessine des plis d'encre sur le terrain)
   vec3 bn = vec3(bendDir.x, 0.0, bendDir.y);
   vNormalW = normalize(n0 + bn * 0.35 * t);
-  vShadow = shadow1(base.xyz + n0 * 0.05);
+  vShadow = shadow1(base.xyz + n0 * 0.05 + vec3(0.0, 0.5 * hgt, 0.0));
   vLantern = lanternLight(vec3(1.0), base.xyz, n0);
   vWorldPos = wp;
   vec4 mv = viewMatrix * applyCurve(vec4(wp, 1.0));
@@ -190,10 +194,16 @@ varying vec3 vAlbedo;
 varying float vShadow;
 varying vec3 vLantern;
 varying float vViewDist;
+varying float vT;
 void main() {
   vec3 N = normalize(vNormalW);
   vec3 V = normalize(cameraPosition - vWorldPos);
   vec3 col = toonShade(vAlbedo, N, V, vShadow, 0.3);
+  // ombre plus marquée qu'au sol (environ × 0,5 avec la rampe toon), comme sous les arbres de Genshin
+  col *= mix(0.8, 1.0, vShadow);
+  // contre-jour : soleil derrière le pré, les pointes s'illuminent (BotW)
+  float back = max(dot(-V, uSunDir), 0.0);
+  col += uSunColor * vAlbedo * back * back * back * smoothstep(0.4, 1.0, vT) * 0.7 * vShadow * (1.0 - uNight);
   col += vAlbedo * vLantern;
   col = applyFog(col, vViewDist);
   writeGBuffer(col, N, uId, 0.0);
