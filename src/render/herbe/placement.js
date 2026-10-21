@@ -10,6 +10,30 @@ export const BLADES = 384; // brins par cellule au plus (96 par m²)
 export const BLADE_VERTS = 7; // 3 tronçons et une pointe
 export const BLADE_TRIS = 5;
 
+// Forme d'un brin : largeur au pied (m) avec tous les brins d'une cellule, rétrécie de TAPER à la
+// pointe ; moins de brins au loin, donc plus larges (part de BLADES à la puissance −WIDEN_EXP, au
+// plus × WIDEN_MAX) : en 1/√part, la surface des brins par m² tomberait comme √n au loin et le sol
+// percerait aux anneaux B et C. Le shader fait le même calcul (render/herbe/materiau.js).
+export const BLADE_WIDTH = 0.1;
+export const TAPER = 0.7;
+export const WIDEN_EXP = 0.72;
+export const WIDEN_MAX = 10;
+export function bladeWidth(n) {
+  return BLADE_WIDTH * Math.min(WIDEN_MAX, Math.pow(Math.max(n, 1e-6) / BLADES, -WIDEN_EXP));
+}
+// surface d'un brin de largeur 1 et de longueur 1 (profil : pied, 1/3, 2/3, pointe nulle)
+const a1 = 1 - TAPER / 3;
+const a2 = 1 - (2 * TAPER) / 3;
+export const BLADE_AREA = ((1 + a1) / 2 + (a1 + a2) / 2 + a2 / 2) / 3;
+
+// Couverture : surface des brins (largeur × longueur, la longueur d'un brin incliné restant celle
+// de sa tige) par m² de sol à la distance d du joueur, pour une densité R et une longueur L (m).
+export function couverture(d, P, R, L) {
+  const n = bladesAt(d, P);
+  if (n <= 0) return 0;
+  return (n / (CELL * CELL)) * R * bladeWidth(n) * L * BLADE_AREA;
+}
+
 // Préréglages par qualité : anneaux centrés sur le joueur (distance horizontale, m) et brins par
 // cellule de chaque anneau (A près, B à mi-distance, C loin) ; fade : part de chaque anneau où la
 // densité glisse vers celle de l'anneau suivant (ni saut d'anneau ni pop de densité).

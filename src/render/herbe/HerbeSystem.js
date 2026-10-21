@@ -10,12 +10,11 @@ import * as THREE from 'three';
 import { ORIGIN } from '../../core/globals.js';
 import { herbeMaterial } from './materiau.js';
 import { paletteHerbe } from '../../world/islands/biomes.js';
-import { BLADES, BLADE_VERTS, HERBE_PRESETS, cellsForTile } from './placement.js';
+import { BLADES, BLADE_VERTS, BLADE_WIDTH, HERBE_PRESETS, cellsForTile } from './placement.js';
 
 const V = 65; // nœuds par côté d'une tuile (TILE + 1)
 const MOVE = 0.25;
 const TURN = (1 * Math.PI) / 180;
-const WIDTH = 0.045; // m, largeur d'un brin dans l'anneau le plus dense
 // herbe fauchée : masque de 129 × 129 sur la tuile (au demi-mètre), qui repousse en REGROW s
 const CUT_N = 129;
 const CUT_STEP = 0.5;
@@ -50,7 +49,7 @@ function patchGeometry() {
 }
 
 // Carte d'herbe de secours, pour une tuile sans champ du Worker : herbe là où le sol est peint en
-// vert (ni chemin, ni sable, ni roche), densité et hauteur de prairie ordinaire.
+// vert (ni chemin, ni sable, ni roche), densité (0,88) et hauteur (0,37 m) de prairie ordinaire.
 export function champDeSecours(tile) {
   const out = new Uint8Array(V * V * 4);
   for (let k = 0; k < V * V; k++) {
@@ -58,8 +57,8 @@ export function champDeSecours(tile) {
     const g = tile.colors[k * 3 + 1];
     const b = tile.colors[k * 3 + 2];
     const green = g > r * 1.03 && g > b * 1.05 && tile.positions[k * 3 + 1] > 0.6;
-    out[k * 4] = green ? 178 : 0;
-    out[k * 4 + 1] = 82;
+    out[k * 4] = green ? 224 : 0;
+    out[k * 4 + 1] = 79;
     out[k * 4 + 2] = 30;
   }
   return out;
@@ -88,7 +87,7 @@ export class HerbeSystem {
       uFocus: { value: new THREE.Vector3() },
       uRings: { value: new THREE.Vector4() },
       uCounts: { value: new THREE.Vector4() },
-      uWidth: { value: WIDTH },
+      uWidth: { value: BLADE_WIDTH },
       uPushers: { value: Array.from({ length: PUSHERS }, () => new THREE.Vector4()) },
     };
     this.regrowT = 0;

@@ -105,15 +105,20 @@ void main() {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
-  // moins de brins au loin : plus larges, pour couvrir le sol autant (au plus × 4)
-  float part = max(n / uCounts.w, 1.0 / 16.0);
-  float w = uWidth * inversesqrt(part) * (1.0 - 0.85 * t);
-  float a = r2 * 6.2831853;
-  vec2 across = vec2(cos(a), sin(a));
-  vec2 bendDir = vec2(-across.y, across.x);
+  // moins de brins au loin : plus larges, pour couvrir le sol autant (même calcul que bladeWidth
+  // de placement.js : part^−0,72, au plus × 10) ; brin effilé
+  float part = max(n / uCounts.w, 1.0 / 24.4);
+  float w = uWidth * pow(part, -0.72) * (1.0 - 0.7 * t);
+  // pré peigné : brins de face au vent, couchés de 15 à 35° sous le vent (± 25° de hasard), la
+  // courbure croissant vers la pointe ; la tige garde sa longueur (hgt)
+  vec2 wd = normalize(uWindDir + vec2(0.0001));
+  float a = atan(wd.y, wd.x) + (r2 - 0.5) * 0.873;
+  vec2 bendDir = vec2(cos(a), sin(a));
+  vec2 across = vec2(-bendDir.y, bendDir.x);
+  float lean = mix(0.26, 0.61, hash12(cellId * 0.37 + i * 0.2718 + 3.0));
   vec3 off = vec3(across.x, 0.0, across.y) * side * w * 0.5;
-  off += vec3(bendDir.x, 0.0, bendDir.y) * hgt * (0.1 + 0.3 * r1) * t * t;
-  off.y = hgt * t;
+  off += vec3(bendDir.x, 0.0, bendDir.y) * hgt * sin(lean) * t * t;
+  off.y = hgt * t * (1.0 - (1.0 - cos(lean)) * t);
   vec3 wp = base.xyz + mat3(modelMatrix) * off;
   // vent : balancement commun, et ondes qui traversent le pré en bandes (pointes couchées et
   // éclaircies ; la même onde teinte le sol, voir HERBE)

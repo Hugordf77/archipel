@@ -2,7 +2,7 @@
 // préréglage sur un balayage de caméra, coût et seuil des mises à jour.
 import * as THREE from 'three';
 import { describe, it, expect } from 'vitest';
-import { CELL, BLADES, HERBE_PRESETS, bladesAt, r2, ringOf, cellsForTile, bladesDrawn } from '../src/render/herbe/placement.js';
+import { CELL, BLADES, HERBE_PRESETS, bladesAt, r2, ringOf, cellsForTile, bladesDrawn, bladeWidth, couverture } from '../src/render/herbe/placement.js';
 import { HerbeSystem, champDeSecours } from '../src/render/herbe/HerbeSystem.js';
 import { ORIGIN } from '../src/core/globals.js';
 
@@ -124,6 +124,46 @@ describe('herbe en tapis : placement', () => {
   });
 });
 
+describe('herbe en tapis : forme et couverture', () => {
+  it('les brins couvrent le sol d’une prairie à chaque anneau (≥ 1,5 / 1,0 / 0,7 m² par m² en Haut)', () => {
+    // prairie la moins dense (R = 0,85) et brins de 0,36 m (moyenne de la prairie : 0,30 à 0,45 m)
+    const R = 0.85;
+    const L = 0.36;
+    const report = {};
+    for (const [name, P] of Object.entries(HERBE_PRESETS)) {
+      const [rA, rB, rC] = P.rings;
+      const f = P.fade;
+      // plus faible couverture à l'intérieur de chaque anneau (hors fondu vers l'anneau suivant)
+      const ring = (d0, d1) => {
+        let m = Infinity;
+        for (let d = d0; d <= d1; d += 0.05) m = Math.min(m, couverture(d, P, R, L));
+        return m;
+      };
+      report[name] = [ring(0, rA * (1 - f)), ring(rA, rB * (1 - f)), P.blades[2] ? ring(rB, rC * (1 - f)) : 0];
+    }
+    console.info(`couverture (m² de brins par m²) : ${Object.entries(report).map(([k, v]) => `${k} ${v.map((x) => x.toFixed(2)).join(' / ')}`).join(' ; ')}`);
+    expect(report.high[0]).toBeGreaterThanOrEqual(1.5);
+    expect(report.high[1]).toBeGreaterThanOrEqual(1.0);
+    expect(report.high[2]).toBeGreaterThanOrEqual(0.7);
+    // Moyen : mêmes cibles aux deux premiers anneaux
+    expect(report.medium[0]).toBeGreaterThanOrEqual(1.5);
+    expect(report.medium[1]).toBeGreaterThanOrEqual(1.0);
+    // largeur au pied dans l'anneau A (Haut) : 7 à 10 cm ; plus large au loin, sans saut
+    expect(bladeWidth(HERBE_PRESETS.high.blades[0])).toBeGreaterThanOrEqual(0.07);
+    expect(bladeWidth(HERBE_PRESETS.high.blades[0])).toBeLessThanOrEqual(0.1);
+    expect(bladeWidth(24)).toBeGreaterThan(bladeWidth(96));
+  });
+
+  it('carte de secours : prairie dense (R ≥ 0,85) au mollet (0,30 à 0,45 m)', () => {
+    const tile = { positions: new Float32Array(V * V * 3).fill(2), colors: new Float32Array(V * V * 3).fill(0) };
+    tile.colors.set([0.37, 0.6, 0.24], 0); // milieu ombré de la prairie
+    const c = champDeSecours(tile);
+    expect(c[0] / 255).toBeGreaterThanOrEqual(0.85);
+    expect((c[1] / 255) * 1.2).toBeGreaterThanOrEqual(0.3);
+    expect((c[1] / 255) * 1.2).toBeLessThanOrEqual(0.45);
+  });
+});
+
 describe('herbe en tapis : budgets et mises à jour', () => {
   it('reste sous le plafond de brins de chaque préréglage sur un balayage de caméra', () => {
     const caps = { high: 120000, medium: 75000, low: 30000 };
@@ -191,7 +231,7 @@ describe('herbe en tapis : budgets et mises à jour', () => {
   it('l’épée fauche l’herbe d’un disque, qui ne se fauche pas deux fois et repousse en deux minutes', () => {
     const { H } = system('medium');
     const first = H.cut(10, 12, 1.3);
-    expect(first).toBeGreaterThan(0.5); // prairie de secours, densité 0,7
+    expect(first).toBeGreaterThan(0.5); // prairie de secours, densité 0,88
     const tile = [...H.tiles].find((t) => t.x0 === 0 && t.z0 === 0);
     expect(tile.herbe.coupe).not.toBeNull();
     expect(tile.herbe.material.uniforms.uCoupe.value).toBe(tile.herbe.coupeTex);
