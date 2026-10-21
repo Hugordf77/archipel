@@ -1,8 +1,11 @@
 // Cheveux du personnage : une seule coupe (en pics), vers laquelle retombent les anciennes sauvegardes.
 import { describe, expect, it } from 'vitest';
+import { installCanvasStub } from './helpers/canvas.js';
 import { HAIRS, defaultAvatar, sanitizeAvatar } from '../src/entities/character/avatar.js';
 import { migrate } from '../src/core/state.js';
 import { HAIR_STYLES } from '../src/models/personnage/index.js';
+
+installCanvasStub();
 
 describe('coupe unique en pics', () => {
   it('est la seule coupe, celle du look par défaut, et elle a sa géométrie', () => {
@@ -116,5 +119,23 @@ describe('physique des pics', async () => {
     const elan = (t) => (t < 0.2 ? [0, -20, -10] : [0, 9.8, 0]);
     const ref = rejoue(elan, 0.5, 240);
     for (const fps of [30, 60, 144]) expect(Math.abs(rejoue(elan, 0.5, fps).x - ref.x)).toBeLessThan(0.02);
+  });
+
+  it('restent calmes et bornées sur un personnage immobile qu’on fait tourner (miroir, aperçu de l’inventaire)', async () => {
+    const { Character } = await import('../src/entities/character/Character.js');
+    const c = new Character(defaultAvatar());
+    const { B } = await import('../src/models/personnage/commun.js');
+    for (let i = 0; i < 120; i++) {
+      c.root.rotation.y = i < 60 ? i * 0.1 : 6; // glissé rapide (6 rad/s), puis lâché
+      c.update(1 / 60, 0, null);
+      for (const [bone, d] of [[B.HAIR_A, A], [B.HAIR_B, Bd]]) {
+        const r = c.bones[bone].rotation;
+        expect(Number.isFinite(r.x + r.y + r.z)).toBe(true);
+        expect(r.x).toBeGreaterThanOrEqual(d.x[0] - 1e-9);
+        expect(r.x).toBeLessThanOrEqual(d.x[1] + 1e-9);
+      }
+    }
+    for (let i = 0; i < 120; i++) c.update(1 / 60, 0, null);
+    expect(Math.abs(c.clothSprings.hairA.x) + Math.abs(c.clothSprings.hairB.x)).toBeLessThan(0.03);
   });
 });
