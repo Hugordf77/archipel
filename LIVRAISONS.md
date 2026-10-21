@@ -1,7 +1,7 @@
 # Livraisons — Archipel
 
 Point d'entrée pour une IA ou un nouvel arrivant : ce qui est livré, où ça vit, comment le vérifier, ce
-qui est en cours. Mis à jour le 20/10/2026. À tenir à jour à chaque livraison (section « État courant »
+qui est en cours. Mis à jour le 21/10/2026. À tenir à jour à chaque livraison (section « État courant »
 et domaine concerné).
 
 ## Démarrer
@@ -99,8 +99,18 @@ et domaine concerné).
 
 ### Fabrication et progression
 
-- Inventaire et fabrication : `src/gameplay/Inventory.js` (`craft`), recettes `src/data/recipes.json`,
-  objets `src/data/items.js`, interface `src/ui/inventoryUI.js`.
+- Inventaire et fabrication : `src/gameplay/Inventory.js` (`craft`, `discard`, `freeSlot`), recettes
+  `src/data/recipes.json`, objets `src/data/items.js`, barre rapide `src/ui/inventoryUI.js`.
+- **Inventaire V2 (plein écran, 21/10/2026)** : `src/ui/inventoryScreen.js` (touche I, △ à la manette),
+  logique pure `src/ui/inventoryLogic.js` (8 onglets de catégories : Tout, Ressources, Jardin, Nourriture,
+  Faune, Artisanat, Outils, Chantier ; tri par catégorie, nombre ou nom ; pages de 5 × 4 ; déplacement
+  dans la grille ; actions et fiche tirées des données), aperçu 3D du personnage
+  `src/ui/inventoryPreview.js` (second personnage dans un petit canevas, 0,3 ms par image). Le jeu est en
+  pause (`game.paused`, `Game.frame`) ; l'atelier est l'onglet voisin dans le même habillage. Pas de
+  « manger » ni de cœurs (aucune faim ni santé dans le jeu) ; rareté en étoiles seulement pour poissons
+  et insectes (champ `rarity` existant).
+- Tests : `tests/inventaire.test.js` (catégories, tri, pagination, grille, pastilles, actions, fiches).
+  Captures : `captures/inventaire-v2-*.png` (non versionnées).
 - Tests : `tests/progression.test.js` (fabriquer une station depuis les ressources de base, rien n'est
   consommé si le sac est plein, seules les stations posées à portée sont proposées).
 
@@ -154,12 +164,18 @@ et domaine concerné).
 ### Manette, audio, interface
 
 - Manette DualSense : `src/core/Gamepad.js` (vibrations, aide contextuelle), tests `tests/gamepad.test.js`.
+  Un panneau peut lire lui-même la manette : `sheet.padScreen(pad, dt)` (utilisé par l'inventaire V2).
+- Sons doux de l'inventaire : `AudioEngine.menu(kind)` (ouverture, fermeture, curseur, onglet, refus).
 - Audio procédural : `src/audio/AudioEngine.js`.
 - Tableau de bord de production : `dashboard.html`, `dashboard/` (`management.json` : relations entre
   agents).
 
 ## État courant (21/10/2026)
 
+- **Inventaire V2** (branche `claude/inventaire-v2-c40733`, worktree, ni fusionnée ni poussée) : écran
+  plein écran à la place du panneau Sac. Choix de DA à valider par l'utilisateur : regroupement en 8
+  onglets, voile violet et cases claires, fond bleu pastel pour la barre rapide, aperçu 3D (gardé plutôt
+  qu'un portrait fixe). Carnet et Réglages, depuis l'écran, ouvrent les panneaux existants.
 - Branche `v3-archipel`. Derniers commits : herbe V2, lettres A à F (palettes et sol, variation, forme
   et couverture, lumière, touffes récoltables, carte d'herbe du Worker) et réglage de l'ombre.
 - **Herbe V2** : sol des îles plus foncé et plus saturé sous l'herbe, validé par l'utilisateur le
@@ -169,15 +185,20 @@ et domaine concerné).
 - **Non commité** (hors de ce chantier) : tableau de bord (`dashboard.html`, `dashboard/`,
   `vite.config.js`), agents d'équipe et skill `modele-3d`, `README.md`, chèvre, mouton et fleurs
   (PLA-015), `tests/fixtures/empreintes.json`.
-- **Tests** : 239 sur 240. Échec : `tests/empreintes.test.js` (personnage PER-001 à PER-003, 160
+- **Tests** : 256 sur 257 sur la branche de l'inventaire V2. Échec : `tests/empreintes.test.js` (personnage PER-001 à PER-004, 160
   triangles de l'épée, changement voulu à valider puis `npm run modeles:empreinte -- --ecrire` ; fleurs
   PLA-015 en cours). « Budget du Worker » de `tests/world.test.js` : mesure de temps sensible à la
   charge (peut échouer sous la suite complète, vert seul).
-- **Graphe du code** : mis à jour le 21/10/2026 après l'herbe V2 sur `src/` (code seul, 1 901 nœuds,
-  5 252 liens, 95 communautés ; nouvelles : « Herbe en tapis (rendu) », « Carte d'herbe du Worker »).
-  Les `FICHE.md` et les planches n'y sont pas : lire les dossiers des modèles.
+- **Graphe du code** : mis à jour le 21/10/2026 après l'inventaire V2 sur `src/` (code seul, sans LLM :
+  2 446 nœuds, 6 293 liens, 179 communautés ; nouvelles : « Inventaire plein écran », « Aperçu du
+  personnage (inventaire) »). Les communautés portent désormais le nom de leur fichier central : les
+  noms français précédents étaient décalés par rapport aux communautés (par exemple « Îles, obstacles
+  et troncs » posé sur les palettes d'herbe, « Moteur audio » deux fois) ; une passe de noms par LLM
+  reste à faire (`/graphify src --update`). Les `FICHE.md` et les planches n'y sont pas : lire les
+  dossiers des modèles.
   Seul `graphify-out/GRAPH_REPORT.md` est versionné ; `graph.json` et `graph.html` se régénèrent avec
-  `/graphify src --update` (ou `/graphify src` sur un clone neuf).
+  `graphify update src` (sortie dans `src/graphify-out/`, à déplacer dans `graphify-out/`) ou
+  `/graphify src --update`.
 
 ## Règles de travail pour toute IA
 
