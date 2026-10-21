@@ -80,13 +80,14 @@ export const PALETTES_HERBE = {
 PALETTES_HERBE.maison = PALETTES_HERBE.prairie;
 
 const rgb = (h) => [1, 3, 5].map((o) => parseInt(h.slice(o, o + 2), 16) / 255);
-// Palette d'herbe d'un biome en RVB (0 à 1) ; sol : « milieu ombré », couleur du sol sous le
-// tapis (entre le milieu et le pied), que voient les trous entre les brins et le lointain
+// Palette d'herbe d'un biome en RVB (0 à 1) ; sol : « milieu ombré », couleur moyenne du tapis vu
+// d'en haut (un quart vers la pointe, × 0,9), que prennent le sol sous l'herbe et les brins au
+// loin (render/herbe/materiau.js) : les trous entre les brins et le lointain ne se voient pas
 export function paletteHerbe(biome) {
   const p = PALETTES_HERBE[biome] || PALETTES_HERBE.prairie;
-  const pied = rgb(p.pied);
   const milieu = rgb(p.milieu);
-  return { pied, milieu, pointe: rgb(p.pointe), sec: rgb(p.sec), sol: milieu.map((v, i) => (v + pied[i]) * 0.5) };
+  const pointe = rgb(p.pointe);
+  return { pied: rgb(p.pied), milieu, pointe, sec: rgb(p.sec), sol: milieu.map((v, i) => (v + (pointe[i] - v) * 0.25) * 0.9) };
 }
 
 // Densité relative de l'herbe d'un biome (0 à 1), d'après la densité des touffes (veg « herbe »)

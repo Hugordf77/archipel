@@ -134,6 +134,10 @@ et domaine concerné).
     40 m, ondes de vent en bandes de 6 à 12 m ; par brin, valeur ± 4 % et hauteur ± 25 % seulement.
   - Forme : 10 cm au pied (anneau A), élargis au loin en part^−0,72 ; pré peigné dans le vent (15 à
     35°). Lumière : ombre à mi-hauteur (× 0,62 en plus de la rampe toon), occlusion au pied, contre-jour.
+  - Raccord au loin : le détail du tapis s'estompe avec la distance vers sa couleur moyenne, que prend
+    aussi le sol sous l'herbe ; fondus d'anneaux longs (40 %), anneau B plus dense (Haut 32 brins/m²,
+    Moyen 24) ; villages herbus jusqu'au pied des murs (maisons au cercle de leurs murs), pentes
+    herbues jusqu'à 1 (falaises au-delà).
   - Touffes récoltables dans la palette du tapis (`grassMaterial` avec palette, un par biome).
   - Carte d'herbe du Worker (`gen/herbe.js`, `tile.herbe`) : zone × biome × pente × eau × ombre des
     couronnes × chemins × lieux × altitude × massifs et trouées ; `champDeSecours` (0,88, 0,37 m) si

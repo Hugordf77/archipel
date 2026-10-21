@@ -37,11 +37,12 @@ export function couverture(d, P, R, L) {
 // Préréglages par qualité : anneaux centrés sur le joueur (distance horizontale, m) et brins par
 // cellule de chaque anneau (A près, B à mi-distance, C loin) ; fade : part de chaque anneau où la
 // densité glisse vers celle de l'anneau suivant (ni saut d'anneau ni pop de densité).
-// 384 / 96 / 24 brins par cellule = 96 / 24 / 6 brins par m².
+// 384 / 128 / 32 brins par cellule = 96 / 32 / 8 brins par m² ; fondus longs : le bord d'un anneau
+// ne suit pas le joueur.
 export const HERBE_PRESETS = {
-  high: { rings: [10, 32, 60], blades: [384, 96, 24], fade: 0.3 },
-  medium: { rings: [9, 28, 50], blades: [256, 64, 16], fade: 0.3 },
-  low: { rings: [7, 22, 22], blades: [128, 32, 0], fade: 0.3 },
+  high: { rings: [10, 32, 60], blades: [384, 128, 32], fade: 0.4 },
+  medium: { rings: [9, 28, 50], blades: [256, 96, 24], fade: 0.4 },
+  low: { rings: [7, 22, 22], blades: [128, 48, 0], fade: 0.4 },
 };
 
 const smooth = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));

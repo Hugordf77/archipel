@@ -17,6 +17,7 @@ import { Z, ZONE_HERBE } from './zones.js';
 import { KINDS, KIND_RADIUS, STRIDE } from './kinds.js';
 import { SHAPES } from '../farveg.js';
 import { densiteHerbeBiome } from '../biomes.js';
+import { MURS } from '../../../models/batiments/maison-village/physique.js';
 
 export const HERBE_HMAX = 1.2;
 
@@ -41,7 +42,10 @@ for (const [kind, shapes] of Object.entries(SHAPES)) {
 
 // emprises bâties (m), comme flora.js : rien n'y pousse ; quelques pièces au sol en plus
 // (rayon d'obstacle de leur physique.js)
-const BUILT = new Set(['maison', 'moulin', 'moulin_eau', 'phare', 'tour_guet', 'cabane', 'temple', 'puits', 'etal', 'jetee', 'epave', 'epave_geante', 'observatoire']);
+const BUILT = { moulin: 4, moulin_eau: 4, phare: 3.5, tour_guet: 2.5, cabane: 2.5, temple: 4, puits: 1.2, etal: 1.8, jetee: 2, epave: 3, epave_geante: 5, observatoire: 3.5 };
+// maison : cercle de ses murs (0,62 fois le plus grand côté, selon sa taille) ; l'herbe pousse
+// jusqu'au pied des murs, autour du village
+const maisonR = (v) => Math.max(MURS.w[v || 0], MURS.d[v || 0]) * 0.62;
 const GROUND_PARTS = { tente: 1.3, feu_camp: 0.8, bois_pile: 0.6, rondin: 0.6, ruche: 0.45, coffre: 0.5, potager: 1.4, barque_echouee: 1.3 };
 // lieux sans piétinement : verger (règle des rangs), eau, rivage, arbre géant (ombre de couronne)
 const NO_TRAMPLE = new Set(['verger', 'recif', 'epave_immergee', 'rocher_baleine', 'oasis', 'cascade', 'arbre_geant', 'arche', 'grotte']);
@@ -50,10 +54,10 @@ const NO_TRAMPLE = new Set(['verger', 'recif', 'epave_immergee', 'rocher_baleine
 const SEA_H = 0.3;
 const G_NONE = Math.round((0.2 / 1.2) * 255);
 const B_NONE = Math.round(0.7 * 255);
-// pente au mètre : l'herbe se raréfie de SLOPE_A à SLOPE_B (la roche commence à affleurer à la
-// peinture vers 0,62), et disparaît à 0,9
-const SLOPE_A = 0.45;
-const SLOPE_B = 0.8;
+// pente au mètre : l'herbe se raréfie un peu de SLOPE_A à SLOPE_B (collines herbues, comme dans
+// BotW), et disparaît de 1 à 1,15 (falaises)
+const SLOPE_A = 0.55;
+const SLOPE_B = 0.95;
 const CH = 7; // canaux de la base : densité, hauteur, sécheresse, touffes, roche, plage, distance à l'herbe
 const OB = 10; // obstacle : x, z, r0 (nul), r1 (fin de rampe), couronne, c0, c1, anneau a, anneau b, gain
 
@@ -103,8 +107,8 @@ function prepare(plan) {
   const orchards = [];
   for (const p of plan.pois) {
     for (const pt of p.parts || []) {
-      if (BUILT.has(pt.t)) {
-        const rb = pt.t === 'maison' ? 4.2 : pt.t === 'jetee' ? 2 : 4;
+      if (pt.t === 'maison' || BUILT[pt.t]) {
+        const rb = pt.t === 'maison' ? maisonR(pt.v) : BUILT[pt.t];
         obs.push(pt.x, pt.z, rb, rb + 0.3, 0, 1, 1, rb + 0.3, rb + 1, 1.3);
       } else if (GROUND_PARTS[pt.t]) {
         const rb = GROUND_PARTS[pt.t];
@@ -230,7 +234,7 @@ export function herbeTile(plan, surf, x0, z0, T, src) {
       }
     }
   }
-  // lieux : disque de 0,6 r piétiné (× 0,3), puis × 0,7 jusqu'au bord
+  // lieux : disque de 0,6 r à peine piétiné (× 0,85), puis × 0,92 jusqu'au bord
   const tr = P.trample;
   for (let q = 0; q < tr.length; q += 3) {
     const ox = tr[q];
@@ -245,7 +249,7 @@ export function herbeTile(plan, surf, x0, z0, T, src) {
       for (let i = i0; i <= i1; i++) {
         const dx = x0 + i - ox;
         const d = Math.sqrt(dx * dx + dz * dz);
-        const f = 0.3 + 0.4 * smooth(0.5 * r, 0.7 * r, d) + 0.3 * smooth(0.9 * r, 1.1 * r, d);
+        const f = 0.85 + 0.075 * smooth(0.5 * r, 0.7 * r, d) + 0.075 * smooth(0.9 * r, 1.1 * r, d);
         const k = j * V + i;
         if (f < lieu[k]) lieu[k] = f;
       }
@@ -396,8 +400,8 @@ export function herbeTile(plan, surf, x0, z0, T, src) {
       let cut = 1;
       if (g > SLOPE_A) {
         const sl = smooth(SLOPE_A, SLOPE_B, g);
-        cut = 1 - smooth(0.8, 0.9, g);
-        R *= (1 - 0.9 * sl) * cut;
+        cut = 1 - smooth(1, 1.15, g);
+        R *= (1 - 0.6 * sl) * cut;
         G *= 1 - 0.3 * sl;
       }
       // fissures herbeuses sur la roche
@@ -426,7 +430,7 @@ export function herbeTile(plan, surf, x0, z0, T, src) {
       const cd = coast ? (coast[q0] * (1 - wu) + coast[q0 + 1] * wu) * (1 - wv) + (coast[q0 + n] * (1 - wu) + coast[q0 + n + 1] * wu) * wv : 1e9;
       if (cd < 25) {
         const c = smooth(10, 25, cd);
-        R *= 0.6 + 0.4 * c;
+        R *= 0.75 + 0.25 * c;
         G *= 0.65 + 0.35 * c;
         B += 0.35 * (1 - c);
       }

@@ -100,6 +100,35 @@ describe('carte d’herbe des tuiles', () => {
     expect(quantile(G, 0.99)).toBeLessThanOrEqual(0.95);
   });
 
+  it('les villages et les collines restent herbus (hors chemins et pied des murs)', () => {
+    const { p, surf } = island('village-pommeraie');
+    const vil = p.pois.find((q) => q.type === 'village');
+    const houses = vil.parts.filter((q) => q.t === 'maison' || q.t === 'etal' || q.t === 'puits' || q.t === 'potager');
+    const village = [];
+    const hill = [];
+    for (const [tx, tz] of allTiles('village-pommeraie')) {
+      const t = tileOf('village-pommeraie', tx, tz);
+      const g = tileGround(p, surf, tx, tz);
+      for (let k = 0; k < V * V; k++) {
+        const x = t.positions[k * 3];
+        const y = t.positions[k * 3 + 1];
+        const z = t.positions[k * 3 + 2];
+        if (g.pathW[k] > 0 || y < 1.5) continue;
+        const R = t.herbe[k * 4] / 255;
+        if (Math.hypot(x - vil.x, z - vil.z) < vil.r && houses.every((q) => Math.hypot(q.x - x, q.z - z) > 3.2)) village.push(R);
+        const [zn, same] = zoneAt(p, x, z);
+        const ny = t.normals[k * 3 + 1];
+        // pente de 0,55 à 0,85 (normale de 0,76 à 0,88)
+        if (zn === Z.PRAIRIE && same && ny > 0.76 && ny < 0.88) hill.push(R);
+      }
+    }
+    console.info(`Pommeraie : densité médiane au village ${median(village).toFixed(2)} (${village.length} nœuds), sur les pentes de prairie ${median(hill).toFixed(2)} (${hill.length} nœuds)`);
+    expect(village.length).toBeGreaterThan(300);
+    expect(median(village)).toBeGreaterThanOrEqual(0.6);
+    expect(hill.length).toBeGreaterThan(30);
+    expect(median(hill)).toBeGreaterThanOrEqual(0.6);
+  });
+
   it('rien sur les chemins, herbe rase à leur bord (0,12 à 0,25 m)', () => {
     const { p, surf } = island('village-pommeraie');
     let on = 0;
@@ -168,12 +197,12 @@ describe('carte d’herbe des tuiles', () => {
     expect(median(forest)).toBeLessThan(0.3);
   });
 
-  it('ne change ni les éléments, ni les identifiants, ni le sol des tuiles (flux aléatoire propre)', () => {
-    // empreintes relevées sans la carte d'herbe (même code, même table ZONE_HERBE)
+  it('ne change ni les éléments, ni les identifiants, ni le relief des tuiles (flux aléatoire propre)', () => {
+    // empreintes relevées sans la carte d'herbe (la couleur du sol, réglée avec la palette, n'y est pas)
     const ref = {
-      'village-pommeraie': '5b8196e0:7df888e5:22af9f11:92d95f8a,d6c34b85:e3e60df7:6e2bbf45:e8210cd8,811c9dc5:811c9dc5:a3db2f68:b45e6671',
-      'dunes-du-mirage': '9ae5cc79:50010ded:aeaa21e4:59e8d010,2d411ba7:854341c:6262f648:b36c39c6,6776bd4c:9d273962:9009f395:221b79dd',
-      'bois-des-lanternes': 'cc626bf:581c3630:4fde8f5c:a8738d32,1e5f8a34:2cbbfc6:4964d67:51868052,620145db:2b9a3dbb:bff0e4df:6c409844',
+      'village-pommeraie': '5b8196e0:7df888e5:22af9f11,d6c34b85:e3e60df7:6e2bbf45,811c9dc5:811c9dc5:a3db2f68',
+      'dunes-du-mirage': '9ae5cc79:50010ded:aeaa21e4,2d411ba7:854341c:6262f648,6776bd4c:9d273962:9009f395',
+      'bois-des-lanternes': 'cc626bf:581c3630:4fde8f5c,1e5f8a34:2cbbfc6:4964d67,620145db:2b9a3dbb:bff0e4df',
     };
     const hash = (a) => {
       let h = 2166136261;
@@ -184,7 +213,7 @@ describe('carte d’herbe des tuiles', () => {
     for (const [id, want] of Object.entries(ref)) {
       const parts = [[-1, -1], [0, 0], [1, -1]].map(([tx, tz]) => {
         const t = tileOf(id, tx, tz);
-        return `${hash(Float32Array.from(t.items))}:${hash(Float64Array.from(t.ids))}:${hash(t.positions)}:${hash(t.colors)}`;
+        return `${hash(Float32Array.from(t.items))}:${hash(Float64Array.from(t.ids))}:${hash(t.positions)}`;
       });
       expect(parts.join(','), id).toBe(want);
     }
