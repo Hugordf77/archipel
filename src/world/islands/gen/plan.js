@@ -65,6 +65,7 @@ export function buildPlan(desc) {
     id: desc.id,
     seed: desc.seed,
     archetype: T.ctx.arch,
+    biome: desc.biome,
     name: desc.name,
     n: P.n,
     s: P.s,
@@ -85,6 +86,10 @@ export function buildPlan(desc) {
     ids: flora.ids,
     spawners,
     traits,
+    // distances (m) à l'eau douce et à la mer sur la grille de 4 m : carte d'herbe des tuiles
+    // (restent dans le cache du Worker, comme H et C)
+    wetDist: P.wetDist,
+    coastDist: P.coastDist,
     failedLinks: P.failedLinks || [],
     stats: { hmax, flowerCells, pathFailed: net.failed, nodes: net.nodes, rivers: T.rivers.length, lakes: T.lakes.length, falls: T.falls.length, pois: pois.length, micro: micro.length, items: flora.ids.length, spawners: spawners.length },
     timings: tm,

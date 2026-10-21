@@ -11,6 +11,7 @@ import { Z, bloomBand, BLOOM_IDS, bloomColorOf } from './zones.js';
 import { KINDS, KIND_INDEX, STRIDE } from './kinds.js';
 import { reliefContext, baseHeight } from './relief.js';
 import { BIOMES } from '../biomes.js';
+import { herbeTile } from './herbe.js';
 
 export const TILE = 64;
 const BUCKET = 16;
@@ -133,12 +134,15 @@ export class Surface {
 // Peinture des chemins (couleur terre, bord irrégulier, lisière plus foncée)
 const PATH = [0.93, 0.85, 0.7];
 const PATH_EDGE = [0.8, 0.7, 0.55];
-function pathPaint(paths, x, z, noise, out) {
+// dist (facultatif) : reçoit en dist[k] la distance au bord du chemin le plus proche, mesurée
+// jusqu'à 4,5 m (carte d'herbe) ; la peinture, elle, ne dépend que des chemins à moins de 1,2 m
+function pathPaint(paths, x, z, noise, out, dist = null, k = 0) {
   let dmin = Infinity;
   let w = 0;
+  const pad = dist ? 4.5 : 1.2;
   for (const p of paths) {
     const pts = p.pts;
-    const reach = p.w / 2 + 1.2;
+    const reach = p.w / 2 + pad;
     if (x < p.box[0] - reach || x > p.box[2] + reach || z < p.box[1] - reach || z > p.box[3] + reach) continue;
     for (let q = 0; q < pts.length - 2; q += 2) {
       const ax = pts[q];
@@ -157,6 +161,7 @@ function pathPaint(paths, x, z, noise, out) {
       }
     }
   }
+  if (dist) dist[k] = dmin;
   if (dmin > 1.2) return 0;
   const wob = (noise(x / 1.7, z / 1.7) - 0) * 0.35;
   const inner = smooth(0.15, -0.15, dmin + wob);
@@ -312,7 +317,10 @@ const SMALL_TABLE = {
   [Z.CULTURES]: [['herbe', 0.03]],
 };
 
-export function buildTile(plan, surf, tx, tz) {
+// Sol d'une tuile : relief au mètre (avec une bordure d'un sommet), sommets, normales, couleurs
+// peintes (zones au fondu bruité, roche des fortes pentes, chemins) ; garde aussi, par sommet, le
+// poids de peinture et la distance des chemins et les indices du fondu des zones (carte d'herbe).
+export function tileGround(plan, surf, tx, tz) {
   const T = TILE;
   const x0 = tx * T;
   const z0 = tz * T;
@@ -331,6 +339,10 @@ export function buildTile(plan, surf, tx, tz) {
   const col = [0, 0, 0];
   // poids « chemin » de chaque sommet : la petite végétation l'évite sans recalculer les distances
   const pathW = new Float32Array(V * V);
+  // pour la carte d'herbe : distance aux chemins et indices du fondu bruité des zones, par sommet
+  const pathD = new Float32Array(V * V);
+  const zfi = new Float64Array(V * V);
+  const zfj = new Float64Array(V * V);
   let minTop = Infinity;
   let maxTop = -Infinity;
   for (let j = 0; j < V; j++) {
@@ -356,6 +368,8 @@ export function buildTile(plan, surf, tx, tz) {
       const jz = noise(z / 3.1 + 7, x / 3.1 - 4) * 1.8;
       const fi = (x + jx + ext) / s;
       const fj = (z + jz + ext) / s;
+      zfi[k] = fi;
+      zfj[k] = fj;
       sampleColor(C, n, fi, fj, col);
       // roche qui affleure sur les fortes pentes au mètre
       const slope = 1 - inv;
@@ -365,12 +379,18 @@ export function buildTile(plan, surf, tx, tz) {
         col[1] = col[1] * (1 - k2) + 0.74 * k2;
         col[2] = col[2] * (1 - k2) + 0.78 * k2;
       }
-      pathW[k] = pathPaint(paths, x, z, noise, col);
+      pathW[k] = pathPaint(paths, x, z, noise, col, pathD, k);
       colors[k * 3] = col[0];
       colors[k * 3 + 1] = col[1];
       colors[k * 3 + 2] = col[2];
     }
   }
+  return { T, x0, z0, V, W, Hb, NS, NV, positions, normals, colors, pathW, pathD, zfi, zfj, minTop, maxTop };
+}
+
+export function buildTile(plan, surf, tx, tz) {
+  const g = tileGround(plan, surf, tx, tz);
+  const { T, x0, z0, V, W, Hb, NS, NV, positions, normals, colors, pathW, minTop, maxTop } = g;
   // jupe : on duplique le bord 1,5 m plus bas (aucune fissure avec le LOD1 voisin)
   const edge = [];
   for (let i = 0; i < T; i++) edge.push(i);
@@ -407,7 +427,10 @@ export function buildTile(plan, surf, tx, tz) {
   // petite végétation de la tuile
   const small = smallVegetation(plan, surf, x0, z0, T, Hb, W, pathW, V);
   const groups = instanceGroups(small.items, colors, x0, z0, V);
-  return { tx, tz, x0, z0, positions, normals, colors, index, items: small.items, ids: small.ids, groups, minTop, maxTop };
+  // carte d'herbe (densité, hauteur, sécheresse par sommet) : bruits propres, après le tirage
+  // de la petite végétation, qu'elle ne modifie pas
+  const herbe = herbeTile(plan, surf, x0, z0, T, g);
+  return { tx, tz, x0, z0, positions, normals, colors, index, items: small.items, ids: small.ids, groups, herbe, minTop, maxTop };
 }
 
 function sampleColor(C, n, fi, fj, out) {

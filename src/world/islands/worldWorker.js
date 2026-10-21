@@ -76,6 +76,8 @@ self.onmessage = (e) => {
       const tile = buildTile(p, surf, m.tx, m.tz);
       const list = views(tile);
       for (const gq of tile.groups) list.push(gq.offs.buffer, gq.mats.buffer, gq.cols.buffer);
+      // carte d'herbe (RGBA par sommet) : déjà relevée par views() ; jamais deux fois dans la liste
+      if (!list.includes(tile.herbe.buffer)) list.push(tile.herbe.buffer);
       self.postMessage({ type: 'tile', id: m.desc.id, req: m.req, tile, ms: performance.now() - tp, planMs: hit ? 0 : tp - t0 }, list);
     } else if (m.type === 'depth') {
       const data = buildDepthWindow(m.islands, m.cx, m.cz, m.size, m.res, (d) => plans.get(keyOf(d)));

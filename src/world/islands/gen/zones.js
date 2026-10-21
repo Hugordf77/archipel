@@ -17,9 +17,9 @@ export const ZONE_NAMES = Object.keys(Z);
 // du sol sous l'herbe (zoneColors) et la carte d'herbe des tuiles (gen/herbe.js). Hauteurs pour un
 // personnage de 1,1 m : prairie au mollet, alpage et bords de chemin ras.
 export const ZONE_HERBE = {
-  [Z.PRAIRIE]: [0.9, 0.37, 0.08, 0],
+  [Z.PRAIRIE]: [0.95, 0.37, 0.08, 0],
   [Z.FLEURS]: [0.6, 0.32, 0.06, 0],
-  [Z.CLAIRIERE]: [0.85, 0.37, 0.06, 0],
+  [Z.CLAIRIERE]: [0.9, 0.37, 0.06, 0],
   [Z.VERGER]: [0.75, 0.32, 0.08, 0],
   [Z.MARAIS]: [0.9, 0.55, 0, 0],
   [Z.LISIERE]: [0.7, 0.42, 0.06, 0],

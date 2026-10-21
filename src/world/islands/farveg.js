@@ -7,8 +7,8 @@ function hex(c) {
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 }
 
-// formes : [type, cx, cy, cz, r, squash | haut, couleur]
-const SHAPES = {
+// formes : [type, cx, cy, cz, r, squash | haut, couleur] (aussi lues par gen/herbe.js : couronnes)
+export const SHAPES = {
   arbre_pompon: [['ball', 0, 2.55, 0, 1.45, 0.9, '#8fd08a'], ['ball', 0.45, 3.25, -0.25, 0.95, 0.9, '#a9dc96']],
   arbre_fruitier: [['ball', 0, 2.55, 0, 1.45, 0.9, '#93d28c']],
   arbre_cerisier: [['ball', 0, 2.55, 0, 1.45, 0.9, '#f6bfcb'], ['ball', 0.45, 3.25, -0.25, 0.95, 0.9, '#f9d3dc']],
