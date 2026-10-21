@@ -10,7 +10,7 @@ import { ISLANDS, islandsInRange } from './regions.js';
 import { KINDS, KIND_RADIUS, STRIDE, TREES } from './gen/kinds.js';
 import { Surface, TILE } from './gen/surface.js';
 import { bloomColorOf } from './gen/zones.js';
-import { BIOMES } from './biomes.js';
+import { BIOMES, PALETTES_HERBE, paletteHerbe } from './biomes.js';
 import { kindModel, CAP_COLORS, ROCKY } from '../../models/vegetation.js';
 import { GRIMPE } from '../../models/physique.gen.js';
 import { HerbeSystem } from '../../render/herbe/HerbeSystem.js';
@@ -194,7 +194,7 @@ export class IslandManager {
       solid: toonMaterial({ ...MAT.solid }),
       glow: toonMaterial({ ...MAT.glow }),
       foliage: foliageMaterial({ leafTex, ...MAT.foliage }),
-      grass: grassMaterial({ id: this.terrainId, tipColor: 0xe4f0bc }),
+      grass: grassMaterial({ id: this.terrainId, palette: paletteHerbe('prairie') }),
       flower: toonMaterial({ ...MAT.flower }),
       far: toonMaterial({ vertexColors: true, rim: 0.4, outline: 0.6 }),
       silhouette: toonMaterial({ vertexColors: true, terrain: true, paths: false, id: this.terrainId, rim: 0.4 }),
@@ -640,6 +640,15 @@ export class IslandManager {
     });
   }
 
+  // touffes d'herbe récoltables : peintes dans la palette du tapis de leur biome (une par biome)
+  grassMat(biome) {
+    if (!biome || !PALETTES_HERBE[biome] || biome === 'prairie') return this.mats.grass;
+    this.grassMats ||= new Map();
+    let m = this.grassMats.get(biome);
+    if (!m) this.grassMats.set(biome, (m = grassMaterial({ id: this.terrainId, palette: paletteHerbe(biome) })));
+    return m;
+  }
+
   buildKind(e, near, plan, ki, list, ctx, st) {
     if (!this.entries.has(e.desc.id)) return false;
     const items = plan.items;
@@ -663,7 +672,7 @@ export class IslandManager {
     st.slot = 0;
     const solid = model.solid ? add(model.solid, model.glow ? this.mats.glow : this.mats.solid, SHADOW_KINDS.has(kind)) : null;
     const leaves = model.clumpGeo ? add(model.clumpGeo, this.mats.foliage) : null;
-    const grass = model.grassGeo ? add(model.grassGeo, this.mats.grass) : null;
+    const grass = model.grassGeo ? add(model.grassGeo, this.grassMat(e.desc.biome)) : null;
     const flower = model.flowerGeo ? add(model.flowerGeo, this.mats.flower) : null;
     const rad = KIND_RADIUS[kind] || 0;
     const grimpe = GRIMPE[kind];
@@ -837,7 +846,7 @@ export class IslandManager {
       const model = kindModel(kind);
       const geo = model.grassGeo || model.flowerGeo || model.solid;
       if (!geo) continue;
-      const mat = model.grassGeo ? this.mats.grass : model.flowerGeo ? this.mats.flower : this.mats.solid;
+      const mat = model.grassGeo ? this.grassMat(e.desc.biome) : model.flowerGeo ? this.mats.flower : this.mats.solid;
       const im = new THREE.InstancedMesh(geo, mat, 0);
       im.instanceMatrix = new THREE.InstancedBufferAttribute(gq.mats, 16);
       im.instanceColor = new THREE.InstancedBufferAttribute(gq.cols, 3);

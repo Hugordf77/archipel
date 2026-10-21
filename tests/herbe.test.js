@@ -354,6 +354,22 @@ describe('herbe en tapis : palettes et sol', () => {
   });
 });
 
+describe('herbe en tapis : touffes récoltables', () => {
+  it('sont peintes dans la palette du tapis, plus hautes ; les oyats gardent leur couleur', async () => {
+    const { grassMaterial } = await import('../src/render/shaders/materials.js');
+    const { paletteHerbe } = await import('../src/world/islands/biomes.js');
+    const P = paletteHerbe('champignons');
+    const m = grassMaterial({ id: 1, palette: P });
+    expect(m.defines.PALETTE).toBe('');
+    expect(m.uniforms.uMilieu.value.toArray()).toEqual(P.milieu);
+    expect(m.uniforms.uTall.value).toBeGreaterThan(1);
+    const oyats = grassMaterial({ id: 1, tipColor: 0xeee0a8 });
+    expect(oyats.defines.PALETTE).toBeUndefined();
+    expect(oyats.uniforms.uMilieu).toBeUndefined();
+    expect(oyats.uniforms.uTipColor.value.getHex()).toBe(0xeee0a8);
+  });
+});
+
 describe('herbe en tapis : île de départ', () => {
   it('pré dense sur les terrasses, rien dans la mare, le potager ni sur les chemins', async () => {
     const { installCanvasStub } = await import('./helpers/canvas.js');

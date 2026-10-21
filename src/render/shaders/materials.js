@@ -380,12 +380,17 @@ export function foliageMaterial(opts = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// Herbe : touffes instanciées, pliées par le vent et par le joueur
+// Herbe : touffes instanciées, pliées par le vent et par le joueur. Avec une palette (PALETTE) :
+// touffes récoltables des îles, peintes dans la palette du tapis (render/herbe/), plus hautes et
+// plus foncées que lui, lisibles comme un massif ; sans palette : oyats et catalogue.
 // ---------------------------------------------------------------------------
 const grassVert = /* glsl */ `
 ${CURVE}
 ${WIND}
 uniform vec3 uPlayerPos;
+#ifdef PALETTE
+uniform float uTall;
+#endif
 varying vec3 vWorldPos;
 varying vec3 vColor;
 varying float vH;
@@ -401,6 +406,9 @@ void main() {
   vec3 local = wp.xyz - base;
   local.y *= lod;
   local.xz *= mix(0.65, 1.0, lod);
+  #ifdef PALETTE
+  local.y *= uTall;
+  #endif
   wp.xyz = base + local;
   wp.xyz += windOffset(base, 0.28 * h * h, base.x * 0.9 + base.z * 0.4);
   vec3 d = wp.xyz - uPlayerPos;
@@ -427,6 +435,11 @@ ${TOON}
 ${MRT_OUT}
 uniform float uId;
 uniform vec3 uTipColor;
+#ifdef PALETTE
+uniform vec3 uPied;
+uniform vec3 uMilieu;
+uniform vec3 uPointe;
+#endif
 varying vec3 vWorldPos;
 varying vec3 vColor;
 varying float vH;
@@ -434,7 +447,18 @@ varying float vViewDist;
 void main() {
   vec3 N = vec3(0.0, 1.0, 0.0);
   vec3 V = normalize(cameraPosition - vWorldPos);
+  #ifdef PALETTE
+  // palette du tapis, plus foncée (× 0,82) ; la couleur du sol (à la luminance du milieu) n'y entre
+  // qu'à 25 %, comme pour les brins ; pied dans l'ombre du massif
+  const vec3 LUM = vec3(0.299, 0.587, 0.114);
+  vec3 zone = clamp(vColor * (dot(uMilieu, LUM) / max(dot(vColor, LUM), 0.04)) / max(uMilieu, vec3(0.02)), 0.6, 1.5);
+  vec3 tint = mix(vec3(1.0), zone, 0.25) * 0.82;
+  float hh = smoothstep(0.0, 1.0, vH);
+  vec3 albedo = (hh < 0.5 ? mix(uPied, uMilieu, hh * 2.0) : mix(uMilieu, uPointe, hh * 2.0 - 1.0)) * tint;
+  albedo *= mix(0.55, 1.0, smoothstep(0.0, 0.7, vH));
+  #else
   vec3 albedo = mix(vColor * 0.86, mix(vColor, uTipColor, 0.55) * 1.08, smoothstep(0.0, 1.0, vH));
+  #endif
   float sh = sampleShadow(vWorldPos, N);
   vec3 col = toonShade(albedo, N, V, sh, 0.4);
   col += lanternLight(albedo, vWorldPos, N);
@@ -443,15 +467,27 @@ void main() {
 }
 `;
 
+// palette (facultative) : { pied, milieu, pointe } en RVB (biomes.js, paletteHerbe) ; tall :
+// hauteur relative des touffes peintes dans la palette
 export function grassMaterial(opts = {}) {
-  const { id, tipColor = 0xd8efa0 } = opts;
+  const { id, tipColor = 0xd8efa0, palette = null, tall = 1.35 } = opts;
+  const pal = palette
+    ? {
+        uPied: { value: new THREE.Color().fromArray(palette.pied) },
+        uMilieu: { value: new THREE.Color().fromArray(palette.milieu) },
+        uPointe: { value: new THREE.Color().fromArray(palette.pointe) },
+        uTall: { value: tall },
+      }
+    : {};
   return new THREE.ShaderMaterial({
     name: 'grass',
     glslVersion: THREE.GLSL3,
+    defines: palette ? { PALETTE: '' } : {},
     uniforms: {
       ...U,
       uId: { value: id },
       uTipColor: { value: new THREE.Color(tipColor) },
+      ...pal,
     },
     vertexShader: grassVert,
     fragmentShader: grassFrag,
