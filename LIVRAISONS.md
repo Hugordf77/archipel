@@ -173,9 +173,10 @@ et domaine concerné).
 ## État courant (21/10/2026)
 
 - **Inventaire V2** (branche `claude/inventaire-v2-c40733`, worktree, ni fusionnée ni poussée) : écran
-  plein écran à la place du panneau Sac. Choix de DA à valider par l'utilisateur : regroupement en 8
-  onglets, voile violet et cases claires, fond bleu pastel pour la barre rapide, aperçu 3D (gardé plutôt
-  qu'un portrait fixe). Carnet et Réglages, depuis l'écran, ouvrent les panneaux existants.
+  plein écran à la place du panneau Sac. Choix de DA validés par l'utilisateur le 21/10/2026 :
+  regroupement en 8 onglets, voile violet et cases claires, fond bleu pastel pour la barre rapide, aperçu
+  3D (gardé plutôt qu'un portrait fixe). Carnet et Réglages, depuis l'écran, ouvrent les panneaux
+  existants. Reste à essayer avec une vraie manette (testé avec une DualSense simulée).
 - Branche `v3-archipel`. Derniers commits : herbe V2, lettres A à F (palettes et sol, variation, forme
   et couverture, lumière, touffes récoltables, carte d'herbe du Worker) et réglage de l'ombre.
 - **Herbe V2** : sol des îles plus foncé et plus saturé sous l'herbe, validé par l'utilisateur le
