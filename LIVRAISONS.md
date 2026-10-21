@@ -122,14 +122,26 @@ et domaine concerné).
   `src/world/islands/gen/` (relief, érosion, hydrologie, zones, surface, plan, lieux, chemins, faune) ;
   `IslandManager.js` (LOD, tuiles, Worker `worldWorker.js`).
 - Carte : `src/ui/mapPanel.js`, brouillard `src/world/fog.js` ; minicarte `src/ui/minimap.js` (nouvelle).
-- **Herbe en tapis** (refonte « façon Breath of the Wild », en cours) : brins procéduraux générés par le
-  shader (`src/render/herbe/` : `placement.js` pur, `materiau.js`, `HerbeSystem.js`), trois anneaux de
-  densité autour du joueur selon la qualité (Haut 96 → 24 → 6 brins/m² jusqu'à 60 m, Moyen 64 → 16 → 4,
-  Bas 32 → 8), textures 65 × 65 par tuile au mètre (densité, hauteur et sécheresse ; hauteur et couleur
-  du sol), pied à la teinte exacte du terrain (`PAINT` de `shaders/chunks.js`, partagé avec le terrain),
-  vent avec ondes qui traversent le pré, couchée autour du joueur. Raccord : `IslandManager.js` (tuiles,
-  terrassement), `Game.js` (`state.settings.herbe` : « touffes » pour l'ancienne herbe seule). Tests :
-  `tests/herbe.test.js`.
+- **Herbe en tapis** (refonte « façon Breath of the Wild / Genshin », V2 livrée le 21/10/2026) : brins
+  procéduraux générés par le shader (`src/render/herbe/` : `placement.js` pur, `materiau.js`,
+  `HerbeSystem.js`), trois anneaux de densité autour du joueur selon la qualité (Haut 96 → 24 → 6
+  brins/m² jusqu'à 60 m, Moyen 64 → 16 → 4, Bas 32 → 8), textures 65 × 65 par tuile au mètre.
+  - Couleur : palette par biome (`PALETTES_HERBE` de `world/islands/biomes.js` : pied, milieu, pointe,
+    sec ; île de départ = prairie), sécheresse vers « sec », couleur du sol à 25 % au plus. Sous l'herbe,
+    le sol prend le « milieu ombré » de la palette en proportion de la densité (`ZONE_HERBE` de
+    `gen/zones.js` × biome), au relief de 4 m comme au mètre et sur le pré de départ (`champsMaison`).
+  - Variation (`HERBE` de `shaders/chunks.js`, partagé par les brins et le terrain) : plaques de 15 à
+    40 m, ondes de vent en bandes de 6 à 12 m ; par brin, valeur ± 4 % et hauteur ± 25 % seulement.
+  - Forme : 10 cm au pied (anneau A), élargis au loin en part^−0,72 ; pré peigné dans le vent (15 à
+    35°). Lumière : ombre à mi-hauteur (× 0,62 en plus de la rampe toon), occlusion au pied, contre-jour.
+  - Touffes récoltables dans la palette du tapis (`grassMaterial` avec palette, un par biome).
+  - Carte d'herbe du Worker (`gen/herbe.js`, `tile.herbe`) : zone × biome × pente × eau × ombre des
+    couronnes × chemins × lieux × altitude × massifs et trouées ; `champDeSecours` (0,88, 0,37 m) si
+    une tuile n'en a pas.
+  - Raccord : `IslandManager.js` (tuiles, terrassement, `grassMat`), `Game.js`
+    (`state.settings.herbe` : « touffes » pour l'ancienne herbe seule). Tests : `tests/herbe.test.js`,
+    `tests/herbe-champ.test.js`. Captures et mesures : `captures/herbe-v2-*.png`,
+    `captures/references-herbe/mesure-couleurs.py` (aide de cadrage : `captures/_herbe2.js`).
 - Agents : `archipel-calibrateur` (corrections ciblées d'une île) et `archipel-critique` (revue).
 
 ### Manette, audio, interface
@@ -139,17 +151,18 @@ et domaine concerné).
 - Tableau de bord de production : `dashboard.html`, `dashboard/` (`management.json` : relations entre
   agents).
 
-## État courant (20/10/2026)
+## État courant (21/10/2026)
 
-- Branche `v3-archipel`. Derniers commits : grimper aux palmiers, partie B (pose, caméra, retours),
-  partie A (`f634eb7`, moteur), partie C (`f27dcbd`, données des troncs).
+- Branche `v3-archipel`. Derniers commits : herbe V2, lettres A à F (palettes et sol, variation, forme
+  et couverture, lumière, touffes récoltables, carte d'herbe du Worker) et réglage de l'ombre.
+- **Herbe V2, à valider** : sol des îles plus foncé et plus saturé sous l'herbe (choix de DA) ; palette
+  glace resaturée (0,45) pour tenir la fourchette des références.
 - **Lot 2 de la grimpe à faire** : autres arbres à tronc dégagé (sommet `suspendu`), un commit par
   espèce ; la noix de coco au sommet attend l'accord de l'utilisateur (progression).
 - **Non commité** (hors de ce chantier) : tableau de bord (`dashboard.html`, `dashboard/`,
   `vite.config.js`), agents d'équipe et skill `modele-3d`, `README.md`, chèvre, mouton et fleurs
-  (PLA-015), calibration d'îles (`gen/surface.js`, `gen/zones.js`, `tests/world.test.js`),
-  `tests/fixtures/empreintes.json`.
-- **Tests** : 215 sur 216. Échec : `tests/empreintes.test.js` (personnage PER-001 à PER-003, 160
+  (PLA-015), `tests/fixtures/empreintes.json`.
+- **Tests** : 239 sur 240. Échec : `tests/empreintes.test.js` (personnage PER-001 à PER-003, 160
   triangles de l'épée, changement voulu à valider puis `npm run modeles:empreinte -- --ecrire` ; fleurs
   PLA-015 en cours). « Budget du Worker » de `tests/world.test.js` : mesure de temps sensible à la
   charge (peut échouer sous la suite complète, vert seul).
