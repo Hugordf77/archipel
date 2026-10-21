@@ -421,7 +421,9 @@ export class IslandManager {
     this.stats.workerMs.push(m.ms);
     if (this.stats.workerMs.length > 200) this.stats.workerMs.shift();
     if (!e) return;
-    e.pending[m.lod] = false;
+    // le LOD1 reste « en cours » jusqu'à son assemblage (lod1-assemblage), plusieurs travaux plus
+    // tard : sinon pump le redemande entre-temps et l'île reçoit un second groupe « ile-4m »
+    if (m.lod === 2 || e.want < 0) e.pending[m.lod] = false;
     if (e.want < 0) return;
     if (m.lod === 2) this.job('lod2', () => this.buildLod2(e, m));
     else this.queueLod1(e, m);
@@ -508,6 +510,9 @@ export class IslandManager {
         this.anims.push(a);
       }
       e.poiObstacles = acc.obstacles;
+      e.pending[1] = false;
+      // jamais deux groupes « ile-4m » : l'ancien, que plus rien ne cacherait, s'en va
+      if (e.lod1) this.dropLod1(e);
       e.lod1 = L;
       e.group.add(group);
       this.applyHole(e);
