@@ -138,6 +138,9 @@ et domaine concerné).
     aussi le sol sous l'herbe ; fondus d'anneaux longs (40 %), anneau B plus dense (Haut 32 brins/m²,
     Moyen 24) ; villages herbus jusqu'au pied des murs (maisons au cercle de leurs murs), pentes
     herbues jusqu'à 1 (falaises au-delà).
+  - Peint et pastel : touches de pinceau en aplats (traits de 3,5 × 0,7 m dans le vent, ± 9 %) et
+    voile de gouache crème (20 %), sur les brins, le sol herbeux et les touffes (`HERBE` de
+    `shaders/chunks.js` : `herbePinceau`, `herbePastel`).
   - Touffes récoltables dans la palette du tapis (`grassMaterial` avec palette, un par biome).
   - Carte d'herbe du Worker (`gen/herbe.js`, `tile.herbe`) : zone × biome × pente × eau × ombre des
     couronnes × chemins × lieux × altitude × massifs et trouées ; `champDeSecours` (0,88, 0,37 m) si

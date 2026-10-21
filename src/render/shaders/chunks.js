@@ -63,8 +63,9 @@ vec3 grassTouches(vec3 albedo, vec3 wA, float grassMask) {
 
 // Herbe en tapis, variation de la grande échelle à la petite (à inclure après NOISE ; uTime,
 // uWindDir et uWindStrength déclarés par WIND ou à part) : plaques de 15 à 40 m (teinte ± 6°,
-// valeur ± 8 %) et ondes de vent, bandes de 6 à 12 m qui défilent dans le sens du vent. Les brins et
-// le sol (terrain) lisent les mêmes : le lointain raccorde au tapis. p : position absolue (xz).
+// valeur ± 8 %), ondes de vent, bandes de 6 à 12 m qui défilent dans le sens du vent, touches de
+// pinceau en aplats et voile pastel. Les brins et le sol (terrain) lisent les mêmes : le lointain
+// raccorde au tapis. p : position absolue (xz).
 export const HERBE = /* glsl */ `
 vec3 hueRot(vec3 c, float a) {
   const vec3 k = vec3(0.57735);
@@ -88,6 +89,18 @@ float herbeOnde(vec2 p) {
   float band = smoothstep(0.35, 0.95, 0.5 + 0.5 * sin(ph * 6.2831853));
   float gate = smoothstep(0.25, 0.65, vnoise(vec2(q.x / 30.0 - uTime * 0.1, q.y / 18.0)));
   return band * (0.35 + 0.65 * gate) * uWindStrength;
+}
+// touches de pinceau : traits allongés dans le sens du vent (environ 3,5 × 0,7 m), en aplats de
+// gouache (valeur par paliers de 4,5 %, de −9 à +9 %) ; facteur à multiplier à la couleur
+float herbePinceau(vec2 p) {
+  vec2 d = normalize(uWindDir + vec2(0.0001));
+  vec2 q = vec2(dot(p, d), dot(p, vec2(-d.y, d.x)));
+  float a = vnoise(vec2(q.x / 3.6, q.y / 0.7)) * 0.65 + vnoise(vec2(q.x / 2.2 + 13.1, q.y / 0.45 - 7.7)) * 0.35;
+  return 1.0 + 0.09 * floor((a * 2.0 - 1.0) * 2.0 + 0.5) * 0.5;
+}
+// voile pastel : un lavis de gouache crème par-dessus la couleur (k : 0 à 1)
+vec3 herbePastel(vec3 c, float k) {
+  return mix(c, vec3(0.97, 0.95, 0.86), k);
 }
 `;
 

@@ -172,8 +172,10 @@ void main() {
   // le joueur
   float detail = 1.0 - smoothstep(uRings.x * 0.4, uRings.y * 0.6, length(base.xz - uFocus.xz));
   vAlbedo = mix(mix(mil, pointe, 0.25) * 0.9, vAlbedo, mix(0.4, 1.0, detail));
-  // occlusion au pied : le cœur du tapis reste sombre (× 0,55 de près)
-  vAlbedo *= mix(1.0 - 0.45 * detail, 1.0, smoothstep(0.0, 0.7, t));
+  // occlusion au pied : le cœur du tapis reste plus sombre (× 0,65 de près)
+  vAlbedo *= mix(1.0 - 0.35 * detail, 1.0, smoothstep(0.0, 0.7, t));
+  // peint : touches de pinceau en aplats, puis voile pastel (comme le sol sous l'herbe)
+  vAlbedo = herbePastel(vAlbedo * herbePinceau(wA.xz), 0.2);
   vT = t;
   // normale proche de celle du sol (sinon le contour dessine des plis d'encre sur le terrain)
   vec3 bn = vec3(bendDir.x, 0.0, bendDir.y);

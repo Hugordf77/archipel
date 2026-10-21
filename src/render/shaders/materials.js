@@ -168,6 +168,7 @@ void main() {
   float herbeuse = grassMask * smoothstep(0.03, 0.1, albedo.g - max(albedo.r, albedo.b));
   albedo = mix(albedo, herbeVarie(albedo, herbePlaque(wA.xz)), herbeuse);
   albedo *= 1.0 + 0.1 * herbeOnde(wA.xz) * herbeuse;
+  albedo = mix(albedo, herbePastel(albedo * herbePinceau(wA.xz), 0.2), herbeuse);
   float cliff = 1.0 - smoothstep(0.55, 0.8, N.y);
   float strata = sin(vWorldPos.y * 5.5 + vnoise(wA.xz * 0.5) * 3.0);
   albedo = mix(albedo, albedo * (0.93 + 0.08 * strata), cliff);
@@ -455,7 +456,9 @@ void main() {
   vec3 tint = mix(vec3(1.0), zone, 0.25) * 0.82;
   float hh = smoothstep(0.0, 1.0, vH);
   vec3 albedo = (hh < 0.5 ? mix(uPied, uMilieu, hh * 2.0) : mix(uMilieu, uPointe, hh * 2.0 - 1.0)) * tint;
-  albedo *= mix(0.55, 1.0, smoothstep(0.0, 0.7, vH));
+  albedo *= mix(0.65, 1.0, smoothstep(0.0, 0.7, vH));
+  // voile pastel, comme le tapis
+  albedo = mix(albedo, vec3(0.97, 0.95, 0.86), 0.2);
   #else
   vec3 albedo = mix(vColor * 0.86, mix(vColor, uTipColor, 0.55) * 1.08, smoothstep(0.0, 1.0, vH));
   #endif
