@@ -199,8 +199,8 @@ void main() {
   vec3 N = normalize(vNormalW);
   vec3 V = normalize(cameraPosition - vWorldPos);
   vec3 col = toonShade(vAlbedo, N, V, vShadow, 0.3);
-  // ombre plus marquée qu'au sol (environ × 0,5 avec la rampe toon), comme sous les arbres de Genshin
-  col *= mix(0.8, 1.0, vShadow);
+  // ombre plus marquée qu'au sol (× 0,45 à 0,55 avec la rampe toon), comme sous les arbres de Genshin
+  col *= mix(0.62, 1.0, vShadow);
   // contre-jour : soleil derrière le pré, les pointes s'illuminent (BotW)
   float back = max(dot(-V, uSunDir), 0.0);
   col += uSunColor * vAlbedo * back * back * back * smoothstep(0.4, 1.0, vT) * 0.7 * vShadow * (1.0 - uNight);
