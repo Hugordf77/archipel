@@ -8,12 +8,13 @@
 // de la caméra ; ni ombre portée ni contour (identifiant du terrain).
 import * as THREE from 'three';
 import { U } from '../../core/globals.js';
-import { NOISE, CURVE, WIND, SHADOW, TOON, MRT_OUT } from '../shaders/chunks.js';
+import { NOISE, HERBE, CURVE, WIND, SHADOW, TOON, MRT_OUT } from '../shaders/chunks.js';
 
 const herbeVert = /* glsl */ `
 ${CURVE}
 ${WIND}
 ${NOISE}
+${HERBE}
 ${SHADOW}
 ${TOON}
 attribute vec2 aCell;
@@ -99,7 +100,7 @@ void main() {
   float camD = distance(cameraPosition.xz, base.xz);
   float lod = mix(0.45, 1.0, smoothstep(2.0, 7.0, camD));
   float cut = texture(uCoupe, lt / 64.0 * (128.0 / 129.0) + 0.5 / 129.0).r;
-  float hgt = champ.g * 1.2 * (0.7 + 0.6 * r1) * keep * lod * mix(1.0, 0.15, cut);
+  float hgt = champ.g * 1.2 * (0.75 + 0.5 * r1) * keep * lod * mix(1.0, 0.15, cut);
   if (hgt < 0.01) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
@@ -114,11 +115,12 @@ void main() {
   off += vec3(bendDir.x, 0.0, bendDir.y) * hgt * (0.1 + 0.3 * r1) * t * t;
   off.y = hgt * t;
   vec3 wp = base.xyz + mat3(modelMatrix) * off;
-  // vent : balancement commun, et ondes qui traversent le pré (pointes couchées et éclaircies)
+  // vent : balancement commun, et ondes qui traversent le pré en bandes (pointes couchées et
+  // éclaircies ; la même onde teinte le sol, voir HERBE)
   vec3 wA = base.xyz + uWorldOffset;
   wp += windOffset(base.xyz, 0.6 * hgt * t * t, r1 * 6.0);
   vec2 wdir = normalize(uWindDir + vec2(0.0001));
-  float wave = smoothstep(0.42, 0.85, vnoise(wA.xz * 0.09 - wdir * uTime * 0.55)) * uWindStrength;
+  float wave = herbeOnde(wA.xz);
   wp.xz += wdir * wave * hgt * 0.45 * t * t;
   wp.y -= wave * hgt * 0.15 * t * t;
   // couchée sous le joueur (ses pieds restent visibles), les animaux et le souffle de l'aigle
@@ -143,16 +145,20 @@ void main() {
   const vec3 LUM = vec3(0.299, 0.587, 0.114);
   vec3 zone = clamp(sol * (dot(uMilieu, LUM) / max(dot(sol, LUM), 0.04)) / max(uMilieu, vec3(0.02)), 0.6, 1.5);
   vec3 tint = mix(vec3(1.0), zone, 0.25);
-  float dry = champ.b;
-  vec3 pied = mix(uPied, uSec * 0.72, dry) * tint;
-  vec3 mil = mix(uMilieu, uSec * 0.86, dry) * tint;
-  vec3 pointe = mix(uPointe, uSec, dry) * tint;
-  // chaque brin a sa nuance (un sur cinq tire vers le jaune)
+  // sécheresse : teinte d'ensemble, et des brins tout secs là seulement où elle dépasse 0,4
+  float dry = champ.b * 0.6;
   float hue = hash12(cellId * 2.31 + i * 0.7071);
-  float nv = 0.9 + 0.2 * r2;
-  vec3 yel = mix(vec3(1.0), vec3(1.08, 1.04, 0.82), step(0.8, hue));
-  vec3 blade = (t < 0.5 ? mix(pied, mil, t * 2.0) : mix(mil, pointe, t * 2.0 - 1.0)) * nv * yel;
-  blade += vec3(0.08, 0.08, 0.04) * wave * t;
+  dry = max(dry, step(hue, (champ.b - 0.4) / 0.6) * 0.9);
+  // plaques de 15 à 40 m (teinte, valeur, pointes jaunies), comme le sol sous l'herbe
+  vec3 plq = herbePlaque(wA.xz);
+  vec3 pied = herbeVarie(mix(uPied, uSec * 0.72, dry) * tint, plq);
+  vec3 mil = herbeVarie(mix(uMilieu, uSec * 0.86, dry) * tint, plq);
+  vec3 pointe = herbeVarie(mix(uPointe, uSec, dry) * tint, plq);
+  pointe = mix(pointe, pointe * vec3(1.1, 1.05, 0.8), 0.4 * plq.z);
+  // par brin : valeur à ± 4 % seulement (ni poivre ni sel) ; l'onde éclaircit les pointes de 15 %
+  float nv = 0.96 + 0.08 * r2;
+  vec3 blade = (t < 0.5 ? mix(pied, mil, t * 2.0) : mix(mil, pointe, t * 2.0 - 1.0)) * nv;
+  blade *= 1.0 + 0.15 * wave * t;
   // chaume fauché : coupe nette, plus jaune
   vAlbedo = mix(blade, mil * vec3(1.1, 1.02, 0.75), cut * step(0.5, t));
   // normale proche de celle du sol (sinon le contour dessine des plis d'encre sur le terrain)

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { U, nextId } from '../../core/globals.js';
-import { NOISE, PAINT, CURVE, WIND, SHADOW, TOON, MRT_OUT } from './chunks.js';
+import { NOISE, PAINT, HERBE, CURVE, WIND, SHADOW, TOON, MRT_OUT } from './chunks.js';
 
 // ---------------------------------------------------------------------------
 // Matériau toon générique (décors, terrain, personnages)
@@ -105,6 +105,10 @@ varying vec2 vUv;
 #ifdef TERRAIN
 uniform sampler2D uPathTex;
 uniform vec4 uHeightBounds;
+uniform float uTime;
+uniform vec2 uWindDir;
+uniform float uWindStrength;
+${HERBE}
 #endif
 #ifdef TERRAIN_HOLE
 // rectangle (local) où les tuiles au mètre remplacent ce relief simplifié
@@ -160,6 +164,10 @@ void main() {
   // touches peintes sur l'herbe et strates dans la falaise
   float grassMask = smoothstep(0.75, 0.9, N.y) * smoothstep(0.75, 0.95, vWorldPos.y);
   albedo = grassTouches(albedo, wA, grassMask);
+  // sol herbeux (vert) : mêmes plaques et mêmes ondes de vent que les brins du tapis
+  float herbeuse = grassMask * smoothstep(0.03, 0.1, albedo.g - max(albedo.r, albedo.b));
+  albedo = mix(albedo, herbeVarie(albedo, herbePlaque(wA.xz)), herbeuse);
+  albedo *= 1.0 + 0.1 * herbeOnde(wA.xz) * herbeuse;
   float cliff = 1.0 - smoothstep(0.55, 0.8, N.y);
   float strata = sin(vWorldPos.y * 5.5 + vnoise(wA.xz * 0.5) * 3.0);
   albedo = mix(albedo, albedo * (0.93 + 0.08 * strata), cliff);
