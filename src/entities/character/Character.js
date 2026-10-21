@@ -6,7 +6,8 @@ import { defaultAvatar, sanitizeAvatar, SKINS, HAIR_COLORS } from './avatar.js';
 import { FaceAtlas, faceGeometry, EXPRESSIONS, BLINKABLE, EYE, cellUV } from './face.js';
 import { locomotionPose, LOCO_FAMILY, FAMILY_HALFLIFE, createArmDynamics, stepArmDynamics, handWeightTarget, climbRootFrame, axisInRoot, climbHandTarget, perchHandTarget, trunkChord, CLIMB, CLIMB_GAP, climbRenderFrame } from '../locomotion/pose.js';
 import { H as MOTOR_STEP } from '../locomotion/motor.js';
-import { applyJoints, reachHand, shoulderInRoot, handInRoot, HAND_RADIUS, HAND_BRUSH_GAP } from '../locomotion/rig.js';
+import { applyJoints, reachHand, shoulderInRoot, handInRoot, boneToRoot, HAND_RADIUS, HAND_BRUSH_GAP } from '../locomotion/rig.js';
+import { RESSORT, hairSpring, stepHair, hairAngles } from './cheveux.js';
 import { HC, B, PARENT, REST, ID, tint, HAIR_STYLES, buildAvatarGeometry } from '../../models/personnage/index.js';
 import { crayonGeometry } from '../../models/personnage/index.js';
 export { HAIR_STYLES };
@@ -224,14 +225,21 @@ export class Character {
     this.lastStep = 0;
     this.sleepy = false;
     this.clothSprings = {
-      hairA: { x: 0, vx: 0, y: 0, vy: 0, z: 0, vz: 0 },
-      hairB: { x: 0, vx: 0, y: 0, vy: 0, z: 0, vz: 0 },
+      hairA: hairSpring(),
+      hairB: hairSpring(),
       skirt: { x: 0, vx: 0, y: 0, vy: 0, z: 0, vz: 0 },
       scarf: { x: 0, vx: 0, y: 0, vy: 0, z: 0, vz: 0 },
     };
     this.springs = [this.clothSprings.hairA, this.clothSprings.hairB];
-    this.prevBodyY = 0;
     this.prevHeadY = 0;
+    // cheveux (hairPush) : racine et sommet du crâne autour d'elle à l'image précédente, leurs vitesses,
+    // accélération lissée (state : 0 = à placer, 1 = vitesses à prendre, 2 = en route), orientation de
+    // la tête, poussée
+    const v3 = () => new THREE.Vector3();
+    this._hairDyn = {
+      state: 0, p: v3(), prev: v3(), rootPrev: v3(), vr: v3(), vr1: v3(), vo: v3(), vo1: v3(), acc: v3(), a: v3(), w: v3(),
+      q: new THREE.Quaternion(), s: v3(), m: new THREE.Matrix4(), push: [0, 0, 0],
+    };
     this._prevPos = null;
     this._estVel = new THREE.Vector3();
     this.j = { ...BASE };
@@ -1003,9 +1011,7 @@ export class Character {
     // Dynamique physique 3D des cheveux et des vêtements au vent
     // -------------------------------------------------------------------------
     const idt = 1 / Math.max(dt, 1e-4);
-    const vY = (j.bodyY - this.prevBodyY) * idt;
     const vYaw = (j.headY - this.prevHeadY) * idt;
-    this.prevBodyY = j.bodyY;
     this.prevHeadY = j.headY;
 
     // Vitesse mondiale du personnage (fournie par motion.vel ou estimée par déplacement)
@@ -1054,90 +1060,22 @@ export class Character {
     const localWindY = totalWindY; // ascendant(+)
 
     const airSpeed = Math.hypot(totalWindX, totalWindY, totalWindZ);
-    // inertie : au freinage cheveux et écharpe partent en avant, à l'accélération ils traînent
+    // inertie de l'écharpe : au freinage elle part en avant, à l'accélération elle traîne
     const accF = THREE.MathUtils.clamp(motion?.loco?.aLong ?? motion?.loco?.accF ?? 0, -30, 30);
     const accL = THREE.MathUtils.clamp(motion?.loco?.aLat ?? (motion?.loco?.omega || 0) * (motion?.loco?.v || 0), -15, 15);
-    const tilt = j.headX + j.lean + j.torsoX;
-    const sway = Math.sin(this.phase) * 0.06 * walk;
-    const hairStyle = this.avatar?.hair || 'queue';
 
-    // 1. CHEVEUX (HAIR_A et HAIR_B)
-    const hairFlutterFreq = 14 + airSpeed * 0.65;
-    const hairFlutter = Math.sin(now * hairFlutterFreq) * Math.min(0.25, 0.04 + airSpeed * 0.025);
-    const hairFlutterRoll = Math.cos(now * (hairFlutterFreq * 0.85)) * Math.min(0.18, 0.02 + airSpeed * 0.018);
-
-    ['hairA', 'hairB'].forEach((key, idx) => {
-      const s = this.clothSprings[key];
-      const side = idx === 0 ? 1 : -1;
-      let tx = 0;
-      let ty = 0;
-      let tz = 0;
-
-      if (hairStyle === 'queue') {
-        // Queue de cheval : traîne au vent, flotte en piqué et chute libre
-        tx = THREE.MathUtils.clamp(
-          localWindZ * 0.065 + localWindY * 0.035 - tilt * 0.5 + vY * 0.25 + hairFlutter + accF * 0.03,
-          -0.7, 1.45
-        );
-        tz = THREE.MathUtils.clamp(
-          -localWindX * 0.055 - vYaw * 0.07 + hairFlutterRoll + accL * 0.04,
-          -0.85, 0.85
-        );
-        ty = -vYaw * 0.04;
-      } else if (hairStyle === 'carre') {
-        // Carré court : mèches latérales écartées par le vent et inertie
-        tx = THREE.MathUtils.clamp(
-          localWindZ * 0.045 + localWindY * 0.02 - tilt * 0.4 + vY * 0.2 + hairFlutter * 0.5,
-          -0.4, 0.85
-        );
-        const flare = side * (0.08 + Math.min(0.25, airSpeed * 0.015));
-        tz = THREE.MathUtils.clamp(
-          flare - localWindX * 0.045 - vYaw * 0.04 * side + sway * side * 0.5,
-          -0.7, 0.7
-        );
-      } else if (hairStyle === 'longs') {
-        // Cheveux longs : HAIR_A (masse arrière fluide), HAIR_B (mèches latérales)
-        if (idx === 0) {
-          tx = THREE.MathUtils.clamp(
-            localWindZ * 0.075 + localWindY * 0.038 - tilt * 0.55 + vY * 0.28 + hairFlutter,
-            -0.4, 1.55
-          );
-          tz = THREE.MathUtils.clamp(-localWindX * 0.06 - vYaw * 0.06 + hairFlutterRoll, -0.8, 0.8);
-        } else {
-          tx = THREE.MathUtils.clamp(
-            localWindZ * 0.05 + localWindY * 0.02 - tilt * 0.35 + vY * 0.2 + hairFlutter * 0.6,
-            -0.35, 1.05
-          );
-          tz = THREE.MathUtils.clamp(
-            side * (0.12 + airSpeed * 0.018) - localWindX * 0.045 - vYaw * 0.04 * side,
-            -0.75, 0.75
-          );
-        }
-      } else if (hairStyle === 'macarons') {
-        // Macarons : rubans et chignons élastiques
-        tx = THREE.MathUtils.clamp(localWindZ * 0.035 - tilt * 0.35 + vY * 0.22, -0.4, 0.55);
-        tz = THREE.MathUtils.clamp(side * 0.14 - localWindX * 0.035 - vYaw * 0.05 * side + sway * side, -0.6, 0.6);
-      } else {
-        // Bol / boucles : ressort vertical souple
-        tx = THREE.MathUtils.clamp(localWindZ * 0.04 - tilt * 0.6 + vY * 0.35 + hairFlutter * 0.5, -0.7, 0.7);
-        tz = THREE.MathUtils.clamp(-localWindX * 0.04 - vYaw * 0.05 * side + sway * side, -0.5, 0.5);
+    // 1. CHEVEUX : la couronne (HAIR_A) et l'arrière (HAIR_B) sont des pendules raides fixés à la tête
+    // (cheveux.js), poussés par l'accélération réelle du crâne et par le vent ressenti, dans le repère
+    // de la tête : ils suivent la course, l'appel et la réception d'un saut, la roulade, l'arrêt brusque
+    const hairDyn = HAIR_STYLES[this.avatar?.hair]?.dyn;
+    if (hairDyn) {
+      const push = this.hairPush(dt, totalWindX, totalWindY, totalWindZ, motion?.vel);
+      const yawRate = turnRate + vYaw;
+      for (const [key, bone, d] of [['hairA', B.HAIR_A, hairDyn.a], ['hairB', B.HAIR_B, hairDyn.b]]) {
+        const a = hairAngles(stepHair(this.clothSprings[key], d, push, dt, yawRate), d);
+        bn[bone].rotation.set(a.x, a.y, a.z);
       }
-
-      // Simulation de ressort amorti en 3D
-      const stiffness = 85;
-      const damping = 8.5;
-      s.vx += ((tx - s.x) * stiffness - s.vx * damping) * dt;
-      s.x += s.vx * dt;
-      s.vy += ((ty - s.y) * stiffness - s.vy * damping) * dt;
-      s.y += s.vy * dt;
-      s.vz += ((tz - s.z) * stiffness - s.vz * damping) * dt;
-      s.z += s.vz * dt;
-
-      const targetBone = idx === 0 ? B.HAIR_A : B.HAIR_B;
-      if (bn[targetBone]) {
-        bn[targetBone].rotation.set(s.x, s.y, s.z);
-      }
-    });
+    }
 
     // 2. VÊTEMENTS : JUPE ET ROBE (B.SKIRT)
     if (bn[B.SKIRT]) {
@@ -1209,6 +1147,43 @@ export class Character {
     }
     this.expression = expr;
     this.updateDust(dt);
+  }
+
+  // Poussée ressentie par les cheveux (m/s², repère de la tête) : inertie du crâne qui accélère et vent
+  // ressenti (wx, wy, wz : vent du monde + vent de course). L'accélération du crâne est celle de la
+  // racine, prise sur la vitesse du moteur (vel : une seule dérivée, sans les dents de scie des pas
+  // fixes), plus une part de celle du sommet du crâne autour de la racine (la pose : foulée, saut,
+  // roulade), lissées (RESSORT, cheveux.js). Une téléportation ou une image très longue repart de zéro.
+  hairPush(dt, wx, wy, wz, vel = null) {
+    const H = this._hairDyn;
+    const rp = this.root.position;
+    boneToRoot(this._rig, B.HEAD, H.m);
+    H.m.decompose(H.p, H.q, H.s);
+    H.q.premultiply(this.root.quaternion);
+    // sommet du crâne autour de la racine, en axes du monde
+    H.p.set(0, HC + 0.25 - REST[B.HEAD][1], -0.05).applyMatrix4(H.m).applyQuaternion(this.root.quaternion);
+    if (H.state === 0 || dt > 0.1 || rp.distanceToSquared(H.rootPrev) > 4) {
+      H.state = 1;
+      H.a.set(0, 0, 0);
+    } else if (dt > 1e-4) {
+      if (vel) H.vr1.copy(vel);
+      else H.vr1.subVectors(rp, H.rootPrev).divideScalar(dt);
+      H.vo1.subVectors(H.p, H.prev).divideScalar(dt);
+      if (H.state === 2) {
+        H.acc.subVectors(H.vo1, H.vo).multiplyScalar(RESSORT.pose).add(H.vr1).sub(H.vr).divideScalar(dt).clampLength(0, 80);
+        H.a.lerp(H.acc, 1 - Math.exp(-dt / RESSORT.lissage));
+      }
+      H.vr.copy(H.vr1);
+      H.vo.copy(H.vo1);
+      H.state = 2;
+    }
+    H.prev.copy(H.p);
+    H.rootPrev.copy(rp);
+    H.w.set(wx, wy, wz).multiplyScalar(RESSORT.vent).sub(H.a).applyQuaternion(H.q.invert());
+    H.push[0] = H.w.x;
+    H.push[1] = H.w.y;
+    H.push[2] = H.w.z;
+    return H.push;
   }
 
   // Locomotion pilotée par le moteur : pose pure (locomotion/pose.js) + regard qui flâne,
