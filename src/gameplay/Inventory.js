@@ -121,6 +121,20 @@ export class Inventory {
     return true;
   }
 
+  // jette le contenu d'une case (menu de l'inventaire)
+  discard(i) {
+    if (!this.slots[i]) return false;
+    this.slots[i] = null;
+    this.changed();
+    return true;
+  }
+
+  // première case vide d'une plage [from, to[ (-1 si aucune)
+  freeSlot(from = 0, to = SLOTS) {
+    for (let i = from; i < to; i++) if (!this.slots[i]) return i;
+    return -1;
+  }
+
   // meilleur outil d'un type (hache, pioche…) : niveau 0 si aucun
   bestTool(kind) {
     let best = null;

@@ -171,7 +171,7 @@ export function itemSheet(id, items, recipes = [], stationNames = {}, total = 0)
   if (it.where === 'toutes') lines.push('Se pêche autour de toutes les îles.');
   else if (it.where) lines.push(`Se pêche du côté de l'île « ${it.where} ».`);
   if (made) lines.push(`Se fabrique : ${stationNames[made.station] || made.station}.`);
-  if (uses.length) lines.push(`Sert à fabriquer : ${uses.slice(0, 4).join(', ')}${uses.length > 4 ? '…' : ''}.`);
+  if (uses.length) lines.push(`Sert à fabriquer : ${uses.slice(0, 4).join(', ')}${uses.length > 4 ? '…' : '.'}`);
   if (!lines.length) lines.push(it.sell > 0 ? 'Le marchand le reprend volontiers.' : 'Un objet précieux à garder.');
   return { name: it.name, cat: CAT_LABEL[it.cat] || 'Objet', rarity: rarityStars(it.rarity), stats, text: lines.join(' ') };
 }

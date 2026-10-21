@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ITEMS, STATION_NAMES } from '../src/data/items.js';
 import RECIPES from '../src/data/recipes.json';
+import { Inventory } from '../src/gameplay/Inventory.js';
 import {
   GROUPS, CAT_ORDER, groupOf, entries, pageCount, pageOf, clampCursor, moveCursor, nextSort,
   rarityStars, badgeOf, actionsFor, itemSheet, nextTab, recipesOf,
@@ -81,6 +82,18 @@ describe('inventaire plein écran : pagination et grille', () => {
     expect(clampCursor({ page: 1, cell: 9 }, 22)).toEqual({ page: 1, cell: 1 });
     expect(clampCursor({ page: 1, cell: 9 }, 5)).toEqual({ page: 0, cell: 4 });
     expect(clampCursor({ page: 0, cell: 3 }, 0)).toEqual({ page: 0, cell: 0 });
+  });
+});
+
+describe('inventaire plein écran : sac', () => {
+  it('jette une case et trouve les cases libres', () => {
+    const inv = new Inventory(slots({ id: 'bois', n: 5 }, { id: 'pierre', n: 2 }));
+    expect(inv.freeSlot(0, 8)).toBe(2);
+    expect(inv.freeSlot(8)).toBe(8);
+    expect(inv.discard(0)).toBe(true);
+    expect(inv.count('bois')).toBe(0);
+    expect(inv.discard(0)).toBe(false);
+    expect(inv.freeSlot(0, 8)).toBe(0);
   });
 });
 

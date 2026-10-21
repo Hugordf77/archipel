@@ -480,6 +480,25 @@ export class AudioEngine {
     this.tone(1200 * pitch, { t0: t0 + 0.01, peak: 0.03, attack: 0.002, decay: 0.05, type: 'triangle' });
   }
 
+  // sons doux de l'inventaire : ouverture, fermeture, curseur, onglet, refus
+  menu(kind = 'tick') {
+    if (!this.ready) return;
+    const t0 = this.ctx.currentTime;
+    if (kind === 'open') {
+      this.bell(587.33, t0, 0.035, 0.5, 0.4);
+      this.bell(880, t0 + 0.06, 0.03, 0.6, 0.4);
+    } else if (kind === 'close') {
+      this.bell(880, t0, 0.03, 0.4, 0.3);
+      this.bell(587.33, t0 + 0.06, 0.03, 0.5, 0.3);
+    } else if (kind === 'tab') {
+      this.tone(660, { t0, peak: 0.035, attack: 0.003, decay: 0.09, type: 'triangle', glide: 990 });
+    } else if (kind === 'no') {
+      this.tone(220, { t0, peak: 0.05, attack: 0.004, decay: 0.12, type: 'triangle', glide: 180 });
+    } else {
+      this.tone(1320, { t0, peak: 0.018, attack: 0.002, decay: 0.045, type: 'triangle' });
+    }
+  }
+
   coin() {
     if (!this.ready) return;
     const t0 = this.ctx.currentTime;
