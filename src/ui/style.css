@@ -2216,7 +2216,7 @@ input[type='range'] {
   --inv-cream-3: rgba(255, 248, 236, 0.5);
   --inv-deep: #3d3049;
   --inv-line: rgba(255, 248, 236, 0.18);
-  --cell: min(12vh, 7vw, 116px);
+  --cell: min(13.4vh, 7.4vw, 140px);
   --gap: clamp(8px, 1.1vh, 12px);
   place-items: stretch;
   background:
@@ -2392,6 +2392,7 @@ input[type='range'] {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: clamp(6px, 1vh, 10px);
 }
 .inv2-cats {
@@ -2813,7 +2814,7 @@ input[type='range'] {
 }
 .inv2-text {
   margin: 0;
-  font-size: clamp(14px, 2vh, 16px);
+  font-size: clamp(14px, 1.75vh, 19px);
   line-height: 1.45;
 }
 .inv2-needs {
@@ -2922,9 +2923,6 @@ input[type='range'] {
 }
 
 @media (max-height: 760px) {
-  .inv2-card {
-    min-height: 0;
-  }
   .inv2-text {
     font-size: 14px;
     line-height: 1.38;

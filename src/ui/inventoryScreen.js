@@ -597,6 +597,11 @@ export function openInventoryScreen(game, startTab = 'inventaire') {
     const r = previewBox.getBoundingClientRect();
     preview.resize(Math.round(r.width), Math.round(r.height));
   };
+  // redimensionner la fenêtre efface le canevas du jeu : on redessine une image figée
+  const onResize = () => {
+    fitPreview();
+    if (game.paused) game.pipeline.render(game.world.scene, game.camera, game.overlayScene);
+  };
   const baseChange = inv.onChange;
   inv.onChange = () => {
     baseChange?.();
@@ -609,7 +614,7 @@ export function openInventoryScreen(game, startTab = 'inventaire') {
     done = true;
     window.removeEventListener('keydown', onKey, true);
     window.removeEventListener('pointermove', onPointer, true);
-    window.removeEventListener('resize', fitPreview);
+    window.removeEventListener('resize', onResize);
     inv.onChange = baseChange;
     game.paused = false;
     game.pauseFrame = null;
@@ -643,7 +648,7 @@ export function openInventoryScreen(game, startTab = 'inventaire') {
   };
   window.addEventListener('keydown', onKey, true);
   window.addEventListener('pointermove', onPointer, true);
-  window.addEventListener('resize', fitPreview);
+  window.addEventListener('resize', onResize);
   render();
   fitPreview();
   requestAnimationFrame(fitPreview);
