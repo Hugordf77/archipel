@@ -41,7 +41,7 @@ describe('physique des pics', async () => {
     return Math.hypot(p.x / (R * FACE.SX), (p.y - CAP_C[1]) / (R * CAP_SY), (p.z - CAP_C[2]) / (R * 1.05));
   };
   const groupes = [
-    ['couronne', HAIR_STYLES.pics.a, A],
+    ['dessus', HAIR_STYLES.pics.a, A],
     ['arriere', HAIR_STYLES.pics.b, Bd],
   ];
 
@@ -50,7 +50,7 @@ describe('physique des pics', async () => {
     const pire = { crane: Infinity, calotte: Infinity };
     for (const [nom, pivot, d] of groupes) {
       const P = new THREE.Vector3(...pivot);
-      for (const x of [d.x[0], 0, d.x[1]]) for (const y of [-0.3, 0, 0.3]) for (const z of [-d.z, 0, d.z]) {
+      for (const x of [d.x[0], 0, d.x[1]]) for (const y of [-RESSORT.vrilleMax, 0, RESSORT.vrilleMax]) for (const z of [-d.z, 0, d.z]) {
         e.set(x, y, z);
         for (const s of SPIKES[nom]) {
           const f = spikeFrame(s);
@@ -79,7 +79,7 @@ describe('physique des pics', async () => {
 
   it('se dressent en l’air (chute libre), se couchent à la réception, puis reviennent au repos', () => {
     const enLAir = rejoue([0, 9.8, 0], 0.4, 60);
-    expect(enLAir.x).toBeGreaterThan(0.05); // couronne : se redresse vers l'avant
+    expect(enLAir.x).toBeGreaterThan(0.05); // dessus : se redresse vers l'avant
     const arriere = rejoue([0, 9.8, 0], 0.4, 60, hairSpring(), Bd);
     expect(arriere.x).toBeGreaterThan(0.05); // arrière : pointes qui remontent
     // réception : la tête freine sa chute (poussée vers le bas) pendant 0,1 s

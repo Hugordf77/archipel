@@ -12,7 +12,7 @@ import { perso } from '../fiche.js';
 
 // ---------------------------------------------------------------------------
 // Cheveux : une calotte + des pics effilés à bout rond (tubes `limb`). La frange et les côtés
-// tiennent à la tête ; la couronne suit l'os HAIR_A, l'arrière l'os HAIR_B, montés sur ressort
+// tiennent à la tête ; le dessus suit l'os HAIR_A, l'arrière l'os HAIR_B, montés sur ressort
 // (entities/character/cheveux.js).
 // ---------------------------------------------------------------------------
 // calotte nettement décentrée (vers le haut et l'arrière) : son intersection avec
@@ -22,7 +22,7 @@ export const CAP_SY = 0.93;
 export const CAP_EXTRA = 0.034;
 
 function cap(b, c, extra = CAP_EXTRA) {
-  b.add(G.sphere(FACE.R + extra, 22, 14), c, { p: CAP_C, s: [FACE.SX, CAP_SY, 1.05] });
+  b.add(G.sphere(FACE.R + extra, 18, 12), c, { p: CAP_C, s: [FACE.SX, CAP_SY, 1.05] });
 }
 
 // point sur la calotte : azimut a (0 = devant), hauteur dy, poussé de `out`
@@ -37,46 +37,49 @@ export function onCap(a, dy, out = 0.012, extra = CAP_EXTRA) {
 // mèche est un tube effilé à bout rond, aplati contre le crâne (épaisseur FLAT de sa largeur) ; son
 // pied s'enfonce de 3 à 4,5 cm sous la calotte : il ne se décolle pas quand son os bascule.
 const FLAT = 0.5;
-// enfoncement du pied sous la calotte et profil (rayon au pied, au ventre, aux deux tiers, à la
-// pointe, en part de la demi-largeur) : mèches couchées larges dès le pied, pics dressés en feuille
-const COUCHEE = { sink: 0.03, profile: [0.9, 1, 0.62, 0.1] };
-const DRESSEE = { sink: 0.045, profile: [0.55, 1, 0.6, 0.1] };
+// enfoncement du pied sous la calotte, profil (rayon au pied, au ventre, aux deux tiers, à la pointe,
+// en part de la demi-largeur) et finesse du tube : mèches couchées larges dès le pied, pics dressés
+// en feuille ; la frange, vue de près et de face, a plus de côtés et d'anneaux (aucune facette)
+const COUCHEE = { sink: 0.03, profile: [0.9, 1, 0.62, 0.1], sides: 7, rings: 3 };
+const FRANGE = { ...COUCHEE, sides: 10, rings: 4 };
+const NUQUE = { ...COUCHEE, sides: 6 }; // vue de loin, de dos : 6 côtés suffisent (budget)
+const DRESSEE = { sink: 0.045, profile: [0.55, 1, 0.6, 0.1], sides: 7, rings: 3 };
 export const SPIKES = {
-  // frange : mèches couchées sur le front, qui dépassent la ligne des cheveux en zigzag ; pointes
-  // au-dessus des sourcils
+  // frange : mèches couchées sur le front, de longueurs et de sens inégaux (ébouriffée), qui dépassent
+  // la ligne des cheveux en zigzag ; pointes au-dessus des sourcils
   frange: [
-    [-0.68, 0.12, 0.15, 0.06, [-0.45, -1, 0], 0.12, 0.05],
-    [-0.34, 0.15, 0.165, 0.064, [-0.22, -1, 0], 0.1, 0.05],
-    [0.0, 0.16, 0.17, 0.066, [0.03, -1, 0], 0.1, 0.05],
-    [0.34, 0.15, 0.165, 0.064, [0.24, -1, 0], 0.1, 0.05],
-    [0.68, 0.12, 0.15, 0.06, [0.45, -1, 0], 0.12, 0.05],
+    [-0.7, 0.12, 0.13, 0.058, [-0.6, -1, 0], 0.16, 0.05],
+    [-0.38, 0.16, 0.17, 0.064, [-0.1, -1, 0], 0.12, 0.05],
+    [-0.05, 0.17, 0.14, 0.066, [0.35, -1, 0], 0.14, 0.05],
+    [0.3, 0.16, 0.175, 0.064, [-0.05, -1, 0], 0.12, 0.05],
+    [0.66, 0.12, 0.12, 0.058, [0.7, -1, 0], 0.18, 0.05],
   ],
-  // côtés : balayés vers l'arrière au-dessus des oreilles
+  // côtés : balayés vers l'arrière au-dessus des oreilles, assez décollés pour déborder de la silhouette
   cotes: [
-    [-1.15, 0.1, 0.15, 0.07, [0, -0.35, -1], 0.32, 0.05],
-    [1.15, 0.1, 0.15, 0.07, [0, -0.35, -1], 0.32, 0.05],
-    [-1.6, -0.02, 0.13, 0.064, [0, -0.6, -1], 0.3, 0.05],
-    [1.6, -0.02, 0.13, 0.064, [0, -0.6, -1], 0.3, 0.05],
+    [-1.15, 0.1, 0.15, 0.07, [0, -0.35, -1], 0.5, 0],
+    [1.15, 0.1, 0.15, 0.07, [0, -0.35, -1], 0.5, 0],
+    [-1.6, -0.02, 0.13, 0.064, [0, -0.6, -1], 0.45, 0],
+    [1.6, -0.02, 0.13, 0.064, [0, -0.6, -1], 0.45, 0],
   ],
-  // couronne : les grands pics du dessus, dressés vers le haut et l'arrière
-  couronne: [
-    [-0.5, 0.25, 0.15, 0.082, [-0.25, 0.4, -1], 0.5, 0],
-    [0.0, 0.27, 0.16, 0.088, [0, 0.4, -1], 0.55, 0],
-    [0.5, 0.25, 0.15, 0.082, [0.25, 0.4, -1], 0.5, 0],
-    [-1.0, 0.2, 0.15, 0.076, [-0.4, 0.2, -1], 0.48, 0],
-    [1.0, 0.2, 0.15, 0.076, [0.4, 0.2, -1], 0.48, 0],
-    [Math.PI - 0.55, 0.25, 0.15, 0.078, [-0.2, 0.3, -1], 0.5, 0],
-    [Math.PI + 0.55, 0.25, 0.15, 0.078, [0.2, 0.3, -1], 0.5, 0],
+  // dessus : pics ébouriffés, chacun dans son sens (pas de couronne régulière), longueurs et
+  // décollements inégaux, pointes qui rebiquent (courbure négative)
+  dessus: [
+    [0.25, 0.25, 0.14, 0.076, [0.5, 0, -0.2], 0.62, -0.2],
+    [-0.3, 0.27, 0.17, 0.082, [-0.4, 0, -1], 0.7, -0.2],
+    [0.75, 0.22, 0.15, 0.076, [1, 0, -0.5], 0.55, -0.18],
+    [-0.95, 0.21, 0.16, 0.078, [-1, 0, -0.2], 0.58, -0.2],
+    [1.4, 0.17, 0.14, 0.072, [1, 0, -0.8], 0.5, -0.15],
+    [-1.6, 0.15, 0.13, 0.07, [-1, 0, -0.9], 0.5, -0.15],
+    [Math.PI - 0.35, 0.26, 0.18, 0.082, [-0.5, 0, -1], 0.6, -0.2],
+    [Math.PI + 0.6, 0.24, 0.16, 0.08, [0.6, 0, -1], 0.58, -0.18],
   ],
-  // arrière : une rangée vers l'arrière et le bas, une rangée sur la nuque
+  // arrière : mèches couchées vers la nuque, en deux rangs, pointes en zigzag (vues de dos, elles se
+  // lisent comme la frange ; des pics dressés, vus en bout, feraient des taches)
   arriere: [
-    [Math.PI - 0.95, 0.1, 0.16, 0.075, [-0.3, -0.6, -1], 0.42, 0.05],
-    [Math.PI - 0.32, 0.12, 0.17, 0.078, [-0.1, -0.5, -1], 0.45, 0.05],
-    [Math.PI + 0.32, 0.12, 0.17, 0.078, [0.1, -0.5, -1], 0.45, 0.05],
-    [Math.PI + 0.95, 0.1, 0.16, 0.075, [0.3, -0.6, -1], 0.42, 0.05],
-    [Math.PI - 0.55, -0.08, 0.13, 0.068, [-0.2, -1, -0.3], 0.35, 0.05],
-    [Math.PI, -0.07, 0.14, 0.07, [0, -1, -0.3], 0.38, 0.05],
-    [Math.PI + 0.55, -0.08, 0.13, 0.068, [0.2, -1, -0.3], 0.35, 0.05],
+    [Math.PI - 0.62, 0.13, 0.17, 0.074, [-0.25, -1, 0], 0.24, -0.06],
+    [Math.PI + 0.05, 0.15, 0.19, 0.076, [0.1, -1, 0], 0.22, -0.06],
+    [Math.PI + 0.68, 0.13, 0.16, 0.074, [0.3, -1, 0], 0.26, -0.06],
+    ...[-0.5, 0, 0.5].map((da) => [Math.PI + da, -0.01, 0.16, 0.07, [da * 0.4, -1, 0], 0.24, 0]),
   ],
 };
 
@@ -106,7 +109,7 @@ export function spikeTip(s, { sink } = DRESSEE) {
   return f.base.addScaledVector(f.dir, len + sink).addScaledVector(f.z, -bend * (len + sink) * FLAT);
 }
 
-function spikes(b, list, c, { sink, profile } = DRESSEE) {
+function spikes(b, list, c, { sink, profile, sides, rings } = DRESSEE) {
   for (const s of list) {
     const [, , len, r, , , bend] = s;
     const f = spikeFrame(s, sink);
@@ -115,7 +118,7 @@ function spikes(b, list, c, { sink, profile } = DRESSEE) {
     // axe courbé dans le plan de l'épaisseur (bend > 0 : la pointe revient vers le crâne)
     const pts = [0, 0.3, 0.65, 1].map((t) => [0, L * t, -bend * L * t * t]);
     const at = { add: (g, col, opts) => b.add(g.applyMatrix4(_m), col, opts) };
-    limb(at, c, pts, profile.map((k) => k * r), { sides: 7, rings: 3, end: 'round' });
+    limb(at, c, pts, profile.map((k) => k * r), { sides, rings, end: 'round' });
   }
 }
 
@@ -131,17 +134,22 @@ export const HAIR_STYLES = {
     // bras de levier, butées en radians (x : avant + / arrière −, z : roulis), choisies pour que les
     // pointes ne rentrent pas dans la tête (tests/cheveux.test.js)
     dyn: {
-      a: { dir: [0, 0.74, -0.67], lever: 0.13, x: [-0.3, 0.32], z: 0.26 },
-      b: { dir: [0, -0.25, -0.97], lever: 0.12, x: [-0.16, 0.4], z: 0.24 },
+      a: { dir: [0, 0.8, -0.6], lever: 0.13, x: [-0.24, 0.18], z: 0.16 },
+      b: { dir: [0, -0.9, -0.44], lever: 0.13, x: [-0.08, 0.4], z: 0.24 },
     },
-    build(P, c, d) {
-      const H = P.on(B.HEAD, ID.hair);
-      cap(H, c);
-      // la frange recouvre la calotte : identifiant de contour à part, le trait d'encre la détache
-      spikes(P.on(B.HEAD, ID.limb), SPIKES.frange, c, COUCHEE);
-      spikes(H, SPIKES.cotes, d, COUCHEE);
-      spikes(P.on(B.HAIR_A, ID.hair), SPIKES.couronne, c);
-      spikes(P.on(B.HAIR_B, ID.hair), SPIKES.arriere, d);
+    // av : l'avatar (le bob cache le dessus et le rang haut de l'arrière)
+    build(P, c, d, av = {}) {
+      cap(P.on(B.HEAD, ID.hair), c);
+      // les mèches recouvrent la calotte : identifiant de contour à part, le trait d'encre les détache
+      const M = P.on(B.HEAD, ID.limb);
+      spikes(M, SPIKES.frange, c, FRANGE);
+      spikes(M, SPIKES.cotes, c, COUCHEE);
+      // arrière : rang haut clair, rang bas foncé (de la profondeur entre les deux)
+      const A = P.on(B.HAIR_B, ID.limb);
+      spikes(A, SPIKES.arriere.slice(3), d, NUQUE);
+      if (av.accessory === 'bob') return; // le bob couvre le haut de la tête : ni dessus, ni rang haut
+      spikes(A, SPIKES.arriere.slice(0, 3), c, NUQUE);
+      spikes(P.on(B.HAIR_A, ID.limb), SPIKES.dessus, c);
     },
   },
 };

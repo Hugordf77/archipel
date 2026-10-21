@@ -53,7 +53,7 @@ export function buildAvatarGeometry(av) {
   H.add(G.sphere(FACE.R, 22, 14), skin, { p: [0, HC, 0], s: [FACE.SX, FACE.SY, 1] });
   if (!HAIR_STYLES[av.hair].hideEars) for (const sx of [-1, 1]) H.add(G.sphere(0.062, 8, 6), skinWarm, { p: [sx * 0.292, HC - 0.02, 0.005], s: [0.55, 1, 0.8] });
   const Acc = P.on(B.HEAD, ID.limb);
-  HAIR_STYLES[av.hair].build(P, hair, hairDark);
+  HAIR_STYLES[av.hair].build(P, hair, hairDark, av);
 
   // --- torse ---
   const T = P.on(B.TORSO);
@@ -166,8 +166,10 @@ export function buildAvatarGeometry(av) {
     Sc.add(box(0.076, 0.03, 0.037, 0.01), '#f6d78a', { p: [0.093, 0.65, 0.17], r: [0.25, 0, 0.2] });
   } else if (acc === 'bob') {
     Acc.add(G.cyl(0.36, 0.38, 0.03, 18), ac, { p: [0, HC + 0.17, -0.02], r: [-0.12, 0, 0], s: [FACE.SX, 1, 1] });
-    Acc.add(G.sphere(0.27, 12, 6), ac, { p: [0, HC + 0.2, -0.04], s: [1.12, 0.72, 1.12] });
-    Acc.add(G.torus(0.285, 0.022, 5, 20), CREAM, { p: [0, HC + 0.22, -0.035], r: [Math.PI / 2 - 0.12, 0, 0], s: [1.1, 1.1, 1] });
+    // dôme calé sur la calotte des cheveux (coupes/, centre en z −0,08) : elle ne dépasse ni derrière ni
+    // sur les côtés
+    Acc.add(G.sphere(0.27, 12, 6), ac, { p: [0, HC + 0.2, -0.085], s: [1.2, 0.74, 1.24] });
+    Acc.add(G.torus(0.285, 0.022, 5, 20), CREAM, { p: [0, HC + 0.22, -0.08], r: [Math.PI / 2 - 0.12, 0, 0], s: [1.19, 1.23, 1] });
   } else if (acc === 'barrette') {
     const p = onCap(0.62, 0.17, 0.02);
     Acc.add(G.sphere(0.036, 8, 6), ac, { p: [p[0] - 0.03, p[1], p[2]], s: [1.3, 0.8, 0.5], r: [0, 0.6, 0.2] });

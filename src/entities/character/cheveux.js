@@ -19,6 +19,7 @@ export const RESSORT = {
   lissage: 0.04, // constante de temps du lissage de l'accélération (s)
   butee: 30, // raideur des butées, en multiple de k
   vrille: 0.035, // vrille (axe y) par rad/s de rotation de la tête
+  vrilleMax: 0.15, // vrille au plus (rad)
   pas: 1 / 240,
   maxPas: 16,
 };
@@ -49,7 +50,7 @@ export function stepHair(s, dyn, f, dt, yawRate = 0) {
   // cibles : l'angle où le ressort équilibre la poussée, saturé sous les butées
   const tx = sature(_tq.x / k, dyn.x[0], dyn.x[1]);
   const tz = sature(_tq.z / k, -dyn.z, dyn.z);
-  const ty = Math.max(-0.3, Math.min(0.3, -yawRate * RESSORT.vrille));
+  const ty = Math.max(-RESSORT.vrilleMax, Math.min(RESSORT.vrilleMax, -yawRate * RESSORT.vrille));
   const n = Math.min(maxPas, Math.ceil(dt / pas - 1e-9));
   const h = dt / n;
   const [lo, hi] = dyn.x;
@@ -74,7 +75,7 @@ export function hairAngles(s, dyn) {
   const [lo, hi] = dyn.x;
   return {
     x: Math.max(lo, Math.min(hi, s.x)),
-    y: s.y,
+    y: Math.max(-RESSORT.vrilleMax, Math.min(RESSORT.vrilleMax, s.y)),
     z: Math.max(-dyn.z, Math.min(dyn.z, s.z)),
   };
 }

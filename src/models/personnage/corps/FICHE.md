@@ -4,7 +4,7 @@ Dossier `src/models/personnage/corps/` · Personnage · modèle vedette
 
 | Identifiant | Nom | Statut | Référence du jeu | Taille (m) | Budget |
 | --- | --- | --- | --- | --- | --- |
-| PER-001 | Corps et visage | Validé | `avatar` | 0,67 × 1,48 × 0,69 | — |
+| PER-001 | Corps et visage | Validé | `avatar` | 0,82 × 1,64 × 0,77 (coiffé) | 9 000 (personnage) |
 
 ## DA retenue
 
@@ -21,12 +21,16 @@ Dossier `src/models/personnage/corps/` · Personnage · modèle vedette
 - Expressions : paupière baissée (endormi, concentré, effort) = l'iris descend pour qu'on en voie la
   moitié basse ; surprise = œil 12 % plus grand et iris à 82 % (plus de blanc) ; clignement et joie
   restent des traits.
+- Bob : dôme calé sur la calotte de la coupe en pics (centre en z −0,085, échelle 1,2 × 0,74 × 1,24),
+  ruban suivi ; plus rien ne le traverse.
 
 Règles communes : `docs/DA.md`.
 
 ## Écarts restants
 
-Aucun relevé pour l’instant.
+- `mesure.mjs` : ✗ « Facettes », 11 primitives sous 10 segments (oreilles `G.sphere(0.062, 8, 6)`,
+  boutons, mains…, `corps/index.js`), antérieur à la reprise du visage ; plus visible depuis que la
+  coupe en pics laisse les oreilles dégagées. À reprendre avec la marge de triangles (8 878 au plus).
 
 ## Historique
 
