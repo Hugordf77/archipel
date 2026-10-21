@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { ORIGIN } from '../../core/globals.js';
 import { herbeMaterial } from './materiau.js';
+import { paletteHerbe } from '../../world/islands/biomes.js';
 import { BLADES, BLADE_VERTS, HERBE_PRESETS, cellsForTile } from './placement.js';
 
 const V = 65; // nœuds par côté d'une tuile (TILE + 1)
@@ -150,14 +151,16 @@ export class HerbeSystem {
   }
 
   // Tuile au mètre ajoutée par IslandManager (t : sa tuile, tile : les données du Worker) ; id :
-  // identifiant du terrain sous l'herbe (sans contour entre brins et sol), celui des îles par défaut
+  // identifiant du terrain sous l'herbe (sans contour entre brins et sol), celui des îles par défaut ;
+  // palette du biome de l'île (île de départ : « maison »)
   addTile(e, t, tile, id = this.id) {
     const champ = dataTexture(tile.herbe ? new Uint8Array(tile.herbe) : champDeSecours(tile), THREE.RGBAFormat, THREE.UnsignedByteType, THREE.LinearFilter);
     const haut = new Float32Array(V * V);
     const sol = new Uint8Array(V * V * 4);
     const hautTex = dataTexture(haut, THREE.RedFormat, THREE.FloatType, THREE.NearestFilter);
     const solTex = dataTexture(sol, THREE.RGBAFormat, THREE.UnsignedByteType, THREE.LinearFilter);
-    const material = herbeMaterial({ id, shared: this.shared, champ, sol: solTex, haut: hautTex, coupe: NO_CUT, x0: t.x0, z0: t.z0 });
+    const palette = paletteHerbe(e.desc.biome || 'maison');
+    const material = herbeMaterial({ id, shared: this.shared, champ, sol: solTex, haut: hautTex, coupe: NO_CUT, x0: t.x0, z0: t.z0, palette });
     const rings = [0, 1, 2].map((r) => {
       const geo = new THREE.InstancedBufferGeometry();
       geo.setAttribute('position', this.patch.position);

@@ -3,6 +3,7 @@
 // jardin de champignons ; puis couleurs peintes et amplitude du relief fin par zone.
 import { makeNoise, fbm } from '../../../core/noise.js';
 import { slopeAt, distanceField, smooth } from './grid.js';
+import { paletteHerbe, densiteHerbeBiome } from '../biomes.js';
 
 export const Z = {
   MER: 0, PLAGE: 1, DUNE: 2, PRAIRIE: 3, FLEURS: 4, VERGER: 5, FORET: 6, LISIERE: 7, CLAIRIERE: 8, MARAIS: 9,
@@ -10,6 +11,35 @@ export const Z = {
   LAC: 19, RIVIERE: 20,
 };
 export const ZONE_NAMES = Object.keys(Z);
+
+// Herbe en tapis par zone : [densité (0 à 1), hauteur des brins (m), sécheresse (0 à 1), touffes
+// (contraste du bruit fin)], avant le facteur du biome (densiteHerbeBiome). Partagé par la couleur
+// du sol sous l'herbe (zoneColors) et la carte d'herbe des tuiles (gen/herbe.js). Hauteurs pour un
+// personnage de 1,1 m : prairie au mollet, alpage et bords de chemin ras.
+export const ZONE_HERBE = {
+  [Z.PRAIRIE]: [0.9, 0.37, 0.08, 0],
+  [Z.FLEURS]: [0.6, 0.32, 0.06, 0],
+  [Z.CLAIRIERE]: [0.85, 0.37, 0.06, 0],
+  [Z.VERGER]: [0.75, 0.32, 0.08, 0],
+  [Z.MARAIS]: [0.9, 0.55, 0, 0],
+  [Z.LISIERE]: [0.7, 0.42, 0.06, 0],
+  [Z.FORET]: [0.15, 0.28, 0.12, 0],
+  [Z.CHAMPIGNONS]: [0.15, 0.25, 0.04, 0],
+  [Z.MAQUIS]: [0.3, 0.32, 0.45, 1],
+  [Z.ALPAGE]: [0.7, 0.18, 0.2, 0],
+  [Z.VILLAGE]: [0.35, 0.22, 0.15, 0],
+  [Z.ROSELIERE]: [0.2, 0.55, 0.02, 0],
+  [Z.DUNE]: [0.08, 0.32, 0.85, 1],
+  [Z.CULTURES]: [0.2, 0.2, 0.3, 0],
+  // sans herbe : hauteur et sécheresse ne servent qu'au fondu avec les zones voisines
+  [Z.PLAGE]: [0, 0.25, 0.75, 0],
+  [Z.ROCHE]: [0, 0.2, 0.4, 0],
+  [Z.NEIGE]: [0, 0.15, 0.35, 0],
+  [Z.LAVE]: [0, 0.2, 0.6, 0],
+  [Z.LAC]: [0, 0.55, 0, 0],
+  [Z.RIVIERE]: [0, 0.55, 0, 0],
+  [Z.MER]: [0, 0.25, 0.7, 0],
+};
 
 const FOREST = { foret: 0.68, montagne: 0.42, village: 0.2, fleurs: 0.1, falaises: 0.3, cratere: 0.22, jumelles: 0.34, curiosite: 0.18, dunes: 0.02, lagon: 0.12 };
 // part visée des prés ouverts réellement convertie en fleurs, distincte par archétype
@@ -162,6 +192,9 @@ export function zoneColors(P, desc) {
   const villageG = hex('#d6d9a6');
   const orchard = hex('#bfdc9c');
   const bed = hex('#bcd9cf');
+  // sol sous l'herbe en tapis : « milieu ombré » de la palette, en proportion de la densité
+  const solH = paletteHerbe(desc.biome).sol;
+  const fH = densiteHerbeBiome(desc.biome);
   const AMP = [0, 12, 25, 40, 30, 35, 50, 45, 35, 15, 20, 55, 100, 50, 40, 80, 40, 6, 5, 10, 10];
   const mix = (a, b, t, o) => {
     o[0] = a[0] + (b[0] - a[0]) * t;
@@ -180,6 +213,9 @@ export function zoneColors(P, desc) {
       const patch = 0.5 + 0.5 * fbm(nn, x / 30, z / 30, 2);
       mix(g0, g1, smooth(0.35, 0.7, patch), c);
       mix(c, acc, smooth(0.62, 0.82, 0.5 + 0.5 * nn(x / 18 + 4, z / 18 - 2)) * 0.5, c);
+      const dH = Math.min(1, (ZONE_HERBE[zone[k]]?.[0] ?? 0) * fH);
+      // champs de fleurs : le sol herbeux d'abord, puis les bandes colorées par-dessus
+      if (zone[k] === Z.FLEURS) mix(c, solH, dH, c);
       switch (zone[k]) {
         case Z.MER: mix(hex(pal.floor), wet, Math.max(0, Math.min(1, (h + 3) / 3)) * 0.5, c); break;
         case Z.PLAGE: mix(wet, sand, smooth(0.05, 0.6, h), c); break;
@@ -216,6 +252,7 @@ export function zoneColors(P, desc) {
         case Z.RIVIERE: mix(bed, sand, 0.3, c); break;
         default: break;
       }
+      if (zone[k] !== Z.FLEURS) mix(c, solH, dH, c);
       // pentes raides de toute zone : roche qui affleure
       const cl = smooth(0.62, 0.9, slope[k]);
       if (cl > 0 && zone[k] !== Z.ROCHE) mix(c, mix(cliff, rock, 0.5, t2), cl * 0.8, c);

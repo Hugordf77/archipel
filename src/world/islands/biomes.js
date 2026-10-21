@@ -61,3 +61,38 @@ export const BIOMES = {
     structures: ['epave', 'grotte'],
   },
 };
+
+// Herbe en tapis (render/herbe/) : palette des brins par biome, du pied à la pointe, et teinte de
+// l'herbe sèche (canal B de la carte d'herbe). Saturée et plus sombre que la palette pastel du sol
+// (mesures des références BotW et Genshin : saturation 0,5 à 0,7, valeur 0,45 à 0,7) ; points de
+// départ à régler en jeu. « maison » : île de départ.
+export const PALETTES_HERBE = {
+  prairie: { pied: '#4f8a35', milieu: '#6fa646', pointe: '#a6c95f', sec: '#c8b866' },
+  pins: { pied: '#2f6138', milieu: '#4f8642', pointe: '#86ac58', sec: '#b3a866' },
+  tropical: { pied: '#3c8a4c', milieu: '#5fae55', pointe: '#a6d46a', sec: '#c9c070' },
+  atoll: { pied: '#3c8a4c', milieu: '#5fae55', pointe: '#a6d46a', sec: '#c9c070' },
+  champignons: { pied: '#1f6f6a', milieu: '#3a9b8f', pointe: '#79c9a8', sec: '#a9b88a' },
+  // glace : vert froid, resaturé pour rester dans la fourchette des références (0,45)
+  glace: { pied: '#3b6e55', milieu: '#549a6d', pointe: '#9cc59a', sec: '#c9c5a0' },
+  dunes: { pied: '#6d8a45', milieu: '#8fa457', pointe: '#c2c477', sec: '#d0bd78' },
+  volcan: { pied: '#6d8a45', milieu: '#8fa457', pointe: '#c2c477', sec: '#d0bd78' },
+};
+PALETTES_HERBE.maison = PALETTES_HERBE.prairie;
+
+const rgb = (h) => [1, 3, 5].map((o) => parseInt(h.slice(o, o + 2), 16) / 255);
+// Palette d'herbe d'un biome en RVB (0 à 1) ; sol : « milieu ombré », couleur du sol sous le
+// tapis (entre le milieu et le pied), que voient les trous entre les brins et le lointain
+export function paletteHerbe(biome) {
+  const p = PALETTES_HERBE[biome] || PALETTES_HERBE.prairie;
+  const pied = rgb(p.pied);
+  const milieu = rgb(p.milieu);
+  return { pied, milieu, pointe: rgb(p.pointe), sec: rgb(p.sec), sol: milieu.map((v, i) => (v + pied[i]) * 0.5) };
+}
+
+// Densité relative de l'herbe d'un biome (0 à 1), d'après la densité des touffes (veg « herbe »)
+export function densiteHerbeBiome(biome) {
+  const b = BIOMES[biome] || BIOMES.prairie;
+  const e = b.veg.find((v) => v[0] === 'herbe');
+  const f = Math.min(1, (e ? e[1] : 12) / 12);
+  return biome === 'glace' ? Math.max(0.3, f) : f;
+}

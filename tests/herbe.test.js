@@ -238,6 +238,82 @@ describe('herbe en tapis : budgets et mises à jour', () => {
   });
 });
 
+// teinte, saturation, valeur (0 à 1) et luminance (0 à 255) d'une couleur RVB (0 à 1)
+function hsv([r, g, b]) {
+  const mx = Math.max(r, g, b);
+  const mn = Math.min(r, g, b);
+  const d = mx - mn;
+  let h = 0;
+  if (d > 0) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return { h: ((h * 60) + 360) % 360, s: mx ? d / mx : 0, v: mx, l: 255 * (0.299 * r + 0.587 * g + 0.114 * b) };
+}
+
+describe('herbe en tapis : palettes et sol', () => {
+  it('chaque biome a une palette complète, saturée comme les références, pointe plus claire que le pied', async () => {
+    const { BIOMES, PALETTES_HERBE, paletteHerbe } = await import('../src/world/islands/biomes.js');
+    for (const biome of [...Object.keys(BIOMES), 'maison']) {
+      const p = PALETTES_HERBE[biome];
+      expect(p, biome).toBeTruthy();
+      for (const k of ['pied', 'milieu', 'pointe', 'sec']) expect(p[k], `${biome}.${k}`).toMatch(/^#[0-9a-f]{6}$/);
+      const P = paletteHerbe(biome);
+      const m = hsv(P.milieu);
+      expect(m.s, `${biome} : saturation du milieu`).toBeGreaterThanOrEqual(0.45);
+      expect(m.s, `${biome} : saturation du milieu`).toBeLessThanOrEqual(0.7);
+      expect(m.v, `${biome} : valeur du milieu`).toBeGreaterThanOrEqual(0.45);
+      expect(m.v, `${biome} : valeur du milieu`).toBeLessThanOrEqual(0.8);
+      expect(hsv(P.pointe).l - hsv(P.pied).l, `${biome} : pointe − pied`).toBeGreaterThanOrEqual(25);
+      // sol sous l'herbe : entre le pied et le milieu
+      expect(hsv(P.sol).l).toBeGreaterThan(hsv(P.pied).l);
+      expect(hsv(P.sol).l).toBeLessThan(hsv(P.milieu).l);
+    }
+  });
+
+  it('sous l’herbe, le sol prend le milieu ombré de la palette, au relief de 4 m comme au mètre', async () => {
+    const { ISLANDS } = await import('../src/world/islands/regions.js');
+    const { buildPlan } = await import('../src/world/islands/gen/plan.js');
+    const { Surface, buildTile } = await import('../src/world/islands/gen/surface.js');
+    const { Z } = await import('../src/world/islands/gen/zones.js');
+    const { paletteHerbe } = await import('../src/world/islands/biomes.js');
+    const d = ISLANDS.find((q) => q.id === 'village-pommeraie');
+    const p = buildPlan(d);
+    const sol = paletteHerbe(d.biome).sol;
+    // relief de 4 m : cellules de prairie peu pentues
+    const mean4 = [0, 0, 0];
+    let n4 = 0;
+    for (let k = 0; k < p.n * p.n; k++) {
+      if (p.Z[k] !== Z.PRAIRIE) continue;
+      for (let c = 0; c < 3; c++) mean4[c] += p.C[k * 3 + c];
+      n4++;
+    }
+    for (let c = 0; c < 3; c++) mean4[c] /= n4;
+    expect(n4).toBeGreaterThan(100);
+    for (let c = 0; c < 3; c++) expect(Math.abs(mean4[c] - sol[c]), `canal ${c}`).toBeLessThan(0.06);
+    expect(hsv(mean4).s).toBeGreaterThan(0.4); // plus de menthe pastel (0,24)
+    // tuiles au mètre : mêmes couleurs sur les mêmes zones
+    const surf = new Surface(p);
+    const mean1 = [0, 0, 0];
+    let n1 = 0;
+    for (const [tx, tz] of [[-1, -1], [0, -1], [-1, 0], [0, 0]]) {
+      const tile = buildTile(p, surf, tx, tz);
+      for (let k = 0; k < 65 * 65; k++) {
+        const x = tile.positions[k * 3];
+        const z = tile.positions[k * 3 + 2];
+        const i = Math.round((x + p.ext) / p.s);
+        const j = Math.round((z + p.ext) / p.s);
+        if (i < 1 || j < 1 || i >= p.n - 1 || j >= p.n - 1) continue;
+        let all = true;
+        for (let dj = -1; dj <= 1 && all; dj++) for (let di = -1; di <= 1; di++) if (p.Z[(j + dj) * p.n + i + di] !== Z.PRAIRIE) all = false;
+        if (!all || tile.normals[k * 3 + 1] < 0.9) continue;
+        for (let c = 0; c < 3; c++) mean1[c] += tile.colors[k * 3 + c];
+        n1++;
+      }
+    }
+    for (let c = 0; c < 3; c++) mean1[c] /= n1;
+    expect(n1).toBeGreaterThan(500);
+    for (let c = 0; c < 3; c++) expect(Math.abs(mean1[c] - mean4[c]), `canal ${c}`).toBeLessThan(0.04);
+  });
+});
+
 describe('herbe en tapis : île de départ', () => {
   it('pré dense sur les terrasses, rien dans la mare, le potager ni sur les chemins', async () => {
     const { installCanvasStub } = await import('./helpers/canvas.js');
@@ -276,5 +352,20 @@ describe('herbe en tapis : île de départ', () => {
     expect(onPath).toBe(0);
     expect(n).toBeGreaterThan(1000); // plus de 1 000 m² d'herbe
     expect(sum / n).toBeGreaterThan(0.35);
+    // sol du pré : milieu ombré de la palette (comme aux îles), couleur que lisent les brins
+    const { paletteHerbe } = await import('../src/world/islands/biomes.js');
+    const sol = paletteHerbe('maison').sol;
+    let near = 0;
+    let dense = 0;
+    for (const { tile } of tiles) {
+      for (let k = 0; k < 65 * 65; k++) {
+        if (tile.herbe[k * 4] < 200) continue;
+        dense++;
+        const e = Math.max(...[0, 1, 2].map((c) => Math.abs(tile.colors[k * 3 + c] - sol[c])));
+        if (e < 0.08) near++;
+      }
+    }
+    expect(dense).toBeGreaterThan(200);
+    expect(near / dense).toBeGreaterThan(0.9);
   });
 });

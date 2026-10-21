@@ -2,18 +2,18 @@
 // de son indice (position.z), de sa place dans le brin (position.xy : côté, hauteur relative) et de
 // l'origine de sa cellule (attribut d'instance aCell, coordonnées de l'île). Les textures de la tuile
 // donnent la densité, la hauteur et la sécheresse (carte d'herbe du Worker), la hauteur du sol
-// (mêmes triangles que le maillage) et sa couleur, et l'herbe fauchée. Brins pliés par le vent, avec
+// (mêmes triangles que le maillage) et sa couleur, et l'herbe fauchée. Couleur : palette du biome
+// (biomes.js, PALETTES_HERBE), du pied à la pointe. Brins pliés par le vent, avec
 // des ondes qui traversent le pré, couchés sous les pousseurs (joueur, animaux, aigle), plus bas près
 // de la caméra ; ni ombre portée ni contour (identifiant du terrain).
 import * as THREE from 'three';
 import { U } from '../../core/globals.js';
-import { NOISE, PAINT, CURVE, WIND, SHADOW, TOON, MRT_OUT } from '../shaders/chunks.js';
+import { NOISE, CURVE, WIND, SHADOW, TOON, MRT_OUT } from '../shaders/chunks.js';
 
 const herbeVert = /* glsl */ `
 ${CURVE}
 ${WIND}
 ${NOISE}
-${PAINT}
 ${SHADOW}
 ${TOON}
 attribute vec2 aCell;
@@ -25,7 +25,11 @@ uniform vec3 uFocus;
 uniform vec4 uRings;
 uniform vec4 uCounts;
 uniform float uWidth;
-uniform vec3 uTipColor;
+// palette de l'île : pied, milieu, pointe et herbe sèche
+uniform vec3 uPied;
+uniform vec3 uMilieu;
+uniform vec3 uPointe;
+uniform vec3 uSec;
 // pousseurs (x, z de la scène, rayon, force) : joueur, animaux, souffle de l'aigle
 uniform vec4 uPushers[8];
 // herbe fauchée (0 à 1) au demi-mètre, 129 × 129 sur la tuile
@@ -132,22 +136,25 @@ void main() {
   if (pl > 1.0) pushV /= pl;
   wp.xz += pushV * hgt * 0.8 * t;
   wp.y -= push * hgt * 0.55 * t;
-  // couleur : pied à la teinte exacte du sol (même peinture que le terrain), pointe plus claire,
-  // sèche vers la paille, éclaircie par l'onde de vent
-  float gm = smoothstep(0.75, 0.9, n0.y) * smoothstep(0.75, 0.95, base.y);
-  vec3 sol = texture(uSol, uv).rgb * (1.0 + (pigmentVar(wA) - 0.5) * 0.16);
-  sol = grassTouches(sol, wA, gm);
-  vec3 straw = vec3(0.86, 0.78, 0.52);
-  sol = mix(sol, sol * 0.5 + straw * 0.5, champ.b);
-  // chaque brin a sa nuance (un sur cinq tire vers le jaune) ; pied sombre (ombre au cœur du
-  // tapis), pointe claire : sans ce contraste, le tapis se fond dans le sol peint
+  // couleur : palette de l'île du pied à la pointe, tirée vers l'herbe sèche par la sécheresse ;
+  // la couleur du sol (à la luminance du milieu) n'y entre qu'à 25 % : le tapis suit les zones
+  // (fleurs, marais, lisière) sans reprendre la pâleur du sol peint
+  vec3 sol = texture(uSol, uv).rgb;
+  const vec3 LUM = vec3(0.299, 0.587, 0.114);
+  vec3 zone = clamp(sol * (dot(uMilieu, LUM) / max(dot(sol, LUM), 0.04)) / max(uMilieu, vec3(0.02)), 0.6, 1.5);
+  vec3 tint = mix(vec3(1.0), zone, 0.25);
+  float dry = champ.b;
+  vec3 pied = mix(uPied, uSec * 0.72, dry) * tint;
+  vec3 mil = mix(uMilieu, uSec * 0.86, dry) * tint;
+  vec3 pointe = mix(uPointe, uSec, dry) * tint;
+  // chaque brin a sa nuance (un sur cinq tire vers le jaune)
   float hue = hash12(cellId * 2.31 + i * 0.7071);
-  vec3 blade = sol * (0.9 + 0.2 * r2);
-  blade = mix(blade, blade * vec3(1.08, 1.04, 0.82), step(0.8, hue));
-  vec3 tip = mix(blade, uTipColor, 0.6) * 1.1 + vec3(0.08, 0.08, 0.04) * wave;
+  float nv = 0.9 + 0.2 * r2;
+  vec3 yel = mix(vec3(1.0), vec3(1.08, 1.04, 0.82), step(0.8, hue));
+  vec3 blade = (t < 0.5 ? mix(pied, mil, t * 2.0) : mix(mil, pointe, t * 2.0 - 1.0)) * nv * yel;
+  blade += vec3(0.08, 0.08, 0.04) * wave * t;
   // chaume fauché : coupe nette, plus jaune
-  tip = mix(tip, blade * vec3(1.1, 1.02, 0.75), cut);
-  vAlbedo = mix(blade * 0.78, tip, smoothstep(0.0, 1.0, t));
+  vAlbedo = mix(blade, mil * vec3(1.1, 1.02, 0.75), cut * step(0.5, t));
   // normale proche de celle du sol (sinon le contour dessine des plis d'encre sur le terrain)
   vec3 bn = vec3(bendDir.x, 0.0, bendDir.y);
   vNormalW = normalize(n0 + bn * 0.35 * t);
@@ -184,7 +191,8 @@ void main() {
 
 // shared : uniformes communs à toutes les tuiles (joueur, anneaux, nombres de brins, largeur), par
 // référence ; les textures et l'origine de la tuile sont propres à chaque matériau.
-export function herbeMaterial({ id, shared, champ, sol, haut, coupe, x0, z0, tipColor = 0xe4f0bc }) {
+// palette : { pied, milieu, pointe, sec } en RVB (biomes.js, paletteHerbe)
+export function herbeMaterial({ id, shared, champ, sol, haut, coupe, x0, z0, palette }) {
   return new THREE.ShaderMaterial({
     name: 'herbe',
     glslVersion: THREE.GLSL3,
@@ -192,7 +200,10 @@ export function herbeMaterial({ id, shared, champ, sol, haut, coupe, x0, z0, tip
       ...U,
       ...shared,
       uId: { value: id },
-      uTipColor: { value: new THREE.Color(tipColor) },
+      uPied: { value: new THREE.Color().fromArray(palette.pied) },
+      uMilieu: { value: new THREE.Color().fromArray(palette.milieu) },
+      uPointe: { value: new THREE.Color().fromArray(palette.pointe) },
+      uSec: { value: new THREE.Color().fromArray(palette.sec) },
       uChamp: { value: champ },
       uSol: { value: sol },
       uHaut: { value: haut },

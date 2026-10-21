@@ -47,9 +47,8 @@ float fbm(vec2 p) {
 }
 `;
 
-// Peinture du sol partagée par le terrain et les brins d'herbe (à inclure après NOISE) : variation
-// de pigment, comme une couche de gouache irrégulière, et touches peintes sur l'herbe. La base des
-// brins prend ainsi exactement la teinte du terrain sous elle. wA : position absolue.
+// Peinture du sol (à inclure après NOISE) : variation de pigment, comme une couche de gouache
+// irrégulière, et touches peintes sur l'herbe. wA : position absolue.
 export const PAINT = /* glsl */ `
 float pigmentVar(vec3 wA) {
   return vnoise(wA.xz * 0.45 + wA.y * 0.6) * 0.65 + vnoise(wA.xz * 1.7 - wA.y) * 0.35;

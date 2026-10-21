@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { grassMaterial } from './shaders/materials.js';
 import { LAYOUT, heightAt, pathMask, vnoise, distToPolyline } from '../world/home/terrain.js';
+import { paletteHerbe } from '../world/islands/biomes.js';
 
 function rng(seed) {
   let s = (seed * 9301 + 49297) >>> 0;
@@ -151,10 +152,6 @@ export function champsMaison(terrain, obstacles) {
           positions[k * 3] = x;
           positions[k * 3 + 1] = y;
           positions[k * 3 + 2] = z;
-          sample(x, z, c);
-          colors[k * 3] = c.r;
-          colors[k * 3 + 1] = c.g;
-          colors[k * 3 + 2] = c.b;
           if (Math.abs(x) > 40 || Math.abs(z) > 40) continue;
           const terrace = smooth(0.82, 0.92, y) * (1 - smooth(1.35, 1.5, y)) + smooth(3.1, 3.2, y) * (1 - smooth(3.65, 3.8, y));
           if (terrace <= 0 || blocked(x, z, obstacles, 0.1)) continue;
@@ -168,14 +165,54 @@ export function champsMaison(terrain, obstacles) {
         }
       }
       if (!any) continue;
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      const group = new THREE.Group();
-      group.name = `herbe-maison-${x0},${z0}`;
-      out.push({ t: { x0, z0, group, mesh: { geometry: geo }, active: true }, tile: { positions, colors, herbe, x0, z0 } });
+      out.push({ positions, colors, herbe, x0, z0 });
     }
   }
-  return out;
+  solSousHerbe(terrain, out);
+  for (const tile of out) {
+    const { positions, colors } = tile;
+    for (let k = 0; k < HOME_V * HOME_V; k++) {
+      sample(positions[k * 3], positions[k * 3 + 2], c);
+      colors[k * 3] = c.r;
+      colors[k * 3 + 1] = c.g;
+      colors[k * 3 + 2] = c.b;
+    }
+  }
+  return out.map((tile) => {
+    const { positions, colors, x0, z0 } = tile;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const group = new THREE.Group();
+    group.name = `herbe-maison-${x0},${z0}`;
+    return { t: { x0, z0, group, mesh: { geometry: geo }, active: true }, tile };
+  });
 }
 
+// Sol sous le tapis : comme aux îles (gen/zones.js), il prend le « milieu ombré » de la palette en
+// proportion de la densité de l'herbe (carte au mètre lue en bilinéaire à chaque sommet du terrain)
+function solSousHerbe(terrain, tiles) {
+  const sol = paletteHerbe('maison').sol;
+  const pos = terrain.geometry.attributes.position;
+  const col = terrain.geometry.attributes.color;
+  const at = (i, j) => {
+    for (const t of tiles) {
+      const a = i - t.x0;
+      const b = j - t.z0;
+      if (a >= 0 && b >= 0 && a < HOME_V && b < HOME_V) return t.herbe[(b * HOME_V + a) * 4] / 255;
+    }
+    return 0;
+  };
+  for (let v = 0; v < pos.count; v++) {
+    const x = pos.getX(v);
+    const z = pos.getZ(v);
+    const i = Math.floor(x);
+    const j = Math.floor(z);
+    const u = x - i;
+    const w = z - j;
+    const d = (at(i, j) * (1 - u) + at(i + 1, j) * u) * (1 - w) + (at(i, j + 1) * (1 - u) + at(i + 1, j + 1) * u) * w;
+    if (d <= 0) continue;
+    col.setXYZ(v, col.getX(v) + (sol[0] - col.getX(v)) * d, col.getY(v) + (sol[1] - col.getY(v)) * d, col.getZ(v) + (sol[2] - col.getZ(v)) * d);
+  }
+  col.needsUpdate = true;
+}
