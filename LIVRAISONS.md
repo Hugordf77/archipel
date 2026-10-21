@@ -155,8 +155,8 @@ et domaine concerné).
 
 - Branche `v3-archipel`. Derniers commits : herbe V2, lettres A à F (palettes et sol, variation, forme
   et couverture, lumière, touffes récoltables, carte d'herbe du Worker) et réglage de l'ombre.
-- **Herbe V2, à valider** : sol des îles plus foncé et plus saturé sous l'herbe (choix de DA) ; palette
-  glace resaturée (0,45) pour tenir la fourchette des références.
+- **Herbe V2** : sol des îles plus foncé et plus saturé sous l'herbe, validé par l'utilisateur le
+  21/10/2026 (choix de DA) ; palette glace resaturée (0,45) pour tenir la fourchette des références.
 - **Lot 2 de la grimpe à faire** : autres arbres à tronc dégagé (sommet `suspendu`), un commit par
   espèce ; la noix de coco au sommet attend l'accord de l'utilisateur (progression).
 - **Non commité** (hors de ce chantier) : tableau de bord (`dashboard.html`, `dashboard/`,
