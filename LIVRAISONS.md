@@ -9,7 +9,7 @@ et domaine concerné).
 - Jeu : `npm run dev`, puis http://localhost:5173 (les agents utilisent la configuration `ile` de
   `.claude/launch.json`, port 5174, pour ne pas gêner la partie de l'utilisateur).
 - Catalogue des modèles : `/catalogue.html` ; tableau de bord de production : `/dashboard.html`.
-- Tests : `npm test` (21 fichiers) ; build : `npm run build`.
+- Tests : `npm test` (22 fichiers) ; build : `npm run build`.
 - Outils de développement en jeu : `window.__ile` (`tp`, `setHour`, `frame`, `look`, `settle`, `capture`,
   `game.skipSave`).
 
@@ -156,6 +156,30 @@ et domaine concerné).
     célestes, désert, Île aux lueurs, bandeau d'entrée).
   - Tests : `tests/world.test.js` (zones, chenaux de 70 m au moins, repères, sections, bases, Lac
     céleste, limite, migration v4).
+- **Montagnes, collines et nature** (22/10/2026, `gen/forme.js`, `gen/zones.js`, `gen/flora.js`) :
+  - Massifs : relief alpin (`alpine`, bruit en crêtes multifractal) sur l'enveloppe des monts et des
+    chaînes, avec arêtes, sommets multiples et vallées en arbre.
+  - Neige : ligne des neiges de 82 m au nord à 232 m au sud (`snowLine`), au bord irrégulier ; la
+    neige tient jusqu'à une pente de 1,7, au-delà les parois sont en roche givrée (`givre`).
+  - Volcan : ravines sur les flancs et lac de cratère.
+  - Collines propres à chaque zone (`collines` des zones de `archipel.js`, sinon selon le biome),
+    fondues d'une zone à l'autre ; bords des plateaux et des lacs déformés.
+  - Nature : espèces d'arbres par zone et décor naturel par micro-zone (`DECOR` : arbustes, buissons
+    fleuris, rochers, rochers moussus, fougères, souches, lavande, petits champignons), allégé pour
+    les espèces lourdes (`POIDS`). Ce décor ne se récolte pas (`Gather.js`) ; les arbres, si.
+  - Mesuré en jeu (Forêt des souvenirs) : 2,5 M triangles, ombres comprises.
+  - Plan de la Grande Île : 1,5 à 2,2 s dans Node, une fois par partie, dans le Worker.
+- **Îles célestes** (22/10/2026), à la place des pitons en mer :
+  - Cinq îles flottantes (`ARCHIPEL.ciel`), de 92 à 228 m d'altitude, au nord de la Grande Île.
+  - Modules : `src/world/ciel/relief.js` (pur : contour, dessus, dessous, maillage, arbres, ruisseau
+    et cascade) et `IlesCelestes.js` (rendu).
+  - Praticables : le sol dépend de la hauteur du joueur (`setGroundRef` de `navigation.js`, posée par
+    `Player` et `AirRide` ; `cielSous`). On marche dessus, on tombe par le bord, on s'y pose avec
+    l'aigle, le bateau passe dessous.
+  - Les arbres des îles du ciel ne gênent que qui marche dessus (obstacles avec `ymin`).
+  - Sauvegarde : `state.player.y` est enregistré ; au chargement, on revient sur l'île du ciel.
+  - Outil de test : `__ile.tp(x, z, y)` ; sans `y`, on se pose sur le dessus.
+  - Tests : `tests/ciel.test.js`.
 - Ancien archipel à archétypes (lieux, villages, chemins, faune) : la chaîne de génération
   `gen/` (pois, paths, spawns) reste en place pour la suite. Elle est testée sur l'ancien archipel,
   gardé en fixture (`tests/fixtures/archipel-v3.js`, `tests/helpers/archipel-v3.js`). `archetypes.js`
@@ -206,10 +230,11 @@ et domaine concerné).
   - la remise à zéro du monde dans la sauvegarde.
 
   Reprend le correctif du LOD1 en double (`f888202` de `claude/arbres-v2-11841d`).
+- **Montagnes, collines, nature et Îles célestes** livrées le 22/10/2026 (deux commits sur la même
+  branche).
 - **À faire ensuite** :
   - lieux et villages (Côte aux villages, moulins du Plateau venté, phare de l'Île du silence, ruines) ;
   - routes entre les régions ;
-  - vraies îles flottantes (aujourd'hui des pitons en mer) ;
   - grottes ;
   - faune, ressources et éléments de la mer.
 
@@ -228,13 +253,13 @@ et domaine concerné).
 - **Non commité** (hors de ce chantier) : tableau de bord (`dashboard.html`, `dashboard/`,
   `vite.config.js`), agents d'équipe et skill `modele-3d`, `README.md`, chèvre, mouton et fleurs
   (PLA-015), `tests/fixtures/empreintes.json`.
-- **Tests** : 245 sur 246. Échec : `tests/empreintes.test.js` (personnage PER-001 à PER-003, 160
+- **Tests** : 251 sur 252. Échec : `tests/empreintes.test.js` (personnage PER-001 à PER-003, 160
   triangles de l'épée, changement voulu à valider puis `npm run modeles:empreinte -- --ecrire` ; fleurs
   PLA-015 en cours). « Budget du Worker » de `tests/world.test.js` : mesure de temps sensible à la
   charge (peut échouer sous la suite complète, vert seul).
 - **Graphe du code** : mis à jour le 22/10/2026 après l'open world.
   - Commande : `graphify update src`, sans LLM, code seul.
-  - Résultat : 2 459 nœuds, 6 384 liens, 170 communautés, nommées automatiquement d'après leur nœud
+  - Résultat : 2 502 nœuds, 6 523 liens, 171 communautés, nommées automatiquement d’après leur nœud
     central (`forme.js`, `surface.js`, `zones.js`…).
   - Attention : la commande écrit dans `src/graphify-out/`. Il faut déplacer `GRAPH_REPORT.md`,
     `graph.json` et `graph.html` dans `graphify-out/`, puis supprimer `src/graphify-out/`.
