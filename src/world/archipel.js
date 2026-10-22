@@ -1,80 +1,306 @@
-// L'archipel : seule source de vérité du monde. Un carré de 2,4 × 2,4 km, l'île de départ au
-// centre, neuf îles fixes (une par archétype) et les éléments de la mer à positions fixes.
-// Le relief, la végétation et les lieux de chaque île sont produits par la chaîne de génération
-// (islands/gen/plan.js) à partir de ces données ; overrides les retouche à la main :
-//   pois : lieux imposés (ajoutés s'ils manquent) · removePois : lieux interdits
-//   name : nom affiché · traits : traits imposés (village, moulin, fleurs, curiosité…)
-//   faune : troupeaux posés à la main ({ sp, x, z, count, r, robes }, x et z relatifs au centre de l'île)
+// L'archipel des souvenirs : seule source de vérité du monde ouvert. Un rectangle de 6 × 4 km tracé
+// d'après la carte de référence de l'utilisateur (1 536 × 1 024 pixels, 4 m par pixel), l'île de
+// départ en (0, 0), juste au sud de la côte aux villages de la Grande Île. Nord = −Z.
+//
+// Les îles sont décrites en pixels de la carte de référence (repère : PX, ORIGINE) puis converties en
+// mètres : silhouette (côte, polygone) ou cercle, reliefs posés à la main (monts, chaînes, collines,
+// plateaux, cuvettes, volcans, pitons, dunes), et zones nommées (étiquettes de la carte, de la minicarte
+// et du bandeau d'entrée ; biome, part de forêt et arbres de chaque zone). Le relief détaillé, l'eau
+// douce et les arbres sont produits par la chaîne de génération (islands/gen/forme.js, plan.js).
+// Étape « bases » : ni lieux, ni villages, ni faune, ni ressources.
 // Les identifiants sont stables : ils servent aux sauvegardes, aux récoltes et au journal.
 
+export const PX = 4; // mètres par pixel de la carte de référence
+export const ORIGINE = [770, 690]; // pixel de l'île de départ
+const m = ([x, y]) => [(x - ORIGINE[0]) * PX, (y - ORIGINE[1]) * PX];
+
+// ---------------------------------------------------------------------------
+// Zones nommées. aire : ellipse [x, y, rx, ry] en pixels ; at : point de l'étiquette (centre de
+// l'aire par défaut). Les zones d'une île découpée (ile) se partagent son relief : chaque case prend
+// la zone la plus proche (distance normalisée à l'ellipse). foret : part des terres en forêt ;
+// arbres : table d'arbres [espèce, densité pour 100 m²] (sinon celle du biome) ; palmiers : sur les
+// plages ; fleurs : part des prés en champs de fleurs (couleur du sol seulement) ; mer : zone de mer
+// (hauts-fonds, bancs), reconnue aussi en bateau.
+const ZONES_PX = [
+  // Grande Île
+  { id: 'sommet-givre', name: 'Le Sommet givré', sous: 'Montagnes enneigées', ile: 'grande-ile', biome: 'pins', foret: 0.45, aire: [700, 225, 150, 80], at: [690, 200] },
+  { id: 'foret-des-souvenirs', name: 'La Forêt des souvenirs', sous: 'Arbres-mémoire', ile: 'grande-ile', biome: 'prairie', foret: 0.72, aire: [545, 380, 130, 170], arbres: [['arbre_pompon', 1.6], ['erable', 0.7], ['saule', 0.15]] },
+  { id: 'lac-celeste', name: 'Le Lac céleste', sous: 'Eau cristalline et îlots', ile: 'grande-ile', biome: 'prairie', foret: 0.3, aire: [990, 365, 95, 75], arbres: [['saule', 0.6], ['arbre_pompon', 0.9], ['erable', 0.5]] },
+  { id: 'plateau-vente', name: 'Le Plateau venté', sous: 'Prairies et vent du large', ile: 'grande-ile', biome: 'prairie', foret: 0.07, fleurs: 0.12, aire: [925, 480, 105, 65], arbres: [['arbre_pompon', 0.9], ['erable', 0.2]] },
+  { id: 'cote-aux-villages', name: 'La Côte aux villages', sous: 'Plaine côtière', ile: 'grande-ile', biome: 'prairie', foret: 0.16, fleurs: 0.08, palmiers: true, aire: [745, 590, 200, 60], arbres: [['arbre_pompon', 1.0], ['arbre_fruitier', 0.35], ['arbre_cerisier', 0.2]] },
+  // nord
+  { id: 'ruines-gelees', name: 'Les Ruines gelées', sous: 'Vestiges d’une ancienne civilisation', biome: 'glace', foret: 0.3, aire: [420, 125, 130, 120] },
+  { id: 'iles-celestes', name: 'Les Îles célestes', sous: 'Pitons rocheux', biome: 'pins', foret: 0.5, aire: [930, 80, 105, 70] },
+  { id: 'volcan-endormi', name: 'Le Volcan endormi', sous: 'Cratère et coulées refroidies', biome: 'volcan', foret: 0.18, aire: [1180, 195, 175, 115] },
+  // ouest
+  { id: 'ile-du-silence', name: 'L’Île du silence', sous: 'Le phare oublié', biome: 'pins', foret: 0.25, aire: [150, 215, 60, 50] },
+  { id: 'ile-aux-fleurs', name: 'L’Île aux fleurs', sous: 'Forêts enchantées', biome: 'prairie', foret: 0.35, fleurs: 0.5, aire: [215, 365, 130, 85], arbres: [['arbre_cerisier', 1.3], ['arbre_pompon', 0.6], ['arbre_fruitier', 0.3]] },
+  { id: 'archipel-des-tempetes', name: 'L’Archipel des tempêtes', sous: 'Îles changeantes, cieux en colère', biome: 'volcan', foret: 0.14, aire: [365, 485, 110, 85], arbres: [['pin', 0.8], ['bois_mort', 0.5]] },
+  { id: 'grottes-de-cristal', name: 'Les Grottes de cristal', sous: 'Réseaux sous la mer', biome: 'tropical', foret: 0.3, aire: [440, 625, 75, 50] },
+  { id: 'village-englouti', name: 'Le Village englouti', sous: 'Une ville sous la mer', biome: 'atoll', foret: 0.3, mer: true, aire: [355, 720, 55, 38] },
+  { id: 'cascades-sacrees', name: 'Les Cascades sacrées', sous: 'Chutes d’eau et sanctuaires', biome: 'tropical', foret: 0.5, aire: [170, 645, 120, 85] },
+  { id: 'ilots-secrets', name: 'Les Îlots secrets', sous: 'Petites îles cachées', biome: 'atoll', foret: 0.4, palmiers: true, aire: [215, 825, 110, 60] },
+  // sud
+  { id: 'grotte-lumineuse', name: 'La Grotte lumineuse', sous: 'Lacs luminescents', biome: 'tropical', foret: 0.45, aire: [632, 742, 85, 60] },
+  { id: 'ile-brumeuse', name: 'L’Île brumeuse', sous: 'Brouillard et sous-bois', biome: 'pins', foret: 0.6, aire: [475, 885, 105, 60] },
+  { id: 'place-des-os', name: 'La Place des os', sous: 'Épaves et bancs de sable', biome: 'atoll', foret: 0.2, mer: true, aire: [785, 875, 90, 50], arbres: [['bois_mort', 0.6], ['palmier', 0.3]] },
+  // est
+  { id: 'ile-aux-lueurs', name: 'L’Île aux lueurs', sous: 'Forêts bioluminescentes', biome: 'champignons', foret: 0.65, aire: [1082, 818, 140, 90] },
+  { id: 'falaises-oubliees', name: 'Les Falaises oubliées', sous: 'Grottes et ponts naturels', biome: 'tropical', foret: 0.25, aire: [1245, 500, 115, 60] },
+  { id: 'ocean-sans-fin', name: 'L’Océan sans fin', sous: 'Récifs mystérieux', biome: 'atoll', foret: 0.3, palmiers: true, aire: [1370, 385, 135, 80] },
+  { id: 'desert-ile-sechee', name: 'Le Désert de l’île séchée', sous: 'Sables, cendres et vestiges', ile: 'ile-sechee', biome: 'dunes', foret: 0.02, aire: [1240, 655, 110, 75], at: [1232, 700], arbres: [['palmier', 0.35], ['cactus', 0.4], ['cactus_fleur', 0.15]] },
+  { id: 'royaume-des-ruines', name: 'Le Royaume des ruines', sous: 'Cité ensevelie', ile: 'ile-sechee', biome: 'dunes', foret: 0.04, aire: [1405, 650, 75, 75], at: [1412, 618], arbres: [['palmier', 0.3], ['bois_mort', 0.3]] },
+  { id: 'ile-du-soleil-couchant', name: 'L’Île du soleil couchant', sous: 'Rochers et plages', biome: 'tropical', foret: 0.22, palmiers: true, aire: [1368, 815, 100, 55] },
+];
+
+// ---------------------------------------------------------------------------
+// Îles. cote : polygone [x, y] en pixels (sens indifférent) ; cercle : [x, y, rayon] en pixels.
+// base : hauteur des terres loin du bord (m) et largeur de la montée (m) ; plage (m) ; falaise : part
+// des côtes en falaise (0 à 1) ; immerge : haut-fond sous la mer (seuls les reliefs en sortent).
+// Reliefs (pixels pour les positions et les rayons, mètres pour les hauteurs) :
+//   mont [x, y, r, h] · chaine pts [[x, y, h]…] + l (largeur) · colline [x, y, r, h]
+//   plateau [x, y, rx, ry, h] + bord (m) · cuvette [x, y, r, profondeur] · volcan [x, y, r, h] + cratere (px)
+//   piton [x, y, r, h] · dunes h + dir (rad)
+const ILES_PX = [
+  {
+    id: 'grande-ile', name: 'La Grande Île', zone: 'foret-des-souvenirs', biome: 'prairie', base: { h: 16, larg: 320 }, plage: 20, falaise: 0.25,
+    cote: [[705, 148], [760, 158], [820, 182], [880, 213], [925, 252], [962, 283], [1012, 298], [1060, 322], [1096, 360], [1106, 410], [1093, 455], [1071, 500], [1040, 535], [985, 556], [930, 566], [882, 590], [842, 624], [792, 646], [738, 650], [682, 640], [630, 628], [590, 600], [566, 560], [548, 516], [520, 480], [490, 440], [470, 395], [450, 346], [431, 300], [441, 262], [470, 232], [520, 218], [575, 204], [620, 180], [664, 158]],
+    reliefs: [
+      { t: 'mont', at: [700, 232, 105, 255] },
+      { t: 'chaine', pts: [[612, 205, 150], [662, 222, 205], [700, 232, 250], [752, 220, 205], [812, 236, 150]], l: 26 },
+      { t: 'chaine', pts: [[700, 240, 220], [672, 290, 140], [640, 340, 90]], l: 24 },
+      { t: 'chaine', pts: [[715, 245, 210], [770, 300, 120], [835, 330, 70]], l: 26 },
+      { t: 'colline', at: [520, 300, 55, 42] },
+      { t: 'colline', at: [600, 420, 65, 50] },
+      { t: 'colline', at: [505, 420, 45, 34] },
+      { t: 'colline', at: [860, 380, 55, 40] },
+      { t: 'plateau', at: [930, 478, 72, 44, 46], bord: 22 },
+      { t: 'cuvette', at: [988, 368, 46, 42] },
+      { t: 'colline', at: [980, 362, 9, 30] },
+      { t: 'colline', at: [1000, 384, 6, 24] },
+    ],
+  },
+  {
+    id: 'ruines-gelees', name: 'Les Ruines gelées', zone: 'ruines-gelees', biome: 'glace', base: { h: 14, larg: 160 }, plage: 12, falaise: 0.45,
+    cote: [[330, 60], [390, 30], [470, 35], [520, 70], [530, 130], [500, 180], [440, 200], [380, 190], [330, 150], [315, 100]],
+    reliefs: [{ t: 'mont', at: [430, 95, 62, 85] }, { t: 'colline', at: [360, 150, 30, 26] }, { t: 'plateau', at: [470, 150, 32, 22, 30], bord: 10 }],
+  },
+  { id: 'ilot-givre', name: 'Îlot du givre', zone: 'ruines-gelees', biome: 'glace', ilot: true, cercle: [330, 238, 13], reliefs: [{ t: 'colline', at: [330, 238, 10, 14] }] },
+  {
+    id: 'ile-du-silence', name: 'L’Île du silence', zone: 'ile-du-silence', biome: 'pins', base: { h: 10, larg: 60 }, plage: 8, falaise: 0.7,
+    cote: [[115, 195], [155, 180], [190, 198], [188, 232], [150, 248], [117, 232]],
+    reliefs: [{ t: 'colline', at: [152, 212, 26, 34] }],
+  },
+  {
+    id: 'ile-aux-fleurs', name: 'L’Île aux fleurs', zone: 'ile-aux-fleurs', biome: 'prairie', base: { h: 9, larg: 160 }, plage: 16, falaise: 0.1,
+    cote: [[95, 320], [150, 290], [230, 295], [300, 305], [335, 340], [320, 390], [270, 425], [200, 435], [140, 420], [100, 385]],
+    reliefs: [{ t: 'colline', at: [200, 350, 40, 28] }, { t: 'colline', at: [282, 380, 30, 20] }, { t: 'colline', at: [140, 380, 25, 14] }],
+  },
+  { id: 'ilot-des-pins', name: 'Îlot des pins', zone: 'ile-aux-fleurs', biome: 'pins', ilot: true, cercle: [285, 258, 11], reliefs: [{ t: 'colline', at: [285, 258, 9, 12] }] },
+  {
+    id: 'ile-des-tempetes', name: 'L’Île des tempêtes', zone: 'archipel-des-tempetes', biome: 'volcan', base: { h: 12, larg: 120 }, plage: 8, falaise: 0.6,
+    cote: [[305, 440], [355, 415], [415, 425], [445, 460], [435, 510], [395, 540], [340, 535], [305, 500]],
+    reliefs: [{ t: 'mont', at: [372, 470, 48, 80] }, { t: 'chaine', pts: [[330, 500, 40], [372, 470, 70], [420, 450, 45]], l: 14 }],
+  },
+  { id: 'recif-des-tempetes', name: 'Récif des tempêtes', zone: 'archipel-des-tempetes', biome: 'volcan', ilot: true, cercle: [272, 455, 13], reliefs: [{ t: 'piton', at: [272, 455, 8, 26] }] },
+  { id: 'roc-des-tempetes', name: 'Roc des tempêtes', zone: 'archipel-des-tempetes', biome: 'volcan', ilot: true, cercle: [285, 560, 11], reliefs: [{ t: 'piton', at: [285, 560, 7, 20] }] },
+  {
+    id: 'ile-des-cristaux', name: 'L’Île des cristaux', zone: 'grottes-de-cristal', biome: 'tropical', base: { h: 8, larg: 80 }, plage: 8, falaise: 0.7,
+    cote: [[405, 605], [445, 592], [480, 610], [478, 645], [445, 662], [410, 650]],
+    reliefs: [{ t: 'plateau', at: [442, 626, 28, 22, 26], bord: 8 }],
+  },
+  { id: 'ilot-des-cristaux', name: 'Îlot des cristaux', zone: 'grottes-de-cristal', biome: 'tropical', ilot: true, cercle: [378, 652, 12], reliefs: [{ t: 'piton', at: [378, 652, 8, 22] }] },
+  {
+    id: 'haut-fond-englouti', name: 'Le Haut-fond englouti', zone: 'village-englouti', biome: 'atoll', immerge: true, base: { h: 2, larg: 80 },
+    cote: [[315, 705], [350, 690], [395, 700], [405, 728], [380, 750], [335, 748], [310, 728]],
+    reliefs: [{ t: 'colline', at: [345, 712, 7, 4.5] }, { t: 'colline', at: [388, 735, 5, 3.5] }],
+  },
+  {
+    id: 'cascades-sacrees', name: 'Les Cascades sacrées', zone: 'cascades-sacrees', biome: 'tropical', base: { h: 12, larg: 120 }, plage: 12, falaise: 0.55,
+    cote: [[80, 600], [140, 575], [210, 580], [265, 610], [275, 660], [240, 705], [170, 720], [110, 705], [70, 660]],
+    reliefs: [{ t: 'plateau', at: [168, 642, 72, 46, 78], bord: 30 }, { t: 'mont', at: [150, 630, 34, 120] }, { t: 'colline', at: [215, 690, 22, 16] }],
+  },
+  { id: 'ilot-secret-1', name: 'Îlot secret', zone: 'ilots-secrets', biome: 'atoll', ilot: true, cercle: [172, 802, 22], reliefs: [{ t: 'colline', at: [172, 802, 14, 7] }] },
+  { id: 'ilot-secret-2', name: 'Îlot secret', zone: 'ilots-secrets', biome: 'atoll', ilot: true, cercle: [215, 840, 15], reliefs: [{ t: 'colline', at: [215, 840, 10, 5] }] },
+  { id: 'ilot-secret-3', name: 'Îlot secret', zone: 'ilots-secrets', biome: 'tropical', ilot: true, cercle: [262, 800, 18], reliefs: [{ t: 'colline', at: [262, 800, 12, 14] }] },
+  { id: 'ilot-secret-4', name: 'Îlot secret', zone: 'ilots-secrets', biome: 'atoll', ilot: true, cercle: [295, 852, 12], reliefs: [{ t: 'colline', at: [295, 852, 8, 4] }] },
+  { id: 'ilot-secret-5', name: 'Îlot secret', zone: 'ilots-secrets', biome: 'atoll', ilot: true, cercle: [138, 852, 14], reliefs: [{ t: 'colline', at: [138, 852, 9, 5] }] },
+  {
+    id: 'grotte-lumineuse', name: 'L’Île de la grotte lumineuse', zone: 'grotte-lumineuse', biome: 'tropical', base: { h: 10, larg: 100 }, plage: 14, falaise: 0.35,
+    cote: [[565, 705], [615, 690], [670, 695], [705, 725], [695, 770], [650, 790], [595, 785], [560, 755]],
+    reliefs: [{ t: 'mont', at: [628, 738, 40, 58] }, { t: 'colline', at: [675, 760, 18, 14] }],
+  },
+  {
+    id: 'ile-brumeuse', name: 'L’Île brumeuse', zone: 'ile-brumeuse', biome: 'pins', base: { h: 12, larg: 120 }, plage: 12, falaise: 0.3,
+    cote: [[390, 860], [450, 840], [520, 845], [565, 870], [555, 915], [500, 935], [430, 930], [385, 900]],
+    reliefs: [{ t: 'colline', at: [470, 882, 42, 44] }, { t: 'colline', at: [530, 900, 22, 20] }],
+  },
+  { id: 'banc-des-os-1', name: 'Banc des os', zone: 'place-des-os', biome: 'atoll', ilot: true, base: { h: 1.5, larg: 30 }, plage: 30, cercle: [742, 860, 18] },
+  { id: 'banc-des-os-2', name: 'Banc des os', zone: 'place-des-os', biome: 'atoll', ilot: true, base: { h: 1.5, larg: 30 }, plage: 30, cercle: [802, 892, 14] },
+  { id: 'banc-des-os-3', name: 'Banc des os', zone: 'place-des-os', biome: 'atoll', ilot: true, base: { h: 1.2, larg: 20 }, plage: 20, cercle: [842, 858, 10] },
+  {
+    id: 'ile-aux-lueurs', name: 'L’Île aux lueurs', zone: 'ile-aux-lueurs', biome: 'champignons', base: { h: 10, larg: 160 }, plage: 14, falaise: 0.2,
+    cote: [[965, 770], [1030, 740], [1110, 745], [1180, 770], [1210, 820], [1190, 870], [1120, 900], [1040, 895], [980, 860], [955, 815]],
+    reliefs: [{ t: 'colline', at: [1080, 815, 50, 38] }, { t: 'colline', at: [1150, 840, 30, 28] }, { t: 'cuvette', at: [1030, 840, 14, 12] }],
+  },
+  {
+    id: 'falaise-oubliee-1', name: 'La Grande Falaise', zone: 'falaises-oubliees', biome: 'tropical', base: { h: 8, larg: 60 }, plage: 6, falaise: 0.85,
+    cote: [[1150, 475], [1200, 465], [1235, 490], [1225, 530], [1180, 540], [1148, 520]],
+    reliefs: [{ t: 'plateau', at: [1190, 502, 34, 28, 52], bord: 8 }],
+  },
+  { id: 'falaise-oubliee-2', name: 'Falaise oubliée', zone: 'falaises-oubliees', biome: 'tropical', falaise: 0.9, cercle: [1282, 478, 27], reliefs: [{ t: 'plateau', at: [1282, 478, 22, 22, 44], bord: 6 }] },
+  { id: 'falaise-oubliee-3', name: 'Falaise oubliée', zone: 'falaises-oubliees', biome: 'tropical', ilot: true, falaise: 0.9, cercle: [1332, 520, 17], reliefs: [{ t: 'piton', at: [1332, 520, 12, 38] }] },
+  {
+    id: 'ile-des-recifs', name: 'L’Île des récifs', zone: 'ocean-sans-fin', biome: 'atoll', base: { h: 6, larg: 60 }, plage: 18, falaise: 0.3,
+    cote: [[1240, 350], [1275, 335], [1305, 350], [1305, 388], [1275, 402], [1242, 390]],
+    reliefs: [{ t: 'plateau', at: [1272, 368, 18, 16, 22], bord: 8 }],
+  },
+  { id: 'recif-1', name: 'Récif', zone: 'ocean-sans-fin', biome: 'atoll', ilot: true, base: { h: 2, larg: 30 }, plage: 30, cercle: [1420, 332, 22] },
+  { id: 'recif-2', name: 'Récif', zone: 'ocean-sans-fin', biome: 'atoll', ilot: true, base: { h: 2, larg: 30 }, plage: 30, cercle: [1462, 420, 17] },
+  { id: 'recif-3', name: 'Récif', zone: 'ocean-sans-fin', biome: 'atoll', ilot: true, base: { h: 1.5, larg: 20 }, plage: 20, cercle: [1378, 432, 11] },
+  {
+    id: 'ile-sechee', name: 'L’Île séchée', zone: 'desert-ile-sechee', biome: 'dunes', base: { h: 8, larg: 200 }, plage: 26, falaise: 0.15,
+    cote: [[1150, 612], [1210, 582], [1300, 578], [1390, 586], [1460, 616], [1470, 670], [1430, 720], [1350, 735], [1260, 725], [1190, 700], [1150, 660]],
+    reliefs: [{ t: 'dunes', h: 6, dir: 0.5 }, { t: 'cuvette', at: [1232, 640, 16, 10] }, { t: 'plateau', at: [1398, 652, 50, 40, 42], bord: 14 }],
+  },
+  {
+    id: 'ile-du-soleil-couchant', name: 'L’Île du soleil couchant', zone: 'ile-du-soleil-couchant', biome: 'tropical', base: { h: 7, larg: 90 }, plage: 22, falaise: 0.35,
+    cote: [[1290, 790], [1345, 770], [1415, 775], [1455, 805], [1440, 845], [1375, 860], [1310, 850], [1280, 820]],
+    reliefs: [{ t: 'colline', at: [1395, 810, 25, 26] }, { t: 'piton', at: [1440, 828, 7, 22] }],
+  },
+  {
+    id: 'volcan-endormi', name: 'Le Volcan endormi', zone: 'volcan-endormi', biome: 'volcan', base: { h: 14, larg: 200 }, plage: 12, falaise: 0.35,
+    cote: [[1015, 170], [1070, 120], [1150, 95], [1240, 100], [1310, 130], [1345, 185], [1330, 245], [1270, 285], [1180, 295], [1090, 280], [1030, 240]],
+    reliefs: [{ t: 'volcan', at: [1180, 188, 118, 200], cratere: 22 }],
+  },
+  // Îles célestes : pitons rocheux en mer, sommets verts (les vraies îles flottantes viendront plus tard)
+  { id: 'piton-celeste-1', name: 'Piton céleste', zone: 'iles-celestes', biome: 'pins', falaise: 1, cercle: [880, 70, 22], reliefs: [{ t: 'piton', at: [880, 70, 17, 120] }] },
+  { id: 'piton-celeste-2', name: 'Piton céleste', zone: 'iles-celestes', biome: 'pins', falaise: 1, cercle: [930, 42, 16], reliefs: [{ t: 'piton', at: [930, 42, 12, 92] }] },
+  { id: 'piton-celeste-3', name: 'Piton céleste', zone: 'iles-celestes', biome: 'pins', falaise: 1, cercle: [968, 96, 25], reliefs: [{ t: 'piton', at: [968, 96, 20, 140] }] },
+  { id: 'piton-celeste-4', name: 'Piton céleste', zone: 'iles-celestes', biome: 'pins', falaise: 1, cercle: [910, 126, 14], reliefs: [{ t: 'piton', at: [910, 126, 10, 72] }] },
+  { id: 'piton-celeste-5', name: 'Piton céleste', zone: 'iles-celestes', biome: 'pins', falaise: 1, cercle: [1004, 40, 12], reliefs: [{ t: 'piton', at: [1004, 40, 9, 82] }] },
+  // îlots entre les îles
+  { id: 'ilot-nord', name: 'Îlot', biome: 'pins', ilot: true, cercle: [562, 128, 11], reliefs: [{ t: 'colline', at: [562, 128, 8, 10] }] },
+  { id: 'ilot-ouest', name: 'Îlot', biome: 'tropical', ilot: true, cercle: [58, 482, 14], reliefs: [{ t: 'colline', at: [58, 482, 10, 12] }] },
+  { id: 'ilot-cascades', name: 'Îlot', biome: 'tropical', ilot: true, cercle: [62, 768, 11], reliefs: [{ t: 'piton', at: [62, 768, 7, 18] }] },
+  { id: 'ilot-brumeux', name: 'Îlot', biome: 'pins', ilot: true, cercle: [598, 845, 11], reliefs: [{ t: 'colline', at: [598, 845, 8, 9] }] },
+  { id: 'ilot-de-la-baleine', name: 'Îlot de la baleine', biome: 'tropical', ilot: true, cercle: [885, 735, 13], reliefs: [{ t: 'colline', at: [885, 735, 10, 11] }] },
+  { id: 'ilot-du-plateau', name: 'Îlot', biome: 'prairie', ilot: true, cercle: [1005, 640, 14], reliefs: [{ t: 'colline', at: [1005, 640, 10, 10] }] },
+  { id: 'ilot-est', name: 'Îlot', biome: 'atoll', ilot: true, cercle: [1495, 505, 12], reliefs: [{ t: 'colline', at: [1495, 505, 8, 6] }] },
+  { id: 'ilot-sud-est', name: 'Îlot', biome: 'tropical', ilot: true, cercle: [1482, 905, 11], reliefs: [{ t: 'colline', at: [1482, 905, 8, 8] }] },
+];
+
+// ---------------------------------------------------------------------------
+// Conversion en mètres
+function hash(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
+function zoneM(z) {
+  const [cx, cz] = m(z.aire);
+  const [lx, lz] = m(z.at || z.aire);
+  const { aire, at, ...rest } = z;
+  return { ...rest, x: cx, z: cz, rx: aire[2] * PX, rz: aire[3] * PX, lx, lz };
+}
+export const ZONES = ZONES_PX.map(zoneM);
+export const ZONE_BY_ID = new Map(ZONES.map((z) => [z.id, z]));
+
+// zone d'une île sans zone attitrée : la plus proche (distance normalisée à son aire)
+function nearestZone(x, z) {
+  let best = null;
+  for (const zn of ZONES) {
+    if (zn.ile) continue;
+    const d = Math.hypot((x - zn.x) / zn.rx, (z - zn.z) / zn.rz);
+    if (!best || d < best.d) best = { d, id: zn.id };
+  }
+  return best.id;
+}
+
+function relief(r, ox, oz) {
+  const pos = (p) => [(p[0] - ORIGINE[0]) * PX - ox, (p[1] - ORIGINE[1]) * PX - oz];
+  const out = { t: r.t };
+  if (r.at) {
+    const [x, z] = pos(r.at);
+    Object.assign(out, { x, z });
+    if (r.t === 'plateau') Object.assign(out, { rx: r.at[2] * PX, rz: r.at[3] * PX, h: r.at[4], bord: r.bord ?? 12 });
+    else if (r.t === 'cuvette') Object.assign(out, { r: r.at[2] * PX, p: r.at[3] });
+    else Object.assign(out, { r: r.at[2] * PX, h: r.at[3] });
+    if (r.cratere) out.cratere = r.cratere * PX;
+  }
+  if (r.pts) {
+    out.pts = r.pts.map((p) => [...pos(p), p[2]]);
+    out.l = (r.l ?? 20) * PX;
+  }
+  if (r.t === 'dunes') Object.assign(out, { h: r.h, dir: r.dir ?? 0 });
+  return out;
+}
+
+function ileM(isl) {
+  let pts;
+  if (isl.cote) pts = isl.cote.map(m);
+  else {
+    const [cx, cz] = m(isl.cercle);
+    const rr = isl.cercle[2] * PX;
+    pts = [];
+    for (let k = 0; k < 14; k++) {
+      const a = (k / 14) * Math.PI * 2;
+      pts.push([cx + Math.cos(a) * rr, cz + Math.sin(a) * rr]);
+    }
+  }
+  let x0 = Infinity;
+  let x1 = -Infinity;
+  let z0 = Infinity;
+  let z1 = -Infinity;
+  for (const [x, z] of pts) {
+    x0 = Math.min(x0, x);
+    x1 = Math.max(x1, x);
+    z0 = Math.min(z0, z);
+    z1 = Math.max(z1, z);
+  }
+  // centre sur un multiple de 4 m (grille de 4 m alignée sur le monde)
+  const x = Math.round((x0 + x1) / 8) * 4;
+  const z = Math.round((z0 + z1) / 8) * 4;
+  const local = pts.map(([px, pz]) => [px - x, pz - z]);
+  const r = Math.max(...local.map(([a, b]) => Math.hypot(a, b)));
+  const rEq = Math.sqrt(((x1 - x0) * (z1 - z0)) / Math.PI);
+  const sous = ZONES.filter((zn) => zn.ile === isl.id).map((zn) => ({ id: zn.id, x: zn.x - x, z: zn.z - z, rx: zn.rx, rz: zn.rz }));
+  const zone = isl.zone || nearestZone(x, z);
+  return {
+    id: isl.id,
+    name: isl.name,
+    x,
+    z,
+    r,
+    biome: isl.biome,
+    seed: hash(isl.id),
+    ilot: !!isl.ilot,
+    zone,
+    forme: {
+      cote: local,
+      rEq,
+      base: { h: isl.base?.h ?? Math.min(10, 2 + rEq * 0.08), larg: isl.base?.larg ?? Math.max(20, rEq * 0.5) },
+      plage: isl.plage ?? Math.min(14, 4 + rEq * 0.08),
+      falaise: isl.falaise ?? 0.3,
+      immerge: !!isl.immerge,
+      reliefs: (isl.reliefs || []).map((rl) => relief(rl, x, z)),
+      // zones de l'île (une seule si elle n'est pas découpée)
+      zones: sous.length ? sous : [{ id: zone, x: 0, z: 0, rx: r, rz: r }],
+    },
+  };
+}
+
 export const ARCHIPEL = {
-  // emprise (m) : la carte et le brouillard de découverte s'y arrêtent
-  bounds: { minX: -1200, maxX: 1200, minZ: -1200, maxZ: 1200 },
-  // limite du monde (m depuis le centre) : brume du large et courant, puis demi-tour
-  limit: { mist: 1200, turn: 1400 },
+  // emprise (m) : la carte et le brouillard de découverte s'y arrêtent (6 × 4 km)
+  bounds: { minX: -3000, maxX: 3000, minZ: -2800, maxZ: 1200 },
+  // limite du monde, en mètres au-delà de l'emprise : brume du large dès 100 m avant le bord, courant
+  // qui ramène à partir du bord, demi-tour à 250 m au-delà
+  limit: { mist: 0, turn: 250 },
   home: { id: 'home', name: 'Ton île', x: 0, z: 0, r: 34 },
-  islands: [
-    { id: 'village-pommeraie', name: 'Village de Pommeraie', archetype: 'village', biome: 'prairie', x: -170, z: 400, r: 80, seed: 3576918575, overrides: { traits: { village: 'Pommeraie', mill: 'rose' }, faune: [{ sp: 'vache', x: -12, z: -3, count: 3, r: 9, robes: [0, 1, 2] }] } },
-    { id: 'ile-aux-mille-fleurs', name: 'Île aux Mille Fleurs', archetype: 'fleurs', biome: 'prairie', x: 250, z: 430, r: 66, seed: 535206036, overrides: { traits: { bloom: 'mauve' } } },
-    { id: 'rocher-perce', name: 'Rocher Percé', archetype: 'curiosite', biome: 'glace', x: -320, z: -330, r: 42, seed: 1070415549, overrides: { traits: { landmark: 'arche' } } },
-    { id: 'falaises-de-nacre', name: 'Falaises de Nacre', archetype: 'falaises', biome: 'tropical', x: 760, z: -160, r: 74, seed: 683123431, overrides: { pois: ['phare'], traits: { village: 'Nacre' } } },
-    { id: 'mont-des-aigles', name: 'Mont des Aigles', archetype: 'montagne', biome: 'pins', x: -700, z: -480, r: 135, seed: 922480751, overrides: {} },
-    { id: 'bois-des-lanternes', name: 'Bois des Lanternes', archetype: 'foret', biome: 'champignons', x: -820, z: 160, r: 100, seed: 535207271, overrides: {} },
-    { id: 'cratere-de-braise', name: 'Cratère de Braise', archetype: 'cratere', biome: 'volcan', x: 180, z: -820, r: 95, seed: 2027814003, overrides: {} },
-    { id: 'dunes-du-mirage', name: 'Dunes du Mirage', archetype: 'dunes', biome: 'dunes', x: 820, z: 330, r: 88, seed: 1788454745, overrides: {} },
-    { id: 'lagon-turquoise', name: 'Lagon Turquoise', archetype: 'lagon', biome: 'atoll', x: 640, z: 700, r: 72, seed: 1161835082, overrides: {} },
-  ],
-  // éléments de la mer : algues, récifs, bancs de poissons, bouées, bouteilles, caisses
-  marine: [
-    { id: 'mer-01', type: 'recif', x: -967, z: -5 },
-    { id: 'mer-02', type: 'bouteille', x: -583, z: -93 },
-    { id: 'mer-03', type: 'bouteille', x: -795, z: -182 },
-    { id: 'mer-04', type: 'caisse', x: -963, z: -287 },
-    { id: 'mer-05', type: 'poissons', x: -181, z: -119 },
-    { id: 'mer-06', type: 'bouteille', x: -498, z: -366 },
-    { id: 'mer-07', type: 'bouee', x: -304, z: -235 },
-    { id: 'mer-08', type: 'algue', x: -395, z: -580 },
-    { id: 'mer-09', type: 'algue', x: -282, z: -442 },
-    { id: 'mer-10', type: 'caisse', x: -532, z: -873 },
-    { id: 'mer-11', type: 'bouteille', x: -329, z: -716 },
-    { id: 'mer-12', type: 'bouteille', x: -22, z: -444 },
-    { id: 'mer-13', type: 'bouteille', x: -41, z: -949 },
-    { id: 'mer-14', type: 'algue', x: 103, z: -681 },
-    { id: 'mer-15', type: 'algue', x: 294, z: -956 },
-    { id: 'mer-16', type: 'poissons', x: 216, z: -562 },
-    { id: 'mer-17', type: 'bouee', x: 349, z: -498 },
-    { id: 'mer-18', type: 'poissons', x: 175, z: -217 },
-    { id: 'mer-19', type: 'poissons', x: 408, z: -253 },
-    { id: 'mer-20', type: 'bouee', x: 880, z: -528 },
-    { id: 'mer-21', type: 'bouee', x: 820, z: -377 },
-    { id: 'mer-22', type: 'bouee', x: 887, z: -119 },
-    { id: 'mer-23', type: 'caisse', x: 985, z: 59 },
-    { id: 'mer-24', type: 'bouee', x: 741, z: 58 },
-    { id: 'mer-25', type: 'algue', x: 705, z: 129 },
-    { id: 'mer-26', type: 'bouteille', x: 351, z: 78 },
-    { id: 'mer-27', type: 'poissons', x: 633, z: 167 },
-    { id: 'mer-28', type: 'poissons', x: 560, z: 264 },
-    { id: 'mer-29', type: 'recif', x: 957, z: 518 },
-    { id: 'mer-30', type: 'caisse', x: 180, z: 104 },
-    { id: 'mer-31', type: 'poissons', x: 814, z: 520 },
-    { id: 'mer-32', type: 'recif', x: 491, z: 735 },
-    { id: 'mer-33', type: 'bouteille', x: 490, z: 962 },
-    { id: 'mer-34', type: 'bouteille', x: 287, z: 642 },
-    { id: 'mer-35', type: 'caisse', x: 256, z: 795 },
-    { id: 'mer-36', type: 'bouee', x: 165, z: 884 },
-    { id: 'mer-37', type: 'bouee', x: 77, z: 618 },
-    { id: 'mer-38', type: 'poissons', x: 52, z: 745 },
-    { id: 'mer-39', type: 'bouteille', x: 7, z: 522 },
-    { id: 'mer-40', type: 'poissons', x: -62, z: 694 },
-    { id: 'mer-41', type: 'bouee', x: -81, z: 212 },
-    { id: 'mer-42', type: 'bouteille', x: -481, z: 668 },
-    { id: 'mer-43', type: 'poissons', x: -703, z: 803 },
-    { id: 'mer-44', type: 'caisse', x: -121, z: 125 },
-    { id: 'mer-45', type: 'bouteille', x: -817, z: 653 },
-    { id: 'mer-46', type: 'bouee', x: -640, z: 321 },
-    { id: 'mer-47', type: 'caisse', x: -836, z: 349 },
-    { id: 'mer-48', type: 'caisse', x: -1040, z: 17 },
-  ],
+  islands: ILES_PX.map(ileM),
+  // éléments de la mer (algues, récifs, bouteilles, caisses…) : retirés à l'étape « bases »
+  marine: [],
 };
 
 const smooth = (a, b, x) => {
@@ -82,19 +308,23 @@ const smooth = (a, b, x) => {
   return t * t * (3 - 2 * t);
 };
 
-// Limite du monde au point (x, z) : mist 0 → 1 de 1,1 à 1,4 km (brume du large), pull 0 → 1 de
-// 1,2 à 1,4 km (courant qui ramène vers le centre), turn au-delà de 1,4 km (demi-tour), et la
-// direction du centre (ux, uz).
+// Limite du monde au point (x, z). d : distance (m) au-delà du bord de l'emprise (négative dedans) ;
+// mist 0 → 1 de 100 m avant le bord à 250 m au-delà (brume du large), pull 0 → 1 du bord à 250 m
+// (courant qui ramène vers le centre), turn au-delà (demi-tour), et la direction du centre (ux, uz).
 export function worldLimit(x, z) {
   const { mist, turn } = ARCHIPEL.limit;
-  const d = Math.hypot(x, z);
-  const inv = d > 1e-6 ? 1 / d : 0;
+  const B = ARCHIPEL.bounds;
+  const cx = (B.minX + B.maxX) / 2;
+  const cz = (B.minZ + B.maxZ) / 2;
+  const d = Math.max(Math.abs(x - cx) - (B.maxX - B.minX) / 2, Math.abs(z - cz) - (B.maxZ - B.minZ) / 2);
+  const len = Math.hypot(x - cx, z - cz);
+  const inv = len > 1e-6 ? 1 / len : 0;
   return {
     d,
     mist: smooth(mist - 100, turn, d),
     pull: smooth(mist, turn, d),
     turn: d > turn,
-    ux: -x * inv,
-    uz: -z * inv,
+    ux: (cx - x) * inv,
+    uz: (cz - z) * inv,
   };
 }

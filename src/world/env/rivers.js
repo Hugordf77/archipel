@@ -117,12 +117,20 @@ export function buildRivers(rivers) {
 // un lac : cellules de 4 m (débordant d'une cellule, le relief cache le surplus)
 export function buildLake(lake, plan) {
   const { n, s, ext } = plan;
+  // clip : cases dessinées [i0, j0, i1, j1] (sections des grandes îles : leur carré seulement)
+  const [i0, j0, i1, j1] = lake.clip || [0, 0, n - 1, n - 1];
   const cells = new Set();
   for (const c of lake.cells) {
     const i = c % n;
     const j = (c - i) / n;
-    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) cells.add((j + dj) * n + (i + di));
+    for (let dj = -1; dj <= 1; dj++) {
+      for (let di = -1; di <= 1; di++) {
+        if (i + di < i0 || i + di > i1 || j + dj < j0 || j + dj > j1) continue;
+        cells.add((j + dj) * n + (i + di));
+      }
+    }
   }
+  if (!cells.size) return null;
   const pos = [];
   const idx = [];
   let v = 0;

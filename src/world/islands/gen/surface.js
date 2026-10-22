@@ -10,6 +10,7 @@ import { bilinear, bicubic, stableId, smooth } from './grid.js';
 import { Z, bloomBand, BLOOM_IDS, bloomColorOf } from './zones.js';
 import { KINDS, KIND_INDEX, STRIDE } from './kinds.js';
 import { reliefContext, baseHeight } from './relief.js';
+import { BIOME_IDS, formeZone, snowLine } from './forme.js';
 import { BIOMES } from '../biomes.js';
 import { herbeTile } from './herbe.js';
 
@@ -26,6 +27,9 @@ export class Surface {
     this.ext = d.ext;
     this.Z = d.Z || null;
     this.noise = makeNoise(d.seed ^ 0xde7a11);
+    // sections des grandes îles : centre de la section dans l'île (les bruits restent ceux de l'île)
+    this.ox = d.ox || 0;
+    this.oz = d.oz || 0;
     // différences de terrassement (objet vivant de la sauvegarde) ; compteur pour éviter tout coût sans elles
     this.terra = terra || null;
     this.terraCount = terra ? Object.keys(terra).length : 0;
@@ -87,7 +91,11 @@ export class Surface {
     const fj = (lz + this.ext) / this.s;
     let h = bicubic(this.H, this.n, fi, fj);
     const amp = bilinear(this.A, this.n, fi, fj) / 100;
-    if (amp > 0.005) h += amp * (fbm(this.noise, lx / 6.5, lz / 6.5, 2) * 0.75 + this.noise(lx / 2.3, lz / 2.3) * 0.25);
+    if (amp > 0.005) {
+      const wx = lx + this.ox;
+      const wz = lz + this.oz;
+      h += amp * (fbm(this.noise, wx / 6.5, wz / 6.5, 2) * 0.75 + this.noise(wx / 2.3, wz / 2.3) * 0.25);
+    }
     const rv = this.river(lx, lz);
     if (rv && rv.d < rv.half * 1.5) {
       const depth = 0.35 + rv.half * 0.18;
@@ -220,14 +228,16 @@ export function buildLOD1(plan) {
     }
   }
   // (pas de « heights » ici : le tableau du plan reste dans le cache du Worker, il ne doit pas être transféré)
-  return { n, s, ext, positions, normals, colors, index: gridIndex(H, n, -1.2) };
+  // sections : seul le carré de la section est dessiné (les marges appartiennent aux voisines)
+  const c0 = plan.core ? Math.round((ext - plan.core) / s) : 0;
+  return { n, s, ext, positions, normals, colors, index: gridIndex(H, n, -1.2, c0, c0 ? n - 1 - c0 : n - 1) };
 }
 
-function gridIndex(H, n, minTop) {
+function gridIndex(H, n, minTop, a0 = 0, a1 = n - 1) {
   const all = n * n > 65535 ? new Uint32Array((n - 1) * (n - 1) * 6) : new Uint16Array((n - 1) * (n - 1) * 6);
   let m = 0;
-  for (let j = 0; j < n - 1; j++) {
-    for (let i = 0; i < n - 1; i++) {
+  for (let j = a0; j < a1; j++) {
+    for (let i = a0; i < a1; i++) {
       const a = j * n + i;
       const b = a + 1;
       const d = a + n;
@@ -248,25 +258,33 @@ function gridIndex(H, n, minTop) {
 // LOD2 : silhouette 32 × 32 depuis le relief de base (pas besoin du plan complet).
 // Les sommets prennent un mélange moyenne / maximum : les pics restent visibles de loin.
 const hex = (h) => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
-export function buildLOD2(desc) {
-  const c = reliefContext(desc);
+// parent : île entière d'une section (la silhouette de la section est prise dans son relief)
+export function buildLOD2(desc, parent = null) {
+  const c = reliefContext(parent || desc);
   const n = 32;
-  const ext = c.ext;
+  // section : son carré seulement (pas de marge, pas de recouvrement entre voisines)
+  const ext = desc.section ? 256 : c.ext;
+  const ox = desc.section ? desc.section.cx : 0;
+  const oz = desc.section ? desc.section.cz : 0;
   const s = (2 * ext) / (n - 1);
   const H = new Float32Array(n * n);
-  const pal = (BIOMES[desc.biome] || BIOMES.prairie).pal;
-  const sand = hex(pal.sand);
-  const grass = hex(pal.grass[1]);
-  const rock = hex(pal.rock);
-  const snow = hex(pal.snow || '#f7fbff');
+  const palOf = (b) => {
+    const pal = (BIOMES[b] || BIOMES.prairie).pal;
+    return { sand: hex(pal.sand), grass: hex(pal.grass[1]), rock: hex(pal.rock), snow: hex(pal.snow || '#f7fbff') };
+  };
+  const pals = c.forme ? c.zones.map((z) => palOf(z.biome)) : [palOf(desc.biome)];
+  // îles de la carte : neige sous la ligne des neiges de la latitude, couleurs du biome de chaque zone
+  const zw = (parent || desc).z;
+  const ZB = c.forme ? new Uint8Array(n * n) : null;
   for (let j = 0; j < n; j++) {
     for (let i = 0; i < n; i++) {
-      const x = -ext + i * s;
-      const z = -ext + j * s;
+      const x = ox - ext + i * s;
+      const z = oz - ext + j * s;
+      if (ZB) ZB[j * n + i] = formeZone(c, x, z);
       let mx = -99;
       let sum = 0;
-      for (const [ox, oz] of [[0, 0], [0.35, 0.35], [-0.35, 0.35], [0.35, -0.35], [-0.35, -0.35]]) {
-        const h = baseHeight(c, x + ox * s, z + oz * s);
+      for (const [dx, dz] of [[0, 0], [0.35, 0.35], [-0.35, 0.35], [0.35, -0.35], [-0.35, -0.35]]) {
+        const h = baseHeight(c, x + dx * s, z + dz * s);
         mx = Math.max(mx, h);
         sum += h;
       }
@@ -289,9 +307,12 @@ export function buildLOD2(desc) {
       const inv = 1 / Math.sqrt(nx * nx + 1 + nz * nz);
       positions.set([-ext + i * s, h, -ext + j * s], k * 3);
       normals.set([nx * inv, inv, nz * inv], k * 3);
-      let cc = h < 1.4 ? sand : grass;
-      if (h > 40 || 1 - inv > 0.5) cc = rock;
-      if ((c.arch === 'montagne' && h > hmax * 0.7) || (desc.biome === 'glace' && h > 12)) cc = snow;
+      const q = pals[ZB ? ZB[k] : 0];
+      let cc = h < 1.4 ? q.sand : q.grass;
+      if (h > 40 || 1 - inv > 0.5) cc = q.rock;
+      if (ZB) {
+        if (h > snowLine(zw + oz - ext + j * s, c.zones[ZB[k]].biome)) cc = q.snow;
+      } else if ((c.arch === 'montagne' && h > hmax * 0.7) || (desc.biome === 'glace' && h > 12)) cc = q.snow;
       colors.set(cc, k * 3);
     }
   }
@@ -335,6 +356,8 @@ export function tileGround(plan, surf, tx, tz) {
   const colors = new Float32Array(NV * 3);
   const { C, n, s, ext } = plan;
   const noise = makeNoise(plan.seed ^ 0x51ab);
+  const ox = plan.ox || 0;
+  const oz = plan.oz || 0;
   const paths = plan._paths || (plan._paths = prepPaths(plan.paths));
   const col = [0, 0, 0];
   // poids « chemin » de chaque sommet : la petite végétation l'évite sans recalculer les distances
@@ -364,8 +387,10 @@ export function tileGround(plan, surf, tx, tz) {
       minTop = Math.min(minTop, h);
       maxTop = Math.max(maxTop, h);
       // couleur des zones, échantillonnée avec un léger décalage bruité : bords peints
-      const jx = noise(x / 3.1, z / 3.1) * 1.8;
-      const jz = noise(z / 3.1 + 7, x / 3.1 - 4) * 1.8;
+      const wx = x + ox;
+      const wz = z + oz;
+      const jx = noise(wx / 3.1, wz / 3.1) * 1.8;
+      const jz = noise(wz / 3.1 + 7, wx / 3.1 - 4) * 1.8;
       const fi = (x + jx + ext) / s;
       const fj = (z + jz + ext) / s;
       zfi[k] = fi;
@@ -425,12 +450,21 @@ export function buildTile(plan, surf, tx, tz) {
   }
   const index = NV > 65535 ? new Uint32Array(idx) : new Uint16Array(idx);
   // petite végétation de la tuile
-  const small = smallVegetation(plan, surf, x0, z0, T, Hb, W, pathW, V);
+  // îles de la carte, étape « bases » : pas de petite végétation (touffes, fleurs, roseaux)
+  const small = plan.archetype === 'forme' ? { items: new Float32Array(0), ids: new Uint32Array(0) } : smallVegetation(plan, surf, x0, z0, T, Hb, W, pathW, V);
   const groups = instanceGroups(small.items, colors, x0, z0, V);
   // carte d'herbe (densité, hauteur, sécheresse par sommet) : bruits propres, après le tirage
   // de la petite végétation, qu'elle ne modifie pas
   const herbe = herbeTile(plan, surf, x0, z0, T, g);
-  return { tx, tz, x0, z0, positions, normals, colors, index, items: small.items, ids: small.ids, groups, herbe, minTop, maxTop };
+  return { tx, tz, x0, z0, positions, normals, colors, index, items: small.items, ids: small.ids, groups, herbe, minTop, maxTop, biome: tileBiome(plan, x0 + T / 2, z0 + T / 2) };
+}
+
+// biome d'une tuile (palette de l'herbe) : celui du centre de la tuile sur les îles à plusieurs biomes
+export function tileBiome(plan, x, z) {
+  if (!plan.B) return plan.biome;
+  const i = Math.max(0, Math.min(plan.n - 1, Math.round((x + plan.ext) / plan.s)));
+  const j = Math.max(0, Math.min(plan.n - 1, Math.round((z + plan.ext) / plan.s)));
+  return BIOME_IDS[plan.B[j * plan.n + i]];
 }
 
 function sampleColor(C, n, fi, fj, out) {
@@ -608,7 +642,8 @@ export function halfToFloat(hv) {
   if (e === 31) return sg * Infinity;
   return sg * (1 + m / 1024) * 2 ** (e - 15);
 }
-export function buildDepthWindow(islands, cx, cz, size, res, planOf) {
+// parentOf : île entière d'une section (relief de base quand le plan de la section n'est pas prêt)
+export function buildDepthWindow(islands, cx, cz, size, res, planOf, parentOf = () => null) {
   const out = new Uint16Array(res * res);
   const sc = size / res;
   const x0 = cx - size / 2;
@@ -618,8 +653,11 @@ export function buildDepthWindow(islands, cx, cz, size, res, planOf) {
   const vals = new Float32Array(res * res).fill(-16);
   for (const desc of islands) {
     const plan = planOf(desc);
-    const c = plan ? null : reliefContext(desc);
-    const reach = desc.r * 1.38;
+    const parent = desc.parent ? parentOf(desc) : null;
+    const c = plan ? null : reliefContext(parent || desc);
+    const ox = parent ? desc.section.cx : 0;
+    const oz = parent ? desc.section.cz : 0;
+    const reach = plan ? plan.ext : parent ? 264 : c.ext;
     const i0 = Math.max(0, Math.floor((desc.x - reach - x0) / sc));
     const i1 = Math.min(res - 1, Math.ceil((desc.x + reach - x0) / sc));
     const j0 = Math.max(0, Math.floor((desc.z - reach - z0) / sc));
@@ -628,7 +666,7 @@ export function buildDepthWindow(islands, cx, cz, size, res, planOf) {
       for (let i = i0; i <= i1; i++) {
         const lx = x0 + (i + 0.5) * sc - desc.x;
         const lz = z0 + (j + 0.5) * sc - desc.z;
-        const h = plan ? bilinear(plan.H, plan.n, (lx + plan.ext) / plan.s, (lz + plan.ext) / plan.s) : baseHeight(c, lx, lz);
+        const h = plan ? bilinear(plan.H, plan.n, (lx + plan.ext) / plan.s, (lz + plan.ext) / plan.s) : baseHeight(c, lx + ox, lz + oz);
         const k = j * res + i;
         if (h > vals[k]) {
           vals[k] = h;

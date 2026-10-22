@@ -1,11 +1,14 @@
 import { h } from './dom.js';
 import { ICON } from './icons.js';
 import { KINDS } from '../gameplay/collectibles.js';
-import { ARCHETYPES } from '../world/islands/archetypes.js';
+import { ZONE_BY_ID } from '../world/archipel.js';
 import { BIOMES } from '../world/islands/biomes.js';
 import { SPECIES, SPECIES_LABEL } from '../world/islands/gen/spawns.js';
 import { ITEMS } from '../data/items.js';
-import { ISLANDS } from '../world/islands/regions.js';
+import { ILES } from '../world/islands/regions.js';
+
+// îles qui comptent au carnet (les îlots sont notés sans être comptés)
+const CARNET = ILES.filter((d) => !d.ilot);
 import { fogShare } from '../world/fog.js';
 
 // Panneaux de l'exploration : journal de bord, carte, cartographe.
@@ -21,20 +24,20 @@ export function openLogbookPanel(game) {
   const right = h('div', { class: 'nb-page right' });
   const ribbons = h('div', { class: 'nb-ribbons' });
   const stat = (icon, label, value) => h('div', { class: 'stat' }, h('span', { class: 'icon', html: ICON[icon] }), h('span', { class: 'stat-label' }, label), h('b', {}, value));
-  const islands = () => ISLANDS.filter((d) => ex.islands?.[d.id]).map((d) => ex.islands[d.id]);
+  const islands = () => CARNET.filter((d) => ex.islands?.[d.id]).map((d) => ex.islands[d.id]);
 
   const renderBord = () => {
     const found = islands();
     left.replaceChildren(
       h('h2', {}, 'Journal de bord'),
       h('p', { class: 'muted hand' }, st.world?.name || 'Mon archipel'),
-      stat('map', 'Îles découvertes', `${found.length} / ${ISLANDS.length}`),
+      stat('map', 'Îles découvertes', `${found.length} / ${CARNET.length}`),
       stat('compass', 'Archipel découvert', `${Math.round(fogShare(ex.fog || {}) * 100)} %`),
       stat('boat', 'Distance parcourue', fmtKm(ex.distance || 0)),
       stat('sparkle', 'Trésors trouvés', String(Object.values(st.collect?.totals || {}).reduce((a, b) => a + b, 0))),
       stat('shell', 'Coquillages', String(st.shells)),
     );
-    // fiche de chaque île : archétype, biome, lieux découverts, animaux rencontrés
+    // fiche de chaque île : zone, biome, lieux découverts, animaux rencontrés
     const pois = ex.pois || {};
     const card = (i) => {
       const places = (i.pois || []).map((id) => pois[id]?.name).filter(Boolean);
@@ -43,19 +46,19 @@ export function openLogbookPanel(game) {
         h('span', { class: 'dot', style: { background: (BIOMES[i.biome]?.pal.grass[1]) || '#9fdcc8' } }),
         h('div', {},
           h('b', {}, i.name),
-          h('div', { class: 'muted' }, [ARCHETYPES[i.archetype]?.name, BIOMES[i.biome]?.name].filter(Boolean).join(' · ')),
+          h('div', { class: 'muted' }, [ZONE_BY_ID.get(i.zone)?.name, BIOMES[i.biome]?.name].filter(Boolean).join(' · ')),
           places.length ? h('div', { class: 'isle-line' }, `Lieux : ${places.slice(0, 5).join(', ')}${places.length > 5 ? '…' : ''}`) : null,
           beasts.length ? h('div', { class: 'isle-line' }, `Rencontres : ${beasts.join(', ')}`) : null));
     };
     // les îles encore inconnues gardent leur place au carnet, sans nom
-    const unknown = ISLANDS.length - found.length;
+    const unknown = CARNET.length - found.length;
     right.replaceChildren(
-      h('h3', {}, `Îles au carnet (${found.length} / ${ISLANDS.length})`),
+      h('h3', {}, `Îles au carnet (${found.length} / ${CARNET.length})`),
       found.length
         ? h('ul', { class: 'day-list isle-list' }, ...found.sort((a, b) => (b.t || 0) - (a.t || 0)).map(card),
           ...(unknown ? [h('li', { class: 'isle-card unknown' }, h('span', { class: 'dot' }), h('div', {}, h('b', {}, '???'), h('div', { class: 'muted' }, `${unknown} île${unknown > 1 ? 's' : ''} à découvrir`)))] : []))
         : h('div', { class: 'empty-state' },
-          h('p', { class: 'hand' }, `Aucune île au carnet pour l'instant. Neuf îles t'attendent au large : deux se voient déjà depuis le ponton.`)),
+          h('p', { class: 'hand' }, `Aucune île au carnet pour l'instant. ${CARNET.length} îles t'attendent au large, et la Grande Île se voit déjà depuis le ponton.`)),
     );
   };
 

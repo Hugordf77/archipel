@@ -151,14 +151,14 @@ export class HerbeSystem {
 
   // Tuile au mètre ajoutée par IslandManager (t : sa tuile, tile : les données du Worker) ; id :
   // identifiant du terrain sous l'herbe (sans contour entre brins et sol), celui des îles par défaut ;
-  // palette du biome de l'île (île de départ : « maison »)
+  // palette du biome de la tuile, sinon de l'île (île de départ : « maison »)
   addTile(e, t, tile, id = this.id) {
     const champ = dataTexture(tile.herbe ? new Uint8Array(tile.herbe) : champDeSecours(tile), THREE.RGBAFormat, THREE.UnsignedByteType, THREE.LinearFilter);
     const haut = new Float32Array(V * V);
     const sol = new Uint8Array(V * V * 4);
     const hautTex = dataTexture(haut, THREE.RedFormat, THREE.FloatType, THREE.NearestFilter);
     const solTex = dataTexture(sol, THREE.RGBAFormat, THREE.UnsignedByteType, THREE.LinearFilter);
-    const palette = paletteHerbe(e.desc.biome || 'maison');
+    const palette = paletteHerbe(tile.biome || e.desc.biome || 'maison');
     const material = herbeMaterial({ id, shared: this.shared, champ, sol: solTex, haut: hautTex, coupe: NO_CUT, x0: t.x0, z0: t.z0, palette });
     const rings = [0, 1, 2].map((r) => {
       const geo = new THREE.InstancedBufferGeometry();

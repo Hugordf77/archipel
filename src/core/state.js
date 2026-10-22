@@ -2,7 +2,7 @@
 // Horodatages : millisecondes epoch. Jours : chaînes locales « YYYY-MM-DD ».
 
 import { defaultAvatar, sanitizeAvatar, sanitizeWardrobe, STARTER } from '../entities/character/avatar.js';
-import { GEN_VERSION, ISLANDS, ISLAND_BY_ID } from '../world/islands/regions.js';
+import { GEN_VERSION, ILE_BY_ID } from '../world/islands/regions.js';
 import { ARCHIPEL } from '../world/archipel.js';
 import { boundFog } from '../world/fog.js';
 
@@ -140,23 +140,21 @@ export function migrate(raw) {
     pois: ex.pois && typeof ex.pois === 'object' ? ex.pois : {},
     animals: ex.animals && typeof ex.animals === 'object' ? ex.animals : {},
   };
-  // générateur d'îles plus ancien : seules restent les récoltes et terrassements des îles
-  // inchangées ; le reste de l'exploration est ramené dans l'emprise de l'archipel
+  // générateur d'îles plus ancien : l'open world (génération 4) redessine tout l'archipel, le monde
+  // repart de zéro (brouillard, îles notées, lieux, récoltes, terrassements, épingles) ; l'inventaire,
+  // l'île de départ, les bateaux et le reste du journal sont gardés ; joueur et bateau reviennent à
+  // l'île de départ s'ils étaient au large
   const oldGen = (raw.world?.genVersion || 1) < GEN_VERSION;
   const obj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
-  const kept = (m) => (oldGen ? Object.fromEntries(Object.entries(obj(m)).filter(([id]) => ISLAND_BY_ID.has(id))) : obj(m));
-  s.harvest = kept(raw.harvest);
-  s.terra = kept(raw.terra);
+  s.harvest = oldGen ? {} : obj(raw.harvest);
+  s.terra = oldGen ? {} : obj(raw.terra);
   if (oldGen) {
-    const B = ARCHIPEL.bounds;
-    const inside = (p) => p && p.x >= B.minX && p.x <= B.maxX && p.z >= B.minZ && p.z <= B.maxZ;
-    s.explorer.fog = boundFog(s.explorer.fog);
-    s.explorer.pins = s.explorer.pins.filter(inside);
-    s.explorer.pois = Object.fromEntries(Object.entries(s.explorer.pois).filter(([, p]) => ISLAND_BY_ID.has(p?.island)));
-    const far = (x, z) => Math.hypot(x, z) > ARCHIPEL.limit.mist;
-    if (s.boat.x !== null && far(s.boat.x, s.boat.z)) s.boat.x = s.boat.z = null;
-    if (far(s.player.x || 0, s.player.z || 0)) Object.assign(s.player, { x: base.player.x, z: base.player.z });
-  }
+    Object.assign(s.explorer, { fog: {}, pins: [], pois: {}, animals: {}, islands: {} });
+    const H = ARCHIPEL.home;
+    const far = (x, z, pad) => Math.hypot(x - H.x, z - H.z) > H.r + pad;
+    if (s.boat.x !== null && far(s.boat.x, s.boat.z, 90)) s.boat.x = s.boat.z = null;
+    if (far(s.player.x || 0, s.player.z || 0, 30)) Object.assign(s.player, { x: base.player.x, z: base.player.z });
+  } else s.explorer.fog = boundFog(s.explorer.fog);
   s.opened = obj(raw.opened);
   if (!Array.isArray(s.decor)) s.decor = [];
   if (typeof s.inventory !== 'object' || !s.inventory) s.inventory = {};
@@ -171,20 +169,13 @@ export function migrate(raw) {
 
 const MARINE_IDS = new Set(ARCHIPEL.marine.map((m) => m.id));
 
-// Ancienne génération d'îles : chaque île notée au journal est rattachée à l'île de l'archipel du
-// même archétype, la plus proche (les plus anciennes notes d'abord), puis la sauvegarde passe à la
-// génération courante. Renvoie true si quelque chose a changé.
+// Ancienne génération d'îles : les îles notées n'existent plus (open world, génération 4) ; on garde
+// seulement celles de l'archipel courant, puis la sauvegarde passe à la génération courante.
+// Renvoie true si quelque chose a changé.
 export function relinkDiscoveries(state) {
   const ex = state.explorer;
   if ((state.world.genVersion || 1) >= GEN_VERSION) return false;
-  const next = {};
-  const notes = Object.values(ex.islands).sort((a, b) => (a.t || a.firstSeen || 0) - (b.t || b.firstSeen || 0));
-  for (const rec of notes) {
-    const dist = (d) => Math.hypot(d.x - (rec.x || 0), d.z - (rec.z || 0));
-    const same = ISLANDS.filter((d) => d.archetype === rec.archetype && !next[d.id]).sort((a, b) => dist(a) - dist(b))[0];
-    if (same) next[same.id] = { ...rec, name: same.name, biome: same.biome, archetype: same.archetype, x: Math.round(same.x), z: Math.round(same.z), r: Math.round(same.r), pois: [], animals: [] };
-  }
-  ex.islands = next;
+  ex.islands = Object.fromEntries(Object.entries(ex.islands).filter(([id]) => ILE_BY_ID.has(id)));
   state.world.genVersion = GEN_VERSION;
   return true;
 }

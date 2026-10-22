@@ -256,3 +256,98 @@ export function placeFlora(P, pois, paths) {
 }
 
 export { STRIDE };
+
+// ---------------------------------------------------------------------------
+// Îles de la carte (open world), étape « bases » : des arbres seulement, par zone nommée (table
+// d'arbres de la zone, sinon celle de son biome). Forêts en futaie, arbres épars en bosquets ailleurs.
+// DENSITE : facteur commun des densités (budget de rendu d'un monde de 6 × 4 km).
+export const DENSITE_FORME = 0.5;
+// espèces trop lourdes pour une forêt continue (bouleau : environ 1 800 triangles, les autres arbres
+// 100 à 180) : écartées en attendant les arbres V2 (branche claude/arbres-v2-11841d)
+const LOURDS = new Set(['bouleau']);
+const OUVERT = new Set([Z.PRAIRIE, Z.FLEURS, Z.CLAIRIERE, Z.ALPAGE, Z.MAQUIS, Z.MARAIS, Z.ROSELIERE]);
+
+export function placeFloraForme(P) {
+  const { H, n, s, ext, zone, slope, water, wetDist, desc, ZI } = P;
+  const zones = P.ctx.zones;
+  const rng = mulberry32(desc.seed ^ 0xf10a17);
+  const nc = makeNoise(desc.seed ^ 0xc1a5e7);
+  const items = [];
+  const ids = [];
+  const occN = Math.ceil(2 * ext);
+  const occ = new Uint8Array(occN * occN);
+  const hAt = (x, z) => bilinear(H, n, (x + ext) / s, (z + ext) / s);
+  const free = (x, z, rad) => {
+    const i0 = Math.floor(x + ext - rad);
+    const i1 = Math.floor(x + ext + rad);
+    const j0 = Math.floor(z + ext - rad);
+    const j1 = Math.floor(z + ext + rad);
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) if (i >= 0 && j >= 0 && i < occN && j < occN && occ[j * occN + i]) return false;
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) if (i >= 0 && j >= 0 && i < occN && j < occN) occ[j * occN + i] = 1;
+    return true;
+  };
+  // tables par zone de l'île et par micro-zone : [espèce, densité, bosquet]
+  const tables = zones.map((zd) => {
+    const forest = (zd.arbres || FOREST_TREES[zd.biome] || FOREST_TREES.prairie).map(([k, d]) => [k, d, 1]);
+    const palms = zd.palmiers || zd.biome === 'tropical' || zd.biome === 'atoll';
+    const out = {};
+    for (const [zk, table] of Object.entries(ZONE_TABLE)) {
+      const list = [];
+      for (const [kind, dens, grove] of table) {
+        if (kind === 'TREE') for (const [k2, d2] of forest) list.push([k2, d2 * dens, grove]);
+        else if (kind === 'PALM') {
+          if (palms) list.push(['palmier', dens, grove]);
+        } else if (TREES.has(kind) && !zd.arbres) list.push([kind, dens, grove]);
+      }
+      // prés et landes : quelques arbres de la zone, en bosquets
+      if (OUVERT.has(Number(zk))) for (const [k2, d2] of forest) list.push([k2, d2 * 0.12, 1]);
+      out[zk] = list.filter(([k]) => !LOURDS.has(k)).map(([k, d, g]) => [k, d * DENSITE_FORME, g]);
+    }
+    return out;
+  });
+  const cl = new Float32Array(n * n);
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) cl[j * n + i] = smooth(-0.15, 0.45, fbm(nc, (-ext + i * s) / 46, (-ext + j * s) / 46, 2));
+  const STEP = 2.5;
+  const area = STEP * STEP;
+  for (let gz = -ext; gz < ext; gz += STEP) {
+    for (let gx = -ext; gx < ext; gx += STEP) {
+      const x = gx + rng() * STEP;
+      const z = gz + rng() * STEP;
+      const roll = rng();
+      const rot = rng() * Math.PI * 2;
+      const vr = rng();
+      const sr = rng();
+      const fi = (x + ext) / s;
+      const fj = (z + ext) / s;
+      const i = Math.round(fi);
+      const j = Math.round(fj);
+      if (i < 1 || j < 1 || i >= n - 1 || j >= n - 1) continue;
+      const k = j * n + i;
+      if (water[k] || H[k] < 0.6) continue;
+      const zn = zone[k];
+      const table = tables[ZI[k]][zn];
+      if (!table || !table.length) continue;
+      const cluster = bilinear(cl, n, fi, fj);
+      let acc = 0;
+      let chosen = null;
+      for (let q = 0; q < table.length; q++) {
+        const t = table[q];
+        acc += (t[1] / 100) * area * (t[2] === 2 ? 0.75 + cluster * 0.7 : t[2] ? 0.25 + cluster * 1.9 : 1);
+        if (roll < acc) {
+          chosen = t[0];
+          break;
+        }
+      }
+      // palmiers autour des oasis du désert
+      if (!chosen && zones[ZI[k]].biome === 'dunes' && zn === Z.PRAIRIE && wetDist[k] < 25 && roll > 0.9) chosen = 'palmier';
+      if (!chosen) continue;
+      if (slope[k] > (SLOPE_MAX[chosen] ?? 0.55)) continue;
+      const scale = 0.78 + sr * 0.55;
+      const ki = KIND_INDEX[chosen];
+      if (ki === undefined || !free(x, z, KIND_RADIUS[chosen] * scale + 0.3)) continue;
+      items.push(ki, x, hAt(x, z), z, rot, scale, vr);
+      ids.push(stableId(desc.seed, ki, x, z));
+    }
+  }
+  return { items: Float32Array.from(items), ids: Uint32Array.from(ids) };
+}

@@ -5,6 +5,7 @@ import { makeNoise, fbm, ridged } from '../../../core/noise.js';
 import { mulberry32 } from '../../../core/random.js';
 import { BIOMES } from '../biomes.js';
 import { smooth, clamp } from './grid.js';
+import { formeContext, formeHeight, formeHeightL, coastGrid } from './forme.js';
 
 export const SEA_FLOOR = -16;
 export const CELL = 4;
@@ -23,6 +24,13 @@ export function reliefContext(desc) {
   const key = `${desc.id}:${desc.seed}:${desc.archetype}`;
   let c = cache.get(key);
   if (c) return c;
+  // îles de la carte (open world) : silhouette et reliefs tracés à la main (forme.js)
+  if (desc.forme) {
+    c = formeContext(desc);
+    if (cache.size > 64) cache.delete(cache.keys().next().value);
+    cache.set(key, c);
+    return c;
+  }
   const s = desc.seed;
   const rng = mulberry32(s ^ 0x5eed12e1);
   const arch = desc.archetype || 'foret';
@@ -234,6 +242,7 @@ function interior(c, u, qx, qz, lx, lz, lobe) {
 
 // hauteur de base (m) en coordonnées locales à l'île, avant érosion et rivières
 export function baseHeight(c, lx, lz) {
+  if (c.forme) return formeHeight(c, lx, lz);
   const qx = lx / c.r;
   const qz = lz / c.r;
   const T = landness(c, qx, qz);
@@ -256,6 +265,16 @@ export function baseHeight(c, lx, lz) {
 // grille de 4 m du relief de base
 export function baseGrid(c) {
   const n = c.n;
+  if (c.forme) {
+    // îles de la carte : pas de 4 m exact (les sections se taillent dans la grille)
+    const H = new Float32Array(n * n);
+    const L = coastGrid(c);
+    for (let j = 0; j < n; j++) {
+      const z = -c.ext + j * CELL;
+      for (let i = 0; i < n; i++) H[j * n + i] = formeHeightL(c, -c.ext + i * CELL, z, L[j * n + i]);
+    }
+    return { H, n, s: CELL };
+  }
   const s = (2 * c.ext) / (n - 1);
   const H = new Float32Array(n * n);
   for (let j = 0; j < n; j++) {

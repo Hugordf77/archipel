@@ -1,6 +1,6 @@
-// Monde fini (v3) : l'archipel (neuf îles fixes), la limite du large, la migration v3, puis la
-// chaîne de génération éprouvée sur les îles de l'archipel et des variantes (graines, tailles) :
-// plan déterministe, eau, lieux, chemins, identifiants, budget du Worker.
+// Monde ouvert (v4) : l'archipel des souvenirs (îles tracées, zones, sections, bases), la limite du
+// large, la migration v4 ; puis la chaîne à archétypes éprouvée sur l'ancien archipel (fixture) et des
+// variantes (graines, tailles) : plan déterministe, eau, lieux, chemins, identifiants, budget du Worker.
 import { describe, it, expect, vi } from 'vitest';
 import * as THREE from 'three';
 
@@ -26,7 +26,7 @@ const digest = (p) => [hash(p.H), hash(p.Z), hash(p.C), hash(p.items), hash(p.id
 let shared = null;
 async function samplePlans() {
   if (shared) return shared;
-  const { ARCHIPEL } = await import('../src/world/archipel.js');
+  const { ARCHIPEL_V3: ARCHIPEL } = await import('./helpers/archipel-v3.js');
   const { islandDesc } = await import('../src/world/islands/regions.js');
   const { buildPlan } = await import('../src/world/islands/gen/plan.js');
   const descs = ARCHIPEL.islands.flatMap((isl) => Array.from({ length: 6 }, (_, k) => islandDesc({ ...isl, id: k ? `${isl.id}~${k}` : isl.id, seed: (isl.seed + k * 7919) >>> 0, r: Math.round(isl.r * (k ? 0.85 + 0.06 * k : 1)) })));
@@ -34,57 +34,154 @@ async function samplePlans() {
   return shared;
 }
 
-describe('archipel', () => {
-  it('compte neuf îles, une par archétype, aux identifiants stables, dans l’emprise', async () => {
-    const { ARCHIPEL } = await import('../src/world/archipel.js');
-    const { ISLANDS } = await import('../src/world/islands/regions.js');
+describe('archipel des souvenirs (open world)', () => {
+  it('trace 24 zones nommées et des îles aux identifiants stables, dans l’emprise de 6 × 4 km', async () => {
+    const { ARCHIPEL, ZONES } = await import('../src/world/archipel.js');
+    const { ILES } = await import('../src/world/islands/regions.js');
     const B = ARCHIPEL.bounds;
-    expect(ISLANDS).toHaveLength(9);
-    expect(ISLANDS.map((d) => d.archetype).sort()).toEqual([...ARCHETYPES9].sort());
-    expect(new Set(ISLANDS.map((d) => d.id)).size).toBe(9);
-    for (const d of ISLANDS) {
-      expect(d.id).toMatch(/^[a-z]+(-[a-z]+)+$/);
-      expect(d.name).toMatch(/^[A-ZÉÎ]/);
+    expect(B.maxX - B.minX).toBe(6000);
+    expect(B.maxZ - B.minZ).toBe(4000);
+    expect(ZONES).toHaveLength(24);
+    expect(new Set(ZONES.map((z) => z.id)).size).toBe(24);
+    for (const zn of ZONES) {
+      expect(zn.name).toMatch(/^(L’|Les |Le |La )/);
+      expect(zn.lx).toBeGreaterThan(B.minX);
+      expect(zn.lx).toBeLessThan(B.maxX);
+    }
+    expect(new Set(ILES.map((d) => d.id)).size).toBe(ILES.length);
+    expect(ILES.filter((d) => !d.ilot).length).toBeGreaterThanOrEqual(20);
+    for (const d of ILES) {
+      expect(d.id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+      expect(ZONES.some((z) => z.id === d.zone), d.id).toBe(true);
       expect(d.x - d.r).toBeGreaterThan(B.minX);
       expect(d.x + d.r).toBeLessThan(B.maxX);
       expect(d.z - d.r).toBeGreaterThan(B.minZ);
       expect(d.z + d.r).toBeLessThan(B.maxZ);
-      // toute l'île reste en deçà de la brume du large
-      expect(Math.hypot(d.x, d.z) + d.r).toBeLessThan(ARCHIPEL.limit.mist);
     }
-    expect(B.maxX - B.minX).toBe(2400);
-    expect(B.maxZ - B.minZ).toBe(2400);
+    // la Grande Île est la plus grande ; chaque zone de la carte a au moins une île ou est une zone de mer
+    const grande = ILES.find((d) => d.id === 'grande-ile');
+    expect(Math.max(...ILES.map((d) => d.r))).toBe(grande.r);
+    for (const zn of ZONES) expect(zn.mer || ILES.some((d) => d.zone === zn.id || zn.ile === d.id), zn.id).toBe(true);
   });
 
-  it('espace les îles (250 m au moins, sans chevauchement) et dégage 300 m autour du départ', async () => {
-    const { ISLANDS } = await import('../src/world/islands/regions.js');
-    for (let i = 0; i < ISLANDS.length; i++) {
-      const a = ISLANDS[i];
-      expect(Math.hypot(a.x, a.z), a.id).toBeGreaterThanOrEqual(300);
-      for (let j = i + 1; j < ISLANDS.length; j++) {
-        const b = ISLANDS[j];
-        const d = Math.hypot(a.x - b.x, a.z - b.z);
-        expect(d, `${a.id} / ${b.id}`).toBeGreaterThanOrEqual(250);
-        expect(d, `${a.id} / ${b.id}`).toBeGreaterThan(a.r + b.r + 90);
+  it('laisse des chenaux navigables entre les îles (70 m au moins) et dégage le départ', async () => {
+    const { ILES } = await import('../src/world/islands/regions.js');
+    const { reliefContext, baseHeight } = await import('../src/world/islands/gen/relief.js');
+    const land = new Map();
+    for (const d of ILES) {
+      const c = reliefContext(d);
+      const out = [];
+      for (let z = -c.ext; z <= c.ext; z += 12) for (let x = -c.ext; x <= c.ext; x += 12) if (baseHeight(c, x, z) > 0) out.push(d.x + x, d.z + z);
+      land.set(d.id, out);
+    }
+    for (let i = 0; i < ILES.length; i++) {
+      for (let j = i + 1; j < ILES.length; j++) {
+        const a = ILES[i];
+        const b = ILES[j];
+        if (Math.hypot(a.x - b.x, a.z - b.z) > a.r + b.r + 200) continue;
+        const A = land.get(a.id);
+        const Bl = land.get(b.id);
+        let m = Infinity;
+        for (let p = 0; p < A.length; p += 2) for (let q = 0; q < Bl.length; q += 2) m = Math.min(m, Math.hypot(A[p] - Bl[q], A[p + 1] - Bl[q + 1]));
+        expect(m, `${a.id} / ${b.id}`).toBeGreaterThanOrEqual(70);
       }
     }
+    // aucune terre à moins de 120 m de l'île de départ
+    for (const [id, A] of land) for (let p = 0; p < A.length; p += 2) expect(Math.hypot(A[p], A[p + 1]), id).toBeGreaterThan(120);
+  }, 60000);
+
+  it('dresse des repères visibles de loin : Sommet givré, volcan, pitons des Îles célestes', async () => {
+    const { ILE_BY_ID } = await import('../src/world/islands/regions.js');
+    const { reliefContext, baseHeight } = await import('../src/world/islands/gen/relief.js');
+    const top = (id) => {
+      const d = ILE_BY_ID.get(id);
+      const c = reliefContext(d);
+      let h = 0;
+      for (let z = -c.ext; z <= c.ext; z += 8) for (let x = -c.ext; x <= c.ext; x += 8) h = Math.max(h, baseHeight(c, x, z));
+      return h;
+    };
+    expect(top('grande-ile')).toBeGreaterThan(220);
+    expect(top('volcan-endormi')).toBeGreaterThan(150);
+    expect(top('piton-celeste-3')).toBeGreaterThan(120);
   });
 
-  it('montre au moins deux îles depuis le bout du ponton', async () => {
-    const { ISLANDS } = await import('../src/world/islands/regions.js');
-    const { LAYOUT } = await import('../src/world/home/terrain.js');
-    const P = LAYOUT.pier;
-    const seen = ISLANDS.filter((d) => {
-      const dx = d.x - P.x;
-      const dz = d.z - P.z1;
-      // devant le ponton (vers +z), à portée de vue
-      return Math.hypot(dx, dz) < 700 && Math.abs(Math.atan2(dx, dz)) < Math.PI / 3;
+  it('nomme la zone de chaque point : île, zone de mer, départ, haute mer', async () => {
+    const { zoneAt } = await import('../src/world/islands/regions.js');
+    const { ZONE_BY_ID } = await import('../src/world/archipel.js');
+    const at = (id) => {
+      const z = ZONE_BY_ID.get(id);
+      return zoneAt(z.x, z.z)?.id;
+    };
+    for (const id of ['sommet-givre', 'foret-des-souvenirs', 'plateau-vente', 'cote-aux-villages', 'volcan-endormi', 'ile-aux-fleurs', 'ile-aux-lueurs', 'desert-ile-sechee', 'royaume-des-ruines', 'cascades-sacrees', 'place-des-os', 'village-englouti']) expect(at(id), id).toBe(id);
+    expect(zoneAt(0, 4)?.id).toBe('home');
+    // au large, loin de toute zone
+    expect(zoneAt(-2900, 1200)).toBe(null);
+  });
+
+  it('découpe les grandes îles en sections de 512 m taillées dans le plan de l’île entière', async () => {
+    const { ILE_BY_ID, ISLANDS } = await import('../src/world/islands/regions.js');
+    const { buildPlan } = await import('../src/world/islands/gen/plan.js');
+    const { cropPlan } = await import('../src/world/islands/gen/sections.js');
+    const { TREES, KINDS, STRIDE } = await import('../src/world/islands/gen/kinds.js');
+    const { bilinear } = await import('../src/world/islands/gen/grid.js');
+    const d = ILE_BY_ID.get('ile-aux-lueurs');
+    const secs = ISLANDS.filter((q) => q.parent === d.id);
+    expect(secs.length).toBeGreaterThanOrEqual(4);
+    expect(ISLANDS.some((q) => q.id === d.id)).toBe(false);
+    for (const q of secs) expect(q.id).toMatch(/^ile-aux-lueurs~\d-\d$/);
+    const whole = buildPlan(d);
+    const parts = secs.map((q) => cropPlan(whole, q));
+    // chaque arbre est dans une seule section, au même identifiant
+    expect(parts.reduce((a, p) => a + p.ids.length, 0)).toBe(whole.ids.length);
+    expect(new Set(parts.flatMap((p) => [...p.ids]))).toEqual(new Set(whole.ids));
+    for (const p of parts) for (let k = 0; k < p.items.length; k += STRIDE) expect(TREES.has(KINDS[p.items[k]])).toBe(true);
+    // même relief des deux côtés d'un raccord
+    for (const [p, q] of parts.map((p, i) => [p, secs[i]])) {
+      for (const [lx, lz] of [[-256, 0], [255, 100], [0, -256], [-100, 255]]) {
+        const h = bilinear(p.H, p.n, (lx + p.ext) / p.s, (lz + p.ext) / p.s);
+        const x = q.section.cx + lx;
+        const z = q.section.cz + lz;
+        expect(h).toBeCloseTo(bilinear(whole.H, whole.n, (x + whole.ext) / whole.s, (z + whole.ext) / whole.s), 5);
+      }
+    }
+  }, 30000);
+
+  it('ne pose que les bases : relief, eau douce, arbres (ni lieux, ni chemins, ni faune), Lac céleste', async () => {
+    const { ILE_BY_ID } = await import('../src/world/islands/regions.js');
+    const { buildPlan } = await import('../src/world/islands/gen/plan.js');
+    const { TREES, KINDS, STRIDE } = await import('../src/world/islands/gen/kinds.js');
+    const { ZONE_BY_ID } = await import('../src/world/archipel.js');
+    const d = ILE_BY_ID.get('grande-ile');
+    const p = buildPlan(d);
+    expect(p.pois).toEqual([]);
+    expect(p.paths).toEqual([]);
+    expect(p.spawners).toEqual([]);
+    expect(p.micro).toEqual([]);
+    for (let k = 0; k < p.items.length; k += STRIDE) expect(TREES.has(KINDS[p.items[k]])).toBe(true);
+    expect(p.ids.length).toBeGreaterThan(5000);
+    expect(p.rivers.length).toBeGreaterThanOrEqual(4);
+    // le Lac céleste : un lac d'eau douce à l'est, sous son aire
+    const L = ZONE_BY_ID.get('lac-celeste');
+    const lake = p.lakes.find((q) => {
+      const k = q.cells[0];
+      const x = d.x - p.ext + (k % p.n) * p.s;
+      const z = d.z - p.ext + Math.floor(k / p.n) * p.s;
+      return Math.hypot((x - L.x) / L.rx, (z - L.z) / L.rz) < 1;
     });
-    expect(seen.length).toBeGreaterThanOrEqual(2);
-  });
+    expect(lake).toBeTruthy();
+    expect(lake.area).toBeGreaterThan(20000);
+    // neige au Sommet givré, pas sur la côte
+    const Zs = await import('../src/world/islands/gen/zones.js');
+    let neige = 0;
+    for (let k = 0; k < p.Z.length; k++) if (p.Z[k] === Zs.Z.NEIGE) neige++;
+    expect(neige * p.s * p.s).toBeGreaterThan(30000);
+  }, 30000);
+});
 
+describe('ancien archipel (chaîne à archétypes, gardée pour les lieux)', () => {
   it('donne à chaque île un plan déterministe, avec les lieux de son archétype', async () => {
-    const { ISLANDS } = await import('../src/world/islands/regions.js');
+    const { ISLANDS } = await import('./helpers/archipel-v3.js');
+    expect(ISLANDS.map((d) => d.archetype).sort()).toEqual([...ARCHETYPES9].sort());
     const A = await fresh('../src/world/islands/gen/plan.js');
     const first = ISLANDS.map((d) => digest(A.buildPlan(d)));
     const B = await fresh('../src/world/islands/gen/plan.js');
@@ -103,7 +200,7 @@ describe('archipel', () => {
   });
 
   it('applique les retouches à la main : lieux interdits et lieux imposés', async () => {
-    const { ARCHIPEL } = await import('../src/world/archipel.js');
+    const { ARCHIPEL_V3: ARCHIPEL } = await import('./helpers/archipel-v3.js');
     const { islandDesc } = await import('../src/world/islands/regions.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const cliffs = ARCHIPEL.islands.find((i) => i.archetype === 'falaises');
@@ -117,7 +214,7 @@ describe('archipel', () => {
   });
 
   it('pose le troupeau de vaches de Pommeraie sur un pré, robes mêlées, sans toucher au reste de la faune', async () => {
-    const { ARCHIPEL } = await import('../src/world/archipel.js');
+    const { ARCHIPEL_V3: ARCHIPEL } = await import('./helpers/archipel-v3.js');
     const { islandDesc } = await import('../src/world/islands/regions.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const { Z } = await import('../src/world/islands/gen/zones.js');
@@ -141,14 +238,14 @@ describe('archipel', () => {
   });
 
   it('place les éléments de la mer en eau libre, à positions fixes et identifiants uniques', async () => {
-    const { ARCHIPEL } = await import('../src/world/archipel.js');
+    const { ARCHIPEL_V3: ARCHIPEL } = await import('./helpers/archipel-v3.js');
     const { MARINE_TYPES } = await import('../src/models/objets/index.js');
     const ids = new Set();
     for (const m of ARCHIPEL.marine) {
       expect(ids.has(m.id)).toBe(false);
       ids.add(m.id);
       expect(MARINE_TYPES).toContain(m.type);
-      expect(Math.hypot(m.x, m.z)).toBeLessThan(ARCHIPEL.limit.mist);
+      expect(Math.hypot(m.x, m.z)).toBeLessThan(1200);
       for (const isl of [...ARCHIPEL.islands, ARCHIPEL.home]) expect(Math.hypot(m.x - isl.x, m.z - isl.z), `${m.id} près de ${isl.id}`).toBeGreaterThan(isl.r * 1.3);
     }
     expect(ARCHIPEL.marine.length).toBeGreaterThanOrEqual(40);
@@ -173,79 +270,82 @@ describe('limite du monde', () => {
     let far = 0;
     for (let t = 0; t < seconds; t += 1 / 30) {
       s.update(1 / 30, input);
-      far = Math.max(far, Math.hypot(s.pos.x, s.pos.z));
+      far = Math.max(far, s.pos.x);
     }
-    return { d: Math.hypot(s.pos.x, s.pos.z), far, s };
+    return { x: s.pos.x, far, s };
   }
 
-  it('décrit brume, courant et demi-tour selon la distance au centre', async () => {
+  it('décrit brume, courant et demi-tour selon la distance au bord de l’emprise', async () => {
     const { worldLimit } = await import('../src/world/archipel.js');
-    expect(worldLimit(900, 0).pull).toBe(0);
-    expect(worldLimit(900, 0).mist).toBe(0);
-    expect(worldLimit(0, 1300).pull).toBeGreaterThan(0.3);
-    expect(worldLimit(0, 1300).uz).toBeCloseTo(-1);
-    expect(worldLimit(1300, 0).turn).toBe(false);
-    expect(worldLimit(1000, 1000).turn).toBe(true);
+    expect(worldLimit(0, -800).d).toBe(-2000);
+    expect(worldLimit(2800, 0).pull).toBe(0);
+    expect(worldLimit(2800, 0).mist).toBe(0);
+    expect(worldLimit(2950, 0).mist).toBeGreaterThan(0);
+    expect(worldLimit(3150, 0).pull).toBeGreaterThan(0.3);
+    expect(worldLimit(3150, 0).ux).toBeLessThan(-0.9);
+    expect(worldLimit(0, 1350).uz).toBeLessThan(-0.9);
+    expect(worldLimit(3200, 0).turn).toBe(false);
+    expect(worldLimit(3300, 0).turn).toBe(true);
+    expect(worldLimit(0, -3100).turn).toBe(true);
   });
 
-  it('ramène le bateau au-delà de 1,2 km et fait demi-tour au-delà de 1,4 km', async () => {
-    // à la dérive, moteur coupé : le courant du large le ramène vers 1,2 km
-    const drift = await sail('voilier', 1340, 0, Math.PI / 2, false, 300);
-    expect(drift.d).toBeLessThan(1260);
-    // plein gaz vers le large : il ne dépasse guère 1,4 km, vire et revient
-    const run = await sail('voilier', 1150, 0, Math.PI / 2, true, 150);
-    expect(run.far).toBeLessThan(1480);
-    expect(run.d).toBeLessThan(1200);
+  it('ramène le bateau au-delà du bord de l’emprise et fait demi-tour 250 m plus loin', async () => {
+    // à la dérive, moteur coupé : le courant du large le ramène vers le bord
+    const drift = await sail('voilier', 3200, -700, Math.PI / 2, false, 300);
+    expect(drift.x).toBeLessThan(3060);
+    // plein gaz vers le large : il ne dépasse guère 250 m au-delà, vire et revient
+    const run = await sail('voilier', 2950, -700, Math.PI / 2, true, 150);
+    expect(run.far).toBeLessThan(3330);
+    expect(run.x).toBeLessThan(3000);
     expect(run.s.uTurn).toBe(false);
   }, 30000);
 });
 
-describe('migration v3', () => {
-  it('rattache le journal à l’île du même archétype et vide récoltes et terrassements des îles changées', async () => {
+describe('migration v4 (open world)', () => {
+  it('remet le monde à zéro, garde inventaire, bateaux et île de départ, ramène le joueur au départ', async () => {
     const { migrate, relinkDiscoveries } = await import('../src/core/state.js');
-    const { GEN_VERSION, ISLANDS } = await import('../src/world/islands/regions.js');
-    const village = ISLANDS.find((d) => d.archetype === 'village');
+    const { GEN_VERSION } = await import('../src/world/islands/regions.js');
+    expect(GEN_VERSION).toBe(4);
     const old = {
       version: 2,
-      world: { seed: 'coquille-azur-4821', name: 'Vieux monde', createdAt: 1, genVersion: 2 },
-      harvest: { '3_4_0': { 12: 1 }, [village.id]: { 7: 1 } },
-      terra: { '3_4_0': { '5,6': -1 } },
-      marine: { taken: ['marin_x_1_2_0', 'mer-03'] },
-      boat: { type: 'barque', owned: ['radeau', 'barque'], x: 4800, z: -2200, heading: 1 },
+      world: { seed: 'coquille-azur-4821', name: 'Vieux monde', createdAt: 1, genVersion: 3 },
+      player: { name: 'Mochi', x: -170, z: 400 },
+      shells: 42,
+      inventory: { lanterne: 2 },
+      decor: [{ id: 'd1', type: 'banc', x: 3, z: 4 }],
+      harvest: { 'village-pommeraie': { 7: 1 } },
+      terra: { 'village-pommeraie': { '5,6': -1 } },
+      boat: { type: 'barque', owned: ['radeau', 'barque'], x: 600, z: 700, heading: 1 },
       explorer: {
-        islands: {
-          '3_4_0': { name: 'Île du Moulin Bleu', archetype: 'village', x: 1900, z: 700, t: 5, visited: true },
-          '9_1_0': { name: 'Bourg-Nacre', archetype: 'village', x: 300, z: 300, t: 9 },
-          '-2_2_0': { name: 'Les Sœurs Jumelles', archetype: 'jumelles', x: -900, z: 900, t: 7 },
-        },
-        fog: { '0,0': 'f'.repeat(64), '9,9': 'f'.repeat(64) },
-        pins: [{ x: 10, z: 20 }, { x: 5000, z: 0 }],
-        pois: { 123: { name: 'Moulin', island: '3_4_0', x: 1, z: 2 } },
+        islands: { 'village-pommeraie': { name: 'Village de Pommeraie', archetype: 'village', x: -170, z: 400, t: 5 } },
+        distance: 1234,
+        fog: { '0,0': 'f'.repeat(64) },
+        pins: [{ x: 10, z: 20 }],
+        pois: { 123: { name: 'Moulin', island: 'village-pommeraie', x: 1, z: 2 } },
       },
     };
     const s = migrate(old);
-    // seules les îles inchangées gardent leurs récoltes (ici, aucune île v2 ne subsiste)
-    expect(s.harvest).toEqual({ [village.id]: { 7: 1 } });
+    expect(s.harvest).toEqual({});
     expect(s.terra).toEqual({});
-    expect(s.marine.taken).toEqual(['mer-03']);
-    expect(s.boat.x).toBe(null);
-    expect(Object.keys(s.explorer.fog)).toEqual(['0,0']);
-    expect(s.explorer.pins).toEqual([{ x: 10, z: 20 }]);
+    expect(s.explorer.fog).toEqual({});
+    expect(s.explorer.pins).toEqual([]);
     expect(s.explorer.pois).toEqual({});
+    expect(s.explorer.islands).toEqual({});
+    expect(s.explorer.distance).toBe(1234);
+    expect(s.shells).toBe(42);
+    expect(s.inventory).toEqual({ lanterne: 2 });
+    expect(s.decor).toEqual(old.decor);
+    expect(s.boat.owned).toEqual(['radeau', 'barque']);
+    expect(s.boat.x).toBe(null);
+    expect([s.player.x, s.player.z]).toEqual([0, 4.5]);
     expect(relinkDiscoveries(s)).toBe(true);
     expect(s.world.genVersion).toBe(GEN_VERSION);
-    // deux villages notés : le plus ancien prend le village de l'archipel ; les jumelles n'ont pas d'équivalent
-    expect(Object.keys(s.explorer.islands)).toEqual([village.id]);
-    const rec = s.explorer.islands[village.id];
-    expect(rec.name).toBe(village.name);
-    expect(rec.visited).toBe(true);
-    expect(rec.x).toBe(Math.round(village.x));
-    // une seconde passe ne change plus rien
     expect(relinkDiscoveries(s)).toBe(false);
-    // une sauvegarde à jour garde ses récoltes
+    // une sauvegarde à jour garde ses récoltes et son joueur
     const cur = migrate({ ...old, world: { ...old.world, genVersion: GEN_VERSION } });
     expect(cur.harvest).toEqual(old.harvest);
     expect(cur.terra).toEqual(old.terra);
+    expect(cur.player.x).toBe(-170);
   });
 });
 
@@ -403,7 +503,7 @@ describe('chemins', () => {
 
 describe('identifiants', () => {
   it('sont stables et uniques (arbres, lieux, petite végétation des tuiles)', async () => {
-    const { ISLANDS } = await import('../src/world/islands/regions.js');
+    const { ISLANDS } = await import('./helpers/archipel-v3.js');
     const { buildPlan } = await fresh('../src/world/islands/gen/plan.js');
     const { Surface, buildTile, TILE } = await import('../src/world/islands/gen/surface.js');
     const d = ISLANDS.slice().sort((a, b) => b.r - a.r)[0];
@@ -439,7 +539,7 @@ describe('identifiants', () => {
 
 describe('champs de fleurs', () => {
   it('forme des nappes denses, colorées et stables sur l’île aux Mille Fleurs', async () => {
-    const { ISLANDS } = await import('../src/world/islands/regions.js');
+    const { ISLANDS } = await import('./helpers/archipel-v3.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const { Surface, buildTile, TILE } = await import('../src/world/islands/gen/surface.js');
     const { KINDS, STRIDE } = await import('../src/world/islands/gen/kinds.js');
@@ -503,7 +603,7 @@ describe('champs de fleurs', () => {
 
 describe('budget du Worker', () => {
   it('construit plan + LOD1 en moins de 60 ms en moyenne, 120 ms pour la grande île, une tuile en moins de 15 ms', async () => {
-    const { ISLANDS } = await import('../src/world/islands/regions.js');
+    const { ISLANDS } = await import('./helpers/archipel-v3.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const { Surface, buildLOD1, buildTile, TILE } = await import('../src/world/islands/gen/surface.js');
     for (const d of ISLANDS) buildLOD1(buildPlan(d)); // chauffe du compilateur

@@ -1,11 +1,12 @@
 import { ARCHIPEL } from '../world/archipel.js';
-import { ISLANDS } from '../world/islands/regions.js';
+import { ILES } from '../world/islands/regions.js';
 import { islandContext, islandHeight } from '../world/islands/islandgen.js';
+import { bilinear } from '../world/islands/gen/grid.js';
 import { heightAt, LAYOUT } from '../world/home/terrain.js';
 import { isRevealed } from '../world/fog.js';
 
 const SIZE = 164;
-const METERS_PER_PIXEL = 1.25;
+const METERS_PER_PIXEL = 2;
 const contexts = new Map();
 
 function terrainColor(height) {
@@ -15,7 +16,8 @@ function terrainColor(height) {
   if (height < 5) return [151, 192, 127, 255];
   if (height < 12) return [111, 170, 105, 255];
   if (height < 20) return [88, 142, 101, 255];
-  return [143, 139, 127, 255];
+  if (height < 70) return [143, 139, 127, 255];
+  return [236, 240, 244, 255];
 }
 
 export class MiniMap {
@@ -43,6 +45,20 @@ export class MiniMap {
     const heights = new Float32Array(SIZE * SIZE);
     const known = new Uint8Array(SIZE * SIZE);
     const bounds = ARCHIPEL.bounds;
+    // relief : la grille de 4 m des îles chargées (rapide), sinon le relief de base de l'île
+    const reach = (SIZE / 2) * METERS_PER_PIXEL + 8;
+    const near = [...(this.game.islands?.entries.values() || [])].filter((e) => e.plan && Math.abs(e.desc.x - px) < e.plan.ext + reach && Math.abs(e.desc.z - pz) < e.plan.ext + reach);
+    const isles = ILES.filter((d) => Math.abs(d.x - px) < d.r * 1.4 + 150 + reach && Math.abs(d.z - pz) < d.r * 1.4 + 150 + reach);
+    const loaded = (wx, wz) => {
+      for (const e of near) {
+        const lx = wx - e.desc.x;
+        const lz = wz - e.desc.z;
+        const core = e.plan.core || e.plan.ext - 4;
+        if (Math.abs(lx) > core || Math.abs(lz) > core) continue;
+        return bilinear(e.plan.H, e.plan.n, (lx + e.plan.ext) / e.plan.s, (lz + e.plan.ext) / e.plan.s);
+      }
+      return null;
+    };
 
     for (let y = 0; y < SIZE; y++) {
       for (let x = 0; x < SIZE; x++) {
@@ -53,8 +69,8 @@ export class MiniMap {
         if (inside && isRevealed(state.explorer.fog, wx, wz)) {
           let height = -4;
           if (Math.hypot(wx, wz) < 52) height = heightAt(wx, wz);
-          else {
-            const island = ISLANDS.find((d) => Math.hypot(wx - d.x, wz - d.z) < d.r * 1.4);
+          else if ((height = loaded(wx, wz) ?? -4) === -4) {
+            const island = isles.find((d) => Math.abs(wx - d.x) < islandContext(d).ext && Math.abs(wz - d.z) < islandContext(d).ext && islandHeight(islandContext(d), wx - d.x, wz - d.z) > -3);
             if (island) {
               let islandCtx = contexts.get(island.id);
               if (!islandCtx) {
@@ -143,7 +159,8 @@ export class MiniMap {
     ctx.fillStyle = '#42534f';
     ctx.font = '700 9px Nunito, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('25 m', SIZE - 34, SIZE - 13);
+    ctx.fillText(`${Math.round(20 * METERS_PER_PIXEL)} m`, SIZE - 34, SIZE - 13);
+
 
     // Flèche du joueur : la carte ne tourne pas, l'indicateur suit son cap.
     ctx.save();

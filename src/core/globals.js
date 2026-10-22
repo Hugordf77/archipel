@@ -17,7 +17,7 @@ export const U = {
   uShadowTint: { value: new THREE.Color(0.55, 0.55, 0.85) },
   uRimColor: { value: new THREE.Color(1, 0.9, 0.7) },
   uFogColor: { value: new THREE.Color(0.85, 0.93, 0.95) },
-  uFogRange: { value: new THREE.Vector2(170, 1500) },
+  uFogRange: { value: new THREE.Vector2(170, 3400) },
   uBands: { value: new THREE.Vector3(0.36, 0.55, 0.74) },
   uNight: { value: 0 },
   uSnow: { value: 0 },

@@ -4,7 +4,7 @@ import { Pipeline } from '../render/Pipeline.js';
 import { U, ORIGIN } from '../core/globals.js';
 import { IslandManager } from '../world/islands/IslandManager.js';
 import { IslandFauna } from '../entities/fauna/islandFauna.js';
-import { ARCHETYPES } from '../world/islands/archetypes.js';
+import { ILES, ILE_BY_ID } from '../world/islands/regions.js';
 import { POI_LABELS } from '../world/islands/gen/pois.js';
 import { mulberry32 } from '../core/random.js';
 import { MarineManager } from '../world/marine.js';
@@ -12,7 +12,7 @@ import { Sailing } from '../entities/Sailing.js';
 import { AirRide } from '../entities/AirRide.js';
 import { BOATS } from '../models/boats/bateaux.js';
 import { reveal } from '../world/fog.js';
-import { ARCHIPEL, worldLimit } from '../world/archipel.js';
+import { worldLimit } from '../world/archipel.js';
 import { LAYOUT } from '../world/home/terrain.js';
 import { Fauna } from '../entities/fauna/homeFauna.js';
 import { CameraRig } from './CameraRig.js';
@@ -63,7 +63,8 @@ export class Game {
     // --- rendu ---
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
-    this.camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 2000);
+    // l'archipel fait 6 × 4 km : les repères (Sommet givré, volcan) se voient de l'autre bout
+    this.camera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 4500);
     this.world = new World();
     // contenu du monde en coordonnées absolues (le groupe racine porte l'origine flottante)
     this.scene = this.world.root;
@@ -978,15 +979,17 @@ export class Game {
     openLogbookPanel(this);
   }
 
-  // Nouvelle île en vue : notée dans le journal de bord
+  // Nouvelle île en vue : notée dans le journal de bord (une section compte pour son île entière ;
+  // les îlots sont notés sans annonce)
   discoverIsland(desc) {
     const ex = this.state.explorer;
-    if (ex.islands[desc.id]) return;
-    ex.islands[desc.id] = { name: desc.name, biome: desc.biome, archetype: desc.archetype, x: Math.round(desc.x), z: Math.round(desc.z), r: Math.round(desc.r), t: Date.now(), pois: [], animals: [] };
+    const ile = desc.parent ? ILE_BY_ID.get(desc.parent) : desc;
+    if (!ile || ex.islands[ile.id]) return;
+    ex.islands[ile.id] = { name: ile.name, biome: ile.biome, zone: ile.zone, x: Math.round(ile.x), z: Math.round(ile.z), r: Math.round(ile.r), t: Date.now(), pois: [], animals: [] };
     this.markDirty();
-    const kind = ARCHETYPES[desc.archetype]?.name;
-    const n = Object.keys(ex.islands).length;
-    this.ui.toast(`Nouvelle île : ${desc.name}${kind ? ` — ${kind.toLowerCase()}` : ''} (${n} / ${ARCHIPEL.islands.length})`, { icon: 'map', duration: 4200 });
+    if (ile.ilot) return;
+    const n = Object.keys(ex.islands).filter((id) => !ILE_BY_ID.get(id)?.ilot).length;
+    this.ui.toast(`Nouvelle île : ${ile.name} (${n} / ${ILES.filter((d) => !d.ilot).length})`, { icon: 'map', duration: 4200 });
     this.audio?.pop(1.3);
   }
 
@@ -1195,7 +1198,7 @@ export class Game {
     // brume du large : la vue se referme en approchant de la limite de l'archipel
     const mist = worldLimit(P.x, P.z).mist;
     this.mist = (this.mist || 0) + (mist - (this.mist || 0)) * Math.min(1, dt * 1.5);
-    U.uFogRange.value.set(170 - this.mist * 120, 1500 - this.mist * 1180);
+    U.uFogRange.value.set(170 - this.mist * 120, 3400 - this.mist * 3080);
   }
 
   // Origine flottante : le monde est décalé pour garder des coordonnées locales petites

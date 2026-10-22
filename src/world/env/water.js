@@ -235,7 +235,7 @@ export function buildOcean() {
   const radii = [];
   for (let r = 0; r <= 44; r += 0.9) radii.push(r);
   let r = 44;
-  while (r < 3200) {
+  while (r < 4500) {
     r *= 1.075;
     radii.push(r);
   }

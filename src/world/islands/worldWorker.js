@@ -4,9 +4,12 @@ import { buildPlan } from './gen/plan.js';
 import { Surface, buildLOD1, buildLOD2, buildTile, buildDepthWindow } from './gen/surface.js';
 import { buildFarVeg } from './farveg.js';
 import { BIOMES } from './biomes.js';
-import { GEN_VERSION } from './regions.js';
+import { cropPlan } from './gen/sections.js';
+import { GEN_VERSION, ILE_BY_ID } from './regions.js';
 
 const plans = new Map();
+// plans des grandes îles entières : gardés tant que le Worker vit (leurs sections s'y taillent)
+const parents = new Map();
 const keyOf = (d) => `${d.id}:${d.seed}:${GEN_VERSION}`;
 function planOf(desc) {
   const key = keyOf(desc);
@@ -16,7 +19,11 @@ function planOf(desc) {
     plans.set(key, p);
     return p;
   }
-  p = buildPlan(desc);
+  if (desc.parent) {
+    let whole = parents.get(desc.parent);
+    if (!whole) parents.set(desc.parent, (whole = buildPlan(ILE_BY_ID.get(desc.parent))));
+    p = cropPlan(whole, desc);
+  } else p = buildPlan(desc);
   plans.set(key, p);
   // assez large pour toutes les îles en LOD1 (≤ 600 m) : une tuile ne doit jamais reconstruire son plan
   if (plans.size > 40) plans.delete(plans.keys().next().value);
@@ -31,7 +38,7 @@ const views = (o, out = []) => {
 // ce que le jeu doit connaître du plan (copies : le cache du Worker garde les originaux)
 function publicPlan(p) {
   return {
-    n: p.n, s: p.s, ext: p.ext, seed: p.seed, archetype: p.archetype, traits: p.traits, stats: p.stats, timings: p.timings,
+    n: p.n, s: p.s, ext: p.ext, seed: p.seed, core: p.core, tmax: p.tmax, ox: p.ox, oz: p.oz, zones: p.zones, archetype: p.archetype, traits: p.traits, stats: p.stats, timings: p.timings,
     H: p.H.slice(), A: p.A.slice(), Z: p.Z.slice(),
     rivers: p.rivers.map((rv) => ({ id: rv.id, end: rv.end, pts: rv.pts.slice() })),
     lakes: p.lakes.map((L) => ({ id: L.id, level: L.level, cells: L.cells.slice(), box: L.box, area: L.area })),
@@ -47,7 +54,7 @@ self.onmessage = (e) => {
   try {
     if (m.type === 'island') {
       let out;
-      if (m.lod === 2) out = { mesh: buildLOD2(m.desc) };
+      if (m.lod === 2) out = { mesh: buildLOD2(m.desc, m.desc.parent ? ILE_BY_ID.get(m.desc.parent) : null) };
       else {
         const p = planOf(m.desc);
         const mesh = buildLOD1(p);
@@ -80,7 +87,7 @@ self.onmessage = (e) => {
       if (!list.includes(tile.herbe.buffer)) list.push(tile.herbe.buffer);
       self.postMessage({ type: 'tile', id: m.desc.id, req: m.req, tile, ms: performance.now() - tp, planMs: hit ? 0 : tp - t0 }, list);
     } else if (m.type === 'depth') {
-      const data = buildDepthWindow(m.islands, m.cx, m.cz, m.size, m.res, (d) => plans.get(keyOf(d)));
+      const data = buildDepthWindow(m.islands, m.cx, m.cz, m.size, m.res, (d) => plans.get(keyOf(d)), (d) => ILE_BY_ID.get(d.parent));
       self.postMessage({ type: 'depth', req: m.req, data, cx: m.cx, cz: m.cz, size: m.size, res: m.res, ms: performance.now() - t0 }, [data.buffer]);
     }
   } catch (err) {

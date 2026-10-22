@@ -21,7 +21,8 @@ function markerFor(type, x, z, rnd) {
 }
 
 export class MarineManager {
-  constructor({ root, interactions, taken = [], onCollect = null }) {
+  // list : éléments à poser (ceux de l'archipel par défaut ; vide à l'étape « bases » de l'open world)
+  constructor({ root, interactions, taken = [], onCollect = null, list = ARCHIPEL.marine }) {
     this.root = root;
     this.interactions = interactions;
     this.taken = new Set(taken);
@@ -31,7 +32,7 @@ export class MarineManager {
     root.add(this.group);
     this.t = 0;
     this.records = [];
-    for (const m of ARCHIPEL.marine) this.create(m);
+    for (const m of list) this.create(m);
   }
 
   create({ id, type, x, z }) {

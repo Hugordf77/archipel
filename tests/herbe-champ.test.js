@@ -2,7 +2,7 @@
 // tuiles voisines, règles (zones, chemins, eau, arbres, massifs), éléments et identifiants des
 // tuiles inchangés, coût par tuile.
 import { describe, it, expect } from 'vitest';
-import { ISLANDS } from '../src/world/islands/regions.js';
+import { ISLANDS } from './helpers/archipel-v3.js';
 import { buildPlan } from '../src/world/islands/gen/plan.js';
 import { Surface, buildTile, tileGround, TILE } from '../src/world/islands/gen/surface.js';
 import { herbeTile, HERBE_HMAX } from '../src/world/islands/gen/herbe.js';

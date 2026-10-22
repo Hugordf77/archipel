@@ -1,17 +1,18 @@
 // Plan d'île (Worker) : enchaîne toutes les passes et renvoie une description
 // complète et déterministe — relief, eau, zones, lieux, chemins, végétation, faune.
 import { buildTerrain } from './terrain.js';
-import { computeZones, zoneColors, Z } from './zones.js';
+import { computeZones, computeZonesForme, zoneColors, Z } from './zones.js';
 import { placePOIs, placeMicro, applyStamps } from './pois.js';
 import { buildPaths } from './paths.js';
 import { sealLakes } from './hydro.js';
-import { placeFlora } from './flora.js';
+import { placeFlora, placeFloraForme } from './flora.js';
 import { placeSpawners } from './spawns.js';
 import { slopeAt } from './grid.js';
 import { BIOMES } from '../biomes.js';
 import { islandTraits } from '../archetypes.js';
 
 export function buildPlan(desc) {
+  if (desc.forme) return buildPlanForme(desc);
   const tm = {};
   let t = performance.now();
   const lap = (name) => {
@@ -92,6 +93,71 @@ export function buildPlan(desc) {
     coastDist: P.coastDist,
     failedLinks: P.failedLinks || [],
     stats: { hmax, flowerCells, pathFailed: net.failed, nodes: net.nodes, rivers: T.rivers.length, lakes: T.lakes.length, falls: T.falls.length, pois: pois.length, micro: micro.length, items: flora.ids.length, spawners: spawners.length },
+    timings: tm,
+  };
+}
+
+// Îles de la carte (open world), étape « bases » : relief, eau douce, zones et arbres seulement
+// (ni lieux, ni chemins, ni faune, ni ressources : leurs listes restent vides). Le plan garde en plus
+// le biome (B) et la zone de l'île (ZI) de chaque case.
+function buildPlanForme(desc) {
+  const tm = {};
+  let t = performance.now();
+  const lap = (name) => {
+    const now = performance.now();
+    tm[name] = (tm[name] || 0) + now - t;
+    t = now;
+  };
+  const T = buildTerrain(desc, tm);
+  t = performance.now();
+  const traits = { windAngle: ((desc.seed % 6283) / 1000), bloom: 'rose' };
+  const P = {
+    desc, ctx: T.ctx, traits, pal: (BIOMES[desc.biome] || BIOMES.prairie).pal,
+    H: T.H, n: T.n, s: T.s, ext: T.ext, water: T.water, lakes: T.lakes, rivers: T.rivers, falls: T.falls, hmax: T.hmax,
+  };
+  Object.assign(P, computeZonesForme(T, desc));
+  lap('zones');
+  const rim = sealLakes(P.H, P.n, P.lakes, P.water);
+  for (let j = 0; j < P.n; j++) for (let i = 0; i < P.n; i++) P.slope[j * P.n + i] = slopeAt(P.H, P.n, P.s, i, j);
+  const { C, A } = zoneColors(P, desc);
+  for (const k of rim) A[k] = 0;
+  lap('couleurs');
+  const flora = placeFloraForme(P);
+  lap('végétation');
+  let hmax = 0;
+  for (let k = 0; k < P.H.length; k++) hmax = Math.max(hmax, P.H[k]);
+  return {
+    id: desc.id,
+    seed: desc.seed,
+    archetype: 'forme',
+    biome: desc.biome,
+    name: desc.name,
+    n: P.n,
+    s: P.s,
+    ext: P.ext,
+    H: P.H,
+    A,
+    Z: P.zone,
+    C,
+    B: P.B,
+    ZI: P.ZI,
+    zones: T.ctx.zones.map((z) => z.id),
+    rivers: T.rivers.map((rv) => ({ id: rv.id, end: rv.end, pts: Float32Array.from(rv.pts) })),
+    lakes: T.lakes.map((L) => ({ id: L.id, level: L.level, cells: L.cells, box: L.box, area: L.area })),
+    falls: T.falls,
+    pois: [],
+    micro: [],
+    paths: [],
+    pathParts: [],
+    landing: null,
+    items: flora.items,
+    ids: flora.ids,
+    spawners: [],
+    traits,
+    wetDist: P.wetDist,
+    coastDist: P.coastDist,
+    failedLinks: [],
+    stats: { hmax, flowerCells: 0, pathFailed: 0, nodes: 0, rivers: T.rivers.length, lakes: T.lakes.length, falls: T.falls.length, pois: 0, micro: 0, items: flora.ids.length, spawners: 0 },
     timings: tm,
   };
 }

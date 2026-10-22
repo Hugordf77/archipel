@@ -17,6 +17,7 @@ import { Z, ZONE_HERBE } from './zones.js';
 import { KINDS, KIND_RADIUS, STRIDE } from './kinds.js';
 import { SHAPES } from '../farveg.js';
 import { densiteHerbeBiome } from '../biomes.js';
+import { BIOME_IDS } from './forme.js';
 import { MURS } from '../../../models/batiments/maison-village/physique.js';
 
 export const HERBE_HMAX = 1.2;
@@ -191,7 +192,19 @@ export function herbeTile(plan, surf, x0, z0, T, src) {
   scratch(V);
   const { Hb, W, zfi, zfj, pathW, pathD } = src;
   const { n, s, ext } = plan;
-  const { base, biomeF, dry, tall, hRef } = P;
+  const { base, hRef } = P;
+  // sections des grandes îles : bruits de l'île entière ; îles à plusieurs biomes : celui de la tuile
+  const sx = plan.ox || 0;
+  const sz = plan.oz || 0;
+  let { biomeF, dry, tall } = P;
+  if (plan.B) {
+    const i = Math.max(0, Math.min(n - 1, Math.round((x0 + T / 2 + ext) / s)));
+    const j = Math.max(0, Math.min(n - 1, Math.round((z0 + T / 2 + ext) / s)));
+    const b = BIOME_IDS[plan.B[j * n + i]];
+    biomeF = densiteHerbeBiome(b);
+    dry = BIOME_DRY[b] ?? 0;
+    tall = BIOME_TALL[b] ?? 1;
+  }
   const out = new Uint8Array(V * V * 4);
 
   // 1. ombres et emprises (minimum), anneaux plus denses (maximum), lieux piétinés (minimum)
@@ -324,8 +337,8 @@ export function herbeTile(plan, surf, x0, z0, T, src) {
   const wM = Math.ceil(T / LM) + 2;
   for (let b = 0; b < wM; b++) {
     for (let a = 0; a < wM; a++) {
-      const x = x0 + a * LM;
-      const z = z0 + b * LM;
+      const x = x0 + a * LM + sx;
+      const z = z0 + b * LM + sz;
       const along = x * P.wc + z * P.ws;
       const across = -x * P.ws + z * P.wc;
       latM[b * wM + a] = smooth(0.17, 0.5, fbm(P.nMassif, along / 11, across / 7.35, 2));
@@ -334,7 +347,7 @@ export function herbeTile(plan, surf, x0, z0, T, src) {
   const wT = Math.ceil(T / LT) + 2;
   for (let b = 0; b < wT; b++) {
     for (let a = 0; a < wT; a++) {
-      latT[b * wT + a] = smooth(-0.36, -0.5, fbm(P.nTrou, (x0 + a * LT) / 23, (z0 + b * LT) / 23, 2));
+      latT[b * wT + a] = smooth(-0.36, -0.5, fbm(P.nTrou, (x0 + a * LT + sx) / 23, (z0 + b * LT + sz) / 23, 2));
     }
   }
 
@@ -386,7 +399,7 @@ export function herbeTile(plan, surf, x0, z0, T, src) {
       }
       const tuft = base[o00 + 3] * w00 + base[o10 + 3] * w10 + base[o01 + 3] * w01 + base[o11 + 3] * w11;
       // bruit fin (3,5 m) : × 0,75 à 1,25 ; touffes franches dans le maquis et les dunes
-      const nf = P.nFin(x / 3.5, z / 3.5);
+      const nf = P.nFin((x + sx) / 3.5, (z + sz) / 3.5);
       R *= tuft > 0 ? (1 - tuft) * (1 + 0.25 * nf) + tuft * 3.3 * smooth(0.05, 0.6, nf) : 1 + 0.25 * nf;
       // massifs de hautes herbes et trouées
       const m = lattice(latM, wM, LM, i, j);
@@ -406,7 +419,7 @@ export function herbeTile(plan, surf, x0, z0, T, src) {
       }
       // fissures herbeuses sur la roche
       if (rock > 0.01 && cut > 0) {
-        const fente = smooth(0.82, 0.95, 1 - Math.abs(P.nFente(x / 5, z / 5)));
+        const fente = smooth(0.82, 0.95, 1 - Math.abs(P.nFente((x + sx) / 5, (z + sz) / 5)));
         const r2 = 0.08 * biomeF * rock * fente * cut;
         if (r2 > R) R = r2;
       }

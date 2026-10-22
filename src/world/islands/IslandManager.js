@@ -480,7 +480,10 @@ export class IslandManager {
       if (!this.entries.has(e.desc.id)) return;
       const r = buildRivers(plan.rivers);
       if (r) group.add(r);
-      for (const lake of plan.lakes) group.add(buildLake(lake, plan));
+      for (const lake of plan.lakes) {
+        const mesh = buildLake(lake, plan);
+        if (mesh) group.add(mesh);
+      }
       const f = buildFallFoam(plan.falls);
       if (f) group.add(f);
     });
@@ -775,7 +778,8 @@ export class IslandManager {
     const lx = px - e.desc.x;
     const lz = pz - e.desc.z;
     const ext = e.plan.ext;
-    const tmax = Math.ceil(ext / TILE);
+    // sections des grandes îles : les tuiles de leur carré seulement
+    const tmax = e.plan.tmax || Math.ceil(ext / TILE);
     const ctx = Math.floor(lx / TILE);
     const ctz = Math.floor(lz / TILE);
     const keyW = `${ctx},${ctz}`;
@@ -1071,13 +1075,19 @@ export class IslandManager {
 
   // ---------------------------------------------------------------------------
   // Requêtes du jeu
+  // île (ou section) qui porte ce point : le carré propre d'une section passe avant les marges
   entryAt(x, z) {
+    let fallback = null;
     for (const e of this.entries.values()) {
       if (!e.surf) continue;
-      const ext = e.plan.ext;
-      if (Math.abs(x - e.desc.x) < ext && Math.abs(z - e.desc.z) < ext) return e;
+      const lx = Math.abs(x - e.desc.x);
+      const lz = Math.abs(z - e.desc.z);
+      if (lx >= e.plan.ext || lz >= e.plan.ext) continue;
+      const core = e.plan.core;
+      if (!core || (lx < core && lz < core)) return e;
+      fallback ||= e;
     }
-    return null;
+    return fallback;
   }
 
   heightAt(x, z) {
@@ -1108,14 +1118,8 @@ export class IslandManager {
 
   // niveau de l'eau (lacs et rivières), sinon la mer
   waterLevelAt(x, z) {
-    for (const e of this.entries.values()) {
-      if (!e.surf) continue;
-      const lx = x - e.desc.x;
-      const lz = z - e.desc.z;
-      if (Math.abs(lx) > e.plan.ext || Math.abs(lz) > e.plan.ext) continue;
-      return e.surf.waterLevel(lx, lz);
-    }
-    return 0;
+    const e = this.entryAt(x, z);
+    return e ? e.surf.waterLevel(x - e.desc.x, z - e.desc.z) : 0;
   }
 
   nearest(x, z) {

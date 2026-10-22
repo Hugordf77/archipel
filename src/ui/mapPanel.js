@@ -2,41 +2,49 @@
 // joueur, îles découvertes et leurs noms (les autres en pointillés), limite du large, épingles,
 // zone du bateau, traces des cartes au trésor, part de l'archipel découverte.
 import { h } from './dom.js';
-import { ISLANDS } from '../world/islands/regions.js';
+import { ILES } from '../world/islands/regions.js';
 import { ARCHIPEL } from '../world/archipel.js';
 import { islandContext, islandHeight } from '../world/islands/islandgen.js';
+import { formeZone, snowLine } from '../world/islands/gen/forme.js';
 import { BIOMES } from '../world/islands/biomes.js';
 import { isRevealed, FOG_CELL, fogShare } from '../world/fog.js';
 import { heightAt } from '../world/home/terrain.js';
 import { BOATS } from '../models/bateaux/index.js';
 
 const shapeCache = new Map();
-// silhouette peinte d'une île (petit canevas mis en cache)
+const hex = (s) => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
+const palOf = (b) => {
+  const pal = BIOMES[b]?.pal || BIOMES.prairie.pal;
+  return { sand: hex(pal.sand), grass: hex(pal.grass[1]), rock: hex(pal.rock), snow: hex(pal.snow || '#f7fbff') };
+};
+// demi-côté (m) du carré peint d'une île
+const shapeExt = (desc) => (desc.id === 'home' ? 40 : desc.forme ? islandContext(desc).ext : desc.r * 1.38);
+// silhouette peinte d'une île (canevas mis en cache, environ 12 m par pixel ; couleurs du biome de
+// chaque zone et neige des îles de la carte)
 function islandShape(desc) {
   let c = shapeCache.get(desc.id);
   if (c) return c;
-  const N = 40;
+  const isHome = desc.id === 'home';
+  const ext = shapeExt(desc);
+  const N = Math.max(40, Math.min(240, Math.round(ext / 12)));
   c = document.createElement('canvas');
   c.width = c.height = N;
   const g = c.getContext('2d');
   const img = g.createImageData(N, N);
-  const isHome = desc.id === 'home';
   const ctx = isHome ? null : islandContext(desc);
-  const ext = isHome ? 40 : desc.r * 1.38;
-  const pal = BIOMES[desc.biome]?.pal || BIOMES.prairie.pal;
-  const hex = (s) => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
-  const sand = hex(pal.sand);
-  const grass = hex(pal.grass[1]);
-  const rock = hex(pal.rock);
+  const pals = ctx?.forme ? ctx.zones.map((z) => palOf(z.biome)) : [palOf(desc.biome)];
   const shallow = [176, 225, 214];
   for (let j = 0; j < N; j++) {
     for (let i = 0; i < N; i++) {
       const x = -ext + ((i + 0.5) / N) * ext * 2;
       const z = -ext + ((j + 0.5) / N) * ext * 2;
       const hgt = isHome ? heightAt(x, z) : islandHeight(ctx, x, z);
+      const zi = ctx?.forme && hgt > -0.3 ? formeZone(ctx, x, z) : 0;
+      const { sand, grass, rock, snow } = pals[zi];
       let col = null;
       let a = 255;
-      if (hgt > 1.3) col = hgt > (isHome ? 6 : desc.biome === 'volcan' ? 14 : 16) ? rock : grass;
+      if (ctx?.forme && hgt > snowLine(desc.z + z, ctx.zones[zi].biome)) col = snow;
+      else if (hgt > 1.3) col = hgt > (isHome ? 6 : desc.biome === 'volcan' ? 14 : ctx?.forme ? 60 : 16) ? rock : grass;
       else if (hgt > -0.3) col = sand;
       else if (hgt > -2.5) {
         col = shallow;
@@ -64,8 +72,9 @@ export function openMapPanel(game) {
   const B = ARCHIPEL.bounds;
   const canvas = h('canvas', { class: 'map-canvas', tabindex: '0', 'aria-label': 'Carte de l\'archipel' });
   const share = Math.round(fogShare(ex.fog) * 100);
-  const known = Object.keys(ex.islands).filter((id) => ISLANDS.some((d) => d.id === id)).length;
-  const legend = h('p', { class: 'muted map-legend' }, `${known} / ${ISLANDS.length} îles · ${share} % de l'archipel découvert. Glisse pour te déplacer, molette ou +/− pour zoomer, clique pour poser ou retirer une épingle.`);
+  const big = ILES.filter((d) => !d.ilot);
+  const known = big.filter((d) => ex.islands[d.id]).length;
+  const legend = h('p', { class: 'muted map-legend' }, `${known} / ${big.length} îles · ${share} % de l'archipel découvert. Glisse pour te déplacer, molette ou +/− pour zoomer, clique pour poser ou retirer une épingle.`);
   const zoomTxt = h('span', { class: 'map-scale' }, '');
   const btn = (label, title, fn) => h('button', { class: 'btn ghost small', title, onclick: fn }, label);
   const tools = h('div', { class: 'row map-tools' },
@@ -149,16 +158,17 @@ export function openMapPanel(game) {
       g.strokeStyle = 'rgba(159, 107, 72, 0.45)';
       g.lineWidth = 1.5;
       g.strokeRect(ax, ay, bx - ax, by - ay);
-      const [hx, hy] = toScreen(0, 0);
+      // limite du large : demi-tour au-delà
+      const t = ARCHIPEL.limit.turn;
+      const [cx, cy] = toScreen(B.minX - t, B.minZ - t);
+      const [dx, dy] = toScreen(B.maxX + t, B.maxZ + t);
       g.setLineDash([3, 7]);
       g.strokeStyle = 'rgba(91, 74, 99, 0.35)';
-      g.beginPath();
-      g.arc(hx, hy, ARCHIPEL.limit.mist / view.mpp, 0, Math.PI * 2);
-      g.stroke();
+      g.strokeRect(cx, cy, dx - cx, dy - cy);
       g.setLineDash([]);
     }
     // îles
-    const isles = [...ISLANDS, { id: 'home', x: 0, z: 0, r: 30, biome: 'prairie', name: ARCHIPEL.home.name }];
+    const isles = [...ILES, { id: 'home', x: 0, z: 0, r: 30, biome: 'prairie', name: ARCHIPEL.home.name }];
     const labels = [];
     for (const d of isles) {
       const known = d.id === 'home' || ex.islands[d.id];
@@ -175,12 +185,12 @@ export function openMapPanel(game) {
         g.setLineDash([]);
         continue;
       }
-      const ext = d.id === 'home' ? 40 : d.r * 1.38;
+      const ext = shapeExt(d);
       const [sx, sy] = toScreen(d.x - ext, d.z - ext);
       const size = (ext * 2) / view.mpp;
       g.imageSmoothingEnabled = true;
       g.drawImage(islandShape(d), sx, sy, size, size);
-      if (known) labels.push({ x: d.x, z: d.z + d.r * 0.9, text: d.name, home: d.id === 'home' });
+      if (known && !d.ilot) labels.push({ x: d.x, z: d.z + Math.min(d.r * 0.9, 300), text: d.name, home: d.id === 'home' });
     }
     // traces des cartes au trésor
     for (const t of ex.treasures || []) {

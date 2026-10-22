@@ -309,7 +309,7 @@ describe('herbe en tapis : palettes et sol', () => {
   });
 
   it('sous l’herbe, le sol prend le milieu ombré de la palette, au relief de 4 m comme au mètre', async () => {
-    const { ISLANDS } = await import('../src/world/islands/regions.js');
+    const { ISLANDS } = await import('./helpers/archipel-v3.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const { Surface, buildTile } = await import('../src/world/islands/gen/surface.js');
     const { Z } = await import('../src/world/islands/gen/zones.js');
