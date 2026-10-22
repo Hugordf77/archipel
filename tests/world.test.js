@@ -105,6 +105,48 @@ describe('archipel des souvenirs (open world)', () => {
     expect(top('piton-celeste-3')).toBeGreaterThan(120);
   });
 
+  it('donne du caractère au relief : massif à plusieurs sommets, forêt vallonnée, côte et plateau plus doux', async () => {
+    const { ILE_BY_ID } = await import('../src/world/islands/regions.js');
+    const { ZONE_BY_ID } = await import('../src/world/archipel.js');
+    const { reliefContext, baseHeight } = await import('../src/world/islands/gen/relief.js');
+    const d = ILE_BY_ID.get('grande-ile');
+    const c = reliefContext(d);
+    const sample = (id, step = 16) => {
+      const z = ZONE_BY_ID.get(id);
+      const pts = [];
+      for (let v = -z.rz * 0.7; v <= z.rz * 0.7; v += step) for (let u = -z.rx * 0.7; u <= z.rx * 0.7; u += step) pts.push([u, v, baseHeight(c, z.x - d.x + u, z.z - d.z + v)]);
+      return pts;
+    };
+    // relief local : écart moyen à la moyenne des voisins (rugosité des collines)
+    const rough = (id) => {
+      const z = ZONE_BY_ID.get(id);
+      let sum = 0;
+      let n = 0;
+      for (const [u, v, h] of sample(id, 24)) {
+        if (h < 2) continue;
+        const x = z.x - d.x + u;
+        const y = z.z - d.z + v;
+        const m = (baseHeight(c, x + 30, y) + baseHeight(c, x - 30, y) + baseHeight(c, x, y + 30) + baseHeight(c, x, y - 30)) / 4;
+        sum += Math.abs(h - m);
+        n++;
+      }
+      return sum / n;
+    };
+    expect(rough('foret-des-souvenirs')).toBeGreaterThan(rough('cote-aux-villages') * 1.5);
+    expect(rough('sommet-givre')).toBeGreaterThan(rough('foret-des-souvenirs') * 1.5);
+    // plusieurs sommets au-dessus de 150 m dans le massif (maxima locaux sur la grille de 16 m)
+    const pts = sample('sommet-givre');
+    const H = new Map(pts.map(([u, v, h]) => [`${u},${v}`, h]));
+    let peaks = 0;
+    for (const [u, v, h] of pts) {
+      if (h < 150) continue;
+      let top = true;
+      for (const [du, dv] of [[16, 0], [-16, 0], [0, 16], [0, -16], [16, 16], [-16, -16], [16, -16], [-16, 16]]) if ((H.get(`${u + du},${v + dv}`) ?? -1) > h) top = false;
+      if (top) peaks++;
+    }
+    expect(peaks).toBeGreaterThanOrEqual(3);
+  }, 30000);
+
   it('nomme la zone de chaque point : île, zone de mer, départ, haute mer', async () => {
     const { zoneAt } = await import('../src/world/islands/regions.js');
     const { ZONE_BY_ID } = await import('../src/world/archipel.js');
@@ -134,7 +176,8 @@ describe('archipel des souvenirs (open world)', () => {
     // chaque arbre est dans une seule section, au même identifiant
     expect(parts.reduce((a, p) => a + p.ids.length, 0)).toBe(whole.ids.length);
     expect(new Set(parts.flatMap((p) => [...p.ids]))).toEqual(new Set(whole.ids));
-    for (const p of parts) for (let k = 0; k < p.items.length; k += STRIDE) expect(TREES.has(KINDS[p.items[k]])).toBe(true);
+    const { DECOR } = await import('../src/world/islands/gen/flora.js');
+    for (const p of parts) for (let k = 0; k < p.items.length; k += STRIDE) expect(TREES.has(KINDS[p.items[k]]) || DECOR.has(KINDS[p.items[k]])).toBe(true);
     // même relief des deux côtés d'un raccord
     for (const [p, q] of parts.map((p, i) => [p, secs[i]])) {
       for (const [lx, lz] of [[-256, 0], [255, 100], [0, -256], [-100, 255]]) {
@@ -146,7 +189,7 @@ describe('archipel des souvenirs (open world)', () => {
     }
   }, 30000);
 
-  it('ne pose que les bases : relief, eau douce, arbres (ni lieux, ni chemins, ni faune), Lac céleste', async () => {
+  it('pose relief, eau douce, arbres et décor naturel (ni lieux, ni chemins, ni faune, ni ressources), Lac céleste', async () => {
     const { ILE_BY_ID } = await import('../src/world/islands/regions.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const { TREES, KINDS, STRIDE } = await import('../src/world/islands/gen/kinds.js');
@@ -157,8 +200,16 @@ describe('archipel des souvenirs (open world)', () => {
     expect(p.paths).toEqual([]);
     expect(p.spawners).toEqual([]);
     expect(p.micro).toEqual([]);
-    for (let k = 0; k < p.items.length; k += STRIDE) expect(TREES.has(KINDS[p.items[k]])).toBe(true);
-    expect(p.ids.length).toBeGreaterThan(5000);
+    const { DECOR } = await import('../src/world/islands/gen/flora.js');
+    let trees = 0;
+    for (let k = 0; k < p.items.length; k += STRIDE) {
+      const kind = KINDS[p.items[k]];
+      expect(TREES.has(kind) || DECOR.has(kind), kind).toBe(true);
+      if (TREES.has(kind)) trees++;
+    }
+    expect(trees).toBeGreaterThan(5000);
+    // décor : buissons, rochers, fougères… mais aucune ressource (filons, cristaux, baies)
+    for (const r of ['filon_cuivre', 'filon_fer', 'cristal', 'buisson_baies', 'obsidienne']) expect(DECOR.has(r)).toBe(false);
     expect(p.rivers.length).toBeGreaterThanOrEqual(4);
     // le Lac céleste : un lac d'eau douce à l'est, sous son aire
     const L = ZONE_BY_ID.get('lac-celeste');

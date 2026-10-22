@@ -50,11 +50,12 @@ export function buildTerrain(desc, timings = {}) {
   let { lakes, lakeOf } = findLakes(H, F, n, s);
   if (c.forme) {
     // îles de la carte : seuls les lacs voulus restent (ceux qui couvrent le fond d'une cuvette
-    // tracée) ; les autres creux du relief se comblent (replats, prés)
+    // tracée ou d'un cratère) ; les autres creux du relief se comblent (replats, prés)
     const keep = [];
     const wanted = new Set();
     for (const f of c.reliefs) {
-      if (f.t !== 'cuvette') continue;
+      // cuvettes tracées et cratères (lac de cratère)
+      if (f.t !== 'cuvette' && f.t !== 'volcan') continue;
       const i = Math.round((f.x + c.ext) / s);
       const j = Math.round((f.z + c.ext) / s);
       if (i >= 0 && j >= 0 && i < n && j < n) wanted.add(j * n + i);

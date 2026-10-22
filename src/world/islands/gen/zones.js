@@ -248,6 +248,8 @@ export function zoneColors(P, desc) {
         case Z.ROCHE: {
           const strata = 0.5 + 0.5 * Math.sin(h * 0.9 + nn(x / 25, z / 25) * 3);
           mix(cliff, rock, 0.3 + strata * 0.4, c);
+          // parois au-dessus de la ligne des neiges : roche givrée
+          if (P.givre?.[k]) mix(c, snow, 0.55, c);
           break;
         }
         case Z.ALPAGE: mix(c, alp, 0.55, c); break;
@@ -267,8 +269,9 @@ export function zoneColors(P, desc) {
       }
       if (zone[k] !== Z.FLEURS) mix(c, solH, dH, c);
       // pentes raides de toute zone : roche qui affleure
-      const cl = smooth(0.62, 0.9, slope[k]);
-      if (cl > 0 && zone[k] !== Z.ROCHE) mix(c, mix(cliff, rock, 0.5, t2), cl * 0.8, c);
+      // (la neige tient jusqu'à des pentes plus fortes)
+      const cl = zone[k] === Z.NEIGE ? smooth(1.3, 1.9, slope[k]) * 0.6 : smooth(0.62, 0.9, slope[k]);
+      if (cl > 0 && zone[k] !== Z.ROCHE) mix(c, mix(cliff, rock, 0.5, t2), cl * (P.givre?.[k] ? 0.45 : 0.8), c);
       C[k * 3] = c[0];
       C[k * 3 + 1] = c[1];
       C[k * 3 + 2] = c[2];
@@ -322,6 +325,8 @@ export function computeZonesForme(T, desc) {
   const slope = new Float32Array(N);
   const B = new Uint8Array(N);
   const ZI = new Uint8Array(N);
+  // au-dessus de la ligne des neiges (les parois y sont peintes en roche givrée)
+  const givre = new Uint8Array(N);
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) slope[j * n + i] = slopeAt(H, n, s, i, j);
   const coastDist = distanceField(n, s, (k) => H[k] < 0 && water[k] === 0);
   const wetDist = distanceField(n, s, (k) => water[k] > 0);
@@ -348,13 +353,18 @@ export function computeZonesForme(T, desc) {
       const biome = zd.biome;
       const h = H[k];
       const sl = slope[k];
-      const snow = snowLine(desc.z + z, biome);
+      // ligne des neiges irrégulière (langues de neige dans les combes)
+      const snow = snowLine(desc.z + z, biome) + 14 * fbm(nz, x / 45 + 7, z / 45, 2);
       let zn = Z.PRAIRIE;
       if (water[k] === 1) zn = Z.LAC;
       else if (water[k] === 2) zn = Z.RIVIERE;
       else if (h < -0.3) zn = Z.MER;
       else if (h < 1.45 && sl < 0.5 && coastDist[k] < 45) zn = biome === 'dunes' ? Z.DUNE : Z.PLAGE;
-      else if (h > snow) zn = sl > 1.1 ? Z.ROCHE : Z.NEIGE;
+      // neige : tient jusqu'à des pentes fortes (sommets givrés), la roche seulement sur les parois
+      else if (h > snow) {
+        zn = sl > 1.7 ? Z.ROCHE : Z.NEIGE;
+        givre[k] = 1;
+      }
       else if (sl > 0.68) zn = Z.ROCHE;
       else if (V && biome === 'volcan' && h > 28 && Math.hypot(x - V.x, z - V.z) < V.r * 0.8) {
         // coulées de lave refroidie : rubans rayonnants depuis le cratère
@@ -410,5 +420,5 @@ export function computeZonesForme(T, desc) {
     return quantile(bcand[zi], share);
   });
   for (let k = 0; k < N; k++) if (zone[k] === Z.PRAIRIE && slope[k] <= 0.28 && bloomN[k] !== 0 && bloomN[k] >= bq[ZI[k]]) zone[k] = Z.FLEURS;
-  return { zone, slope, coastDist, wetDist, B, ZI };
+  return { zone, slope, coastDist, wetDist, B, ZI, givre };
 }

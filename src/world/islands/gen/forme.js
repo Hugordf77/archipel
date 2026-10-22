@@ -4,7 +4,7 @@
 // plateaux à falaises, cuvettes (lacs), volcans, pitons, dunes. Chaque case appartient à une zone de
 // l'île (biome, forêt, arbres) : la plus proche, au bord légèrement bruité.
 // Module pur et déterministe (Worker, carte, minicarte, tests).
-import { makeNoise, fbm, ridged } from '../../../core/noise.js';
+import { makeNoise, fbm } from '../../../core/noise.js';
 import { BIOMES } from '../biomes.js';
 import { ZONE_BY_ID } from '../../archipel.js';
 import { smooth, clamp } from './grid.js';
@@ -66,7 +66,7 @@ export function formeContext(desc) {
   const zones = F.zones.map((z) => {
     const src = ZONE_BY_ID.get(z.id) || {};
     const biome = src.biome || desc.biome;
-    return { ...z, biome, bi: BIOME_INDEX[biome] ?? 0, foret: src.foret ?? 0.3, fleurs: src.fleurs ?? 0.06, arbres: src.arbres || null, palmiers: !!src.palmiers };
+    return { ...z, biome, bi: BIOME_INDEX[biome] ?? 0, foret: src.foret ?? 0.3, fleurs: src.fleurs ?? 0.06, arbres: src.arbres || null, palmiers: !!src.palmiers, collines: src.collines || null, decor: src.decor || null };
   });
   const c = {
     desc,
@@ -107,44 +107,96 @@ export function coastDist(c, x, z) {
   return polyDist(c.P, wx, wz) + a * 0.25 * fbm(c.n3, x / 45, z / 45, 2);
 }
 
-// reliefs posés (m au-dessus de la plaine)
+// Relief alpin : bruit « en crêtes » multifractal (chaque octave pondérée par la précédente) :
+// arêtes vives, vallées douces qui descendent en arbre, comme une montagne érodée. 0 à 1 environ.
+function alpine(n, x, z) {
+  let sum = 0;
+  let amp = 0.55;
+  let freq = 1;
+  let w = 1;
+  let norm = 0;
+  for (let o = 0; o < 6; o++) {
+    let v = 1 - Math.abs(n(x * freq, z * freq));
+    v *= v;
+    sum += v * amp * w;
+    norm += amp;
+    w = clamp(v * 1.7, 0, 1);
+    freq *= 2.03;
+    amp *= 0.5;
+  }
+  return sum / norm;
+}
+
+// collines de chaque zone [hauteur (m), échelle (m)] : celles de la zone, sinon celles de son biome
+const COLLINES = { prairie: [12, 180], pins: [22, 170], tropical: [14, 150], glace: [16, 170], volcan: [8, 150], dunes: [0, 100], champignons: [14, 160], atoll: [2, 80] };
+export function collinesZone(z) {
+  return z.collines || COLLINES[z.biome] || COLLINES.prairie;
+}
+
+// poids doux des zones de l'île au point (somme 1) : les reliefs propres aux zones se fondent
+function zoneWeights(c, x, z, out) {
+  const Z = c.zones;
+  let sum = 0;
+  for (let k = 0; k < Z.length; k++) {
+    const zn = Z[k];
+    const d = Math.hypot((x - zn.x) / zn.rx, (z - zn.z) / zn.rz);
+    out[k] = Math.exp(-3 * d * d) + 1e-6;
+    sum += out[k];
+  }
+  for (let k = 0; k < Z.length; k++) out[k] /= sum;
+  return out;
+}
+
+// reliefs posés (m au-dessus de la plaine), sur des coordonnées déformées : bords organiques
+const W8 = new Float64Array(16);
 function reliefs(c, x, z) {
+  // déformation commune des formes (plateaux, cuvettes, masses des montagnes)
+  const wx = x + 55 * fbm(c.n5, x / 260 + 1.3, z / 260 - 4.1, 2) + 16 * c.n6(x / 70, z / 70);
+  const wz = z + 55 * fbm(c.n5, x / 260 - 7.7, z / 260 + 2.2, 2) + 16 * c.n6(x / 70 + 5, z / 70 - 3);
+  let massif = 0;
+  let summit = 0;
   let peak = 0;
   let add = 0;
   let sub = 0;
   for (const f of c.reliefs) {
     switch (f.t) {
       case 'mont': {
-        const d = Math.hypot(x - f.x, z - f.z) / f.r;
-        if (d < 1) peak = Math.max(peak, f.h * Math.pow(1 - d, 1.45));
+        // enveloppe du massif, sommet pointu
+        const d = Math.hypot(wx - f.x, wz - f.z) / f.r;
+        if (d < 1) {
+          massif = Math.max(massif, f.h * Math.pow(1 - d, 1.15));
+          summit = Math.max(summit, f.h * 0.3 * Math.pow(Math.max(0, 1 - d * 2.6), 2));
+        }
         break;
       }
       case 'chaine': {
+        // une chaîne élargit le massif dans sa direction (ses arêtes viennent du relief alpin)
         for (let k = 0; k < f.pts.length - 1; k++) {
           const a = f.pts[k];
           const b = f.pts[k + 1];
-          const [d, t] = segDist(x, z, a[0], a[1], b[0], b[1]);
-          if (d > f.l * 2.5) continue;
+          const [d, t] = segDist(wx, wz, a[0], a[1], b[0], b[1]);
+          if (d > f.l * 3) continue;
           const hh = a[2] + (b[2] - a[2]) * t;
-          peak = Math.max(peak, hh * Math.exp(-((d / f.l) ** 2)));
+          massif = Math.max(massif, hh * Math.exp(-0.7 * (d / f.l) ** 2));
         }
         break;
       }
       case 'colline': {
-        const d = Math.hypot(x - f.x, z - f.z) / f.r;
+        const d = Math.hypot(wx - f.x, wz - f.z) / f.r;
         if (d < 1.6) add += f.h * Math.exp(-2.4 * d * d);
         break;
       }
       case 'plateau': {
-        const e = Math.hypot((x - f.x) / f.rx, (z - f.z) / f.rz);
+        // table aux bords découpés : escarpement net, dessus doucement vallonné
+        const e = Math.hypot((wx - f.x) / f.rx, (wz - f.z) / f.rz);
         if (e > 1.6) break;
         const din = (1 - e) * Math.min(f.rx, f.rz);
-        const top = f.h * (0.94 + 0.06 * fbm(c.n6, x / 40, z / 40, 2));
-        peak = Math.max(peak, top * smooth(-f.bord * 0.25, f.bord, din));
+        const top = f.h * (0.9 + 0.1 * fbm(c.n6, x / 60, z / 60, 2));
+        peak = Math.max(peak, top * smooth(-f.bord * 0.15, f.bord, din));
         break;
       }
       case 'cuvette': {
-        const d = Math.hypot(x - f.x, z - f.z) / f.r;
+        const d = Math.hypot(wx - f.x, wz - f.z) / f.r;
         if (d < 1) sub += f.p * smooth(1, 0.5, d);
         break;
       }
@@ -154,6 +206,9 @@ function reliefs(c, x, z) {
         if (d >= 1) break;
         const u = 1 - d;
         let h = f.h * (0.1 * u + 0.9 * Math.pow(u, 2.2));
+        // ravines rayonnantes sur les flancs
+        const a = Math.atan2(z - f.z, x - f.x);
+        h *= 1 - 0.12 * Math.pow(Math.abs(Math.sin(a * 9 + fbm(c.n4, x / 90, z / 90, 2) * 3)), 3) * smooth(0.15, 0.6, d);
         const dc = dd / f.cratere;
         if (dc < 1.35) {
           const rim = f.h * Math.pow(1 - f.cratere / f.r, 2.2) * 0.98;
@@ -181,9 +236,27 @@ function reliefs(c, x, z) {
         break;
     }
   }
-  // roche escarpée : bruit « en crêtes » proportionnel à la hauteur des sommets (sauf sur les pitons
-  // et les plateaux, dont le dessus reste praticable)
-  if (peak > 12 && !c.flat) peak += (ridged(c.n4, x / 70, z / 70, 4) - 0.38) * 0.28 * peak;
+  // massif : arêtes et vallées du relief alpin, plus marquées vers le haut
+  if (massif > 1) {
+    const a = alpine(c.n4, wx / 280, wz / 280);
+    const k = smooth(0, 60, massif);
+    peak = Math.max(peak, massif * (0.42 + 0.78 * a * k + 0.42 * (1 - k)) + summit);
+  }
+  // collines propres à chaque zone (bruit arrondi, fondu entre zones) ; ni sur les pitons et
+  // plateaux seuls, ni sur les hauts-fonds
+  if (c.flat || c.F.immerge) return peak + add - sub;
+  const wts = zoneWeights(c, x, z, W8);
+  let ch = 0;
+  let cs = 0;
+  for (let q = 0; q < c.zones.length; q++) {
+    const [h, sc] = collinesZone(c.zones[q]);
+    ch += wts[q] * h;
+    cs += wts[q] * sc;
+  }
+  if (ch > 0.5) {
+    const v = 0.5 + 0.5 * fbm(c.n2, wx / cs + 9.1, wz / cs - 3.7, 3);
+    add += ch * Math.pow(v, 1.7) * 1.6;
+  }
   return peak + add - sub;
 }
 
@@ -255,5 +328,5 @@ export function formeZone(c, x, z) {
 export function snowLine(worldZ, biome) {
   const t = clamp((worldZ + 2700) / 4000, 0, 1);
   if (biome === 'volcan') return Infinity;
-  return biome === 'glace' ? 34 + t * 30 : 135 + t * 150;
+  return biome === 'glace' ? 34 + t * 30 : 82 + t * 150;
 }

@@ -396,9 +396,9 @@ export function tileGround(plan, surf, tx, tz) {
       zfi[k] = fi;
       zfj[k] = fj;
       sampleColor(C, n, fi, fj, col);
-      // roche qui affleure sur les fortes pentes au mètre
+      // roche qui affleure sur les fortes pentes au mètre (pas sous la neige)
       const slope = 1 - inv;
-      if (slope > 0.25 && h > 1) {
+      if (slope > 0.25 && h > 1 && surf.zoneAt(x, z) !== Z.NEIGE) {
         const k2 = smooth(0.25, 0.45, slope) * 0.6;
         col[0] = col[0] * (1 - k2) + 0.8 * k2;
         col[1] = col[1] * (1 - k2) + 0.74 * k2;

@@ -13,7 +13,7 @@ import { kindModel } from '../models/vegetation.js';
 import { outilGeometry } from '../models/personnage/index.js';
 import { flotteurGeometry } from '../models/objets/flotteur-peche/index.js';
 import { MAT } from '../models/kit/materials.js';
-import { STRIDE } from '../world/islands/islandgen.js';
+import { STRIDE, TREES } from '../world/islands/islandgen.js';
 import { BLOOM_IDS } from '../world/islands/gen/zones.js';
 
 const POSE = { hache: 'chop', pioche: 'mine', pelle: 'dig' };
@@ -136,6 +136,8 @@ export class Gather {
     for (const c of g.islands.itemsNear(P.pos.x, P.pos.z, 2.6)) {
       const def = HARVEST[c.kind];
       if (!def) continue;
+      // îles de la carte : le décor naturel (buissons, rochers, fougères…) ne se récolte pas
+      if (c.e?.plan?.archetype === 'forme' && !TREES.has(c.kind)) continue;
       const dx = c.x - P.pos.x;
       const dz = c.z - P.pos.z;
       const dl = Math.hypot(dx, dz) || 1;

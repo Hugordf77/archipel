@@ -258,10 +258,17 @@ export function placeFlora(P, pois, paths) {
 export { STRIDE };
 
 // ---------------------------------------------------------------------------
-// Îles de la carte (open world), étape « bases » : des arbres seulement, par zone nommée (table
-// d'arbres de la zone, sinon celle de son biome). Forêts en futaie, arbres épars en bosquets ailleurs.
+// Îles de la carte (open world) : arbres par zone nommée (table d'arbres de la zone, sinon celle de
+// son biome ; forêts en futaie, arbres épars en bosquets ailleurs) et décor naturel de chaque
+// micro-zone (buissons, rochers, fougères, souches…), simple décor : rien ne s'y récolte (Gather.js).
 // DENSITE : facteur commun des densités (budget de rendu d'un monde de 6 × 4 km).
 export const DENSITE_FORME = 0.5;
+export const DENSITE_DECOR = 0.55;
+// décor des îles de la carte (ni ressources, ni nourriture : pas de filons, de cristaux, de baies)
+export const DECOR = new Set(['arbuste', 'buisson_fleuri', 'rocher', 'rocher_mousse', 'fougere', 'souche', 'champi_petit', 'lavande']);
+// décor lourd (triangles par pièce : fougère 600, petits champignons 600, rochers et buissons fleuris
+// 360 à 380, contre 32 pour l'arbuste) : moins dense
+const POIDS = { fougere: 0.22, champi_petit: 0.3, rocher: 0.6, rocher_mousse: 0.6, buisson_fleuri: 0.6 };
 // espèces trop lourdes pour une forêt continue (bouleau : environ 1 800 triangles, les autres arbres
 // 100 à 180) : écartées en attendant les arbres V2 (branche claude/arbres-v2-11841d)
 const LOURDS = new Set(['bouleau']);
@@ -298,9 +305,11 @@ export function placeFloraForme(P) {
         else if (kind === 'PALM') {
           if (palms) list.push(['palmier', dens, grove]);
         } else if (TREES.has(kind) && !zd.arbres) list.push([kind, dens, grove]);
+        else if (DECOR.has(kind)) list.push([kind, dens * (POIDS[kind] ?? 1) * (DENSITE_DECOR / DENSITE_FORME), grove]);
       }
-      // prés et landes : quelques arbres de la zone, en bosquets
+      // prés et landes : quelques arbres de la zone, en bosquets ; décor propre à la zone
       if (OUVERT.has(Number(zk))) for (const [k2, d2] of forest) list.push([k2, d2 * 0.12, 1]);
+      for (const [k2, d2] of zd.decor || []) if (OUVERT.has(Number(zk)) || Number(zk) === Z.FORET) list.push([k2, d2 * (POIDS[k2] ?? 1) * (DENSITE_DECOR / DENSITE_FORME), 1]);
       out[zk] = list.filter(([k]) => !LOURDS.has(k)).map(([k, d, g]) => [k, d * DENSITE_FORME, g]);
     }
     return out;
@@ -341,8 +350,9 @@ export function placeFloraForme(P) {
       // palmiers autour des oasis du désert
       if (!chosen && zones[ZI[k]].biome === 'dunes' && zn === Z.PRAIRIE && wetDist[k] < 25 && roll > 0.9) chosen = 'palmier';
       if (!chosen) continue;
-      if (slope[k] > (SLOPE_MAX[chosen] ?? 0.55)) continue;
-      const scale = 0.78 + sr * 0.55;
+      const tree = TREES.has(chosen);
+      if (slope[k] > (SLOPE_MAX[chosen] ?? (tree ? 0.55 : 0.75))) continue;
+      const scale = tree ? 0.78 + sr * 0.55 : 0.7 + sr * 0.6;
       const ki = KIND_INDEX[chosen];
       if (ki === undefined || !free(x, z, KIND_RADIUS[chosen] * scale + 0.3)) continue;
       items.push(ki, x, hAt(x, z), z, rot, scale, vr);

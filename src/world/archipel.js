@@ -20,32 +20,33 @@ const m = ([x, y]) => [(x - ORIGINE[0]) * PX, (y - ORIGINE[1]) * PX];
 // la zone la plus proche (distance normalisée à l'ellipse). foret : part des terres en forêt ;
 // arbres : table d'arbres [espèce, densité pour 100 m²] (sinon celle du biome) ; palmiers : sur les
 // plages ; fleurs : part des prés en champs de fleurs (couleur du sol seulement) ; mer : zone de mer
-// (hauts-fonds, bancs), reconnue aussi en bateau.
+// (hauts-fonds, bancs), reconnue aussi en bateau ; collines : [hauteur (m), échelle (m)] des collines
+// de la zone (sinon celles de son biome) ; decor : décor naturel en plus [espèce, densité], non récoltable.
 const ZONES_PX = [
   // Grande Île
-  { id: 'sommet-givre', name: 'Le Sommet givré', sous: 'Montagnes enneigées', ile: 'grande-ile', biome: 'pins', foret: 0.45, aire: [700, 225, 150, 80], at: [690, 200] },
-  { id: 'foret-des-souvenirs', name: 'La Forêt des souvenirs', sous: 'Arbres-mémoire', ile: 'grande-ile', biome: 'prairie', foret: 0.72, aire: [545, 380, 130, 170], arbres: [['arbre_pompon', 1.6], ['erable', 0.7], ['saule', 0.15]] },
-  { id: 'lac-celeste', name: 'Le Lac céleste', sous: 'Eau cristalline et îlots', ile: 'grande-ile', biome: 'prairie', foret: 0.3, aire: [990, 365, 95, 75], arbres: [['saule', 0.6], ['arbre_pompon', 0.9], ['erable', 0.5]] },
-  { id: 'plateau-vente', name: 'Le Plateau venté', sous: 'Prairies et vent du large', ile: 'grande-ile', biome: 'prairie', foret: 0.07, fleurs: 0.12, aire: [925, 480, 105, 65], arbres: [['arbre_pompon', 0.9], ['erable', 0.2]] },
-  { id: 'cote-aux-villages', name: 'La Côte aux villages', sous: 'Plaine côtière', ile: 'grande-ile', biome: 'prairie', foret: 0.16, fleurs: 0.08, palmiers: true, aire: [745, 590, 200, 60], arbres: [['arbre_pompon', 1.0], ['arbre_fruitier', 0.35], ['arbre_cerisier', 0.2]] },
+  { id: 'sommet-givre', name: 'Le Sommet givré', sous: 'Montagnes enneigées', ile: 'grande-ile', biome: 'pins', foret: 0.45, aire: [700, 225, 150, 80], at: [690, 200], collines: [26, 170], arbres: [['pin', 1.6], ['sapin_neige', 0.7], ['pin_givre', 0.3]], decor: [['rocher', 0.3], ['rocher_mousse', 0.25], ['arbuste', 0.3]] },
+  { id: 'foret-des-souvenirs', name: 'La Forêt des souvenirs', sous: 'Arbres-mémoire', ile: 'grande-ile', biome: 'prairie', foret: 0.72, aire: [545, 380, 130, 170], collines: [24, 210], arbres: [['arbre_pompon', 1.6], ['erable', 0.7], ['saule', 0.15], ['arbre_cerisier', 0.1]], decor: [['fougere', 0.8], ['rocher_mousse', 0.2], ['souche', 0.08]] },
+  { id: 'lac-celeste', name: 'Le Lac céleste', sous: 'Eau cristalline et îlots', ile: 'grande-ile', biome: 'prairie', foret: 0.3, aire: [990, 365, 95, 75], collines: [10, 220], arbres: [['saule', 0.6], ['arbre_pompon', 0.9], ['erable', 0.5]], decor: [['buisson_fleuri', 0.25], ['arbuste', 0.3], ['rocher_mousse', 0.1]] },
+  { id: 'plateau-vente', name: 'Le Plateau venté', sous: 'Prairies et vent du large', ile: 'grande-ile', biome: 'prairie', foret: 0.07, fleurs: 0.12, aire: [925, 480, 105, 65], collines: [8, 140], arbres: [['arbre_pompon', 0.9], ['erable', 0.2]], decor: [['rocher', 0.15], ['lavande', 0.3], ['arbuste', 0.3]] },
+  { id: 'cote-aux-villages', name: 'La Côte aux villages', sous: 'Plaine côtière', ile: 'grande-ile', biome: 'prairie', foret: 0.16, fleurs: 0.08, palmiers: true, aire: [745, 590, 200, 60], collines: [7, 160], arbres: [['arbre_pompon', 1.0], ['arbre_fruitier', 0.15], ['arbre_cerisier', 0.3]], decor: [['buisson_fleuri', 0.25], ['arbuste', 0.4]] },
   // nord
-  { id: 'ruines-gelees', name: 'Les Ruines gelées', sous: 'Vestiges d’une ancienne civilisation', biome: 'glace', foret: 0.3, aire: [420, 125, 130, 120] },
+  { id: 'ruines-gelees', name: 'Les Ruines gelées', sous: 'Vestiges d’une ancienne civilisation', biome: 'glace', foret: 0.3, aire: [420, 125, 130, 120], arbres: [['sapin_neige', 1.4], ['pin_givre', 0.8]], decor: [['rocher', 0.3]] },
   { id: 'iles-celestes', name: 'Les Îles célestes', sous: 'Pitons rocheux', biome: 'pins', foret: 0.5, aire: [930, 80, 105, 70] },
   { id: 'volcan-endormi', name: 'Le Volcan endormi', sous: 'Cratère et coulées refroidies', biome: 'volcan', foret: 0.18, aire: [1180, 195, 175, 115] },
   // ouest
   { id: 'ile-du-silence', name: 'L’Île du silence', sous: 'Le phare oublié', biome: 'pins', foret: 0.25, aire: [150, 215, 60, 50] },
-  { id: 'ile-aux-fleurs', name: 'L’Île aux fleurs', sous: 'Forêts enchantées', biome: 'prairie', foret: 0.35, fleurs: 0.5, aire: [215, 365, 130, 85], arbres: [['arbre_cerisier', 1.3], ['arbre_pompon', 0.6], ['arbre_fruitier', 0.3]] },
-  { id: 'archipel-des-tempetes', name: 'L’Archipel des tempêtes', sous: 'Îles changeantes, cieux en colère', biome: 'volcan', foret: 0.14, aire: [365, 485, 110, 85], arbres: [['pin', 0.8], ['bois_mort', 0.5]] },
+  { id: 'ile-aux-fleurs', name: 'L’Île aux fleurs', sous: 'Forêts enchantées', biome: 'prairie', foret: 0.35, fleurs: 0.5, aire: [215, 365, 130, 85], arbres: [['arbre_cerisier', 1.3], ['arbre_pompon', 0.6], ['arbre_fruitier', 0.12]], decor: [['buisson_fleuri', 0.6], ['lavande', 0.4]] },
+  { id: 'archipel-des-tempetes', name: 'L’Archipel des tempêtes', sous: 'Îles changeantes, cieux en colère', biome: 'volcan', foret: 0.14, aire: [365, 485, 110, 85], arbres: [['pin', 0.8], ['bois_mort', 0.5]], decor: [['rocher', 0.4], ['souche', 0.1]] },
   { id: 'grottes-de-cristal', name: 'Les Grottes de cristal', sous: 'Réseaux sous la mer', biome: 'tropical', foret: 0.3, aire: [440, 625, 75, 50], at: [452, 588] },
   { id: 'village-englouti', name: 'Le Village englouti', sous: 'Une ville sous la mer', biome: 'atoll', foret: 0.3, mer: true, aire: [355, 720, 55, 38] },
-  { id: 'cascades-sacrees', name: 'Les Cascades sacrées', sous: 'Chutes d’eau et sanctuaires', biome: 'tropical', foret: 0.5, aire: [170, 645, 120, 85] },
+  { id: 'cascades-sacrees', name: 'Les Cascades sacrées', sous: 'Chutes d’eau et sanctuaires', biome: 'tropical', foret: 0.5, aire: [170, 645, 120, 85], collines: [18, 140], decor: [['fougere', 0.6], ['rocher_mousse', 0.2]] },
   { id: 'ilots-secrets', name: 'Les Îlots secrets', sous: 'Petites îles cachées', biome: 'atoll', foret: 0.4, palmiers: true, aire: [215, 825, 110, 60] },
   // sud
   { id: 'grotte-lumineuse', name: 'La Grotte lumineuse', sous: 'Lacs luminescents', biome: 'tropical', foret: 0.45, aire: [632, 742, 85, 60], at: [626, 806] },
-  { id: 'ile-brumeuse', name: 'L’Île brumeuse', sous: 'Brouillard et sous-bois', biome: 'pins', foret: 0.6, aire: [475, 885, 105, 60] },
+  { id: 'ile-brumeuse', name: 'L’Île brumeuse', sous: 'Brouillard et sous-bois', biome: 'pins', foret: 0.6, aire: [475, 885, 105, 60], arbres: [['pin', 1.8], ['saule', 0.3]], decor: [['fougere', 0.8], ['rocher_mousse', 0.3]] },
   { id: 'place-des-os', name: 'La Place des os', sous: 'Épaves et bancs de sable', biome: 'atoll', foret: 0.2, mer: true, aire: [785, 875, 90, 50], arbres: [['bois_mort', 0.6], ['palmier', 0.3]] },
   // est
-  { id: 'ile-aux-lueurs', name: 'L’Île aux lueurs', sous: 'Forêts bioluminescentes', biome: 'champignons', foret: 0.65, aire: [1082, 818, 140, 90] },
+  { id: 'ile-aux-lueurs', name: 'L’Île aux lueurs', sous: 'Forêts bioluminescentes', biome: 'champignons', foret: 0.65, aire: [1082, 818, 140, 90], decor: [['champi_petit', 0.6], ['fougere', 0.3]] },
   { id: 'falaises-oubliees', name: 'Les Falaises oubliées', sous: 'Grottes et ponts naturels', biome: 'tropical', foret: 0.25, aire: [1245, 500, 115, 60] },
   { id: 'ocean-sans-fin', name: 'L’Océan sans fin', sous: 'Récifs mystérieux', biome: 'atoll', foret: 0.3, palmiers: true, aire: [1370, 385, 135, 80] },
   { id: 'desert-ile-sechee', name: 'Le Désert de l’île séchée', sous: 'Sables, cendres et vestiges', ile: 'ile-sechee', biome: 'dunes', foret: 0.02, aire: [1240, 655, 110, 75], at: [1232, 700], arbres: [['palmier', 0.35], ['cactus', 0.4], ['cactus_fleur', 0.15]] },
