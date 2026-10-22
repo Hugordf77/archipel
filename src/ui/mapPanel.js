@@ -1,9 +1,10 @@
 // Carte parchemin (M) de l'archipel, bornée à son emprise : brouillard qui se lève autour du
-// joueur, îles découvertes et leurs noms (les autres en pointillés), limite du large, épingles,
-// zone du bateau, traces des cartes au trésor, part de l'archipel découverte.
+// joueur, îles découvertes (les autres en pointillés), noms des zones (toujours, pour s'y repérer ;
+// pâles tant qu'on n'y est pas allé), limite du large, épingles, zone du bateau, traces des cartes
+// au trésor, part de l'archipel découverte.
 import { h } from './dom.js';
 import { ILES } from '../world/islands/regions.js';
-import { ARCHIPEL } from '../world/archipel.js';
+import { ARCHIPEL, ZONES } from '../world/archipel.js';
 import { islandContext, islandHeight } from '../world/islands/islandgen.js';
 import { formeZone, snowLine } from '../world/islands/gen/forme.js';
 import { BIOMES } from '../world/islands/biomes.js';
@@ -190,7 +191,23 @@ export function openMapPanel(game) {
       const size = (ext * 2) / view.mpp;
       g.imageSmoothingEnabled = true;
       g.drawImage(islandShape(d), sx, sy, size, size);
-      if (known && !d.ilot) labels.push({ x: d.x, z: d.z + Math.min(d.r * 0.9, 300), text: d.name, home: d.id === 'home' });
+      // noms des îles : le départ toujours ; les autres de près, s'ils diffèrent du nom de leur zone
+      const zname = ZONES.find((zn) => zn.id === d.zone)?.name;
+      if (d.id === 'home' || (known && !d.ilot && d.name !== zname && view.mpp < 2.5)) labels.push({ x: d.x, z: d.z + Math.min(d.r * 0.9, 300), text: d.name, home: d.id === 'home' });
+    }
+    // noms des zones : toujours, pour se repérer ; pâles tant qu'on n'y est pas allé
+    const seenZones = new Set(Object.keys(ex.islands).map((id) => ILES.find((d) => d.id === id)?.zone));
+    g.textAlign = 'center';
+    for (const zn of ZONES) {
+      const [sx, sy] = toScreen(zn.lx, zn.lz);
+      if (sx < -150 || sy < -40 || sx > W + 150 || sy > H + 40) continue;
+      const seen = seenZones.has(zn.id) || isRevealed(ex.fog, zn.lx, zn.lz);
+      g.font = `${seen ? 600 : 500} ${view.mpp > 6 ? 12 : 14}px Fredoka, Nunito, sans-serif`;
+      g.lineWidth = 4;
+      g.strokeStyle = 'rgba(246, 234, 210, 0.9)';
+      g.strokeText(zn.name, sx, sy);
+      g.fillStyle = seen ? '#3f5f7a' : 'rgba(63, 95, 122, 0.55)';
+      g.fillText(zn.name, sx, sy);
     }
     // traces des cartes au trésor
     for (const t of ex.treasures || []) {

@@ -44,6 +44,8 @@ export class UI {
     this.minimap = new MiniMap(game);
 
     this.toasts = h('div', { class: 'toasts' });
+    // bandeau d'entrée de zone (nom de la région et sa devise)
+    this.zoneTitle = h('div', { class: 'zone-title', 'aria-live': 'polite' });
     this.bubbleLayer = h('div', { class: 'bubble-layer' });
     this.floatLayer = h('div', { class: 'float-layer' });
     this.panelHost = h('div', { class: 'panel-host hidden' });
@@ -51,7 +53,7 @@ export class UI {
       if (e.target === this.panelHost && this.panel?.dismissable !== false) this.closePanel();
     });
     root.append(this.bubbleLayer, this.floatLayer, this.prompt, this.topLeft, this.topRight, this.compass, this.sailHud, this.minimap.canvas, this.bottom,
-      this.bottomRight, this.toasts, this.panelHost);
+      this.bottomRight, this.toasts, this.zoneTitle, this.panelHost);
   }
 
   // ---------------------------------------------------------------------------
@@ -220,6 +222,14 @@ export class UI {
     const half = t.halfW;
     const cx = Math.min(Math.max(x, half + 8), innerWidth - half - 8);
     t.style.transform = `translate(${Math.round(cx)}px, ${Math.round(y)}px) translate(-50%, -100%)`;
+  }
+
+  // Entrée dans une zone nommée : grand titre au centre de l'écran, qui s'efface de lui-même
+  zoneBanner(name, sub = '') {
+    clearTimeout(this.zoneTimer);
+    this.zoneTitle.replaceChildren(h('div', { class: 'zone-name' }, name), sub ? h('div', { class: 'zone-sub' }, sub) : null);
+    replay(this.zoneTitle, 'show');
+    this.zoneTimer = setTimeout(() => this.zoneTitle.classList.remove('show'), 3600);
   }
 
   toast(text, { icon = null, tone = 'paper', duration = 3200 } = {}) {

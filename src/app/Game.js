@@ -4,7 +4,7 @@ import { Pipeline } from '../render/Pipeline.js';
 import { U, ORIGIN } from '../core/globals.js';
 import { IslandManager } from '../world/islands/IslandManager.js';
 import { IslandFauna } from '../entities/fauna/islandFauna.js';
-import { ILES, ILE_BY_ID } from '../world/islands/regions.js';
+import { ILES, ILE_BY_ID, zoneAt } from '../world/islands/regions.js';
 import { POI_LABELS } from '../world/islands/gen/pois.js';
 import { mulberry32 } from '../core/random.js';
 import { MarineManager } from '../world/marine.js';
@@ -993,6 +993,26 @@ export class Game {
     this.audio?.pop(1.3);
   }
 
+  // Zone nommée sous le joueur : bandeau à l'entrée (après 2 s dans la zone, pour ne pas clignoter
+  // sur une frontière) ; la minicarte affiche la zone courante
+  updateZone(dt) {
+    this.zoneT = (this.zoneT || 0) - dt;
+    if (this.zoneT > 0) return;
+    this.zoneT = 0.5;
+    const P = this.player.pos;
+    const zn = zoneAt(P.x, P.z);
+    const id = zn?.id || null;
+    if (id !== this.zoneCandidate) {
+      this.zoneCandidate = id;
+      this.zoneSince = performance.now();
+      return;
+    }
+    if (id === this.zone?.id || performance.now() - this.zoneSince < 1500) return;
+    this.zone = zn;
+    this.ui.minimap.zone = zn;
+    if (zn && zn.id !== 'home') this.ui.zoneBanner(zn.name, zn.sous);
+  }
+
   // Ancienne génération : les îles notées gardent leur entrée, rattachée à l'île du même archétype
   relinkDiscoveries() {
     if (relinkDiscoveries(this.state)) this.markDirty();
@@ -1199,6 +1219,7 @@ export class Game {
     const mist = worldLimit(P.x, P.z).mist;
     this.mist = (this.mist || 0) + (mist - (this.mist || 0)) * Math.min(1, dt * 1.5);
     U.uFogRange.value.set(170 - this.mist * 120, 3400 - this.mist * 3080);
+    this.updateZone(0.1);
   }
 
   // Origine flottante : le monde est décalé pour garder des coordonnées locales petites

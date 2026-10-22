@@ -506,6 +506,41 @@ body {
   gap: 8px;
   pointer-events: none !important;
 }
+/* bandeau d'entrée de zone : nom de la région, à la manière d'un titre peint */
+.zone-title {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translate(-50%, 8px);
+  text-align: center;
+  pointer-events: none !important;
+  opacity: 0;
+  transition: opacity 0.9s ease, transform 0.9s ease;
+  color: #fffaf0;
+  text-shadow: 0 2px 0 rgba(91, 74, 99, 0.55), 0 0 18px rgba(91, 74, 99, 0.45);
+}
+.zone-title.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.zone-name {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: clamp(26px, 4vw, 44px);
+  letter-spacing: 0.02em;
+}
+.zone-sub {
+  font-family: var(--font-body);
+  font-size: var(--fs-m);
+  margin-top: 4px;
+  opacity: 0.92;
+}
+.zone-sub::before,
+.zone-sub::after {
+  content: '—';
+  margin: 0 10px;
+  opacity: 0.6;
+}
 .toast {
   max-width: 420px;
   display: flex;

@@ -161,6 +161,19 @@ export class MiniMap {
     ctx.textAlign = 'center';
     ctx.fillText(`${Math.round(20 * METERS_PER_PIXEL)} m`, SIZE - 34, SIZE - 13);
 
+    // Zone nommée où se trouve le joueur (donnée par le jeu), sur une pastille en haut
+    if (this.zone) {
+      // sous le bord rond de la minicarte : la pastille reste entière
+      ctx.font = '700 9px Fredoka, Nunito, sans-serif';
+      const w = Math.min(SIZE - 40, ctx.measureText(this.zone.name).width + 12);
+      ctx.fillStyle = 'rgba(255, 248, 236, 0.9)';
+      ctx.beginPath();
+      ctx.roundRect(SIZE / 2 - w / 2, 30, w, 15, 7);
+      ctx.fill();
+      ctx.fillStyle = '#42534f';
+      ctx.textAlign = 'center';
+      ctx.fillText(this.zone.name, SIZE / 2, 40.5, w - 8);
+    }
 
     // Flèche du joueur : la carte ne tourne pas, l'indicateur suit son cap.
     ctx.save();
