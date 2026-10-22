@@ -9,7 +9,7 @@ et domaine concerné).
 - Jeu : `npm run dev`, puis http://localhost:5173 (les agents utilisent la configuration `ile` de
   `.claude/launch.json`, port 5174, pour ne pas gêner la partie de l'utilisateur).
 - Catalogue des modèles : `/catalogue.html` ; tableau de bord de production : `/dashboard.html`.
-- Tests : `npm test` (18 fichiers) ; build : `npm run build`.
+- Tests : `npm test` (21 fichiers) ; build : `npm run build`.
 - Outils de développement en jeu : `window.__ile` (`tp`, `setHour`, `frame`, `look`, `settle`, `capture`,
   `game.skipSave`).
 
@@ -118,10 +118,49 @@ et domaine concerné).
 
 ### Îles et monde
 
-- Archipel fini de neuf îles : `src/world/islands/regions.js` et archétypes ; génération
-  `src/world/islands/gen/` (relief, érosion, hydrologie, zones, surface, plan, lieux, chemins, faune) ;
-  `IslandManager.js` (LOD, tuiles, Worker `worldWorker.js`).
-- Carte : `src/ui/mapPanel.js`, brouillard `src/world/fog.js` ; minicarte `src/ui/minimap.js` (nouvelle).
+- **Open world, bases** (22/10/2026, génération 4) : « L'archipel des souvenirs », 6 × 4 km tracé
+  d'après la carte de référence de l'utilisateur (4 m par pixel, départ en (0, 0) au sud de la Grande
+  Île, nord = −Z). Bases seulement : relief, côtes, eau douce, arbres ; ni lieux, ni villages, ni
+  faune, ni ressources (ni petite végétation, ni éléments de la mer) pour l'instant.
+  - Données : `src/world/archipel.js`, seule source de vérité. Il contient :
+    - 47 îles, dont 25 îlots, pitons et bancs, en pixels de la carte (silhouette en polygone ou en
+      cercle, reliefs posés à la main) ;
+    - 24 zones nommées (biome, part de forêt, table d'arbres, devise) ;
+    - une limite rectangulaire (`worldLimit` : brume dès 100 m avant le bord, courant au-delà,
+      demi-tour à 250 m).
+  - Relief : `gen/forme.js`. La côte du polygone est déformée par le bruit ; plages et falaises ;
+    monts, chaînes, collines, plateaux, cuvettes, volcan, pitons, dunes. Zone et biome par case ; ligne
+    des neiges selon la latitude, jamais sur le volcan.
+  - Plan : `buildPlanForme` de `gen/plan.js`, `computeZonesForme` de `gen/zones.js`,
+    `placeFloraForme` de `gen/flora.js` (arbres seulement, `DENSITE_FORME` 0,5). Seuls les lacs
+    voulus restent : Lac céleste, oasis, cuvette de l'Île aux lueurs. Rivières selon la surface des
+    terres.
+  - Sections : les îles de plus de 420 m de rayon sont découpées en carrés de 512 m (`gen/sections.js`,
+    `sectionsOf` de `regions.js`). Chaque section est une île du moteur taillée dans le plan de l'île
+    entière, sans raccord visible. Le plan de la Grande Île se calcule une fois dans le Worker (1,2 s
+    dans Node) ; une section se taille en 2 ms.
+  - Listes de `regions.js` :
+    - `ILES` : les îles entières, pour la carte, la minicarte et le journal (les îlots ne comptent pas) ;
+    - `ISLANDS` : ce que charge le moteur (117 entrées, dont 30 sections pour la Grande Île) ;
+    - `zoneAt(x, z)` : la zone nommée sous un point.
+  - Étiquettes :
+    - carte (M) : les 24 noms de zones, toujours, pâles tant que la zone n'est pas découverte ;
+    - minicarte : la zone courante ;
+    - en jeu : un bandeau à l'entrée de chaque zone (`UI.zoneBanner`, `Game.updateZone`).
+  - Moteur : caméra et brume portées à 4 km (repères visibles de loin), océan agrandi, palette d'herbe
+    par tuile.
+  - Sauvegarde : `GEN_VERSION` 4. Le monde repart de zéro (brouillard, îles notées, lieux, récoltes,
+    terrassements, épingles) ; inventaire, maison et bateaux sont gardés, joueur et bateau ramenés au
+    départ.
+  - Captures : `captures/open-world-*.png` (carte, Sommet givré, forêt, Lac céleste, volcan, Îles
+    célestes, désert, Île aux lueurs, bandeau d'entrée).
+  - Tests : `tests/world.test.js` (zones, chenaux de 70 m au moins, repères, sections, bases, Lac
+    céleste, limite, migration v4).
+- Ancien archipel à archétypes (lieux, villages, chemins, faune) : la chaîne de génération
+  `gen/` (pois, paths, spawns) reste en place pour la suite. Elle est testée sur l'ancien archipel,
+  gardé en fixture (`tests/fixtures/archipel-v3.js`, `tests/helpers/archipel-v3.js`). `archetypes.js`
+  sert encore à ces descriptions.
+- Carte : `src/ui/mapPanel.js`, brouillard `src/world/fog.js` ; minicarte `src/ui/minimap.js`.
 - **Herbe en tapis** (refonte « façon Breath of the Wild / Genshin », V2 livrée le 21/10/2026) : brins
   procéduraux générés par le shader (`src/render/herbe/` : `placement.js` pur, `materiau.js`,
   `HerbeSystem.js`), trois anneaux de densité autour du joueur selon la qualité (Haut 96 → 24 → 6
@@ -158,7 +197,27 @@ et domaine concerné).
 - Tableau de bord de production : `dashboard.html`, `dashboard/` (`management.json` : relations entre
   agents).
 
-## État courant (21/10/2026)
+## État courant (22/10/2026)
+
+- **Open world, bases** (branche `claude/charming-khorana-a24b36`, non fusionnée). Ce qui est livré :
+  - les îles de la carte de référence, avec leur relief, leurs côtes, l'eau douce et les arbres ;
+  - les 24 zones étiquetées ;
+  - les sections de 512 m ;
+  - la remise à zéro du monde dans la sauvegarde.
+
+  Reprend le correctif du LOD1 en double (`f888202` de `claude/arbres-v2-11841d`).
+- **À faire ensuite** :
+  - lieux et villages (Côte aux villages, moulins du Plateau venté, phare de l'Île du silence, ruines) ;
+  - routes entre les régions ;
+  - vraies îles flottantes (aujourd'hui des pitons en mer) ;
+  - grottes ;
+  - faune, ressources et éléments de la mer.
+
+  La chaîne à archétypes (`pois`, `paths`, `spawns`) est prête à être rebranchée par zone.
+- **Bouleau** écarté des forêts du monde ouvert (`LOURDS` de `gen/flora.js`) : son modèle fait
+  environ 1 800 triangles contre 100 à 180 pour les autres arbres. À revoir avec les arbres V2.
+- **Budget mesuré en jeu** (Forêt des souvenirs, onglet caché) : 4,3 M triangles, ombres comprises.
+  L'essentiel vient de la végétation complète des sections proches et de l'herbe.
 
 - Branche `v3-archipel`. Derniers commits : herbe V2, lettres A à F (palettes et sol, variation, forme
   et couverture, lumière, touffes récoltables, carte d'herbe du Worker) et réglage de l'ombre.
@@ -169,13 +228,17 @@ et domaine concerné).
 - **Non commité** (hors de ce chantier) : tableau de bord (`dashboard.html`, `dashboard/`,
   `vite.config.js`), agents d'équipe et skill `modele-3d`, `README.md`, chèvre, mouton et fleurs
   (PLA-015), `tests/fixtures/empreintes.json`.
-- **Tests** : 239 sur 240. Échec : `tests/empreintes.test.js` (personnage PER-001 à PER-003, 160
+- **Tests** : 245 sur 246. Échec : `tests/empreintes.test.js` (personnage PER-001 à PER-003, 160
   triangles de l'épée, changement voulu à valider puis `npm run modeles:empreinte -- --ecrire` ; fleurs
   PLA-015 en cours). « Budget du Worker » de `tests/world.test.js` : mesure de temps sensible à la
   charge (peut échouer sous la suite complète, vert seul).
-- **Graphe du code** : mis à jour le 21/10/2026 après l'herbe V2 sur `src/` (code seul, 1 901 nœuds,
-  5 252 liens, 95 communautés ; nouvelles : « Herbe en tapis (rendu) », « Carte d'herbe du Worker »).
-  Les `FICHE.md` et les planches n'y sont pas : lire les dossiers des modèles.
+- **Graphe du code** : mis à jour le 22/10/2026 après l'open world.
+  - Commande : `graphify update src`, sans LLM, code seul.
+  - Résultat : 2 459 nœuds, 6 384 liens, 170 communautés, nommées automatiquement d'après leur nœud
+    central (`forme.js`, `surface.js`, `zones.js`…).
+  - Attention : la commande écrit dans `src/graphify-out/`. Il faut déplacer `GRAPH_REPORT.md`,
+    `graph.json` et `graph.html` dans `graphify-out/`, puis supprimer `src/graphify-out/`.
+  - Les `FICHE.md` et les planches n'y sont pas : lire les dossiers des modèles.
   Seul `graphify-out/GRAPH_REPORT.md` est versionné ; `graph.json` et `graph.html` se régénèrent avec
   `/graphify src --update` (ou `/graphify src` sur un clone neuf).
 
