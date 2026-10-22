@@ -39,7 +39,8 @@ export class CameraRig {
     this.mode = 'follow';
     this.orbit = { center: new THREE.Vector3(), t: 0, baseYaw: 0 };
     this.lookOffset = new THREE.Vector3(0, 0.7, 0);
-    this.limits = { minDist: 8, maxDist: 30, minPitch: 0.25, maxPitch: 1.15 };
+    // minPitch négatif : la caméra descend au ras du sol et lève les yeux (regarder les îles du ciel)
+    this.limits = { minDist: 8, maxDist: 30, minPitch: -0.6, maxPitch: 1.15 };
     this.forward = new THREE.Vector2(0, -1);
     this.followRate = 5;
     this.groundFn = null; // (x, z) => hauteur du sol, pour éviter le relief
@@ -171,7 +172,10 @@ export class CameraRig {
     // évitement du relief : on relève d'abord l'angle, puis on se rapproche
     let extra = 0;
     let distMul = 1;
-    if (this.groundFn) {
+    // regard vers le haut (angle sous l'horizon) : pas d'évitement par l'angle, la caméra reste au
+    // ras du sol (plus bas) et vise au-dessus du personnage
+    const low = this.cur.pitch < 0.12;
+    if (this.groundFn && !low) {
       const p0 = this.cur.pitch + climbPitch;
       while (extra < 0.75 && this.blocked(this.cur.yaw, p0 + extra, this.cur.distance)) extra += 0.05;
       while (distMul > 0.45 && this.blocked(this.cur.yaw, p0 + extra, this.cur.distance * distMul)) distMul -= 0.05;
@@ -179,9 +183,11 @@ export class CameraRig {
     this.occPitch += (extra - this.occPitch) * damp(extra > this.occPitch ? 9 : 1.8, dt);
     this.occDist += (distMul - this.occDist) * damp(distMul < this.occDist ? 9 : 1.8, dt);
     const yaw = this.cur.yaw;
-    const pitch = Math.max(0.12, Math.min(1.3, this.cur.pitch + this.occPitch + climbPitch));
+    const pitch = low ? Math.max(-0.6, this.cur.pitch + climbPitch) : Math.max(0.12, Math.min(1.3, this.cur.pitch + this.occPitch + climbPitch));
+    // part du regard vers le haut (0 à l'horizon, 1 tout en bas) : la caméra se rapproche
+    const up = low ? Math.min(1, (0.12 - pitch) / 0.72) : 0;
     const speedZoom = this.mode === 'follow' && !this.followWater ? Math.min(1.8, this.followSpeed * 0.12) : 0;
-    const distance = (this.cur.distance + speedZoom) * this.occDist * (1 + CLIMB_BACK * ck);
+    const distance = (this.cur.distance + speedZoom) * this.occDist * (1 + CLIMB_BACK * ck) * (1 - 0.5 * up);
     const cp = Math.cos(pitch);
     // la cible est en coordonnées absolues ; la caméra vit en coordonnées locales
     const fx = this.focus.x - ORIGIN.x;
@@ -191,6 +197,11 @@ export class CameraRig {
       this.focus.y + Math.sin(pitch) * distance,
       fz + Math.cos(yaw) * cp * distance,
     );
+    // au ras du sol ou de la mer, jamais dessous
+    if (low && this.groundFn) {
+      const gy = Math.max(0, this.groundFn(this.focus.x + Math.sin(yaw) * cp * distance, this.focus.z + Math.cos(yaw) * cp * distance)) + 0.6;
+      if (this.camera.position.y < gy) this.camera.position.y = gy;
+    }
     // secousse brève (atterrissage lourd, rebond, dérapage) qui s'amortit
     if (this.shakeAmp > 0.0005) {
       this.shakeT += dt;
@@ -218,7 +229,7 @@ export class CameraRig {
       this.camera.fov = fov;
       this.camera.updateProjectionMatrix();
     }
-    this.camera.lookAt(fx + this.lookOffset.x, this.focus.y + this.lookOffset.y + climbLook, fz + this.lookOffset.z);
+    this.camera.lookAt(fx + this.lookOffset.x, this.focus.y + this.lookOffset.y + climbLook + up * distance * 0.12, fz + this.lookOffset.z);
     if (this.tilt) this.camera.rotation.z += this.tilt;
     this.camera.updateMatrixWorld();
 
