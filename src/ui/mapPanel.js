@@ -44,7 +44,10 @@ function islandShape(desc) {
       const { sand, grass, rock, snow } = pals[zi];
       let col = null;
       let a = 255;
-      if (ctx?.forme && hgt > snowLine(desc.z + z, ctx.zones[zi].biome)) col = snow;
+      // lacs voulus (cuvettes tracées : Lac céleste, oasis) : le relief de base ne les remplit pas
+      const lac = ctx?.forme && ctx.reliefs.some((f) => f.t === 'cuvette' && Math.hypot(x - f.x, z - f.z) < f.r * 0.62) && hgt > 1.3 && hgt < 40;
+      if (lac) col = [150, 214, 220];
+      else if (ctx?.forme && hgt > snowLine(desc.z + z, ctx.zones[zi].biome)) col = snow;
       else if (hgt > 1.3) col = hgt > (isHome ? 6 : desc.biome === 'volcan' ? 14 : ctx?.forme ? 60 : 16) ? rock : grass;
       else if (hgt > -0.3) col = sand;
       else if (hgt > -2.5) {
@@ -202,7 +205,7 @@ export function openMapPanel(game) {
       const [sx, sy] = toScreen(zn.lx, zn.lz);
       if (sx < -150 || sy < -40 || sx > W + 150 || sy > H + 40) continue;
       const seen = seenZones.has(zn.id) || isRevealed(ex.fog, zn.lx, zn.lz);
-      g.font = `${seen ? 600 : 500} ${view.mpp > 6 ? 12 : 14}px Fredoka, Nunito, sans-serif`;
+      g.font = `${seen ? 600 : 500} ${view.mpp > 6 ? 11 : view.mpp > 3 ? 12 : 14}px Fredoka, Nunito, sans-serif`;
       g.lineWidth = 4;
       g.strokeStyle = 'rgba(246, 234, 210, 0.9)';
       g.strokeText(zn.name, sx, sy);

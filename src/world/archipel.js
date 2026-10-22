@@ -36,12 +36,12 @@ const ZONES_PX = [
   { id: 'ile-du-silence', name: 'L’Île du silence', sous: 'Le phare oublié', biome: 'pins', foret: 0.25, aire: [150, 215, 60, 50] },
   { id: 'ile-aux-fleurs', name: 'L’Île aux fleurs', sous: 'Forêts enchantées', biome: 'prairie', foret: 0.35, fleurs: 0.5, aire: [215, 365, 130, 85], arbres: [['arbre_cerisier', 1.3], ['arbre_pompon', 0.6], ['arbre_fruitier', 0.3]] },
   { id: 'archipel-des-tempetes', name: 'L’Archipel des tempêtes', sous: 'Îles changeantes, cieux en colère', biome: 'volcan', foret: 0.14, aire: [365, 485, 110, 85], arbres: [['pin', 0.8], ['bois_mort', 0.5]] },
-  { id: 'grottes-de-cristal', name: 'Les Grottes de cristal', sous: 'Réseaux sous la mer', biome: 'tropical', foret: 0.3, aire: [440, 625, 75, 50] },
+  { id: 'grottes-de-cristal', name: 'Les Grottes de cristal', sous: 'Réseaux sous la mer', biome: 'tropical', foret: 0.3, aire: [440, 625, 75, 50], at: [452, 588] },
   { id: 'village-englouti', name: 'Le Village englouti', sous: 'Une ville sous la mer', biome: 'atoll', foret: 0.3, mer: true, aire: [355, 720, 55, 38] },
   { id: 'cascades-sacrees', name: 'Les Cascades sacrées', sous: 'Chutes d’eau et sanctuaires', biome: 'tropical', foret: 0.5, aire: [170, 645, 120, 85] },
   { id: 'ilots-secrets', name: 'Les Îlots secrets', sous: 'Petites îles cachées', biome: 'atoll', foret: 0.4, palmiers: true, aire: [215, 825, 110, 60] },
   // sud
-  { id: 'grotte-lumineuse', name: 'La Grotte lumineuse', sous: 'Lacs luminescents', biome: 'tropical', foret: 0.45, aire: [632, 742, 85, 60] },
+  { id: 'grotte-lumineuse', name: 'La Grotte lumineuse', sous: 'Lacs luminescents', biome: 'tropical', foret: 0.45, aire: [632, 742, 85, 60], at: [626, 806] },
   { id: 'ile-brumeuse', name: 'L’Île brumeuse', sous: 'Brouillard et sous-bois', biome: 'pins', foret: 0.6, aire: [475, 885, 105, 60] },
   { id: 'place-des-os', name: 'La Place des os', sous: 'Épaves et bancs de sable', biome: 'atoll', foret: 0.2, mer: true, aire: [785, 875, 90, 50], arbres: [['bois_mort', 0.6], ['palmier', 0.3]] },
   // est
@@ -76,8 +76,8 @@ const ILES_PX = [
       { t: 'colline', at: [860, 380, 55, 40] },
       { t: 'plateau', at: [930, 478, 72, 44, 46], bord: 22 },
       { t: 'cuvette', at: [988, 368, 46, 42] },
-      { t: 'colline', at: [980, 362, 9, 30] },
-      { t: 'colline', at: [1000, 384, 6, 24] },
+      { t: 'colline', at: [978, 360, 17, 49] },
+      { t: 'colline', at: [1004, 386, 12, 45] },
     ],
   },
   {
