@@ -31,7 +31,7 @@ const ZONES_PX = [
   { id: 'cote-aux-villages', name: 'La Côte aux villages', sous: 'Plaine côtière', ile: 'grande-ile', biome: 'prairie', foret: 0.16, fleurs: 0.08, palmiers: true, aire: [745, 590, 200, 60], collines: [7, 160], arbres: [['arbre_pompon', 1.0], ['arbre_fruitier', 0.15], ['arbre_cerisier', 0.3]], decor: [['buisson_fleuri', 0.25], ['arbuste', 0.4]] },
   // nord
   { id: 'ruines-gelees', name: 'Les Ruines gelées', sous: 'Vestiges d’une ancienne civilisation', biome: 'glace', foret: 0.3, aire: [420, 125, 130, 120], arbres: [['sapin_neige', 1.4], ['pin_givre', 0.8]], decor: [['rocher', 0.3]] },
-  { id: 'iles-celestes', name: 'Les Îles célestes', sous: 'Pitons rocheux', biome: 'pins', foret: 0.5, aire: [930, 80, 105, 70] },
+  { id: 'iles-celestes', name: 'Les Îles célestes', sous: 'Îles flottantes et cascades du ciel', biome: 'pins', foret: 0.5, mer: true, aire: [930, 80, 105, 70], at: [940, 156] },
   { id: 'volcan-endormi', name: 'Le Volcan endormi', sous: 'Cratère et coulées refroidies', biome: 'volcan', foret: 0.18, aire: [1180, 195, 175, 115] },
   // ouest
   { id: 'ile-du-silence', name: 'L’Île du silence', sous: 'Le phare oublié', biome: 'pins', foret: 0.25, aire: [150, 215, 60, 50] },
@@ -174,12 +174,6 @@ const ILES_PX = [
     cote: [[1015, 170], [1070, 120], [1150, 95], [1240, 100], [1310, 130], [1345, 185], [1330, 245], [1270, 285], [1180, 295], [1090, 280], [1030, 240]],
     reliefs: [{ t: 'volcan', at: [1180, 188, 118, 200], cratere: 22 }],
   },
-  // Îles célestes : pitons rocheux en mer, sommets verts (les vraies îles flottantes viendront plus tard)
-  { id: 'piton-celeste-1', name: 'Piton céleste', zone: 'iles-celestes', biome: 'pins', falaise: 1, cercle: [880, 70, 22], reliefs: [{ t: 'piton', at: [880, 70, 17, 120] }] },
-  { id: 'piton-celeste-2', name: 'Piton céleste', zone: 'iles-celestes', biome: 'pins', falaise: 1, cercle: [930, 42, 16], reliefs: [{ t: 'piton', at: [930, 42, 12, 92] }] },
-  { id: 'piton-celeste-3', name: 'Piton céleste', zone: 'iles-celestes', biome: 'pins', falaise: 1, cercle: [968, 96, 25], reliefs: [{ t: 'piton', at: [968, 96, 20, 140] }] },
-  { id: 'piton-celeste-4', name: 'Piton céleste', zone: 'iles-celestes', biome: 'pins', falaise: 1, cercle: [910, 126, 14], reliefs: [{ t: 'piton', at: [910, 126, 10, 72] }] },
-  { id: 'piton-celeste-5', name: 'Piton céleste', zone: 'iles-celestes', biome: 'pins', falaise: 1, cercle: [1004, 40, 12], reliefs: [{ t: 'piton', at: [1004, 40, 9, 82] }] },
   // îlots entre les îles
   { id: 'ilot-nord', name: 'Îlot', biome: 'pins', ilot: true, cercle: [562, 128, 11], reliefs: [{ t: 'colline', at: [562, 128, 8, 10] }] },
   { id: 'ilot-ouest', name: 'Îlot', biome: 'tropical', ilot: true, cercle: [58, 482, 14], reliefs: [{ t: 'colline', at: [58, 482, 10, 12] }] },
@@ -189,6 +183,18 @@ const ILES_PX = [
   { id: 'ilot-du-plateau', name: 'Îlot', biome: 'prairie', ilot: true, cercle: [1005, 640, 14], reliefs: [{ t: 'colline', at: [1005, 640, 10, 10] }] },
   { id: 'ilot-est', name: 'Îlot', biome: 'atoll', ilot: true, cercle: [1495, 505, 12], reliefs: [{ t: 'colline', at: [1495, 505, 8, 6] }] },
   { id: 'ilot-sud-est', name: 'Îlot', biome: 'tropical', ilot: true, cercle: [1482, 905, 11], reliefs: [{ t: 'colline', at: [1482, 905, 8, 8] }] },
+];
+
+// ---------------------------------------------------------------------------
+// Îles célestes : îles flottantes au-dessus de la mer, au nord de la Grande Île (gen ciel.js).
+// at : [x, y, rayon] en pixels ; alt : hauteur du dessus (m) ; arbres [espèce, densité pour 100 m²] ;
+// cascade : angle (rad) du bord d'où l'eau tombe dans le vide, sinon aucune.
+const CIEL_PX = [
+  { id: 'ciel-grand-jardin', name: 'Le Grand Jardin du ciel', at: [962, 96, 27], alt: 118, cascade: 2.4, arbres: [['arbre_cerisier', 1.2], ['arbre_pompon', 1.0], ['pin', 0.4]] },
+  { id: 'ciel-pinede', name: 'La Pinède suspendue', at: [880, 66, 21], alt: 152, cascade: 0.6, arbres: [['pin', 2.0], ['sapin_neige', 0.5]] },
+  { id: 'ciel-belvedere', name: 'Le Belvédère des nuées', at: [930, 30, 15], alt: 196, arbres: [['arbre_pompon', 0.9], ['erable', 0.5]] },
+  { id: 'ciel-ilot-vert', name: 'L’Îlot des vents', at: [906, 128, 12], alt: 92, arbres: [['saule', 0.8], ['arbre_pompon', 0.6]] },
+  { id: 'ciel-cime', name: 'La Cime céleste', at: [1010, 40, 13], alt: 228, cascade: 4.1, arbres: [['erable', 1.0], ['arbre_cerisier', 0.6]] },
 ];
 
 // ---------------------------------------------------------------------------
@@ -300,6 +306,11 @@ export const ARCHIPEL = {
   limit: { mist: 0, turn: 250 },
   home: { id: 'home', name: 'Ton île', x: 0, z: 0, r: 34 },
   islands: ILES_PX.map(ileM),
+  // îles flottantes (rayon, hauteur du dessus en m ; graine tirée de l'identifiant)
+  ciel: CIEL_PX.map((c) => {
+    const [x, z] = m(c.at);
+    return { id: c.id, name: c.name, zone: 'iles-celestes', x, z, r: c.at[2] * PX, alt: c.alt, cascade: c.cascade ?? null, arbres: c.arbres, seed: hash(c.id) };
+  }),
   // éléments de la mer (algues, récifs, bouteilles, caisses…) : retirés à l'étape « bases »
   marine: [],
 };

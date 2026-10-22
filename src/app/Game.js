@@ -5,6 +5,7 @@ import { U, ORIGIN } from '../core/globals.js';
 import { IslandManager } from '../world/islands/IslandManager.js';
 import { IslandFauna } from '../entities/fauna/islandFauna.js';
 import { ILES, ILE_BY_ID, zoneAt } from '../world/islands/regions.js';
+import { IlesCelestes } from '../world/ciel/IlesCelestes.js';
 import { POI_LABELS } from '../world/islands/gen/pois.js';
 import { mulberry32 } from '../core/random.js';
 import { MarineManager } from '../world/marine.js';
@@ -27,7 +28,7 @@ import { Interactions } from '../gameplay/Interactions.js';
 import { Collectibles, KINDS } from '../gameplay/collectibles.js';
 import { Inventory } from '../gameplay/Inventory.js';
 import { Gather } from '../gameplay/Gather.js';
-import { setObstacles, setBridge, pickGround, projectCurved, groundAt, addObstacle, blockedByObstacle, setWaterProvider, obstacleAt, waterDepth } from '../world/navigation.js';
+import { setObstacles, setBridge, pickGround, projectCurved, groundAt, addObstacle, blockedByObstacle, setWaterProvider, obstacleAt, waterDepth, setGroundRef } from '../world/navigation.js';
 import { loadSave, writeSave } from '../core/db.js';
 import { migrate, todayKey, legacyHours, relinkDiscoveries } from '../core/state.js';
 import { Decor, CATALOG, nearbyStations } from '../gameplay/decor.js';
@@ -108,6 +109,8 @@ export class Game {
 
     // --- navigation ---
     setObstacles(this.world.obstacles);
+    // îles célestes : îles flottantes du nord, marchables (sol : navigation.js, cielSous)
+    this.ciel = new IlesCelestes({ root: this.world.root, mats: this.islands.mats });
     setBridge(this.world.spots.bridge);
 
     // --- personnages ---
@@ -119,6 +122,7 @@ export class Game {
     this.player = new Player(this.character);
     const p = this.state.player;
     this.recenter(p.x, p.z);
+    setGroundRef(Number.isFinite(p.y) ? p.y + 1 : 0);
     this.player.place(p.x, p.z, Math.PI);
     this.player.onStep = (surface, speed, pan) => this.audio?.step(surface, speed, pan);
     this.rig.target.copy(this.player.pos);
@@ -393,7 +397,8 @@ export class Game {
     const lf = this._lf.set(f.x - ORIGIN.x, f.y, f.z - ORIGIN.z);
     // ombres : autour de l'île de départ on garde le cadrage d'origine, ailleurs on suit
     const home = Math.hypot(f.x, f.z) < 40 ? 0.6 : 1;
-    this.pipeline.shadowCenter.set(f.x * home - ORIGIN.x, 1, f.z * home - ORIGIN.z);
+    this.islands.update(dt, P.x, P.z);
+    this.ciel.update(dt);
 
     // archipel
     this.islands.update(dt, P.x, P.z);
@@ -443,6 +448,8 @@ export class Game {
     const sp = this.player.savePosition ? this.player.savePosition(this._savePos ||= { x: 0, z: 0 }) : this.player.pos;
     st.player.x = sp.x;
     st.player.z = sp.z;
+    // hauteur : retrouver le dessus d'une île céleste au chargement (sinon la mer en dessous)
+    st.player.y = Math.round(this.player.pos.y * 10) / 10;
     this.saveTimer -= dt;
     if (this.dirty && this.saveTimer <= 0) this.saveNow();
   }
@@ -1450,8 +1457,10 @@ export class Game {
         game.rig.mode = 'follow';
         if (game.rig.savedGroundFn) game.rig.groundFn = game.rig.savedGroundFn;
       },
-      // téléporte le joueur (coordonnées absolues)
-      tp(x, z) {
+      // téléporte le joueur (coordonnées absolues) ; y : hauteur d'où l'on arrive (par défaut d'en haut :
+      // on se pose sur le dessus d'une île céleste)
+      tp(x, z, y = 1e6) {
+        setGroundRef(y);
         game.player.place(x, z);
         game.rig.target.copy(game.player.pos);
         game.rig.focus.copy(game.player.pos);

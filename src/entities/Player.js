@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { groundAt, obstacleAt, waterDepth, pushOut, troncsProches } from '../world/navigation.js';
+import { groundAt, obstacleAt, waterDepth, pushOut, troncsProches, setGroundRef } from '../world/navigation.js';
 import { U, ORIGIN } from '../core/globals.js';
 import { waterSurfaceAt } from '../world/env/water.js';
 import { createMotor, stepMotor, resetMotor, interpolate, climbable, arriveIntent, setProfile, H } from './locomotion/motor.js';
@@ -241,6 +241,8 @@ export class Player {
   update(dt, intent = null, legacyRun = false) {
     // Les longues images après un onglet inactif ne doivent pas téléporter le joueur.
     dt = Math.min(Math.max(dt || 0, 0), 0.05);
+    // sol à la hauteur du joueur (dessus d'une île céleste, ou relief d'en bas)
+    setGroundRef(this.pos.y);
     if (intent && intent.isVector3) intent = { move: intent, sprint: legacyRun };
     const c = this.character;
     let speed01 = 0;

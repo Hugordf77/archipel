@@ -4,6 +4,7 @@ import { islandContext, islandHeight } from '../world/islands/islandgen.js';
 import { bilinear } from '../world/islands/gen/grid.js';
 import { heightAt, LAYOUT } from '../world/home/terrain.js';
 import { isRevealed } from '../world/fog.js';
+import { cielSous } from '../world/navigation.js';
 
 const SIZE = 164;
 const METERS_PER_PIXEL = 2;
@@ -68,7 +69,9 @@ export class MiniMap {
         const inside = wx >= bounds.minX && wx <= bounds.maxX && wz >= bounds.minZ && wz <= bounds.maxZ;
         if (inside && isRevealed(state.explorer.fog, wx, wz)) {
           let height = -4;
-          if (Math.hypot(wx, wz) < 52) height = heightAt(wx, wz);
+          const ciel = cielSous(wx, wz);
+          if (ciel) height = 8;
+          else if (Math.hypot(wx, wz) < 52) height = heightAt(wx, wz);
           else if ((height = loaded(wx, wz) ?? -4) === -4) {
             const island = isles.find((d) => Math.abs(wx - d.x) < islandContext(d).ext && Math.abs(wz - d.z) < islandContext(d).ext && islandHeight(islandContext(d), wx - d.x, wz - d.z) > -3);
             if (island) {

@@ -49,7 +49,7 @@ describe('archipel des souvenirs (open world)', () => {
       expect(zn.lx).toBeLessThan(B.maxX);
     }
     expect(new Set(ILES.map((d) => d.id)).size).toBe(ILES.length);
-    expect(ILES.filter((d) => !d.ilot).length).toBeGreaterThanOrEqual(20);
+    expect(ILES.filter((d) => !d.ilot).length).toBeGreaterThanOrEqual(15);
     for (const d of ILES) {
       expect(d.id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
       expect(ZONES.some((z) => z.id === d.zone), d.id).toBe(true);
@@ -90,7 +90,7 @@ describe('archipel des souvenirs (open world)', () => {
     for (const [id, A] of land) for (let p = 0; p < A.length; p += 2) expect(Math.hypot(A[p], A[p + 1]), id).toBeGreaterThan(120);
   }, 60000);
 
-  it('dresse des repères visibles de loin : Sommet givré, volcan, pitons des Îles célestes', async () => {
+  it('dresse des repères visibles de loin : Sommet givré, volcan, Îles célestes dans le ciel', async () => {
     const { ILE_BY_ID } = await import('../src/world/islands/regions.js');
     const { reliefContext, baseHeight } = await import('../src/world/islands/gen/relief.js');
     const top = (id) => {
@@ -102,7 +102,9 @@ describe('archipel des souvenirs (open world)', () => {
     };
     expect(top('grande-ile')).toBeGreaterThan(220);
     expect(top('volcan-endormi')).toBeGreaterThan(150);
-    expect(top('piton-celeste-3')).toBeGreaterThan(120);
+    const { ARCHIPEL } = await import('../src/world/archipel.js');
+    expect(ARCHIPEL.ciel.length).toBeGreaterThanOrEqual(5);
+    expect(Math.max(...ARCHIPEL.ciel.map((c) => c.alt))).toBeGreaterThan(200);
   });
 
   it('donne du caractère au relief : massif à plusieurs sommets, forêt vallonnée, côte et plateau plus doux', async () => {

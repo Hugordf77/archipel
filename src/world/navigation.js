@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { LAYOUT, heightAt, smooth, distToPolyline } from './home/terrain.js';
 import { U, ORIGIN } from '../core/globals.js';
+import { cielAt } from './ciel/relief.js';
 
 // Toutes les coordonnées de ce module sont absolues (origine du monde = île de départ).
 // L'île de départ est dessinée à la main ; au-delà, un « fournisseur » (le gestionnaire
@@ -20,8 +21,22 @@ export function waterLevelAt(x, z) {
   if (isHome(x, z)) return 0;
   return waterProvider ? waterProvider(x, z) : 0;
 }
+// Hauteur de référence (m) : celle du joueur, posée à chaque image (Player, AirRide). Au-dessus d'une
+// île céleste, le sol est son dessus si l'on n'est pas passé dessous ; sinon le relief d'en bas.
+let groundRef = 0;
+export function setGroundRef(y) {
+  groundRef = y;
+}
+export const getGroundRef = () => groundRef;
+// île céleste portant ce point à la hauteur de référence (dessus à moins de 4 m sous elle), ou null
+export function cielSous(x, z) {
+  const s = cielAt(x, z);
+  return s && groundRef > s.top - 4 ? s : null;
+}
 function terrainY(x, z) {
   if (Math.abs(x) < HOME_EXTENT && Math.abs(z) < HOME_EXTENT) return heightAt(x, z);
+  const s = cielSous(x, z);
+  if (s) return s.top;
   const h = provider ? provider(x, z) : null;
   return h ?? SEA_FLOOR;
 }
@@ -64,6 +79,7 @@ export function groundAt(x, z) {
 
 // Profondeur d'eau sous un point (0 si sec)
 export function waterDepth(x, z) {
+  if (cielSous(x, z)) return 0;
   if (!isHome(x, z)) return Math.max(0, waterLevelAt(x, z) - terrainY(x, z));
   const h = heightAt(x, z);
   const pd = Math.hypot(x - LAYOUT.pond.x, z - LAYOUT.pond.z);
@@ -117,7 +133,8 @@ function near(x, z, fn) {
   for (let i = i0 - 1; i <= i0 + 1; i++) {
     for (let j = j0 - 1; j <= j0 + 1; j++) {
       const c = grid.get(cellKey(i, j));
-      if (c) for (const o of c) if (fn(o)) return true;
+      // obstacles des îles célestes (ymin) : seulement pour qui est dessus
+      if (c) for (const o of c) if ((o.ymin === undefined || groundRef > o.ymin) && fn(o)) return true;
     }
   }
   return false;

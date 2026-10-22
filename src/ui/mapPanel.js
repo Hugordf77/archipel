@@ -212,6 +212,26 @@ export function openMapPanel(game) {
       g.fillStyle = seen ? '#3f5f7a' : 'rgba(63, 95, 122, 0.55)';
       g.fillText(zn.name, sx, sy);
     }
+    // îles célestes : silhouettes flottantes, leur ombre portée sur la mer (pointillés) une fois vues
+    for (const c of ARCHIPEL.ciel) {
+      if (!isRevealed(ex.fog, c.x, c.z) && !isRevealed(ex.fog, c.x, c.z + c.r)) continue;
+      const [sx, sy] = toScreen(c.x, c.z);
+      const rr = Math.max(3, (c.r * 0.9) / view.mpp);
+      g.setLineDash([3, 4]);
+      g.strokeStyle = 'rgba(91, 74, 99, 0.35)';
+      g.lineWidth = 1.2;
+      g.beginPath();
+      g.ellipse(sx + rr * 0.25, sy + rr * 0.35, rr, rr * 0.8, 0, 0, Math.PI * 2);
+      g.stroke();
+      g.setLineDash([]);
+      g.fillStyle = '#9cd6a3';
+      g.strokeStyle = '#a596b6';
+      g.lineWidth = 2;
+      g.beginPath();
+      g.ellipse(sx, sy, rr, rr * 0.8, 0, 0, Math.PI * 2);
+      g.fill();
+      g.stroke();
+    }
     // traces des cartes au trésor
     for (const t of ex.treasures || []) {
       if (t.found) continue;

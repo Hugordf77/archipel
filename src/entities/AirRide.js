@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { buildAlbatros } from '../models/animals/albatros.js';
-import { groundAt, waterDepth } from '../world/navigation.js';
+import { groundAt, waterDepth, setGroundRef } from '../world/navigation.js';
 import { worldLimit } from '../world/archipel.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
@@ -212,6 +212,8 @@ export class AirRide {
     dt = Math.min(Math.max(dt, 0), 0.05);
     const { player, rig } = this.game;
     const p = player.pos;
+    // en vol, le sol est celui que l'on survole à sa hauteur (dessus des îles célestes)
+    setGroundRef(p.y);
     this.time += dt;
 
     // -----------------------------------------------------------------------
