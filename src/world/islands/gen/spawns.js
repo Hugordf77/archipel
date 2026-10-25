@@ -64,8 +64,8 @@ export function placeSpawners(P, pois) {
     const k = land[Math.floor(land.length / 2)];
     add('crabe', -ext + (k % n) * s, -ext + Math.floor(k / n) * s, 2, k);
   }
-  // troupeaux posés à la main (archipel.js, overrides.faune), après tout tirage : le reste ne bouge pas ;
+  // troupeaux posés à la main (lieux.faune de l'île), après tout tirage : le reste ne bouge pas ;
   // robes : robe de chaque bête, dans l'ordre
-  for (const f of desc.overrides?.faune || []) out.push({ sp: f.sp, x: f.x, z: f.z, count: f.count, r: f.r ?? SPREAD[f.sp] ?? 8, zone: -1, ...(f.robes ? { robes: f.robes } : {}) });
+  for (const f of desc.lieux?.faune || []) out.push({ sp: f.sp, x: f.x, z: f.z, count: f.count, r: f.r ?? SPREAD[f.sp] ?? 8, zone: -1, ...(f.robes ? { robes: f.robes } : {}) });
   return out;
 }

@@ -19,7 +19,7 @@ const palOf = (b) => {
   return { sand: hex(pal.sand), grass: hex(pal.grass[1]), rock: hex(pal.rock), snow: hex(pal.snow || '#f7fbff') };
 };
 // demi-côté (m) du carré peint d'une île
-const shapeExt = (desc) => (desc.id === 'home' ? 40 : desc.forme ? islandContext(desc).ext : desc.r * 1.38);
+const shapeExt = (desc) => (desc.id === 'home' ? 40 : islandContext(desc).ext);
 // silhouette peinte d'une île (canevas mis en cache, environ 12 m par pixel ; couleurs du biome de
 // chaque zone et neige des îles de la carte)
 function islandShape(desc) {
@@ -33,22 +33,22 @@ function islandShape(desc) {
   const g = c.getContext('2d');
   const img = g.createImageData(N, N);
   const ctx = isHome ? null : islandContext(desc);
-  const pals = ctx?.forme ? ctx.zones.map((z) => palOf(z.biome)) : [palOf(desc.biome)];
+  const pals = ctx ? ctx.zones.map((z) => palOf(z.biome)) : [palOf(desc.biome)];
   const shallow = [176, 225, 214];
   for (let j = 0; j < N; j++) {
     for (let i = 0; i < N; i++) {
       const x = -ext + ((i + 0.5) / N) * ext * 2;
       const z = -ext + ((j + 0.5) / N) * ext * 2;
       const hgt = isHome ? heightAt(x, z) : islandHeight(ctx, x, z);
-      const zi = ctx?.forme && hgt > -0.3 ? formeZone(ctx, x, z) : 0;
+      const zi = ctx && hgt > -0.3 ? formeZone(ctx, x, z) : 0;
       const { sand, grass, rock, snow } = pals[zi];
       let col = null;
       let a = 255;
       // lacs voulus (cuvettes tracées : Lac céleste, oasis) : le relief de base ne les remplit pas
-      const lac = ctx?.forme && ctx.reliefs.some((f) => f.t === 'cuvette' && Math.hypot(x - f.x, z - f.z) < f.r * 0.62) && hgt > 1.3 && hgt < 40;
+      const lac = ctx && ctx.reliefs.some((f) => f.t === 'cuvette' && Math.hypot(x - f.x, z - f.z) < f.r * 0.62) && hgt > 1.3 && hgt < 40;
       if (lac) col = [150, 214, 220];
-      else if (ctx?.forme && hgt > snowLine(desc.z + z, ctx.zones[zi].biome)) col = snow;
-      else if (hgt > 1.3) col = hgt > (isHome ? 6 : desc.biome === 'volcan' ? 14 : ctx?.forme ? 60 : 16) ? rock : grass;
+      else if (ctx && hgt > snowLine(desc.z + z, ctx.zones[zi].biome)) col = snow;
+      else if (hgt > 1.3) col = hgt > (isHome ? 6 : desc.biome === 'volcan' ? 14 : 60) ? rock : grass;
       else if (hgt > -0.3) col = sand;
       else if (hgt > -2.5) {
         col = shallow;

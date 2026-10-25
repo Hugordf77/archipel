@@ -93,7 +93,7 @@ function dessinerFond() {
   };
   for (const d of ILES) {
     const ic = islandContext(d);
-    peindre(d.x, d.z, d.forme ? ic.ext : d.r * 1.38, (x, z) => islandHeight(ic, x, z));
+    peindre(d.x, d.z, ic.ext, (x, z) => islandHeight(ic, x, z));
   }
   peindre(0, 0, 40, (x, z) => heightAt(x, z));
   g.putImageData(img, 0, 0);

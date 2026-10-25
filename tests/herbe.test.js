@@ -309,19 +309,21 @@ describe('herbe en tapis : palettes et sol', () => {
   });
 
   it('sous l’herbe, le sol prend le milieu ombré de la palette, au relief de 4 m comme au mètre', async () => {
-    const { ISLANDS } = await import('./helpers/archipel-v3.js');
+    // île d'essai (tests/fixtures/ile-essai.js) : côte et prés fleuris en prairie, sous-bois de champignons
+    const { ILE_ESSAI: d } = await import('./fixtures/ile-essai.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const { Surface, buildTile } = await import('../src/world/islands/gen/surface.js');
     const { Z } = await import('../src/world/islands/gen/zones.js');
     const { paletteHerbe } = await import('../src/world/islands/biomes.js');
-    const d = ISLANDS.find((q) => q.id === 'village-pommeraie');
+    const { BIOME_IDS } = await import('../src/world/islands/gen/forme.js');
     const p = buildPlan(d);
     const sol = paletteHerbe(d.biome).sol;
-    // relief de 4 m : cellules de prairie peu pentues
+    const prairie = BIOME_IDS.indexOf(d.biome);
+    // relief de 4 m : cellules de prairie peu pentues, dans les zones du biome de la prairie
     const mean4 = [0, 0, 0];
     let n4 = 0;
     for (let k = 0; k < p.n * p.n; k++) {
-      if (p.Z[k] !== Z.PRAIRIE) continue;
+      if (p.Z[k] !== Z.PRAIRIE || p.B[k] !== prairie) continue;
       for (let c = 0; c < 3; c++) mean4[c] += p.C[k * 3 + c];
       n4++;
     }
@@ -343,7 +345,7 @@ describe('herbe en tapis : palettes et sol', () => {
         if (i < 1 || j < 1 || i >= p.n - 1 || j >= p.n - 1) continue;
         let all = true;
         for (let dj = -1; dj <= 1 && all; dj++) for (let di = -1; di <= 1; di++) if (p.Z[(j + dj) * p.n + i + di] !== Z.PRAIRIE) all = false;
-        if (!all || tile.normals[k * 3 + 1] < 0.9) continue;
+        if (!all || p.B[j * p.n + i] !== prairie || tile.normals[k * 3 + 1] < 0.9) continue;
         for (let c = 0; c < 3; c++) mean1[c] += tile.colors[k * 3 + c];
         n1++;
       }

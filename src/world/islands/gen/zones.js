@@ -42,108 +42,11 @@ export const ZONE_HERBE = {
   [Z.MER]: [0, 0.25, 0.7, 0],
 };
 
-const FOREST = { foret: 0.68, montagne: 0.42, village: 0.2, fleurs: 0.1, falaises: 0.3, cratere: 0.22, jumelles: 0.34, curiosite: 0.18, dunes: 0.02, lagon: 0.12 };
-// part visée des prés ouverts réellement convertie en fleurs, distincte par archétype
-const BLOOM = { fleurs: 0.5, village: 0.18, foret: 0.18, montagne: 0.07, falaises: 0.16, jumelles: 0.16, curiosite: 0.14, cratere: 0.12, dunes: 0.12, lagon: 0.13 };
-
 // seuil tel qu'une fraction « frac » des valeurs soit au-dessus
 function quantile(values, frac) {
   if (!values.length) return Infinity;
   const v = Float32Array.from(values).sort();
   return v[Math.max(0, Math.min(v.length - 1, Math.floor(v.length * (1 - frac))))];
-}
-
-export function computeZones(T, desc) {
-  const { H, n, s, ext, water, hmax } = T;
-  const arch = T.ctx.arch;
-  const biome = desc.biome;
-  const N = n * n;
-  const nz = makeNoise(desc.seed ^ 0x2017e5);
-  const nf = makeNoise(desc.seed ^ 0x5f10e1);
-  const zone = new Uint8Array(N);
-  const slope = new Float32Array(N);
-  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) slope[j * n + i] = slopeAt(H, n, s, i, j);
-  const coastDist = distanceField(n, s, (k) => H[k] < 0 && water[k] === 0);
-  const wetDist = distanceField(n, s, (k) => water[k] > 0);
-  const forestN = new Float32Array(N);
-  const bloomN = new Float32Array(N);
-  const cand = [];
-  const bcand = [];
-  let openCells = 0;
-  const hRef = Math.max(12, hmax);
-  // première passe : eau, plages, roche, altitude
-  for (let j = 0; j < n; j++) {
-    for (let i = 0; i < n; i++) {
-      const k = j * n + i;
-      const x = -ext + i * s;
-      const z = -ext + j * s;
-      const h = H[k];
-      const sl = slope[k];
-      const alt = h / hRef;
-      let zn = Z.PRAIRIE;
-      if (water[k] === 1) zn = Z.LAC;
-      else if (water[k] === 2) zn = Z.RIVIERE;
-      else if (h < -0.3) zn = Z.MER;
-      else if (h < 1.45 && sl < 0.5 && coastDist[k] < 45) zn = biome === 'dunes' ? Z.DUNE : Z.PLAGE;
-      else if ((arch === 'montagne' && alt > 0.7) || (biome === 'glace' && alt > 0.42 && h > 10)) zn = sl > 1.1 ? Z.ROCHE : Z.NEIGE;
-      else if (sl > 0.68) zn = Z.ROCHE;
-      else if (arch === 'cratere' && alt > 0.25) {
-        // coulées de lave refroidie : rubans rayonnants depuis le cratère
-        const a = Math.atan2(z, x);
-        const flow = Math.sin(a * 5 + fbm(nz, x / 60, z / 60, 2) * 4);
-        zn = flow > 0.55 ? Z.LAVE : alt > 0.6 ? Z.ROCHE : Z.MAQUIS;
-      } else if (arch === 'montagne' && alt > 0.5) zn = Z.ALPAGE;
-      else if (arch === 'dunes' || (biome === 'dunes' && h < 6)) zn = wetDist[k] < 28 ? Z.PRAIRIE : Z.DUNE;
-      else if (wetDist[k] < 4.5 && sl < 0.3) zn = Z.ROSELIERE;
-      else if (wetDist[k] < 12 && sl < 0.12 && h < hRef * 0.5) zn = Z.MARAIS;
-      else if (sl > 0.34 && wetDist[k] > 30 && (biome === 'tropical' || biome === 'dunes' || biome === 'volcan' || nz(x / 90, z / 90) > 0.2)) zn = Z.MAQUIS;
-      zone[k] = zn;
-      if (zn === Z.PRAIRIE || zn === Z.MAQUIS) {
-        forestN[k] = fbm(nz, x / 75 + 11, z / 75 - 7, 3) + (arch === 'montagne' && alt > 0.42 ? -1 : 0);
-        cand.push(forestN[k]);
-      }
-    }
-  }
-  // forêt : une part exacte de la terre (quantile), lisières et clairières
-  const fq = quantile(cand, FOREST[arch] ?? 0.25);
-  for (let k = 0; k < N; k++) {
-    if ((zone[k] === Z.PRAIRIE || zone[k] === Z.MAQUIS) && forestN[k] >= fq) zone[k] = Z.FORET;
-  }
-  for (let j = 1; j < n - 1; j++) {
-    for (let i = 1; i < n - 1; i++) {
-      const k = j * n + i;
-      if (zone[k] !== Z.FORET) continue;
-      const x = -ext + i * s;
-      const z = -ext + j * s;
-      if (fbm(nf, x / 34 + 3, z / 34 - 9, 2) > 0.42) {
-        zone[k] = Z.CLAIRIERE;
-        continue;
-      }
-      const edge = [k - 1, k + 1, k - n, k + n].some((q) => zone[q] === Z.PRAIRIE || zone[q] === Z.MAQUIS || zone[q] === Z.PLAGE);
-      if (edge) zone[k] = Z.LISIERE;
-      else if (biome === 'champignons' && fbm(nf, x / 50, z / 50, 2) > 0) zone[k] = Z.CHAMPIGNONS;
-    }
-  }
-  // champs de fleurs : grandes taches sur les pentes douces
-  for (let j = 0; j < n; j++) {
-    for (let i = 0; i < n; i++) {
-      const k = j * n + i;
-      if (zone[k] !== Z.PRAIRIE) continue;
-      openCells++;
-      if (slope[k] > 0.28) continue;
-      const x = -ext + i * s;
-      const z = -ext + j * s;
-      bloomN[k] = fbm(nf, x / 55 - 5, z / 55 + 13, 3);
-      bcand.push(bloomN[k]);
-    }
-  }
-  // Convertit la part visée des prés ouverts en quantile des seules cellules assez
-  // douces pour recevoir un champ. Ainsi une île pentue ne perd pas ses fleurs.
-  const bloomShare = BLOOM[arch] ?? 0.12;
-  const candidateShare = bcand.length ? Math.min(1, bloomShare * openCells / bcand.length) : 0;
-  const bq = quantile(bcand, candidateShare);
-  for (let k = 0; k < N; k++) if (zone[k] === Z.PRAIRIE && slope[k] <= 0.28 && bloomN[k] >= bq && bloomN[k] !== 0) zone[k] = Z.FLEURS;
-  return { zone, slope, coastDist, wetDist };
 }
 
 // ---------------------------------------------------------------------------
@@ -186,15 +89,14 @@ function palSet(pal, biome) {
   };
 }
 
-// P.B (îles de la carte) : un biome par case, sinon celui de l'île (desc.biome, P.pal)
+// P.B : un biome par case (celui de la zone de l'île)
 export function zoneColors(P, desc) {
   const { zone, H, n, s, ext, slope } = P;
   const C = new Float32Array(n * n * 3);
   const A = new Uint8Array(n * n);
   const nn = makeNoise(desc.seed ^ 0x6a1e77);
   const nb = makeNoise(desc.seed ^ 0x0b100);
-  const one = palSet(P.pal, desc.biome);
-  const sets = P.B ? BIOME_IDS.map((b) => palSet(BIOMES[b].pal, b)) : null;
+  const sets = BIOME_IDS.map((b) => palSet(BIOMES[b].pal, b));
   const lava = hex('#8a7a96');
   const marsh = hex('#a8c8a0');
   const reeds = hex('#c9d39a');
@@ -221,7 +123,7 @@ export function zoneColors(P, desc) {
       const x = -ext + i * s;
       const z = -ext + j * s;
       const h = H[k];
-      const q = sets ? sets[P.B[k]] : one;
+      const q = sets[P.B[k]];
       const { g0, g1, acc, sand, wet, rock, cliff, snow, forestFloor, solH } = q;
       const patch = 0.5 + 0.5 * fbm(nn, x / 30, z / 30, 2);
       mix(g0, g1, smooth(0.35, 0.7, patch), c);
@@ -278,7 +180,7 @@ export function zoneColors(P, desc) {
       A[k] = AMP[zone[k]] ?? 30;
     }
   }
-  if (P.B) blendBiomes(C, P.B, n);
+  blendBiomes(C, P.B, n);
   return { C, A };
 }
 
@@ -312,8 +214,8 @@ function blendBiomes(C, B, n) {
 }
 
 // ---------------------------------------------------------------------------
-// Îles de la carte (open world) : mêmes micro-zones, mais biome, forêt et fleurs de la zone nommée
-// de chaque case (forme.js), neige sous la ligne des neiges de la latitude, coulées autour du volcan.
+// Micro-zones des îles de la carte : biome, forêt et fleurs de la zone nommée de chaque case
+// (forme.js), neige sous la ligne des neiges de la latitude, coulées autour du volcan.
 // Renvoie aussi B (indice du biome par case) et ZI (indice de la zone de l'île par case).
 export function computeZonesForme(T, desc) {
   const { H, n, s, ext, water } = T;

@@ -1,6 +1,11 @@
 // Passe 3 — points d'intérêt : gabarits paramétriques avec règles de placement
 // (emprise, pente, altitude, côte, rivière, sommet, terrain plat), disposition des
-// villages, recettes par archétype, petites découvertes partout, puis aplanissement.
+// villages, recette de l'île, petites découvertes partout, puis aplanissement.
+// Ne tourne que pour une île qui décrit ses lieux (desc.lieux, voir plan.js) :
+//   recette [[type, probabilité]…] (1 = obligatoire), dans l'ordre ; generiques : petits lieux tirés
+//   en plus et minimum de lieux selon la taille ; accostage [x, z] (m, repère de l'île) : plage
+//   d'arrivée, vers laquelle descend le village ; village, epave : noms ; moulin : couleur (MOULINS) ;
+//   faune : troupeaux posés à la main (spawns.js).
 import { mulberry32, weighted } from '../../../core/random.js';
 import { bilinear, stableId, smooth } from './grid.js';
 import { Z } from './zones.js';
@@ -25,19 +30,7 @@ export const POI_LABELS = {
   belvedere: 'Belvédère',
 };
 
-// recettes : [type, probabilité] ; probabilité 1 = obligatoire
-const RECIPES = {
-  montagne: [['tour_guet', 1], ['cabane_ermite', 0.6], ['grotte', 0.5], ['cercle_pierres', 0.3], ['sources_chaudes', 0.25], ['observatoire', 0.12], ['ruines', 0.3], ['statue', 0.05]],
-  village: [['village', 1], ['moulin_vent', 1], ['moulin_eau', 0.85], ['verger', 0.6], ['phare', 0.35], ['rucher', 0.3], ['puits_isole', 0.2]],
-  fleurs: [['rucher', 1], ['arche_fleurie', 1], ['moulin_vent', 1], ['verger', 0.4], ['cercle_pierres', 0.35], ['campement', 0.3], ['puits_isole', 0.3]],
-  foret: [['arbre_geant', 1], ['cabane_ermite', 1], ['campement', 0.5], ['ruines', 0.4], ['rucher', 0.2], ['cercle_pierres', 0.25]],
-  cratere: [['sources_chaudes', 1], ['tour_guet', 0.6], ['temple', 0.4], ['grotte', 0.5], ['ruines', 0.3]],
-  falaises: [['phare', 1], ['arche', 1], ['grotte', 0.6], ['ruines', 0.4], ['campement', 0.25], ['cercle_pierres', 0.25]],
-  lagon: [['epave', 1], ['recif', 1], ['campement', 0.35], ['phare', 0.2]],
-  dunes: [['oasis', 1], ['ruines_ensablees', 1], ['bateau_dunes', 1], ['campement', 0.5], ['temple', 0.3]],
-  jumelles: [['pont_corde', 1], ['phare', 0.4], ['campement', 0.4], ['ruines', 0.3], ['cercle_pierres', 0.2]],
-  curiosite: [['landmark', 1], ['barque_echouee', 0.3]],
-};
+// petits lieux tirés en plus (lieux.generiques) : [type, probabilité]
 const GENERIC = [['epave', 0.16], ['barque_echouee', 0.3], ['ruines', 0.1], ['puits_isole', 0.08], ['cercle_pierres', 0.06], ['campement', 0.08], ['observatoire', 0.02], ['statue', 0.02], ['cimetiere_bateaux', 0.03], ['epave_immergee', 0.25]];
 const FALLBACK = ['campement', 'ruines', 'puits_isole', 'cercle_pierres', 'barque_echouee', 'rucher', 'cabane_ermite'];
 
@@ -46,11 +39,19 @@ const NO = -1e9;
 
 const ROOFS = ['#f19b86', '#86c6bb', '#f2c86a', '#c7b2e6', '#9fd6c2', '#7fa6d9'];
 const WALLS = ['#fbf3e6', '#f9e1e3', '#e6f0f6', '#f6ead2', '#eef6e6'];
+// couleurs des ailes des moulins : [identifiant, nom, couleur]
+export const MOULINS = [['bleu', 'Bleu', '#7fa6d9'], ['rose', 'Rose', '#f2a7b8'], ['menthe', 'Menthe', '#8fd6c3'], ['jaune', 'Jaune', '#f2c86a'], ['corail', 'Corail', '#f4a28c']];
+
+// noms et couleurs des lieux d'une île (village, épave, moulin), d'après sa description
+export function traitsLieux(lieux) {
+  const m = MOULINS.find((c) => c[0] === lieux.moulin) || MOULINS[0];
+  return { village: lieux.village || 'Clair-Moulin', wreck: lieux.epave || 'la Belle-Hortense', mill: { id: m[0], label: m[1], color: m[2] } };
+}
 
 export function placePOIs(P) {
   const { H, n, s, ext, zone, slope, coastDist, wetDist, water, rivers, falls, lakes, desc, ctx } = P;
   const rng = mulberry32(desc.seed ^ 0x9015e7);
-  const arch = ctx.arch;
+  const lieux = desc.lieux;
   const r = desc.r;
   const pois = [];
   const placed = []; // emprises { x, z, r }
@@ -58,6 +59,8 @@ export function placePOIs(P) {
   const hAt = (x, z) => bilinear(H, n, (x + ext) / s, (z + ext) / s);
   const cellAt = (x, z) => Math.max(0, Math.min(n - 1, Math.round((z + ext) / s))) * n + Math.max(0, Math.min(n - 1, Math.round((x + ext) / s)));
   const zoneAt = (x, z) => zone[cellAt(x, z)];
+  // biome de la zone de l'île sous un point
+  const biomeAt = (x, z) => ctx.zones[P.ZI[cellAt(x, z)]].biome;
   // pente et dénivelé sur une emprise circulaire
   const site = (x, z, rr) => {
     let lo = Infinity;
@@ -162,7 +165,7 @@ export function placePOIs(P) {
   // -------------------------------------------------------------------------
   const builders = {
     village() {
-      const bay = ctx.bay ? { x: ctx.bay.x * r, z: ctx.bay.z * r } : { x: Math.cos(ctx.landA) * r * 0.8, z: Math.sin(ctx.landA) * r * 0.8 };
+      const bay = P.accostage;
       // petites îles : place plus petite, maisons plus serrées
       const small = r < 75;
       const plazaR = small ? 9 : 14;
@@ -300,7 +303,6 @@ export function placePOIs(P) {
       return add('village', cx, cz, radius, parts, { name: `Village ${/^[AEIOUÉÎ]/.test(P.traits.village) ? `d'${P.traits.village}` : `de ${P.traits.village}`}`, plaza: { x: cx, z: cz }, jetty, fields, door: { x: cx, z: cz } });
     },
     moulin_vent() {
-      const target = ctx.hill ? { x: ctx.hill.x * r, z: ctx.hill.z * r } : null;
       // point haut : d'abord parmi les 25 % de terres les plus hautes, sinon partout
       const lands = [];
       for (let k = 0; k < H.length; k++) if (land(k)) lands.push(H[k]);
@@ -312,8 +314,8 @@ export function placePOIs(P) {
         if (!land(k) || H[k] < minH || zone[k] === Z.FORET || zone[k] === Z.VILLAGE) return NO;
         const st = site(x, z, 4);
         if (st.sl > 0.6 || st.wet) return NO;
-        // haut et dégagé (exposé au vent), de préférence sur la colline prévue
-        return (H[k] / Math.max(1, top)) * 4 - st.sl * 2 - (target ? Math.hypot(x - target.x, z - target.z) * 0.006 : 0);
+        // haut et dégagé (exposé au vent)
+        return (H[k] / Math.max(1, top)) * 4 - st.sl * 2;
       };
       // sur les petites îles le village couvre presque toute la terre : le moulin peut se poser
       // en lisière du village (on n'évite alors que la place et les maisons, pas toute l'emprise)
@@ -360,11 +362,6 @@ export function placePOIs(P) {
       const len = big ? 24 : 14;
       const best = find(big ? 11 : 7, (x, z, k) => {
         const h = H[k];
-        if (arch === 'lagon') {
-          // sur le récif : eau très peu profonde, côté large
-          if (h > 0.3 || h < -1.2 || coastAt(x, z) > 6) return NO;
-          return 1 + Math.hypot(x, z) / r;
-        }
         if (zone[k] !== Z.PLAGE || h < 0.15 || h > 1.1) return NO;
         return 1 - Math.abs(h - 0.6) - site(x, z, 5).sl * 2;
       });
@@ -416,12 +413,12 @@ export function placePOIs(P) {
       const best = find(3, (x, z, k) => {
         if (!land(k)) return NO;
         const st = site(x, z, 3);
-        if (st.sl > (arch === 'cratere' ? 1.15 : 0.85)) return NO;
+        if (st.sl > (biomeAt(x, z) === 'volcan' ? 1.15 : 0.85)) return NO;
         return H[k] - st.sl * 6;
       }, 1);
       if (!best) return null;
       const y = stamp(best.x, best.z, 3, null, 4);
-      return add('tour_guet', best.x, best.z, 3.5, [{ t: 'tour_guet', x: best.x, z: best.z, y, rot: rng() * 6.28, stone: desc.biome === 'glace' || arch === 'cratere' }], { interact: { kind: 'tour', x: best.x, z: best.z } });
+      return add('tour_guet', best.x, best.z, 3.5, [{ t: 'tour_guet', x: best.x, z: best.z, y, rot: rng() * 6.28, stone: ['glace', 'volcan'].includes(biomeAt(best.x, best.z)) }], { interact: { kind: 'tour', x: best.x, z: best.z } });
     },
     flat(type, rr, zones, extraRule = null) {
       const best = find(rr, (x, z, k) => {
@@ -555,7 +552,8 @@ export function placePOIs(P) {
     arbre_geant() {
       const best = this.flat('arbre', 6, [Z.FORET, Z.CLAIRIERE, Z.LISIERE, Z.PRAIRIE, Z.CHAMPIGNONS]);
       if (!best) return null;
-      return add('arbre_geant', best.x, best.z, 6, [{ t: 'arbre_geant', x: best.x, z: best.z, y: 0, rot: rng() * 6.28, kind: desc.biome === 'champignons' ? 'champi' : desc.biome === 'glace' ? 'sapin' : 'chene' }]);
+      const biome = biomeAt(best.x, best.z);
+      return add('arbre_geant', best.x, best.z, 6, [{ t: 'arbre_geant', x: best.x, z: best.z, y: 0, rot: rng() * 6.28, kind: biome === 'champignons' ? 'champi' : biome === 'glace' ? 'sapin' : 'chene' }]);
     },
     oasis() {
       const lake = lakes[0];
@@ -609,41 +607,23 @@ export function placePOIs(P) {
         { t: 'cairn', x: best.x + Math.cos(a + 1.7) * 1.8, z: best.z + Math.sin(a + 1.7) * 1.8, y: 0, rot: rng() * 6.28 },
       ]);
     },
-    landmark() {
-      const lm = ctx.landmark;
-      if (lm === 'phare') return this.phare();
-      if (lm === 'epave_geante') return this.epave(true);
-      if (lm === 'arche') return this.arche();
-      if (lm === 'statue') return this.statue();
-      // rocher de la baleine : repère du relief lui-même
-      let bk = 0;
-      for (let k = 0; k < H.length; k++) if (H[k] > H[bk]) bk = k;
-      const x = -ext + (bk % n) * s;
-      const z = -ext + Math.floor(bk / n) * s;
-      pois.push({ id: stableId(desc.seed, TYPE_ID.rocher_baleine, x, z), type: 'rocher_baleine', label: POI_LABELS.rocher_baleine, x, z, y: H[bk], r: 0, parts: [] });
-      return pois[pois.length - 1];
-    },
   };
-  // retouches de l'archipel : lieux interdits, puis lieux imposés juste après la recette
-  const banned = new Set(desc.overrides?.removePois || []);
   const make = (type) => {
-    if (banned.has(type)) return null;
     if (type === 'epave') return builders.epave(false);
     if (type === 'ruines_ensablees') return builders.ruines(true);
     return builders[type] ? builders[type]() : null;
   };
 
-  // recette de l'archétype, puis ajouts génériques
-  for (const [type, p] of RECIPES[arch] || []) if (p >= 1 || rng() < p) make(type);
-  for (const type of desc.overrides?.pois || []) if (!pois.some((q) => q.type === type)) make(type);
-  for (const [type, p] of GENERIC) if (rng() < p && !pois.some((q) => q.type === type || (type === 'epave' && q.type === 'epave_geante'))) make(type);
+  // recette de l'île, puis petits lieux tirés en plus
+  for (const [type, p] of lieux.recette || []) if (p >= 1 || rng() < p) make(type);
+  if (lieux.generiques) for (const [type, p] of GENERIC) if (rng() < p && !pois.some((q) => q.type === type || (type === 'epave' && q.type === 'epave_geante'))) make(type);
   // cascades : chaque chute nommée devient une découverte
   for (const f of falls) {
     if (!free(f.x, f.z, 3, 1)) continue;
     add('cascade', f.x, f.z, 3, [{ t: 'cascade', x: f.x, z: f.z, y: f.bottom, rot: Math.atan2(f.dz, f.dx), top: f.top, w: f.w }], { name: 'Cascade' });
   }
-  // minimum de lieux selon la taille
-  const want = r > 60 ? 4 : 1;
+  // minimum de lieux selon la taille (petits lieux tirés en plus seulement)
+  const want = !lieux.generiques ? 0 : r > 60 ? 4 : 1;
   const counted = () => pois.filter((p) => !['recif', 'epave_immergee', 'cascade'].includes(p.type)).length;
   for (let q = 0; q < FALLBACK.length && counted() < want; q++) if (!pois.some((p) => p.type === FALLBACK[q])) make(FALLBACK[q]);
   if (counted() < want) {

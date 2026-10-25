@@ -69,7 +69,7 @@ function astar(C, n, a, b, prev) {
 }
 
 export function buildPaths(P, pois) {
-  const { H, n, s, ext, zone, water, desc, ctx } = P;
+  const { H, n, s, ext, zone, water, desc } = P;
   const C = costGrid(P);
   const cellOf = (x, z) => Math.max(0, Math.min(n - 1, Math.round((z + ext) / s))) * n + Math.max(0, Math.min(n - 1, Math.round((x + ext) / s)));
   // cellule praticable la plus proche
@@ -106,12 +106,11 @@ export function buildPaths(P, pois) {
       for (const [c, v] of sizes) if (v > bv) [home, bv] = [c, v];
     }
   }
-  // plage d'accostage : la plage de la terre principale la plus proche de la direction prévue
+  // plage d'accostage : la plage de la terre principale la plus proche du point prévu (P.accostage)
   let landing = null;
   for (const strict of [true, false]) {
     if (landing) break;
-    const tx = Math.cos(ctx.landA) * desc.r;
-    const tz = Math.sin(ctx.landA) * desc.r;
+    const { x: tx, z: tz } = P.accostage;
     let bd = Infinity;
     for (let k = 0; k < n * n; k++) {
       if (zone[k] !== Z.PLAGE && zone[k] !== Z.DUNE) continue;

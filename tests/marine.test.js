@@ -1,8 +1,20 @@
-// Éléments de la mer à positions fixes (ARCHIPEL.marine) : construction, ramassage, sauvegarde.
+// Éléments de la mer à positions fixes (ARCHIPEL.marine, vide à l'étape « bases » du monde ouvert) :
+// construction, ramassage, sauvegarde, sur une liste d'essai au large du départ.
 import { describe, expect, it } from 'vitest';
 import * as THREE from 'three';
-import { ARCHIPEL_V3 as ARCHIPEL } from './fixtures/archipel-v3.js';
 import { MarineManager } from '../src/world/marine.js';
+
+const ARCHIPEL = {
+  marine: [
+    { id: 'mer-essai-1', type: 'recif', x: 120, z: 160 },
+    { id: 'mer-essai-2', type: 'bouteille', x: -140, z: 130 },
+    { id: 'mer-essai-3', type: 'caisse', x: 180, z: 90 },
+    { id: 'mer-essai-4', type: 'poissons', x: -60, z: 210 },
+    { id: 'mer-essai-5', type: 'bouee', x: 60, z: 240 },
+    { id: 'mer-essai-6', type: 'algue', x: -200, z: 60 },
+    { id: 'mer-essai-7', type: 'bouteille', x: 220, z: 200 },
+  ],
+};
 
 // interactions factices : on garde ce qui est proposé au joueur
 function fakeInteractions() {

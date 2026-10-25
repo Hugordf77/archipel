@@ -1,10 +1,10 @@
 // Monde ouvert (v4) : l'archipel des souvenirs (îles tracées, zones, sections, bases), la limite du
-// large, la migration v4 ; puis la chaîne à archétypes éprouvée sur l'ancien archipel (fixture) et des
-// variantes (graines, tailles) : plan déterministe, eau, lieux, chemins, identifiants, budget du Worker.
+// large, la migration v4, le budget du Worker ; puis la passe des lieux éprouvée sur l'île d'essai
+// (tests/fixtures/ile-essai.js) et ses variantes (graines, tailles) : plan déterministe, eau, lieux,
+// chemins, identifiants, champs de fleurs.
 import { describe, it, expect, vi } from 'vitest';
 import * as THREE from 'three';
 
-const ARCHETYPES9 = ['village', 'montagne', 'foret', 'fleurs', 'lagon', 'dunes', 'falaises', 'cratere', 'curiosite'];
 const BUILDINGS = new Set(['maison', 'moulin', 'moulin_eau', 'phare', 'tour_guet', 'temple', 'cabane', 'observatoire']);
 
 // module « neuf » (caches vides) : le résultat ne doit pas dépendre de l'historique
@@ -21,16 +21,14 @@ const hash = (arr) => {
 };
 const digest = (p) => [hash(p.H), hash(p.Z), hash(p.C), hash(p.items), hash(p.ids), JSON.stringify(p.pois), JSON.stringify(p.pathParts), JSON.stringify(p.micro), JSON.stringify(p.spawners), p.paths.map((q) => hash(q.pts)).join(','), p.rivers.map((q) => hash(q.pts)).join(','), p.name].join('|');
 
-// îles de l'archipel et cinq variantes de chacune (autre graine, autre taille) : la chaîne
-// doit rester saine si l'on retouche une île à la main
+// l'île d'essai et cinq variantes (autre graine, autre taille) : la chaîne doit rester saine si
+// l'on retouche une île à la main
 let shared = null;
 async function samplePlans() {
   if (shared) return shared;
-  const { ARCHIPEL_V3: ARCHIPEL } = await import('./helpers/archipel-v3.js');
-  const { islandDesc } = await import('../src/world/islands/regions.js');
+  const { VARIANTES_ESSAI } = await import('./fixtures/ile-essai.js');
   const { buildPlan } = await import('../src/world/islands/gen/plan.js');
-  const descs = ARCHIPEL.islands.flatMap((isl) => Array.from({ length: 6 }, (_, k) => islandDesc({ ...isl, id: k ? `${isl.id}~${k}` : isl.id, seed: (isl.seed + k * 7919) >>> 0, r: Math.round(isl.r * (k ? 0.85 + 0.06 * k : 1)) })));
-  shared = descs.map((d) => ({ d, p: buildPlan(d) }));
+  shared = VARIANTES_ESSAI.map((d) => ({ d, p: buildPlan(d) }));
   return shared;
 }
 
@@ -231,48 +229,44 @@ describe('archipel des souvenirs (open world)', () => {
   }, 30000);
 });
 
-describe('ancien archipel (chaîne à archétypes, gardée pour les lieux)', () => {
-  it('donne à chaque île un plan déterministe, avec les lieux de son archétype', async () => {
-    const { ISLANDS } = await import('./helpers/archipel-v3.js');
-    expect(ISLANDS.map((d) => d.archetype).sort()).toEqual([...ARCHETYPES9].sort());
+describe('île d’essai (passe des lieux)', () => {
+  it('donne à l’île un plan déterministe, avec les lieux de sa recette', async () => {
+    const { VARIANTES_ESSAI } = await import('./fixtures/ile-essai.js');
     const A = await fresh('../src/world/islands/gen/plan.js');
-    const first = ISLANDS.map((d) => digest(A.buildPlan(d)));
+    const first = VARIANTES_ESSAI.map((d) => digest(A.buildPlan(d)));
     const B = await fresh('../src/world/islands/gen/plan.js');
-    const plans = ISLANDS.slice().reverse().map((d) => B.buildPlan(d)).reverse();
-    plans.forEach((p, i) => expect(digest(p), ISLANDS[i].id).toBe(first[i]));
-    const types = Object.fromEntries(ISLANDS.map((d, i) => [d.archetype, plans[i].pois.map((q) => q.type)]));
-    expect(types.village).toEqual(expect.arrayContaining(['village', 'moulin_vent']));
-    expect(types.falaises).toContain('phare');
-    expect(types.fleurs).toEqual(expect.arrayContaining(['rucher', 'arche_fleurie']));
-    expect(types.foret).toContain('arbre_geant');
-    expect(types.cratere).toContain('sources_chaudes');
-    expect(types.dunes).toContain('oasis');
-    expect(types.lagon).toContain('recif');
-    expect(types.curiosite).toContain('arche');
-    expect(plans[ISLANDS.findIndex((d) => d.archetype === 'montagne')].stats.hmax).toBeGreaterThan(80);
+    const plans = VARIANTES_ESSAI.slice().reverse().map((d) => B.buildPlan(d)).reverse();
+    plans.forEach((p, i) => expect(digest(p), VARIANTES_ESSAI[i].id).toBe(first[i]));
+    const types = plans[0].pois.map((q) => q.type);
+    expect(types).toEqual(expect.arrayContaining(['village', 'moulin_vent', 'rucher', 'arche_fleurie', 'phare', 'arbre_geant', 'cabane_ermite', 'cercle_pierres', 'ruines', 'tour_guet']));
+    expect(plans[0].lieux).toBe(true);
+    expect(plans[0].pois.find((q) => q.type === 'village').name).toBe('Village de Port-Essai');
+    expect(plans[0].pois.find((q) => q.type === 'moulin_vent').name).toBe('Moulin Rose');
   });
 
-  it('applique les retouches à la main : lieux interdits et lieux imposés', async () => {
-    const { ARCHIPEL_V3: ARCHIPEL } = await import('./helpers/archipel-v3.js');
-    const { islandDesc } = await import('../src/world/islands/regions.js');
+  it('ne pose que les lieux de la recette ; sans lieux décrits, ni lieux, ni chemins, ni faune', async () => {
+    const { ILE_ESSAI } = await import('./fixtures/ile-essai.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
-    const cliffs = ARCHIPEL.islands.find((i) => i.archetype === 'falaises');
-    const sans = buildPlan(islandDesc({ ...cliffs, overrides: { ...cliffs.overrides, pois: [], removePois: ['phare'] } }));
+    const { Surface, buildTile } = await import('../src/world/islands/gen/surface.js');
+    const lieux = ILE_ESSAI.lieux;
+    const sans = buildPlan({ ...ILE_ESSAI, lieux: { ...lieux, recette: lieux.recette.filter(([t]) => t !== 'phare'), generiques: false } });
     expect(sans.pois.map((q) => q.type)).not.toContain('phare');
-    const forest = ARCHIPEL.islands.find((i) => i.archetype === 'foret');
-    const avec = buildPlan(islandDesc({ ...forest, overrides: { pois: ['puits_isole'] } }));
-    expect(avec.pois.map((q) => q.type)).toContain('puits_isole');
-    // le nom imposé l'emporte
-    expect(islandDesc({ ...forest, overrides: { name: 'Bois Joli' } }).name).toBe('Bois Joli');
+    const seul = buildPlan({ ...ILE_ESSAI, lieux: { ...lieux, recette: [['puits_isole', 1]], generiques: false } });
+    expect(seul.pois.filter((q) => q.type !== 'cascade').map((q) => q.type)).toEqual(['puits_isole']);
+    // comme les îles du jeu à l'étape « bases »
+    const nue = buildPlan({ ...ILE_ESSAI, lieux: undefined });
+    expect(nue.lieux).toBe(false);
+    expect([nue.pois, nue.micro, nue.paths, nue.pathParts, nue.spawners]).toEqual([[], [], [], [], []]);
+    expect(nue.landing).toBe(null);
+    expect(nue.ids.length).toBeGreaterThan(500);
+    expect(buildTile(nue, new Surface(nue), 0, 2).items.length).toBe(0);
   });
 
-  it('pose le troupeau de vaches de Pommeraie sur un pré, robes mêlées, sans toucher au reste de la faune', async () => {
-    const { ARCHIPEL_V3: ARCHIPEL } = await import('./helpers/archipel-v3.js');
-    const { islandDesc } = await import('../src/world/islands/regions.js');
+  it('pose le troupeau de vaches sur un pré, robes mêlées, sans toucher au reste de la faune', async () => {
+    const { ILE_ESSAI } = await import('./fixtures/ile-essai.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const { Z } = await import('../src/world/islands/gen/zones.js');
-    const isl = ARCHIPEL.islands.find((i) => i.id === 'village-pommeraie');
-    const p = buildPlan(islandDesc(isl));
+    const p = buildPlan(ILE_ESSAI);
     const vaches = p.spawners.filter((s) => s.sp === 'vache');
     expect(vaches).toHaveLength(1);
     const [v] = vaches;
@@ -283,25 +277,23 @@ describe('ancien archipel (chaîne à archétypes, gardée pour les lieux)', () 
     for (let a = 0; a < 12; a++) for (const d of [0, v.r * 0.5, v.r]) {
       const k = at(v.x + Math.cos(a) * d, v.z + Math.sin(a) * d);
       expect(p.H[k]).toBeGreaterThan(0.5);
-      expect([Z.PRAIRIE, Z.LISIERE, Z.VERGER]).toContain(p.Z[k]);
+      expect([Z.PRAIRIE, Z.LISIERE, Z.VERGER, Z.FLEURS]).toContain(p.Z[k]);
     }
     // sans le troupeau, la faune de l'île est la même (le troupeau vient après tout tirage)
-    const sans = buildPlan(islandDesc({ ...isl, overrides: { ...isl.overrides, faune: [] } }));
+    const sans = buildPlan({ ...ILE_ESSAI, lieux: { ...ILE_ESSAI.lieux, faune: [] } });
     expect(p.spawners.filter((s) => s.sp !== 'vache')).toEqual(sans.spawners);
   });
 
-  it('place les éléments de la mer en eau libre, à positions fixes et identifiants uniques', async () => {
-    const { ARCHIPEL_V3: ARCHIPEL } = await import('./helpers/archipel-v3.js');
+  it('place les éléments de la mer (s’il y en a) en eau libre, à positions fixes et identifiants uniques', async () => {
+    const { ARCHIPEL } = await import('../src/world/archipel.js');
     const { MARINE_TYPES } = await import('../src/models/objets/index.js');
     const ids = new Set();
     for (const m of ARCHIPEL.marine) {
       expect(ids.has(m.id)).toBe(false);
       ids.add(m.id);
       expect(MARINE_TYPES).toContain(m.type);
-      expect(Math.hypot(m.x, m.z)).toBeLessThan(1200);
       for (const isl of [...ARCHIPEL.islands, ARCHIPEL.home]) expect(Math.hypot(m.x - isl.x, m.z - isl.z), `${m.id} près de ${isl.id}`).toBeGreaterThan(isl.r * 1.3);
     }
-    expect(ARCHIPEL.marine.length).toBeGreaterThanOrEqual(40);
   });
 });
 
@@ -426,7 +418,7 @@ describe('eau douce', () => {
         if (rv.end === 'lac') expect(p.lakes.some((lk) => Math.abs(last - lk.level) < 1.5)).toBe(true);
       }
     }
-    expect(n).toBeGreaterThan(50);
+    expect(n).toBeGreaterThanOrEqual(8);
   });
 
   it('ne laisse fuir aucun lac (seule la rivière exutoire descend sous son niveau)', async () => {
@@ -445,7 +437,7 @@ describe('eau douce', () => {
         }
       }
     }
-    expect(lakes).toBeGreaterThan(5);
+    expect(lakes).toBeGreaterThanOrEqual(2);
   });
 });
 
@@ -485,7 +477,7 @@ describe('points d’intérêt', () => {
         if (worst > 0.35) steep++;
       }
     }
-    expect(n).toBeGreaterThan(60);
+    expect(n).toBeGreaterThan(40);
     expect(steep / n).toBeLessThan(0.03);
   });
 
@@ -503,7 +495,7 @@ describe('points d’intérêt', () => {
       expect(p.Z[k]).not.toBe(Z.FORET);
     }
     ranks.sort((a, b) => a - b);
-    expect(ranks.length).toBeGreaterThanOrEqual(10);
+    expect(ranks.length).toBeGreaterThanOrEqual(6);
     expect(ranks[0]).toBeGreaterThan(0.35); // jamais dans le tiers le plus bas
     expect(ranks[ranks.length >> 1]).toBeGreaterThan(0.85);
   });
@@ -525,14 +517,14 @@ describe('points d’intérêt', () => {
       expect(vil.parts.filter((q) => q.t === 'maison').length).toBeGreaterThanOrEqual(4);
       expect(vil.parts.some((q) => q.t === 'barque_amarree')).toBe(true);
       const mill = p.pois.some((q) => q.type === 'moulin_vent' || q.type === 'moulin_eau');
-      if (d.archetype === 'village') expect(mill, d.id).toBe(true);
+      expect(mill, d.id).toBe(true);
     }
     expect(n).toBeGreaterThanOrEqual(6);
   });
 });
 
 describe('chemins', () => {
-  it('relient les lieux de chaque île de l’archipel à l’accostage', async () => {
+  it('relient les lieux de l’île d’essai à l’accostage', async () => {
     for (const { d, p } of (await samplePlans()).filter(({ d }) => !d.id.includes('~'))) {
       expect(p.failedLinks, d.id).toEqual([]);
       expect(p.stats.pathFailed, d.id).toBe(0);
@@ -556,10 +548,9 @@ describe('chemins', () => {
 
 describe('identifiants', () => {
   it('sont stables et uniques (arbres, lieux, petite végétation des tuiles)', async () => {
-    const { ISLANDS } = await import('./helpers/archipel-v3.js');
+    const { ILE_ESSAI: d } = await import('./fixtures/ile-essai.js');
     const { buildPlan } = await fresh('../src/world/islands/gen/plan.js');
     const { Surface, buildTile, TILE } = await import('../src/world/islands/gen/surface.js');
-    const d = ISLANDS.slice().sort((a, b) => b.r - a.r)[0];
     const a = buildPlan(d);
     const b = buildPlan({ ...d });
     expect(hash(b.ids)).toBe(hash(a.ids));
@@ -591,14 +582,14 @@ describe('identifiants', () => {
 });
 
 describe('champs de fleurs', () => {
-  it('forme des nappes denses, colorées et stables sur l’île aux Mille Fleurs', async () => {
-    const { ISLANDS } = await import('./helpers/archipel-v3.js');
+  it('forme des nappes denses, colorées et stables, plus étendues dans les prés fleuris', async () => {
+    const { ILE_ESSAI } = await import('./fixtures/ile-essai.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const { Surface, buildTile, TILE } = await import('../src/world/islands/gen/surface.js');
     const { KINDS, STRIDE } = await import('../src/world/islands/gen/kinds.js');
     const { Z } = await import('../src/world/islands/gen/zones.js');
     const { fieldFlowerGeometry } = await import('../src/models/plantes/fleurs/index.js');
-    const plan = buildPlan(ISLANDS.find((d) => d.archetype === 'fleurs'));
+    const plan = buildPlan(ILE_ESSAI);
     const surf = new Surface(plan);
     const flowerKind = KINDS.indexOf('fleur_champ');
     const nt = Math.ceil(plan.ext / TILE);
@@ -635,57 +626,66 @@ describe('champs de fleurs', () => {
         for (let k = 0; k < group.cols.length; k += 3) hues.add(`${group.cols[k].toFixed(2)},${group.cols[k + 1].toFixed(2)},${group.cols[k + 2].toFixed(2)}`);
       }
     }
-    expect(flowerCount / flowerArea).toBeCloseTo(2.94, 1);
+    // 3,2 fleurs par m² visées (surface.js), moins les chemins et l'eau
+    expect(flowerCount / flowerArea).toBeGreaterThan(2.7);
+    expect(flowerCount / flowerArea).toBeLessThan(3.3);
     expect(hues.size).toBeGreaterThanOrEqual(4);
     expect(Math.max(...flowersPerTile) * trianglesPerTuft).toBeLessThan(800_000);
 
-    for (const island of ISLANDS) {
-      const islandPlan = island.id === plan.id ? plan : buildPlan(island);
+    // part des prés en fleurs selon la zone de l'île (fleurs de archipel.js) : prés fleuris > côte
+    for (let zi = 0; zi < plan.zones.length; zi++) {
       let open = 0;
       let blooms = 0;
-      for (const zone of islandPlan.Z) {
-        if (zone === Z.PRAIRIE || zone === Z.FLEURS) open++;
-        if (zone === Z.FLEURS) blooms++;
+      for (let k = 0; k < plan.Z.length; k++) {
+        if (plan.ZI[k] !== zi) continue;
+        if (plan.Z[k] === Z.PRAIRIE || plan.Z[k] === Z.FLEURS) open++;
+        if (plan.Z[k] === Z.FLEURS) blooms++;
       }
-      if (open) fieldShares.push(blooms / open);
+      fieldShares.push(open ? blooms / open : 0);
     }
-    expect(fieldShares).toHaveLength(ISLANDS.length);
-    expect(Math.min(...fieldShares)).toBeGreaterThan(0.06);
+    const [cote, , pres] = fieldShares;
+    expect(cote).toBeGreaterThan(0.04);
+    expect(pres).toBeGreaterThan(cote * 2.5);
   }, 30000);
 });
 
 describe('budget du Worker', () => {
-  it('construit plan + LOD1 en moins de 60 ms en moyenne, 120 ms pour la grande île, une tuile en moins de 15 ms', async () => {
-    const { ISLANDS } = await import('./helpers/archipel-v3.js');
+  it('construit plan + LOD1 d’une île en moins de 60 ms en moyenne, le plan de la Grande Île en moins de 3 s, une section en moins de 30 ms, une tuile en moins de 15 ms', async () => {
+    const { ILES, ISLANDS } = await import('../src/world/islands/regions.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const { Surface, buildLOD1, buildTile, TILE } = await import('../src/world/islands/gen/surface.js');
-    for (const d of ISLANDS) buildLOD1(buildPlan(d)); // chauffe du compilateur
-    const time = (d) => {
+    const { cropPlan } = await import('../src/world/islands/gen/sections.js');
+    const { SECTION_MIN_R } = await import('../src/world/islands/gen/forme.js');
+    const time = (f) => {
       const t0 = performance.now();
-      buildLOD1(buildPlan({ ...d, id: `${d.id}-bench` }));
+      f();
       return performance.now() - t0;
     };
-    const all = ISLANDS.map(time);
-    const big = ISLANDS.filter((d) => d.big).map(time);
+    // îles entières (non découpées) : comme le Worker, plan puis LOD1
+    const small = ILES.filter((d) => d.r < SECTION_MIN_R);
+    for (const d of small) buildLOD1(buildPlan(d)); // chauffe du compilateur
+    const all = small.map((d) => time(() => buildLOD1(buildPlan({ ...d, id: `${d.id}-bench` }))));
     const avg = all.reduce((a, b) => a + b, 0) / all.length;
-    // tuiles de la plus grande île
-    const p = buildPlan(ISLANDS.slice().sort((a, b) => b.r - a.r)[0]);
+    // Grande Île : plan entier une fois par partie (Worker), puis chaque section taillée dans le plan
+    const big = ILES.find((d) => d.id === 'grande-ile');
+    let P = null;
+    const plan = time(() => (P = buildPlan({ ...big, id: 'grande-ile-bench' })));
+    const secs = ISLANDS.filter((q) => q.parent === big.id);
+    const crops = secs.map((q) => time(() => buildLOD1(cropPlan(P, q)))).sort((a, b) => a - b);
+    // tuiles d'une section du milieu
+    const p = cropPlan(P, secs[secs.length >> 1]);
     const surf = new Surface(p);
     const nt = Math.ceil(p.ext / TILE);
     const tiles = [];
-    for (let tz = -nt; tz < nt; tz++) {
-      for (let tx = -nt; tx < nt; tx++) {
-        const t0 = performance.now();
-        buildTile(p, surf, tx, tz);
-        tiles.push(performance.now() - t0);
-      }
-    }
+    for (let tz = -nt; tz < nt; tz++) for (let tx = -nt; tx < nt; tx++) tiles.push(time(() => buildTile(p, surf, tx, tz)));
     tiles.sort((a, b) => a - b);
-    console.info(`Worker : plan + LOD1 moyenne ${avg.toFixed(1)} ms (9 îles), grande île ${Math.max(...big).toFixed(1)} ms, tuile médiane ${tiles[tiles.length >> 1].toFixed(1)} ms, p95 ${tiles[Math.floor(tiles.length * 0.95)].toFixed(1)} ms`);
+    console.info(`Worker : plan + LOD1 moyenne ${avg.toFixed(1)} ms (${small.length} îles), pire ${Math.max(...all).toFixed(1)} ms ; Grande Île : plan ${plan.toFixed(0)} ms, section + LOD1 médiane ${crops[crops.length >> 1].toFixed(1)} ms, pire ${crops[crops.length - 1].toFixed(1)} ms (${secs.length} sections) ; tuile médiane ${tiles[tiles.length >> 1].toFixed(1)} ms, p95 ${tiles[Math.floor(tiles.length * 0.95)].toFixed(1)} ms`);
     expect(avg).toBeLessThan(60);
-    expect(Math.max(...big)).toBeLessThan(120);
+    expect(Math.max(...all)).toBeLessThan(250);
+    expect(plan).toBeLessThan(3000);
+    expect(crops[crops.length - 1]).toBeLessThan(30);
     expect(tiles[Math.floor(tiles.length * 0.95)]).toBeLessThan(15);
-  }, 60000);
+  }, 120000);
 });
 
 describe('fenêtre de profondeur', () => {

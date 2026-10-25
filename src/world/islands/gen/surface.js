@@ -272,15 +272,15 @@ export function buildLOD2(desc, parent = null) {
     const pal = (BIOMES[b] || BIOMES.prairie).pal;
     return { sand: hex(pal.sand), grass: hex(pal.grass[1]), rock: hex(pal.rock), snow: hex(pal.snow || '#f7fbff') };
   };
-  const pals = c.forme ? c.zones.map((z) => palOf(z.biome)) : [palOf(desc.biome)];
-  // îles de la carte : neige sous la ligne des neiges de la latitude, couleurs du biome de chaque zone
+  const pals = c.zones.map((z) => palOf(z.biome));
+  // neige sous la ligne des neiges de la latitude, couleurs du biome de chaque zone
   const zw = (parent || desc).z;
-  const ZB = c.forme ? new Uint8Array(n * n) : null;
+  const ZB = new Uint8Array(n * n);
   for (let j = 0; j < n; j++) {
     for (let i = 0; i < n; i++) {
       const x = ox - ext + i * s;
       const z = oz - ext + j * s;
-      if (ZB) ZB[j * n + i] = formeZone(c, x, z);
+      ZB[j * n + i] = formeZone(c, x, z);
       let mx = -99;
       let sum = 0;
       for (const [dx, dz] of [[0, 0], [0.35, 0.35], [-0.35, 0.35], [0.35, -0.35], [-0.35, -0.35]]) {
@@ -296,8 +296,6 @@ export function buildLOD2(desc, parent = null) {
   const positions = new Float32Array(N * 3);
   const normals = new Float32Array(N * 3);
   const colors = new Float32Array(N * 3);
-  let hmax = 1;
-  for (let k = 0; k < N; k++) hmax = Math.max(hmax, H[k]);
   for (let j = 0; j < n; j++) {
     for (let i = 0; i < n; i++) {
       const k = j * n + i;
@@ -307,12 +305,10 @@ export function buildLOD2(desc, parent = null) {
       const inv = 1 / Math.sqrt(nx * nx + 1 + nz * nz);
       positions.set([-ext + i * s, h, -ext + j * s], k * 3);
       normals.set([nx * inv, inv, nz * inv], k * 3);
-      const q = pals[ZB ? ZB[k] : 0];
+      const q = pals[ZB[k]];
       let cc = h < 1.4 ? q.sand : q.grass;
       if (h > 40 || 1 - inv > 0.5) cc = q.rock;
-      if (ZB) {
-        if (h > snowLine(zw + oz - ext + j * s, c.zones[ZB[k]].biome)) cc = q.snow;
-      } else if ((c.arch === 'montagne' && h > hmax * 0.7) || (desc.biome === 'glace' && h > 12)) cc = q.snow;
+      if (h > snowLine(zw + oz - ext + j * s, c.zones[ZB[k]].biome)) cc = q.snow;
       colors.set(cc, k * 3);
     }
   }
@@ -450,8 +446,8 @@ export function buildTile(plan, surf, tx, tz) {
   }
   const index = NV > 65535 ? new Uint32Array(idx) : new Uint16Array(idx);
   // petite végétation de la tuile
-  // îles de la carte, étape « bases » : pas de petite végétation (touffes, fleurs, roseaux)
-  const small = plan.archetype === 'forme' ? { items: new Float32Array(0), ids: new Uint32Array(0) } : smallVegetation(plan, surf, x0, z0, T, Hb, W, pathW, V);
+  // seulement sur une île qui décrit ses lieux (étape « bases » : ni touffes, ni fleurs, ni roseaux)
+  const small = plan.lieux ? smallVegetation(plan, surf, x0, z0, T, Hb, W, pathW, V) : { items: new Float32Array(0), ids: new Uint32Array(0) };
   const groups = instanceGroups(small.items, colors, x0, z0, V);
   // carte d'herbe (densité, hauteur, sécheresse par sommet) : bruits propres, après le tirage
   // de la petite végétation, qu'elle ne modifie pas
