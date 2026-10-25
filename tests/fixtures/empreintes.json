@@ -21,15 +21,21 @@
     "abattable"
    ],
    "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
+    "La Forêt des souvenirs",
+    "Le Lac céleste",
+    "Le Plateau venté",
+    "La Côte aux villages",
+    "Les Grottes de cristal",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "Les Falaises oubliées",
+    "L’Océan sans fin",
+    "L’Île du silence",
+    "L’Île aux fleurs",
+    "Les Cascades sacrées",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -55,7 +61,8 @@
     "fruits"
    ],
    "usedIn": [
-    "Village de Pommeraie"
+    "La Côte aux villages",
+    "L’Île aux fleurs"
    ],
    "variants": []
   },
@@ -81,7 +88,14 @@
     "fleuri"
    ],
    "usedIn": [
-    "Île aux Mille Fleurs"
+    "La Forêt des souvenirs",
+    "La Côte aux villages",
+    "La Grotte lumineuse",
+    "L’Île du silence",
+    "L’Île aux fleurs",
+    "Les Cascades sacrées",
+    "L’Île aux lueurs",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -106,8 +120,11 @@
     "abattable"
    ],
    "usedIn": [
-    "Mont des Aigles",
-    "Cratère de Braise"
+    "Le Sommet givré",
+    "L’Archipel des tempêtes",
+    "L’Île du silence",
+    "L’Île brumeuse",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -132,7 +149,10 @@
     "abattable",
     "glace"
    ],
-   "usedIn": [],
+   "usedIn": [
+    "Le Sommet givré",
+    "Les Ruines gelées"
+   ],
    "variants": []
   },
   "ARB-006": {
@@ -157,8 +177,8 @@
     "glace"
    ],
    "usedIn": [
-    "Rocher Percé",
-    "Mont des Aigles"
+    "Le Sommet givré",
+    "Les Ruines gelées"
    ],
    "variants": []
   },
@@ -184,9 +204,16 @@
     "tropical"
    ],
    "usedIn": [
-    "Falaises de Nacre",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
+    "La Côte aux villages",
+    "Les Grottes de cristal",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "La Place des os",
+    "Les Falaises oubliées",
+    "L’Océan sans fin",
+    "Le Désert de l’île séchée",
+    "Les Cascades sacrées",
+    "L’Île du soleil couchant"
    ],
    "variants": []
   },
@@ -210,16 +237,7 @@
    "tags": [
     "abattable"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ARB-009": {
@@ -244,10 +262,14 @@
     "bord de l'eau"
    ],
    "usedIn": [
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Bois des Lanternes"
+    "La Forêt des souvenirs",
+    "Le Lac céleste",
+    "La Grotte lumineuse",
+    "Les Cascades sacrées",
+    "L’Île brumeuse",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -273,9 +295,10 @@
     "automne"
    ],
    "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Bois des Lanternes"
+    "La Forêt des souvenirs",
+    "Le Lac céleste",
+    "Le Plateau venté",
+    "L’Île aux lueurs"
    ],
    "variants": []
   },
@@ -300,7 +323,11 @@
     "abattable"
    ],
    "usedIn": [
-    "Falaises de Nacre"
+    "Les Grottes de cristal",
+    "La Grotte lumineuse",
+    "Les Falaises oubliées",
+    "Les Cascades sacrées",
+    "L’Île du soleil couchant"
    ],
    "variants": []
   },
@@ -325,8 +352,12 @@
     "tropical"
    ],
    "usedIn": [
-    "Falaises de Nacre",
-    "Cratère de Braise"
+    "Les Grottes de cristal",
+    "La Grotte lumineuse",
+    "Les Falaises oubliées",
+    "Les Cascades sacrées",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -354,7 +385,7 @@
    "status": "valide",
    "tags": [],
    "usedIn": [
-    "Bois des Lanternes"
+    "L’Île aux lueurs"
    ],
    "variants": [
     {
@@ -432,9 +463,7 @@
    "tags": [
     "repère"
    ],
-   "usedIn": [
-    "Bois des Lanternes"
-   ],
+   "usedIn": [],
    "variants": [
     {
      "label": "Chêne",
@@ -475,15 +504,27 @@
    "status": "valide",
    "tags": [],
    "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
+    "Le Sommet givré",
+    "La Forêt des souvenirs",
+    "Le Lac céleste",
+    "Le Plateau venté",
+    "La Côte aux villages",
+    "L’Archipel des tempêtes",
+    "Les Grottes de cristal",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "La Place des os",
+    "Les Falaises oubliées",
+    "L’Océan sans fin",
+    "Le Désert de l’île séchée",
+    "Les Ruines gelées",
+    "L’Île du silence",
+    "L’Île aux fleurs",
+    "Les Cascades sacrées",
+    "L’Île brumeuse",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -507,16 +548,7 @@
    "tags": [
     "récolte"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "PLA-003": {
@@ -538,15 +570,27 @@
    "status": "valide",
    "tags": [],
    "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
+    "Le Sommet givré",
+    "La Forêt des souvenirs",
+    "Le Lac céleste",
+    "Le Plateau venté",
+    "La Côte aux villages",
+    "L’Archipel des tempêtes",
+    "Les Grottes de cristal",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "La Place des os",
+    "Les Falaises oubliées",
+    "L’Océan sans fin",
+    "Le Désert de l’île séchée",
+    "Les Ruines gelées",
+    "L’Île du silence",
+    "L’Île aux fleurs",
+    "Les Cascades sacrées",
+    "L’Île brumeuse",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -571,8 +615,16 @@
     "dunes"
    ],
    "usedIn": [
-    "Cratère de Braise",
-    "Dunes du Mirage"
+    "Les Grottes de cristal",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "Les Falaises oubliées",
+    "L’Océan sans fin",
+    "L’Île du silence",
+    "Les Cascades sacrées",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -597,7 +649,7 @@
     "dunes"
    ],
    "usedIn": [
-    "Dunes du Mirage"
+    "Le Désert de l’île séchée"
    ],
    "variants": []
   },
@@ -620,14 +672,26 @@
    "status": "valide",
    "tags": [],
    "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Lagon Turquoise"
+    "Le Sommet givré",
+    "La Forêt des souvenirs",
+    "Le Lac céleste",
+    "Le Plateau venté",
+    "La Côte aux villages",
+    "L’Archipel des tempêtes",
+    "Les Grottes de cristal",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "La Place des os",
+    "Les Falaises oubliées",
+    "L’Océan sans fin",
+    "Les Ruines gelées",
+    "L’Île du silence",
+    "L’Île aux fleurs",
+    "Les Cascades sacrées",
+    "L’Île brumeuse",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -652,13 +716,24 @@
     "champs"
    ],
    "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Lagon Turquoise"
+    "Le Sommet givré",
+    "La Forêt des souvenirs",
+    "Le Lac céleste",
+    "Le Plateau venté",
+    "La Côte aux villages",
+    "L’Archipel des tempêtes",
+    "Les Grottes de cristal",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "Les Falaises oubliées",
+    "Les Ruines gelées",
+    "L’Île du silence",
+    "L’Île aux fleurs",
+    "Les Cascades sacrées",
+    "L’Île brumeuse",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -682,13 +757,7 @@
    "tags": [
     "champs"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Falaises de Nacre",
-    "Bois des Lanternes",
-    "Cratère de Braise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "PLA-009": {
@@ -712,9 +781,7 @@
     "champs",
     "récolte"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "PLA-010": {
@@ -737,15 +804,7 @@
    "tags": [
     "bord de l'eau"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "PLA-011": {
@@ -768,12 +827,7 @@
    "tags": [
     "bord de l'eau"
    ],
-   "usedIn": [
-    "Falaises de Nacre",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "PLA-012": {
@@ -825,11 +879,25 @@
     "récolte"
    ],
    "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Mont des Aigles",
-    "Bois des Lanternes"
+    "Le Sommet givré",
+    "La Forêt des souvenirs",
+    "Le Lac céleste",
+    "Le Plateau venté",
+    "La Côte aux villages",
+    "L’Archipel des tempêtes",
+    "Les Grottes de cristal",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "Les Falaises oubliées",
+    "L’Océan sans fin",
+    "Les Ruines gelées",
+    "L’Île du silence",
+    "L’Île aux fleurs",
+    "Les Cascades sacrées",
+    "L’Île brumeuse",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -880,17 +948,7 @@
    "tags": [
     "teinté par instance"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "PLA-016": {
@@ -913,17 +971,7 @@
    "tags": [
     "tuiles"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "PLA-017": {
@@ -942,10 +990,7 @@
    "tags": [
     "curiosité"
    ],
-   "usedIn": [
-    "Île aux Mille Fleurs",
-    "Bois des Lanternes"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "PLA-018": {
@@ -1015,14 +1060,29 @@
     "minable"
    ],
    "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
+    "Le Sommet givré",
+    "La Forêt des souvenirs",
+    "Le Lac céleste",
+    "Le Plateau venté",
+    "La Côte aux villages",
+    "L’Archipel des tempêtes",
+    "Les Grottes de cristal",
+    "Le Village englouti",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "La Place des os",
+    "Les Falaises oubliées",
+    "L’Océan sans fin",
+    "Le Désert de l’île séchée",
+    "Le Royaume des ruines",
+    "Les Ruines gelées",
+    "L’Île du silence",
+    "L’Île aux fleurs",
+    "Les Cascades sacrées",
+    "L’Île brumeuse",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -1049,11 +1109,27 @@
     "minable"
    ],
    "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise"
+    "Le Sommet givré",
+    "La Forêt des souvenirs",
+    "Le Lac céleste",
+    "Le Plateau venté",
+    "La Côte aux villages",
+    "L’Archipel des tempêtes",
+    "Les Grottes de cristal",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "Les Falaises oubliées",
+    "L’Océan sans fin",
+    "Le Désert de l’île séchée",
+    "Le Royaume des ruines",
+    "Les Ruines gelées",
+    "L’Île du silence",
+    "L’Île aux fleurs",
+    "Les Cascades sacrées",
+    "L’Île brumeuse",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -1078,9 +1154,7 @@
     "minable",
     "lumineux"
    ],
-   "usedIn": [
-    "Mont des Aigles"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ROC-004": {
@@ -1105,16 +1179,7 @@
    "tags": [
     "minable"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ROC-005": {
@@ -1139,11 +1204,7 @@
    "tags": [
     "minable"
    ],
-   "usedIn": [
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ROC-006": {
@@ -1193,11 +1254,26 @@
     "bois"
    ],
    "usedIn": [
-    "Île aux Mille Fleurs",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Lagon Turquoise"
+    "Le Sommet givré",
+    "La Forêt des souvenirs",
+    "Le Lac céleste",
+    "Le Plateau venté",
+    "La Côte aux villages",
+    "L’Archipel des tempêtes",
+    "Les Grottes de cristal",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "Les Falaises oubliées",
+    "L’Océan sans fin",
+    "Le Désert de l’île séchée",
+    "Les Ruines gelées",
+    "L’Île du silence",
+    "L’Île aux fleurs",
+    "Les Cascades sacrées",
+    "L’Île brumeuse",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -1222,10 +1298,18 @@
     "bois"
    ],
    "usedIn": [
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Dunes du Mirage"
+    "L’Archipel des tempêtes",
+    "Les Grottes de cristal",
+    "Les Îlots secrets",
+    "La Grotte lumineuse",
+    "La Place des os",
+    "Les Falaises oubliées",
+    "L’Océan sans fin",
+    "L’Île du silence",
+    "Les Cascades sacrées",
+    "L’Île aux lueurs",
+    "L’Île du soleil couchant",
+    "Le Volcan endormi"
    ],
    "variants": []
   },
@@ -1245,10 +1329,7 @@
    "tags": [
     "bois"
    ],
-   "usedIn": [
-    "Mont des Aigles",
-    "Bois des Lanternes"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ROC-010": {
@@ -1268,15 +1349,7 @@
     "bois",
     "assise"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Rocher Percé",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "BAT-001": {
@@ -1307,9 +1380,7 @@
     "village",
     "teinté"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": [
     {
      "label": "Petite",
@@ -1404,10 +1475,7 @@
     "animé",
     "teinté"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "BAT-005": {
@@ -1428,9 +1496,7 @@
     "animé",
     "rivière"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "BAT-006": {
@@ -1450,9 +1516,7 @@
     "falaises",
     "lumineux"
    ],
-   "usedIn": [
-    "Falaises de Nacre"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "BAT-007": {
@@ -1471,9 +1535,7 @@
    "slug": "tour-guet",
    "status": "valide",
    "tags": [],
-   "usedIn": [
-    "Mont des Aigles"
-   ],
+   "usedIn": [],
    "variants": [
     {
      "label": "Bois",
@@ -1503,10 +1565,7 @@
    "slug": "temple",
    "status": "valide",
    "tags": [],
-   "usedIn": [
-    "Cratère de Braise",
-    "Dunes du Mirage"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "BAT-009": {
@@ -1523,10 +1582,7 @@
    "slug": "cabane-ermite",
    "status": "valide",
    "tags": [],
-   "usedIn": [
-    "Mont des Aigles",
-    "Bois des Lanternes"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "BAT-010": {
@@ -1569,9 +1625,7 @@
    "tags": [
     "village"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": [
     {
      "label": "Corail",
@@ -1636,9 +1690,7 @@
     "village",
     "accostage"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-002": {
@@ -1683,12 +1735,7 @@
    "tags": [
     "chemins"
    ],
-   "usedIn": [
-    "Île aux Mille Fleurs",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Cratère de Braise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-004": {
@@ -1749,15 +1796,7 @@
    "tags": [
     "chemins"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Cratère de Braise",
-    "Dunes du Mirage"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-006": {
@@ -1776,11 +1815,7 @@
    "tags": [
     "village"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-007": {
@@ -1808,9 +1843,7 @@
    "tags": [
     "champs"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-008": {
@@ -1829,11 +1862,7 @@
    "tags": [
     "village"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Mont des Aigles",
-    "Bois des Lanternes"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-009": {
@@ -1876,10 +1905,7 @@
    "tags": [
     "cratère"
    ],
-   "usedIn": [
-    "Mont des Aigles",
-    "Cratère de Braise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-011": {
@@ -1901,10 +1927,7 @@
    "slug": "arche",
    "status": "valide",
    "tags": [],
-   "usedIn": [
-    "Rocher Percé",
-    "Falaises de Nacre"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-012": {
@@ -1923,9 +1946,7 @@
    "tags": [
     "champs"
    ],
-   "usedIn": [
-    "Île aux Mille Fleurs"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-013": {
@@ -1944,17 +1965,7 @@
    "tags": [
     "chemins"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-014": {
@@ -1978,9 +1989,7 @@
    "tags": [
     "village"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-015": {
@@ -1999,9 +2008,7 @@
    "tags": [
     "lumineux"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-016": {
@@ -2021,10 +2028,7 @@
     "curiosité",
     "lumineux"
    ],
-   "usedIn": [
-    "Cratère de Braise",
-    "Dunes du Mirage"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-017": {
@@ -2043,9 +2047,7 @@
    "tags": [
     "assise"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-018": {
@@ -2065,13 +2067,7 @@
     "assise",
     "curiosité"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Falaises de Nacre",
-    "Mont des Aigles"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-019": {
@@ -2091,9 +2087,7 @@
     "village",
     "pêche"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "STR-020": {
@@ -2266,11 +2260,7 @@
     "rivière",
     "animé"
    ],
-   "usedIn": [
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Cratère de Braise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "MON-001": {
@@ -2287,12 +2277,7 @@
    "slug": "ruines",
    "status": "valide",
    "tags": [],
-   "usedIn": [
-    "Falaises de Nacre",
-    "Bois des Lanternes",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "MON-002": {
@@ -2313,12 +2298,7 @@
    "tags": [
     "dunes"
    ],
-   "usedIn": [
-    "Falaises de Nacre",
-    "Bois des Lanternes",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "MON-003": {
@@ -2337,11 +2317,7 @@
    "tags": [
     "falaises"
    ],
-   "usedIn": [
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Cratère de Braise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "MON-004": {
@@ -2363,11 +2339,7 @@
    "slug": "cercle-pierres",
    "status": "valide",
    "tags": [],
-   "usedIn": [
-    "Île aux Mille Fleurs",
-    "Mont des Aigles",
-    "Bois des Lanternes"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "MON-005": {
@@ -2405,10 +2377,7 @@
    "tags": [
     "curiosité"
    ],
-   "usedIn": [
-    "Cratère de Braise",
-    "Dunes du Mirage"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "MON-007": {
@@ -2427,10 +2396,7 @@
    "tags": [
     "curiosité"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Cratère de Braise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "MON-008": {
@@ -2449,11 +2415,7 @@
    "tags": [
     "curiosité"
    ],
-   "usedIn": [
-    "Falaises de Nacre",
-    "Cratère de Braise",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "NAV-001": {
@@ -2569,9 +2531,7 @@
    "tags": [
     "village"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": [
     {
      "label": "Corail",
@@ -2614,13 +2574,7 @@
    "tags": [
     "épave"
    ],
-   "usedIn": [
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Dunes du Mirage"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "NAV-007": {
@@ -2645,11 +2599,7 @@
    "tags": [
     "épave"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Rocher Percé",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "NAV-008": {
@@ -2688,10 +2638,7 @@
    "tags": [
     "curiosité"
    ],
-   "usedIn": [
-    "Bois des Lanternes",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "NAV-010": {
@@ -3151,11 +3098,7 @@
    "tags": [
     "trésor"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Rocher Percé",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "OBJ-002": {
@@ -3175,10 +3118,7 @@
     "trésor",
     "curiosité"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Dunes du Mirage"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "OBJ-003": {
@@ -3197,11 +3137,7 @@
    "tags": [
     "curiosité"
    ],
-   "usedIn": [
-    "Île aux Mille Fleurs",
-    "Cratère de Braise",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "OBJ-004": {
@@ -3220,10 +3156,7 @@
    "tags": [
     "curiosité"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Mont des Aigles"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "OBJ-005": {
@@ -3242,12 +3175,7 @@
    "tags": [
     "lumineux"
    ],
-   "usedIn": [
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "OBJ-006": {
@@ -3269,12 +3197,7 @@
    "slug": "tente",
    "status": "valide",
    "tags": [],
-   "usedIn": [
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Dunes du Mirage",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": [
     {
      "label": "Corail",
@@ -3306,9 +3229,7 @@
    "tags": [
     "champs"
    ],
-   "usedIn": [
-    "Île aux Mille Fleurs"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "OBJ-008": {
@@ -3327,10 +3248,7 @@
    "tags": [
     "curiosité"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Bois des Lanternes"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "OBJ-009": {
@@ -3349,9 +3267,7 @@
    "tags": [
     "curiosité"
    ],
-   "usedIn": [
-    "Bois des Lanternes"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "OBJ-010": {
@@ -3375,9 +3291,7 @@
    "tags": [
     "lagon"
    ],
-   "usedIn": [
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "OBJ-011": {
@@ -3400,10 +3314,7 @@
    "tags": [
     "lagon"
    ],
-   "usedIn": [
-    "Falaises de Nacre",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "OBJ-012": {
@@ -3702,11 +3613,7 @@
    "tags": [
     "curiosité"
    ],
-   "usedIn": [
-    "Rocher Percé",
-    "Bois des Lanternes",
-    "Cratère de Braise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-001": {
@@ -3725,9 +3632,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": [
     {
      "label": "Crème",
@@ -3765,12 +3670,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Île aux Mille Fleurs",
-    "Falaises de Nacre",
-    "Mont des Aigles",
-    "Cratère de Braise"
-   ],
+   "usedIn": [],
    "variants": [
     {
      "label": "Crème",
@@ -3808,9 +3708,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Village de Pommeraie"
-   ],
+   "usedIn": [],
    "variants": [
     {
      "label": "Pie brune",
@@ -3848,9 +3746,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Île aux Mille Fleurs"
-   ],
+   "usedIn": [],
    "variants": [
     {
      "label": "Fauve d'été",
@@ -3901,13 +3797,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-007": {
@@ -3926,11 +3816,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Cratère de Braise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-008": {
@@ -3949,10 +3835,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Mont des Aigles"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-009": {
@@ -3990,10 +3873,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Village de Pommeraie",
-    "Dunes du Mirage"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-011": {
@@ -4012,12 +3892,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-012": {
@@ -4036,9 +3911,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Falaises de Nacre"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-013": {
@@ -4114,12 +3987,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Falaises de Nacre",
-    "Bois des Lanternes",
-    "Cratère de Braise",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-017": {
@@ -4138,12 +4006,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Île aux Mille Fleurs",
-    "Rocher Percé",
-    "Bois des Lanternes",
-    "Lagon Turquoise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-018": {
@@ -4162,9 +4025,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Île aux Mille Fleurs"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-019": {
@@ -4183,11 +4044,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Mont des Aigles",
-    "Bois des Lanternes",
-    "Cratère de Braise"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-020": {
@@ -4244,10 +4101,7 @@
    "tags": [
     "animé"
    ],
-   "usedIn": [
-    "Falaises de Nacre",
-    "Dunes du Mirage"
-   ],
+   "usedIn": [],
    "variants": []
   },
   "ANI-023": {
