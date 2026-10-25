@@ -330,9 +330,9 @@ et domaine concerné).
   l'épée, changement voulu à valider puis `npm run modeles:empreinte -- --ecrire` ; voir aussi les
   constats ci-dessus). « Budget du Worker » (`tests/world.test.js`) et coût de la carte d'herbe
   (`tests/herbe-champ.test.js`) : mesures de temps, sensibles à la charge.
-- **Graphe du code** : mis à jour le 22/10/2026 après l'open world.
+- **Graphe du code** : mis à jour le 25/10/2026 après le nettoyage de l'ancien monde.
   - Commande : `graphify update src`, sans LLM, code seul.
-  - Résultat : 2 502 nœuds, 6 523 liens, 171 communautés, nommées automatiquement d’après leur nœud
+  - Résultat : 2 558 nœuds, 6 605 liens, 179 communautés, nommées automatiquement d’après leur nœud
     central (`forme.js`, `surface.js`, `zones.js`…).
   - Attention : la commande écrit dans `src/graphify-out/`. Il faut déplacer `GRAPH_REPORT.md`,
     `graph.json` et `graph.html` dans `graphify-out/`, puis supprimer `src/graphify-out/`.
