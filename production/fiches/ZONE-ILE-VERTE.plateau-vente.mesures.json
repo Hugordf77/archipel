@@ -1,0 +1,654 @@
+{
+ "genere_par": "tests/zones/plateau-vente-mesures.mjs",
+ "ile": {
+  "id": "grande-ile",
+  "graine": 1611319869,
+  "centre": [
+   -4,
+   -1164
+  ],
+  "ext": 1792,
+  "n": 897,
+  "s": 4
+ },
+ "vent": {
+  "windAngle": 0.538,
+  "deg": 30.8,
+  "rot_moulin": 3.68,
+  "vient_de": [
+   -0.86,
+   -0.51
+  ],
+  "cap_deg": 300.8
+ },
+ "plateau": {
+  "cases": 37775,
+  "km2": 0.6044,
+  "h_moy": 29.2,
+  "point_haut": {
+   "x": 716,
+   "z": -980,
+   "h": 71.2
+  },
+  "lieux_du_plan": 0,
+  "chemins_du_plan": 0
+ },
+ "corniche": {
+  "pente_visee": 0.17,
+  "longueur_m": 267.2,
+  "points": 53,
+  "format": "[x, z, hauteur visée, hauteur actuelle]",
+  "route": [
+   [
+    349.83,
+    -936,
+    20.9,
+    21.93
+   ],
+   [
+    356.13,
+    -932,
+    22.17,
+    21.75
+   ],
+   [
+    359.4,
+    -928,
+    23.04,
+    22.15
+   ],
+   [
+    373.55,
+    -924,
+    25.54,
+    24.2
+   ],
+   [
+    372.4,
+    -920,
+    26.25,
+    25.96
+   ],
+   [
+    370.65,
+    -916,
+    26.99,
+    26.82
+   ],
+   [
+    368.55,
+    -912,
+    27.76,
+    27.78
+   ],
+   [
+    366.7,
+    -908,
+    28.51,
+    28.91
+   ],
+   [
+    364.75,
+    -904,
+    29.27,
+    29.6
+   ],
+   [
+    362.55,
+    -900,
+    30.04,
+    29.13
+   ],
+   [
+    359.85,
+    -896,
+    30.86,
+    28.82
+   ],
+   [
+    356.65,
+    -892,
+    31.74,
+    30.9
+   ],
+   [
+    352.9,
+    -888,
+    32.67,
+    32.6
+   ],
+   [
+    349.05,
+    -884,
+    33.61,
+    34.54
+   ],
+   [
+    345.6,
+    -880,
+    34.51,
+    36.08
+   ],
+   [
+    343,
+    -876,
+    35.32,
+    37.99
+   ],
+   [
+    341.45,
+    -872,
+    36.05,
+    38.1
+   ],
+   [
+    341.35,
+    -868,
+    36.73,
+    38.85
+   ],
+   [
+    341.75,
+    -864,
+    37.41,
+    38.94
+   ],
+   [
+    342.6,
+    -860,
+    38.11,
+    36.81
+   ],
+   [
+    343.8,
+    -856,
+    38.82,
+    39.44
+   ],
+   [
+    345.1,
+    -852,
+    39.53,
+    41.24
+   ],
+   [
+    346.6,
+    -848,
+    40.26,
+    41.65
+   ],
+   [
+    348.95,
+    -844,
+    41.05,
+    43.14
+   ],
+   [
+    352.25,
+    -840,
+    41.93,
+    43.43
+   ],
+   [
+    356.45,
+    -836,
+    42.92,
+    44.1
+   ],
+   [
+    360.95,
+    -832,
+    43.94,
+    44.15
+   ],
+   [
+    365.3,
+    -828,
+    44.94,
+    44
+   ],
+   [
+    369.25,
+    -824,
+    45.9,
+    45.6
+   ],
+   [
+    372.7,
+    -820,
+    46.8,
+    46.49
+   ],
+   [
+    375.75,
+    -816,
+    47.65,
+    48.81
+   ],
+   [
+    379.05,
+    -812,
+    48.53,
+    50.02
+   ],
+   [
+    382.3,
+    -808,
+    49.41,
+    49.85
+   ],
+   [
+    385.3,
+    -804,
+    50.26,
+    48.87
+   ],
+   [
+    387.6,
+    -800,
+    51.04,
+    48.9
+   ],
+   [
+    388.95,
+    -796,
+    51.76,
+    49.87
+   ],
+   [
+    389.35,
+    -792,
+    52.45,
+    52.45
+   ],
+   [
+    389.15,
+    -788,
+    53.13,
+    53.62
+   ],
+   [
+    389.1,
+    -784,
+    53.81,
+    55.13
+   ],
+   [
+    389.6,
+    -780,
+    54.49,
+    56.56
+   ],
+   [
+    390.95,
+    -776,
+    55.21,
+    57.67
+   ],
+   [
+    393.55,
+    -772,
+    56.02,
+    59.01
+   ],
+   [
+    396.9,
+    -768,
+    56.91,
+    58.82
+   ],
+   [
+    400.45,
+    -764,
+    57.82,
+    57.37
+   ],
+   [
+    404.05,
+    -760,
+    58.73,
+    58.45
+   ],
+   [
+    407.4,
+    -756,
+    59.62,
+    59.7
+   ],
+   [
+    409.9,
+    -752,
+    60.42,
+    60.65
+   ],
+   [
+    411.75,
+    -748,
+    61.17,
+    60.8
+   ],
+   [
+    413.65,
+    -744,
+    61.92,
+    62.43
+   ],
+   [
+    415.8,
+    -740,
+    62.69,
+    65.31
+   ],
+   [
+    419.7,
+    -736,
+    63.64,
+    67.34
+   ],
+   [
+    421.19,
+    -732,
+    64.37,
+    65.08
+   ],
+   [
+    432,
+    -728,
+    66.33,
+    66.33
+   ]
+  ]
+ },
+ "elements": {
+  "PV-M1": {
+   "nom": "Moulin de la Corniche",
+   "x": 418,
+   "z": -786,
+   "local": [
+    422,
+    378
+   ],
+   "h": 66.4,
+   "zone_plan": "plateau-vente",
+   "zoneAt": "plateau-vente",
+   "section": "grande-ile~4-4",
+   "replat": {
+    "r": 4.5,
+    "denivele": 1.67,
+    "relatif": 0.186
+   },
+   "distance_corniche_m": 27.7,
+   "distance_A_m": 59.7,
+   "horizon_vent": {
+    "oeil_0m_4_600": 4.3,
+    "oeil_6_6m_4_600": -4.3,
+    "oeil_6_6m_600_2500": 1.7
+   },
+   "vu_depuis": [
+    "plage_nord",
+    "village_prevu",
+    "frontiere_cote",
+    "ponton_ton_ile"
+   ]
+  },
+  "PV-M2": {
+   "nom": "Moulin du Bord",
+   "x": 376,
+   "z": -868,
+   "local": [
+    380,
+    296
+   ],
+   "h": 61.8,
+   "zone_plan": "plateau-vente",
+   "zoneAt": "plateau-vente",
+   "section": "grande-ile~4-4",
+   "replat": {
+    "r": 4.5,
+    "denivele": 2.58,
+    "relatif": 0.287
+   },
+   "distance_corniche_m": 30.5,
+   "distance_A_m": 150.8,
+   "horizon_vent": {
+    "oeil_0m_4_600": 5.4,
+    "oeil_6_6m_4_600": -2.9,
+    "oeil_6_6m_600_2500": 2
+   },
+   "vu_depuis": [
+    "plage_nord",
+    "frontiere_cote",
+    "ponton_ton_ile"
+   ]
+  },
+  "PV-M3": {
+   "nom": "Moulin du Large",
+   "x": 864,
+   "z": -872,
+   "local": [
+    868,
+    292
+   ],
+   "h": 68.9,
+   "zone_plan": "plateau-vente",
+   "zoneAt": "plateau-vente",
+   "section": "grande-ile~5-4",
+   "replat": {
+    "r": 4.5,
+    "denivele": 1.2,
+    "relatif": 0.133
+   },
+   "distance_corniche_m": 455.4,
+   "distance_A_m": 455.4,
+   "horizon_vent": {
+    "oeil_0m_4_600": 0.3,
+    "oeil_6_6m_4_600": -1.5,
+    "oeil_6_6m_600_2500": 3
+   },
+   "vu_depuis": [
+    "plage_nord",
+    "ponton_ton_ile"
+   ]
+  },
+  "PV-A": {
+   "nom": "Arche basse",
+   "x": 465.7,
+   "z": -756.3,
+   "local": [
+    469.7,
+    407.7
+   ],
+   "h": 59.7,
+   "zone_plan": "plateau-vente",
+   "zoneAt": "plateau-vente",
+   "section": "grande-ile~4-4",
+   "replat": {
+    "r": 3,
+    "denivele": 0.36,
+    "relatif": 0.059
+   },
+   "distance_corniche_m": 44,
+   "distance_A_m": 44
+  },
+  "PV-P1": {
+   "nom": "Menhir du Guet",
+   "x": 479,
+   "z": -768,
+   "local": [
+    483,
+    396
+   ],
+   "h": 59.9,
+   "zone_plan": "plateau-vente",
+   "zoneAt": "plateau-vente",
+   "section": "grande-ile~4-4",
+   "replat": {
+    "r": 1.5,
+    "denivele": 0.44,
+    "relatif": 0.146
+   },
+   "distance_corniche_m": 61.7,
+   "distance_A_m": 61.7
+  },
+  "PV-P2": {
+   "nom": "Menhir du Milieu",
+   "x": 526,
+   "z": -807,
+   "local": [
+    530,
+    357
+   ],
+   "h": 59.9,
+   "zone_plan": "plateau-vente",
+   "zoneAt": "plateau-vente",
+   "section": "grande-ile~4-4",
+   "replat": {
+    "r": 1.5,
+    "denivele": 0.34,
+    "relatif": 0.112
+   },
+   "distance_corniche_m": 122.8,
+   "distance_A_m": 122.8
+  },
+  "PV-P3": {
+   "nom": "Menhir de la Butte",
+   "x": 573,
+   "z": -847,
+   "local": [
+    577,
+    317
+   ],
+   "h": 65.9,
+   "zone_plan": "plateau-vente",
+   "zoneAt": "plateau-vente",
+   "section": "grande-ile~4-4",
+   "replat": {
+    "r": 1.5,
+    "denivele": 0.23,
+    "relatif": 0.076
+   },
+   "distance_corniche_m": 184.5,
+   "distance_A_m": 184.5
+  },
+  "PV-C": {
+   "nom": "Cercle de pierres",
+   "x": 620,
+   "z": -886,
+   "local": [
+    624,
+    278
+   ],
+   "h": 60.8,
+   "zone_plan": "plateau-vente",
+   "zoneAt": "plateau-vente",
+   "section": "grande-ile~4-4",
+   "replat": {
+    "r": 5,
+    "denivele": 0.71,
+    "relatif": 0.071
+   },
+   "distance_corniche_m": 245.6,
+   "distance_A_m": 245.6
+  },
+  "PV-W": {
+   "nom": "Muret effondré (milieu)",
+   "x": 608,
+   "z": -893,
+   "local": [
+    612,
+    271
+   ],
+   "h": 61.1,
+   "zone_plan": "plateau-vente",
+   "zoneAt": "plateau-vente",
+   "section": "grande-ile~4-4",
+   "replat": {
+    "r": 2,
+    "denivele": 0.78,
+    "relatif": 0.196
+   },
+   "distance_corniche_m": 236.5,
+   "distance_A_m": 241.2
+  },
+  "PV-E0": {
+   "nom": "Entrée sud-ouest",
+   "x": 300,
+   "z": -694,
+   "local": [
+    304,
+    470
+   ],
+   "h": 22.8,
+   "zone_plan": "plateau-vente",
+   "zoneAt": "plateau-vente",
+   "section": "grande-ile~4-4",
+   "replat": {
+    "r": 4,
+    "denivele": 0.95,
+    "relatif": 0.119
+   },
+   "distance_corniche_m": 121.8,
+   "distance_A_m": 136.3
+  }
+ },
+ "prototype": {
+  "methode": "copie du plan : bande ±6 m à la hauteur visée, talus 8 m fondu vers le relief naturel, relief fin A coupé",
+  "cases_retouchees": 503,
+  "cases_hors_zone": 0,
+  "pas_de_2m": 166,
+  "pas_praticables": 166,
+  "pente_max": 0.23,
+  "devers_max": 0.12,
+  "pente_sol_max": 0.59,
+  "seuils": {
+   "pente": 0.2,
+   "devers": 0.1
+  },
+  "pas_hors_seuils": [
+   [
+    369,
+    -925,
+    0.21,
+    0.1
+   ],
+   [
+    371,
+    -925,
+    0.15,
+    0.12
+   ],
+   [
+    373,
+    -924,
+    0.09,
+    0.1
+   ],
+   [
+    374,
+    -924,
+    0.16,
+    0.1
+   ],
+   [
+    373,
+    -922,
+    0.23,
+    0.09
+   ],
+   [
+    421,
+    -732,
+    0.17,
+    0.1
+   ]
+  ],
+  "parcours_P0_A": {
+   "plafond_0_25": true,
+   "plafond_0_38": true
+  },
+  "profil_frontal_test": {
+   "denivele": 44.2,
+   "bloque": true
+  }
+ }
+}

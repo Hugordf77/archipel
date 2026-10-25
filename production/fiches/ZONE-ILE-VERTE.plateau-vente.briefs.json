@@ -1,0 +1,283 @@
+{
+  "zone_id": "ZONE-ILE-VERTE",
+  "zone_du_jeu": "plateau-vente",
+  "objectif": "OBJ-0002",
+  "tache": "TASK-ILE-VERTE-006",
+  "redige_par": "world-designer",
+  "date": "2026-10-25",
+  "statut": "specification",
+  "plan": "production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente",
+  "conventions": "Coordonnées monde (m, nord = −Z) sauf mention « repère de l’île » (x + 4, z + 1 164). Toutes les valeurs mesurées viennent des scripts cités dans production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.mesures ; tout le reste est proposition. Les critères sont des contrôles à exécuter après réalisation : aucun n’est exécuté ici.",
+  "ordre": [
+    "BRF-PV-02",
+    "BRF-PV-03",
+    "BRF-PV-05",
+    "BRF-PV-06",
+    "BRF-PV-07",
+    "BRF-PV-08",
+    "BRF-PV-09",
+    "BRF-PV-01",
+    "BRF-PV-04",
+    "BRF-PV-11",
+    "BRF-PV-10",
+    "BRF-PV-12",
+    "BRF-PV-13"
+  ],
+  "briefs": [
+    {
+      "id": "BRF-PV-01",
+      "titre": "Bornage des lieux de la Grande Île à la zone plateau-vente",
+      "role": "world-designer",
+      "statut": "specification",
+      "fichiers": [
+        "src/world/archipel.js (desc.lieux de la Grande Île)",
+        "src/world/islands/gen/pois.js",
+        "src/world/islands/gen/paths.js",
+        "src/world/islands/gen/spawns.js",
+        "src/world/islands/gen/plan.js",
+        "tests/ (nouveau test de génération du plateau)"
+      ],
+      "travail": "Donner à la Grande Île une description de lieux bornée à sa zone plateau-vente : champ lieux.zone (placePOIs, placeMicro, placeSpawners n’acceptent que les cases dont P.ZI est cette zone ; cascades hors zone ignorées) ; generiques: false ; entrées de recette avec indication { pres: [x, z, rayon], nom } dans le repère de l’île ; lieux.entrees (racine du réseau de chemins, accostage facultatif) ; coût infini hors zone dans buildPaths. Recette : celle de production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.bornage.recette_proposee. Indications « pres » et exclusions : production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.bornage.recette_proposee (rayons 3 m pour les moulins de la crête ouest, 2 m pour l’arche).",
+      "criteres": [
+        "Plan de la Grande Île avec et sans desc.lieux : H, A, Z, C identiques (égalité stricte) sur toutes les cases dont ZI ≠ plateau-vente ; liste items/ids identique pour tous les arbres et décors hors de la zone.",
+        "Tous les pois, micro, spawners et tous les points de plan.paths sont sur des cases de la zone plateau-vente.",
+        "plan.pois contient exactement 3 moulin_vent, 1 cercle_pierres, 3 menhir, 1 muret_effondre, 1 arche_basse (plus aucune cascade, aucun lieu générique) ; chacun à moins du rayon « pres » de sa position prévue.",
+        "Identifiants des lieux stables : deux appels successifs de buildPlan donnent les mêmes id (stableId).",
+        "plan.failedLinks vide ; aucun lieu marqué byBoat.",
+        "Temps de buildPlan de la Grande Île mesuré et rapporté (1,26 s aujourd’hui dans Node) ; seuil d’acceptation à fixer par le Technical Artist (non documenté).",
+        "Le test npx vitest run tests/production-donnees.test.js tests/zones/ile-verte.test.js reste vert.",
+        "Lieux hors de l’emprise des terrassements : aucun lieu à moins de 14 m + son rayon de route_complete ou du palier A ; aucun moulin à moins de 24,5 m de route_complete (segments).",
+        "Le test d’égalité hors zone couvre aussi l’effet de la carte d’occupation free de flora.js près des limites de zone."
+      ],
+      "dependances": [
+        "BRF-PV-02 (le réseau de chemins a besoin de la montée)",
+        "types menhir, muret_effondre, arche_basse : BRF-PV-06, BRF-PV-08, BRF-PV-09 (constructeurs de lieux et modèles)"
+      ],
+      "elements": ["PV-M1", "PV-M2", "PV-M3", "PV-A", "PV-P1", "PV-P2", "PV-P3", "PV-C", "PV-W", "PV-E0"]
+    },
+    {
+      "id": "BRF-PV-02",
+      "titre": "Terrain : montée de la corniche du Vent (P0 → A)",
+      "role": "world-designer",
+      "statut": "specification",
+      "fichiers": [
+        "src/world/archipel.js (liste « terrassements » de la Grande Île : polyligne, hauteurs visées, demi-largeur, talus)",
+        "src/world/islands/gen/forme.js (fonction pure qui applique les terrassements à la grille)",
+        "src/world/islands/gen/plan.js (appel juste après buildTerrain, avant computeZonesForme)",
+        "tests/ (test de la montée)"
+      ],
+      "travail": "Tailler la corniche le long de la face ouest selon production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.montee.route_complete (53 points) (de P0 (350, −936) à 20,9 m à A (432, −728) à 66,3 m, 267 m, pente 0,17) : bande de roulement de ±6 m à la hauteur visée, talus de 8 m fondu vers le relief naturel, relief fin (A) à 0 sur la bande ; virages du pied et de l’arrivée arrondis (rayon ≥ 10 m). Appliquer après érosion et rivières pour ne toucher que l’emprise. Ne pas utiliser de talus proportionnel à l’écart de hauteur (le prototype remblaie alors le pied de l’escarpement).",
+      "criteres": [
+        "Sur le relief au mètre (Surface du plan), le long de route_complete au pas de 2 m : aucune pente au-dessus de 0,20 ; dévers (±3 m en travers, /6 m) ≤ 0,10 ; pente du sol ≤ 1,11 (tan 48°, slideExitAngle) sur ±3 m. Prototype (tests/zones/plateau-vente-mesures.mjs) : 160 pas sur 166 dans ces seuils, maxima 0,23 et 0,12 aux deux virages.",
+        "Parcours à pied sur grille de 2 m (règle climbable + tan 55° du test ile-verte) plafonné à 0,25 : A atteinte depuis P0 (prototype : atteinte).",
+        "Toutes les cases modifiées sont dans la zone plateau-vente et à moins de 14 m de route_complete (palier A : 6 + 8 m) ; H strictement inchangé ailleurs.",
+        "Profil frontal du test ile-verte (430, −701) → (460, −722) : dénivelé > 35 m et toujours bloqué (prototype : 44,2 m, bloqué) ; sinon assouplir ce test en le signalant.",
+        "Aucune rivière ni lac dans l’emprise (rivière la plus proche à 127 m de l’axe).",
+        "Aucun « escalier » de paths.js sur le tronçon P0 → A du réseau de chemins.",
+        "Le test npx vitest run tests/production-donnees.test.js tests/zones/ile-verte.test.js reste vert, dont « ≥ 95 % praticable » et l’escarpement REP-03."
+      ],
+      "dependances": [],
+      "elements": ["PV-T1"],
+      "prototype": "node tests/zones/plateau-vente-mesures.mjs (prototype sur une copie en mémoire du plan, aucun fichier du jeu modifié)"
+    },
+    {
+      "id": "BRF-PV-03",
+      "titre": "Terrain : replats (palier d’arrivée, moulins, cercle)",
+      "role": "world-designer",
+      "statut": "specification",
+      "fichiers": ["src/world/archipel.js (palier d’arrivée dans les terrassements)", "src/world/islands/gen/pois.js (replats des lieux : stamp)"],
+      "travail": "Palier d’arrivée de 6 m de rayon à 66,3 m en A (432, −728). Moulins : replat automatique du constructeur moulin_vent (stamp r 4,5 m, chute 6 m, à la hauteur du centre). Cercle de pierres : replat naturel (aucune retouche), vérifier la règle isFlat. Arche, menhirs, muret : posés sur le relief.",
+      "criteres": [
+        "Dénivelé ≤ 0,3 m sur le rayon de chaque replat (16 points sur le cercle du rayon, relief au mètre) : palier A (r 6), moulins (r 4,5).",
+        "Cercle de pierres : règle isFlat de pois.js vérifiée (pente < 0,3, dénivelé relatif < 0,12 sur r 5) ; mesuré aujourd’hui 0,071.",
+        "Aucun recouvrement d’emprises, distances mesurées aux segments de route_complete : moulin–axe ≥ 24,5 m (replat 10,5 + emprise 14 ; mesuré : moulin de la Corniche 27.7 m, moulin du Bord 30.5 m) ; arche basse et tout lieu de rayon r à ≥ 14 + r m de l’axe et de A (arche : 44 m pour 17 m exigés).",
+        "Altitudes après retouche à ±0,5 m des altitudes visées de production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.elements."
+      ],
+      "dependances": ["BRF-PV-01", "BRF-PV-02"],
+      "elements": ["PV-T2", "PV-M1", "PV-M2", "PV-M3", "PV-C", "PV-A"]
+    },
+    {
+      "id": "BRF-PV-04",
+      "titre": "Chemins du plateau",
+      "role": "world-designer",
+      "statut": "specification",
+      "fichiers": ["src/world/islands/gen/paths.js", "tests/ (test du réseau)"],
+      "travail": "Réseau généré par buildPaths, racine E0 (300, −694) : terrasse ouest jusqu’à P0, corniche jusqu’à A, allée A → arche → menhirs → cercle, crête A → moulin 1 → moulin 2, boucle cercle → point haut → moulin 3 → cercle (production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.chemins.liens_prevus). Les panneaux des carrefours viennent de paths.js.",
+      "criteres": [
+        "Graphe des chemins connexe : depuis E0, chaque lieu du plateau est relié (plan.paths, sans byBoat ni failedLinks).",
+        "Le chemin E0 → A passe par la corniche : au moins 90 % de ses points à moins de 6 m de l’axe P0 → A ; aucun escalier sur ce tronçon.",
+        "Aucun point de chemin hors de la zone plateau-vente.",
+        "Pente des chemins au pas de 2 m sur le relief final rapportée (max et 95e centile), escaliers comptés : constat, seuil non documenté hors montée."
+      ],
+      "dependances": ["BRF-PV-01", "BRF-PV-02"],
+      "elements": ["PV-E0", "chemins"]
+    },
+    {
+      "id": "BRF-PV-05",
+      "titre": "Modèle : moulin du plateau (d’après BAT-004)",
+      "role": "asset-artist",
+      "statut": "specification",
+      "fichiers": ["src/models/batiments/moulin/ (variante) ou nouveau dossier src/models/batiments/", "src/models/lieux.js (si nouveau type de pièce)"],
+      "travail": "Moulin des crêtes du plateau : reprendre BAT-004 (tour, toit teinté, ailes animées par le vent, 7,66 × 10,43 × 4,6 m) ou une variante « pierre du plateau » (tour plus trapue en pierre, toit de bardeaux). Garder les ailes sur la face +Z, l’animation anim[{ axis: 'z', wind: true }] et l’obstacle de physique.js.",
+      "criteres": [
+        "Hauteur hors tout 10 à 12 m ; envergure des ailes ≥ 9 m (BAT-004 : bras de 4,8 m centrés à 2,3 m du moyeu) ; mesure par npm run modeles:mesure.",
+        "Ailes animées par le vent : élément anim avec wind: true (vitesse 0,8 × (0,4 + 0,7 × uWindStrength) rad/s dans IslandManager).",
+        "Obstacle du pied conservé (rayon 2,2 m dans physique.js) ; teinte du toit par recolorPart (couleur MOULINS de pois.js).",
+        "Silhouette lisible à 15 m : critère observable (tour, toit et quatre ailes distincts sur fond de ciel au catalogue), seuil non documenté à formaliser par Evis-critique.",
+        "Règles de docs/DA.md ; npm run modeles:empreinte ne change que pour ce modèle."
+      ],
+      "dependances": [],
+      "elements": ["PV-M1", "PV-M2", "PV-M3"],
+      "revue": "evis-critique"
+    },
+    {
+      "id": "BRF-PV-06",
+      "titre": "Modèle : menhir",
+      "role": "asset-artist",
+      "statut": "specification",
+      "fichiers": [
+        "nouveau dossier src/models/monuments/ (identifiant à attribuer, famille MON)",
+        "src/models/lieux.js (type « menhir », rotation DIRZ : face large vers rot)"
+      ],
+      "travail": "Pierre levée seule, plus haute que celles du cercle MON-004 (1,6 à 2,8 m) : 2,5 à 3,5 m, base 0,8 à 1,2 m, épaisseur 0,4 à 0,6 m, légère inclinaison, mousse côté vent ; trois variantes (v 0 à 2).",
+      "criteres": [
+        "Dimensions dans les plages ci-dessus (npm run modeles:mesure).",
+        "Obstacle unique au pied (rayon 0,5 à 0,7 m) dans physique.js.",
+        "Face large orientée par rot (rot 3,680 : face au vent).",
+        "Teintes de pierre du kit (STONE, STONE_D, MOSS de src/models/kit/lieux.js) : même famille que MON-004.",
+        "Règles de docs/DA.md ; empreintes : seul ce modèle change."
+      ],
+      "dependances": [],
+      "elements": ["PV-P1", "PV-P2", "PV-P3"],
+      "revue": "evis-critique"
+    },
+    {
+      "id": "BRF-PV-07",
+      "titre": "Modèle : cercle de pierres (MON-004 existant)",
+      "role": "asset-artist",
+      "statut": "specification",
+      "fichiers": [
+        "src/models/monuments/cercle-pierres/ (paramètre optionnel seulement)",
+        "src/world/islands/gen/pois.js (option de recette du constructeur cercle_pierres, World Designer)"
+      ],
+      "travail": "Réutiliser le modèle MON-004 (8,73 × 2,73 × 8,8 m, paramètre count 5 à 12). Le constructeur cercle_pierres de src/world/islands/gen/pois.js tire aujourd’hui count = 7 à 9 et une rotation au hasard : obtenir 9 pierres, ou un intervalle orienté vers l’allée (cap 2,443 rad), est un changement du constructeur (option de la recette, World Designer) et, pour l’intervalle, un paramètre du modèle (Asset Artist).",
+      "criteres": [
+        "Aucun nouveau modèle si MON-004 convient (constat écrit par l’Asset Artist).",
+        "Sans option de recette, le constructeur garde son tirage actuel (7 à 9 pierres, rotation au hasard) : plans des autres îles inchangés.",
+        "Si l’intervalle est ajouté au modèle : paramètre optionnel, rendu inchangé sans lui (empreinte de MON-004 inchangée par défaut)."
+      ],
+      "dependances": [],
+      "elements": ["PV-C"],
+      "revue": "evis-critique"
+    },
+    {
+      "id": "BRF-PV-08",
+      "titre": "Modèle : muret effondré",
+      "role": "asset-artist",
+      "statut": "specification",
+      "fichiers": [
+        "nouveau dossier src/models/monuments/ ou src/models/ouvrages/ (identifiant à attribuer)",
+        "src/models/lieux.js (type « muret_effondre », rotation DIRX : axe du mur le long de rot)"
+      ],
+      "travail": "Mur de pierres sèches en ruine, environ 20 m en trois tronçons (longueur réglable len), 0,6 à 1,2 m de haut, brèches et pierres tombées ; posé perpendiculaire au vent (rot 2,109).",
+      "criteres": [
+        "Hauteur 0,6 à 1,2 m ; au moins deux brèches de ≥ 1,5 m où l’on passe à pied.",
+        "Obstacles (cercles de physique.js) le long des tronçons, aucun dans les brèches.",
+        "Teintes du kit de pierre, mousse ; règles de docs/DA.md ; seule cette empreinte change."
+      ],
+      "dependances": [],
+      "elements": ["PV-W"],
+      "revue": "evis-critique"
+    },
+    {
+      "id": "BRF-PV-09",
+      "titre": "Modèle : arche basse",
+      "role": "asset-artist",
+      "statut": "specification",
+      "fichiers": ["nouveau dossier src/models/monuments/ (identifiant à attribuer) ou variante de STR-011", "src/models/lieux.js (type « arche_basse »)"],
+      "travail": "Porte de pierres levées (deux montants et un linteau) à l’entrée de la table, bien plus basse que l’arche marine STR-011 (12,64 m de haut, taille 0,8 à 2) : 3,2 à 3,8 m de haut.",
+      "criteres": [
+        "Ouverture ≥ 2,6 m de large (chemin principal de 2,4 m) et ≥ 2,2 m de haut libre.",
+        "Obstacles sur les deux montants seulement ; le passage reste praticable (test de pas climbable sous l’arche).",
+        "Axe de passage indiqué par rot (cap du chemin −0,698 rad).",
+        "Règles de docs/DA.md ; seule cette empreinte change."
+      ],
+      "dependances": [],
+      "elements": ["PV-A"],
+      "revue": "evis-critique"
+    },
+    {
+      "id": "BRF-PV-10",
+      "titre": "Interaction simple au moulin (proposition)",
+      "role": "gameplay",
+      "statut": "specification",
+      "fichiers": ["src/world/islands/gen/pois.js (champ interact du lieu moulin_vent)", "src/app/Game.js (onIslandNear : nouveau cas « moulin »)", "tests/"],
+      "travail": "Au pied de chaque moulin : « Regarder le plateau depuis le moulin » ; l’action réutilise Game.lookout (révèle la carte autour, comme la tour de guet) et nomme le moulin. Pas de nouvel objet ni de nouvelle ressource.",
+      "criteres": [
+        "Le lieu moulin_vent porte interact { kind: 'moulin', x, z } au pied (à 3 m de l’axe, côté opposé aux ailes).",
+        "onIslandNear enregistre une interaction poi:<id> avec son libellé ; l’action révèle des cases du brouillard (compte > 0 au premier usage) et appelle markDirty.",
+        "Test Vitest sur une partie factice (modèle de tests/zones/ile-verte.test.js) : interaction présente, action exécutée."
+      ],
+      "dependances": ["BRF-PV-01", "BRF-PV-11"],
+      "elements": ["PV-M1", "PV-M2", "PV-M3"],
+      "revue": "archipel-critique"
+    },
+    {
+      "id": "BRF-PV-11",
+      "titre": "Intégration : lieux dans les sections, budget, sauvegarde",
+      "role": "technical-artist",
+      "statut": "specification",
+      "fichiers": [
+        "src/world/islands/gen/sections.js (cropPlan)",
+        "src/world/islands/IslandManager.js (lecture seule sauf écart démontré)",
+        "production/integration/ZONE-ILE-VERTE.json"
+      ],
+      "travail": "cropPlan vide aujourd’hui pois, micro, paths, pathParts et spawners des sections : y porter les éléments dont l’ancrage est dans le carré de la section, recentrés (x − cx, z − cz), et les chemins découpés au carré. Sections concernées : grande-ile~4-4, grande-ile~4-3, grande-ile~5-4. Décider avec un humain s’il faut changer GEN_VERSION (regions.js) : ce changement abandonnerait récoltes et terrassements sauvegardés de tout le monde. Petite végétation : buildTile (surface.js) la tire pour toute la tuile si plan.lieux est vrai ; ne pas recopier lieux tel quel dans les sections, ou borner smallVegetation à la zone plateau-vente.",
+      "criteres": [
+        "Chaque lieu du plan de l’île apparaît dans exactement une section, à la même position monde (écart < 1 cm).",
+        "Un chemin qui traverse une limite de section est dessiné une seule fois par carré (pas de doublon au raccord).",
+        "Tuiles hors de la zone plateau-vente inchangées : pour chaque tuile des sections de la Grande Île touchée par le changement, buildTile rend le même nombre d’éléments et les mêmes identifiants (items, ids) qu’avant.",
+        "Budget du Worker et des triangles des sections mesuré avant/après (seuils du projet ou constat si non documentés).",
+        "Test de la zone et suite complète (npx vitest run) sans nouvel échec (production/echecs-connus.json) ; build de production réussi."
+      ],
+      "dependances": ["BRF-PV-01 à BRF-PV-09"],
+      "elements": ["tous"],
+      "revue": "archipel-critique"
+    },
+    {
+      "id": "BRF-PV-12",
+      "titre": "Test de zone : plateau atteignable à pied par la montée",
+      "role": "gameplay",
+      "statut": "specification",
+      "fichiers": ["tests/zones/ile-verte.test.js (ajouts ; ne pas retirer l’assertion de l’escarpement frontal)"],
+      "travail": "Étendre le test fonctionnel de la zone : depuis la plage du débarquement, E0, P0, A et chaque lieu du plateau sont atteignables à pied sur la grille de 2 m ; parcours plafonné à 0,25 de P0 à A ; l’escarpement frontal REP-03 reste bloqué.",
+      "criteres": [
+        "Assertions sur les positions réelles des lieux du plan (pas de coordonnées recopiées sans lecture du plan).",
+        "Le test échoue si la corniche disparaît (parcours plafonné à 0,25 de P0 à A).",
+        "Le test passe avec npm test."
+      ],
+      "dependances": ["BRF-PV-02", "BRF-PV-11"],
+      "elements": ["PV-T1", "tous les lieux"],
+      "revue": "archipel-critique"
+    },
+    {
+      "id": "BRF-PV-13",
+      "titre": "Vérification de l’ambiance et des repères (F04, REP-07)",
+      "role": "technical-artist",
+      "statut": "specification",
+      "fichiers": ["captures/ (nouvelles captures)", "production/integration/ZONE-ILE-VERTE.json"],
+      "travail": "En jeu sur le serveur des agents (port 5174), __ile.game.skipSave = true avant tout déplacement : captures 1 280 × 720 à 11 h et à 19 h depuis le ponton de Ton île (10,5, 32), la plage nord (0, −200), le pied P0 (350, −936) et l’arrivée A (432, −728). Refaire aussi les trois captures de TASK-ILE-VERTE-001, absentes du dossier captures/.",
+      "criteres": [
+        "Depuis le ponton et la plage nord : les trois moulins visibles (lignes de vue mesurées sans arbres : vérifier qu’aucun arbre ne les masque).",
+        "Depuis P0 : le moulin du Bord visible au-dessus de la corniche ; depuis A : l’arche et au moins un menhir dans le champ.",
+        "Ailes en rotation (deux captures à 1 s d’intervalle, angle des ailes différent).",
+        "Lisibilité des silhouettes : critère observable décrit, seuil non documenté à formaliser par Archipel-Critique."
+      ],
+      "dependances": ["BRF-PV-11"],
+      "elements": ["PV-M1", "PV-M2", "PV-M3", "PV-A", "PV-P1", "PV-C"],
+      "revue": "archipel-critique"
+    }
+  ],
+  "donnees_de_reference": "production/fiches/ZONE-ILE-VERTE.plateau-vente.mesures.json (réécrit par node tests/zones/plateau-vente-mesures.mjs --ecrire) ; route de la corniche : production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.montee.route_complete (53 points).",
+  "perimetre": "B04 et F04 retirés de TASK-ILE-VERTE-006 (décision de l’utilisateur) : B04 par BRF-PV-04 et BRF-PV-12 (TASK-ILE-VERTE-008), F04 par BRF-PV-13 (TASK-ILE-VERTE-009)."
+}

@@ -1,0 +1,62 @@
+{
+  "task_id": "TASK-ILE-VERTE-006",
+  "agent": "world-designer",
+  "etat_final": "termine",
+  "resume": "Plan du Plateau venté (OBJ-0002), sans réalisation, corrigé après la revue d’Archipel-Critique (tentative 1). Fiche production/fiches/ZONE-ILE-VERTE.json en version 3 : moulin du Bord déplacé à (376, −868), à 30,5 m de la corniche ; arche basse éloignée à 44 m de l’arrivée, hors palier et talus ; route complète de la corniche (53 points) dans la fiche ; mesures de référence reproductibles dans le dépôt (production/fiches/ZONE-ILE-VERTE.plateau-vente.mesures.json, réécrit par node tests/zones/plateau-vente-mesures.mjs --ecrire) ; bornage de la petite végétation des tuiles ; seuils de dévers alignés à 0,10 ; horizon au vent à hauteur du moyeu (6,6 m). B04 et F04 retirés du périmètre (décision de l’utilisateur) : chemins et ambiance restent décrits, renvoyés à BRF-PV-04/12 (TASK-ILE-VERTE-008) et BRF-PV-13 (TASK-ILE-VERTE-009). Aucun fichier du jeu modifié.",
+  "fichiers": [
+    { "path": "production/fiches/ZONE-ILE-VERTE.json", "action": "modifie", "nature": "specification" },
+    { "path": "production/fiches/ZONE-ILE-VERTE.plateau-vente.briefs.json", "action": "cree", "nature": "specification" },
+    { "path": "production/fiches/ZONE-ILE-VERTE.plateau-vente.mesures.json", "action": "cree", "nature": "specification" },
+    { "path": "tests/zones/plateau-vente-mesures.mjs", "action": "cree", "nature": "fichier" }
+  ],
+  "livrables_attendus": ["production/fiches/ZONE-ILE-VERTE.json"],
+  "livrables_fournis": [
+    "production/fiches/ZONE-ILE-VERTE.json",
+    "production/fiches/ZONE-ILE-VERTE.plateau-vente.briefs.json",
+    "production/fiches/ZONE-ILE-VERTE.plateau-vente.mesures.json"
+  ],
+  "tests": [
+    { "commande": "node tests/zones/plateau-vente-mesures.mjs --ecrire (deux fois de suite)", "resultat": "reussi", "detail": "Plan de la Grande Île en ≈ 1,3 s ; windAngle 0,538 rad ; plateau 37 775 cases, point haut 71,2 m en (716, −980) ; corniche de 267.2 m, 53 points, identique point pour point à la route de la première passe ; fichier de mesures identique aux deux exécutions (SHA-1 4315102059122c5b2212c12440fd6b930648c9e8)." },
+    { "commande": "node tests/zones/plateau-vente-mesures.mjs (éléments)", "resultat": "reussi", "detail": "Moulin de la Corniche (418, −786) : 66.4 m, 27.7 m de la corniche (segments), horizon au vent -4.3° à 6,6 m (4–600 m), vu des 4 points. Moulin du Bord (376, −868) : 61.8 m, 30.5 m, -2.9°, vu de 3 points. Moulin du Large : -1.5° à 6,6 m, 0.3° au sol. Arche (465,7, −756,3) : 59.7 m, 44 m de A, dénivelé 0.36 m sur r 3." },
+    { "commande": "node tests/zones/plateau-vente-mesures.mjs (prototype)", "resultat": "reussi", "detail": "Copie du plan, bande ±6 m, talus 8 m : 503 cases retouchées, 0 hors zone ; 166/166 pas praticables ; pente max 0.23, dévers max 0.12 ; 6 pas hors seuils 0,20 / 0,10 (deux virages) ; P0 → A sous 0,25 : atteint ; profil frontal du test : 44.2 m, bloqué." },
+    { "commande": "node <scratchpad>/m13-arche.mjs", "resultat": "reussi", "detail": "Dénivelé sur r 3 le long de l’allée de 14 à 50 m de A : 1,3 à 2,25 m jusqu’à 38 m (descente du rebord), 0,35 m à 44 m : arche placée à 44 m." },
+    { "commande": "ls captures/ | grep ile-verte", "resultat": "reussi", "detail": "Commande exécutée ; résultat : aucun fichier. les trois captures citées par la version 1 de la fiche sont absentes du dossier captures/ (constat noté dans la fiche)." },
+    { "commande": "node <scratchpad>/verif-fiche.mjs (verifierFiche + existence des sources attestées) et comparaison récursive avec la version 1", "resultat": "reussi", "detail": "Aucune erreur ; valeurs de la version 1 modifiées : les 13 mêmes, voulues, qu’après la première passe." },
+    { "commande": "npx vitest run tests/production-donnees.test.js tests/zones/ile-verte.test.js", "resultat": "reussi", "detail": "Relancé après les corrections : 2 fichiers, 22 tests réussis sur 22." }
+  ],
+  "erreurs": [
+    "Première passe : distances moulin–corniche mesurées aux points de l’axe et non aux segments, disque « pres » trop large (8 et 12 m) ; corrigé (segments de route_complete, rayon 3 m et règle d’exclusion).",
+    "Première passe : arche à 12 m de A, dans le palier et son talus, annoncée sans retouche ; corrigé (44 m).",
+    "Première passe : horizon au vent mesuré au ras du sol (départ 12 m, pas 6 m) ; remplacé par la mesure à hauteur du moyeu (6,6 m, pas 2 m), valeurs au sol données à côté."
+  ],
+  "hypotheses": [
+    "Sens du vent : windAngle n’a pas de sens documenté ; lu comme « souffle vers 0,538 rad » parce que le moulin est tourné vers windAngle + π (ailes face au vent) et que le vent du jeu (Sailing.js, pointOfSail) souffle vers son angle, de moyenne 0,6 rad.",
+    "Exposition au vent : horizon au vent ≤ 0° de 12 à 600 m ; critère choisi ici, sans seuil documenté.",
+    "Lignes de vue vers les moulins mesurées sur le relief seul (sans arbres), sommet des ailes à 10,4 m au-dessus du sol (hauteur de BAT-004).",
+    "Pente visée 0,17 et seuils 0,20 (axe) / 0,10 (dévers) : propositions ; seuls climbable (1,45), stepUp (0,4 m), slideAngle (55°), slideExitAngle (48°), uphillLoss (0,9), l’escalier de paths.js (0,38) et la roche de zones.js (0,68) sont des valeurs du code.",
+    "Parcours à pied mesurés sans les obstacles des arbres et du décor (le test ile-verte, lui, les compte).",
+    "Le prototype de retouche suppose l’application après buildTerrain ; une application avant l’érosion pourrait modifier les rivières et l’érosion d’autres zones (non mesuré)."
+  ],
+  "decisions": [
+    "Montée en corniche sur la face ouest (lacet terrasse ouest + corniche) plutôt qu’un lacet sur la face sud : la face sud est trop mince pour deux rampes sur la grille de 4 m sans remblai de 24 à 26 m ; la corniche suit la courbe de niveau (écart d’axe ≤ 3,7 m) et arrive au sommet de l’escarpement à 16 m de REP-03.",
+    "Retouches de terrain proposées après buildTerrain (après érosion et rivières) pour ne modifier que l’emprise, toute dans la zone ; lieux posés par desc.lieux avec un nouveau bornage lieux.zone, des indications « pres » et une racine de chemins E0 (formats à créer).",
+    "POI-13 (proposition de la version 1, « Moulins du Plateau venté » en (640, −848)) précisé en « Moulin de la Corniche » (418, −786) ; les autres éléments ajoutés en POI-16 à POI-23, REP-06 à REP-08, ACC-05 et ACC-06.",
+    "Aucun fichier du jeu ni test modifié ; le test de l’escarpement frontal n’a pas à être assoupli si le tracé est suivi (prototype : profil toujours bloqué).",
+    "Correction 1 (revue) : moulin du Bord déplacé de (370, −870) à (376, −868) : 30,5 m des segments de route_complete (24,4 m de l’axe publié et 24,8 m de la route complète auparavant), 61,8 m, horizon au vent −2,9° à 6,6 m, vu de la plage nord, de la frontière de la côte et du ponton de Ton île ; « pres » ramené à 3 m pour les deux moulins de la crête ouest et règle d’exclusion de 24,5 m de la corniche ; route complète (53 points) dans plan_plateau_vente.montee.route_complete, critères des briefs BRF-PV-02 et BRF-PV-03 portés sur elle.",
+    "Correction 2 (revue) : arche basse à (465,7, −756,3), 44 m de A sur l’allée, au pied de la descente du rebord (dénivelé 0,36 m sur r 3) ; critère de non-chevauchement de BRF-PV-03 étendu à l’arche et à tout lieu (≥ 14 + r m de l’axe et de A).",
+    "Correction 3 (revue) : bornage de la petite végétation (buildTile de surface.js la tire si plan.lieux) dans plan_plateau_vente.bornage et BRF-PV-11, critère « tuiles hors zone inchangées : nombre d’éléments et identifiants de buildTile » ; risque de propagation par la carte d’occupation free de flora.js noté, couvert par le test d’égalité de BRF-PV-01.",
+    "Mineurs : seuil de dévers 0,10 partout (prototype, fiche, briefs, script) ; BRF-PV-07 dit que 9 pierres ou un intervalle est un changement du constructeur cercle_pierres (tirage actuel 7 à 9, rotation au hasard) ; hauteur d’œil de l’horizon précisée (6,6 m, moyeu ; moulin du Large −1,5° à 6,6 m, +0,3° au sol).",
+    "Reproductibilité : script de mesure du dépôt tests/zones/plateau-vente-mesures.mjs (pas un test, non inclus par vite.config.js) et données de référence production/fiches/ZONE-ILE-VERTE.plateau-vente.mesures.json ; les mesures exploratoires hors script sont décrites par procédure (fonctions et paramètres) dans plan_plateau_vente.mesures.reproduction.",
+    "Périmètre : B04 et F04 retirés (décision de l’utilisateur) ; la fiche le note (perimetre_de_la_tache, chemins.couverture, ambiance.plateau_vente.couverture)."
+  ],
+  "checklist": ["ZONE-ILE-VERTE.B09", "ZONE-ILE-VERTE.F01"],
+  "dependances_restantes": [
+    "B04 (hors de cette tâche) : chemins décrits en plan, à réaliser et vérifier par BRF-PV-04 et BRF-PV-12 (TASK-ILE-VERTE-008).",
+    "F04 (hors de cette tâche) : ambiance décrite, vérification par BRF-PV-13 (TASK-ILE-VERTE-009), qui refait aussi les trois captures absentes de la version 1.",
+    "B09 : les points d’intérêt du plateau ont position, altitude, orientation et fonction, mais restent des propositions (aucun lieu en jeu).",
+    "F01 : souvenir du plateau proposé (narration.plateau_vente), sans appui en jeu au-delà du nom et du sous-titre de la zone.",
+    "Nouveaux types de lieux (menhir, muret_effondre, arche_basse) et nouveaux modèles : BRF-PV-06, BRF-PV-08, BRF-PV-09 (TASK-ILE-VERTE-007).",
+    "Décision sur GEN_VERSION et les sauvegardes : BRF-PV-11 (Technical Artist et humain)."
+  ],
+  "prochaine_etape": "Nouvelle revue par archipel-critique (fiche version 3, briefs, mesures de référence et script tests/zones/plateau-vente-mesures.mjs), puis réalisation dans l’ordre des briefs."
+}

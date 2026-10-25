@@ -1,9 +1,9 @@
 {
   "zone_id": "ZONE-ILE-VERTE",
-  "version": 1,
+  "version": 3,
   "redige_par": "world-designer",
-  "tache": "TASK-ILE-VERTE-001",
-  "date": "2026-10-24",
+  "tache": "TASK-ILE-VERTE-006",
+  "date": "2026-10-25",
   "etape_du_monde": "bases (GEN_VERSION 4) : relief, côtes, eau douce, arbres et décor naturel ; ni lieux, ni chemins, ni villages, ni faune sur la Grande Île (buildPlanForme rend pois: [] et paths: [], mesuré : 0 lieu, 0 chemin).",
   "conventions": "Coordonnées monde en mètres, nord = −Z, départ en (0, 0). Hauteurs en mètres au-dessus de la mer (niveau 0). « atteste » : vérifié dans le code ou mesuré sur la vraie génération (scripts de mesure cités dans le rapport) ; « proposition » : à concevoir ou à confirmer.",
   "perimetre": {
@@ -44,22 +44,30 @@
     "statut": "proposition",
     "constat": "Aucun chemin en jeu sur la Grande Île (buildPlanForme : paths: [] ; mesuré : 0). Les seuls chemins existants sont ceux de Ton île (LAYOUT.paths de src/world/home/terrain.js : maison, ponton, jardin, boutique, rampe du plateau).",
     "principaux": [
-      { "nom": "Route de la plage du départ au Plateau venté", "trace": [[0, -150], [-100, -400], [242, -672], [600, -880]], "fonction": "Relie l'accès principal (plage face à Ton île) au cœur du plateau en passant par la côte aux villages ; franchit la rivière 0 (gué ou pont à placer).", "statut": "proposition", "a_verifier": "Montée sur le plateau : l'escarpement nord-ouest (48,8 m sur 24 m vers (448, −716)) n'est pas praticable ; une rampe reste à trouver par mesure de pente." },
+      { "nom": "Route de la plage du départ au Plateau venté", "trace": [[0, -150], [-100, -400], [242, -672], [300, -694], [322, -760], [318, -840], [322, -910], [350, -936], [432, -728], [620, -886]], "fonction": "Relie l’accès principal (plage face à Ton île) au cœur du plateau : côte aux villages, entrée sud-ouest du plateau E0 (300, −694), terrasse ouest au pied de la table, montée en corniche le long de la face ouest jusqu’au sommet de l’escarpement A (432, −728), puis allée des menhirs jusqu’au cercle de pierres.", "statut": "proposition", "a_verifier": "Tronçon côte (de la plage à E0) : hors de la zone plateau-vente, il relève d’une tâche de la Côte aux villages (non tracé ici). Tronçon plateau : voir plan_plateau_vente.montee (pentes mesurées sur le relief actuel et visées après retouche)." },
       { "nom": "Route de la côte à la Forêt des souvenirs", "trace": [[-100, -400], [-278, -689], [-680, -1080], [-900, -1240]], "fonction": "Relie la côte au cœur de la forêt (colline (−680, −1080)) en longeant la rivière 4.", "statut": "proposition" },
-      { "nom": "Traverse du plateau à la forêt", "trace": [[600, -880], [-29, -1030], [-680, -1080]], "fonction": "Boucle entre les deux régions hautes, passage de frontière mesuré en (−29, −1030), hauteur de base 26,4 m.", "statut": "proposition" }
+      { "nom": "Traverse du plateau à la forêt", "trace": [[600, -880], [-29, -1030], [-680, -1080]], "fonction": "Boucle entre les deux régions hautes, passage de frontière mesuré en (−29, −1030), hauteur de base 26,4 m.", "statut": "proposition" },
+      { "nom": "Montée de la corniche du Vent (plateau)", "trace": [[350, -936], [367, -908], [346, -880], [347, -848], [373, -820], [389, -788], [407, -756], [432, -728]], "fonction": "Seule montée à pied confortable vers le dessus de la table : sentier en corniche de 267 m taillé dans la face ouest, de 21 m au pied P0 à 66 m à l’arrivée A, pente visée 0,17. Aujourd’hui le dessus n’est atteint qu’avec des pas de pente 1,0 à 1,4 (mesuré).", "statut": "proposition" },
+      { "nom": "Allée des menhirs (plateau)", "trace": [[432, -728], [465.7, -756.3], [479, -768], [526, -807], [573, -847], [620, -886]], "fonction": "De l’arrivée de la montée au cercle de pierres : descente du rebord, passage sous l’arche basse, puis trois menhirs (246 m).", "statut": "proposition" }
     ],
     "secondaires": [
       { "nom": "Sentier côtier sud", "trace": [[-808, -480], [-484, -204], [0, -150], [884, -516]], "fonction": "Longe la plage de la côte aux villages et dessert les départs en bateau vers la Grotte lumineuse et l'Île des cristaux.", "statut": "proposition" },
       { "nom": "Sentier de la rivière 0", "trace": [[376, -344], [-268, -1460]], "fonction": "Remonte la plus longue rivière de la zone jusqu'au pied du massif.", "statut": "proposition" },
       { "nom": "Montée vers le Sommet givré", "trace": [[-680, -1080], [-410, -1472]], "fonction": "Sort de la forêt vers le massif (frontière mesurée vers (−410, −1472), hauteur de base 99,9 m).", "statut": "proposition" },
-      { "nom": "Passage vers le Lac céleste", "trace": [[600, -880], [659, -1059]], "fonction": "Sort du plateau vers le lac (frontière mesurée en (659, −1059), hauteur de base 24,2 m).", "statut": "proposition" }
-    ]
+      { "nom": "Passage vers le Lac céleste", "trace": [[600, -880], [659, -1059]], "fonction": "Sort du plateau vers le lac (frontière mesurée en (659, −1059), hauteur de base 24,2 m).", "statut": "proposition" },
+      { "nom": "Terrasse ouest (bas du lacet, plateau)", "trace": [[300, -694], [322, -760], [318, -840], [322, -910], [350, -936]], "fonction": "Chemin de terrasse au pied de la face ouest (22 à 26 m) entre l’entrée sud-ouest et le pied de la corniche : la terrasse et la corniche forment un grand lacet.", "statut": "proposition" },
+      { "nom": "Chemin de crête des moulins (plateau)", "trace": [[432, -728], [418, -786], [376, -868]], "fonction": "Le long du rebord ouest, de l’arrivée aux moulins de la Corniche et du Bord, en surplomb de la montée.", "statut": "proposition" },
+      { "nom": "Traversée du plateau (plateau)", "trace": [[620, -886], [716, -980], [864, -872], [620, -886]], "fonction": "Boucle du cercle au point haut (71,2 m) puis au moulin du Large, sur le rebord est face à la mer.", "statut": "proposition" }
+    ],
+    "couverture": "B04 hors du périmètre de TASK-ILE-VERTE-006 : chemins décrits ici, à réaliser et vérifier par BRF-PV-04 et BRF-PV-12 (TASK-ILE-VERTE-008)."
   },
   "acces": [
     { "id": "ACC-01", "nom": "Point de départ de Ton île", "type": "apparition", "position": { "x": 0, "z": 4 }, "fonction": "Le joueur commence la partie ici (observé en jeu en (0, 4,5)).", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.spawn" },
     { "id": "ACC-02", "nom": "Ponton de Ton île et amarrage du bateau", "type": "ponton", "position": { "x": 10.5, "z": 32 }, "fonction": "Ponton de z 20,5 à 32 (largeur 2,4 m, tablier à 0,86 m) ; le bateau est amarré par défaut en (12,9, 30,4). Arrivée et départ en bateau.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.pier ; src/entities/Sailing.js#mooring" },
     { "id": "ACC-03", "nom": "Plage nord de la Côte aux villages, face au départ", "type": "plage", "position": { "x": 0, "z": -148 }, "fonction": "Première terre de la Grande Île au nord de Ton île : terre la plus proche en (−20, −140), à 141 m du centre de Ton île, soit environ 107 m de mer depuis le bord de son disque (r 34 m), fond à −3,7 m en (0, −100). Accostage en bateau ou à la nage ; prairie à 1,5 m dès (0, −160).", "statut": "atteste", "source": "src/world/islands/gen/forme.js#formeHeightL ; src/world/archipel.js#ILES_PX" },
-    { "id": "ACC-04", "nom": "Arrivée par les airs (aigle)", "type": "vol", "fonction": "L'aigle s'appelle partout (touche G) et se pose sur toute terre : la zone entière est accessible en vol. Praticabilité en vol dans cette zone non vérifiée en jeu dans cette tâche.", "statut": "atteste", "source": "src/entities/AirRide.js#summon ; src/app/Game.js#KeyG" }
+    { "id": "ACC-04", "nom": "Arrivée par les airs (aigle)", "type": "vol", "fonction": "L'aigle s'appelle partout (touche G) et se pose sur toute terre : la zone entière est accessible en vol. Praticabilité en vol dans cette zone non vérifiée en jeu dans cette tâche.", "statut": "atteste", "source": "src/entities/AirRide.js#summon ; src/app/Game.js#KeyG" },
+    { "id": "ACC-05", "nom": "Entrée sud-ouest du Plateau venté (E0)", "type": "passage", "position": { "x": 300, "z": -694 }, "fonction": "Nœud du réseau de chemins du plateau à la limite de la Côte aux villages (dernière case d’une autre zone à 56 m) : la route de la côte s’y raccordera. Prairie à 22,8 m.", "statut": "proposition" },
+    { "id": "ACC-06", "nom": "Plages du Plateau venté", "type": "plage", "position": { "x": 660, "z": -544 }, "fonction": "561 cases de plage (0,3 à 1,2 m) dans la zone plateau-vente : côte sud (x 600 à 900, z −548 à −496) et côte est (x 900 à 1 300). La plus proche du coin sud-ouest : (660, −544), à 273 m de (448, −716). Accostage en bateau non vérifié ; ces plages sont au pied de la face sud, sans montée.", "statut": "atteste", "source": "src/world/islands/gen/plan.js#buildPlan (cases PLAGE du plan, mesure m4)" }
   ],
   "sorties": [
     { "id": "SOR-01", "nom": "Côte ouest de la forêt vers les Ruines gelées", "type": "mer", "position": { "x": -1044, "z": -1900 }, "fonction": "141 m de mer jusqu'à (−1092, −2032) (zone ruines-gelees).", "statut": "atteste", "source": "src/world/archipel.js#ILES_PX" },
@@ -87,7 +95,10 @@
     { "id": "REP-02", "nom": "Épaulement de la chaîne sud-ouest", "type": "crête", "position": { "x": -424, "z": -1572 }, "fonction": "Point haut de la Forêt des souvenirs, 166,7 m : la forêt monte vers lui.", "statut": "atteste", "source": "src/world/archipel.js#ILES_PX" },
     { "id": "REP-03", "nom": "Escarpement du Plateau venté", "type": "falaise intérieure", "position": { "x": 448, "z": -716 }, "fonction": "Rebord de la table : 48,8 m de dénivelé sur 24 m (dessus à 65,3 m) ; silhouette horizontale lisible depuis la côte. Point haut du plateau 71,2 m en (716, −980).", "statut": "atteste", "source": "src/world/islands/gen/forme.js#reliefs" },
     { "id": "REP-04", "nom": "Colline de la forêt", "type": "colline boisée", "position": { "x": -624, "z": -1132 }, "fonction": "Sommet 80,9 m au cœur de la forêt (colline posée en (−680, −1080)).", "statut": "atteste", "source": "src/world/archipel.js#ILES_PX" },
-    { "id": "REP-05", "nom": "Phare ou grand arbre-mémoire sur la côte", "type": "construction", "fonction": "Repère vertical à proposer près de la plage d'arrivée pour guider depuis Ton île.", "statut": "proposition" }
+    { "id": "REP-05", "nom": "Phare ou grand arbre-mémoire sur la côte", "type": "construction", "fonction": "Repère vertical à proposer près de la plage d'arrivée pour guider depuis Ton île.", "statut": "proposition" },
+    { "id": "REP-06", "nom": "Crête ouest du plateau", "type": "crête", "position": { "x": 418, "z": -786 }, "fonction": "Rebord ouest de la table, plus haut que le dessus (66,4 m contre 60 à 62 m) ; vu depuis la plage nord, le village prévu, la frontière de la côte et le ponton de Ton île (lignes de vue mesurées sur le relief, sans les arbres).", "statut": "atteste", "source": "src/world/islands/gen/forme.js#reliefs (plateau posé de la Grande Île, mesure m10)" },
+    { "id": "REP-07", "nom": "Les trois moulins du plateau", "type": "moulins", "position": { "x": 418, "z": -786 }, "fonction": "Moulin de la Corniche (418, −786), moulin du Bord (376, -868), moulin du Large (864, −872) : ailes de 10,4 m de haut sur les crêtes, visibles du ponton de Ton île (les trois) et de la plage nord (les trois).", "statut": "proposition" },
+    { "id": "REP-08", "nom": "Point haut du plateau", "type": "sommet", "position": { "x": 716, "z": -980 }, "fonction": "71,2 m, prairie ; nœud de la traversée du plateau, vue sur le Lac céleste au nord.", "statut": "atteste", "source": "src/world/islands/gen/plan.js#buildPlan (mesure m1)" }
   ],
   "points_interet": [
     { "id": "POI-01", "nom": "Maison", "type": "habitation", "position": { "x": 9, "z": -1.2 }, "fonction": "Maison du joueur sur Ton île.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.house ; src/world/home/props.js#spots.house" },
@@ -102,23 +113,28 @@
     { "id": "POI-10", "nom": "Cascades de la rivière 7", "type": "cascade", "position": { "x": -968, "z": -1243 }, "fonction": "Chute de 3,7 m dans la forêt ; une seconde en (−1284, −1612), 3,6 m. Éléments naturels générés, sans fonction de jeu.", "statut": "atteste", "source": "src/world/islands/gen/hydro.js#findWaterfalls" },
     { "id": "POI-11", "nom": "Embouchure de la rivière 0", "type": "embouchure", "position": { "x": 376, "z": -344 }, "fonction": "Fin de la plus longue rivière de la zone (1 619 m) sur la côte aux villages. Élément naturel généré, sans fonction de jeu.", "statut": "atteste", "source": "src/world/islands/gen/hydro.js#traceRivers" },
     { "id": "POI-12", "nom": "Village de pêcheurs de la côte", "type": "village", "position": { "x": -100, "z": -400 }, "fonction": "Premier village rencontré en venant de Ton île (nom de la zone : « La Côte aux villages »).", "statut": "proposition" },
-    { "id": "POI-13", "nom": "Moulins du Plateau venté", "type": "moulins", "position": { "x": 640, "z": -848 }, "fonction": "Moulins sur la table du plateau, visibles depuis la côte (prévus dans LIVRAISONS.md, « À faire ensuite »).", "statut": "proposition" },
+    { "id": "POI-13", "nom": "Moulin de la Corniche", "type": "moulin_vent", "position": { "x": 418, "z": -786 }, "fonction": "Premier moulin, sur la crête ouest au-dessus de la montée : repère de la montée vu de toute la côte ; interaction proposée (regarder le plateau depuis le moulin). Altitude visée 66,4 m, ailes face au vent (rot 3,680).", "statut": "proposition" },
     { "id": "POI-14", "nom": "Arbre-mémoire de la forêt", "type": "arbre remarquable", "position": { "x": -624, "z": -1132 }, "fonction": "Grand arbre au sommet de la colline de la forêt (sous-titre de la zone : « Arbres-mémoire »).", "statut": "proposition" },
-    { "id": "POI-15", "nom": "Débarcadère de la plage nord", "type": "ponton", "position": { "x": 0, "z": -150 }, "fonction": "Ponton d'arrivée en face de Ton île.", "statut": "proposition" }
+    { "id": "POI-15", "nom": "Débarcadère de la plage nord", "type": "ponton", "position": { "x": 0, "z": -150 }, "fonction": "Ponton d'arrivée en face de Ton île.", "statut": "proposition" },
+    { "id": "POI-16", "nom": "Moulin du Bord", "type": "moulin_vent", "position": { "x": 376, "z": -868 }, "fonction": "Deuxième moulin, au bord de la face ouest (61.8 m), au-dessus du milieu de la corniche, à 30.5 m de son axe : le grimpeur le voit tourner pendant la montée.", "statut": "proposition" },
+    { "id": "POI-17", "nom": "Moulin du Large", "type": "moulin_vent", "position": { "x": 864, "z": -872 }, "fonction": "Troisième moulin, sur le rebord est face à la mer (68,9 m) : but de la traversée du plateau, visible du ponton de Ton île.", "statut": "proposition" },
+    { "id": "POI-18", "nom": "Arche basse, porte du plateau", "type": "arche_basse", "position": { "x": 465.7, "z": -756.3 }, "fonction": "Deux pierres dressées et un linteau sur l’allée, à 44 m de l’arrivée A, au pied de la petite descente du rebord (59.7 m) : on passe dessous pour entrer sur la table, dans l’axe des menhirs.", "statut": "proposition" },
+    { "id": "POI-19", "nom": "Menhir du Guet", "type": "menhir", "position": { "x": 479, "z": -768 }, "fonction": "Premier des trois menhirs de l’allée (59,9 m).", "statut": "proposition" },
+    { "id": "POI-20", "nom": "Menhir du Milieu", "type": "menhir", "position": { "x": 526, "z": -807 }, "fonction": "Deuxième menhir de l’allée (59,9 m).", "statut": "proposition" },
+    { "id": "POI-21", "nom": "Menhir de la Butte", "type": "menhir", "position": { "x": 573, "z": -847 }, "fonction": "Troisième menhir, sur une petite butte (65,9 m) d’où l’on voit le cercle.", "statut": "proposition" },
+    { "id": "POI-22", "nom": "Cercle de pierres du plateau", "type": "cercle_pierres", "position": { "x": 620, "z": -886 }, "fonction": "Cœur ancien de la table (60,8 m), sur un replat naturel ; fin de l’allée des menhirs, carrefour vers le point haut et le moulin du Large.", "statut": "proposition" },
+    { "id": "POI-23", "nom": "Muret effondré coupe-vent", "type": "muret_effondre", "position": { "x": 608, "z": -893 }, "fonction": "Vieux mur de pierres sèches à 14 m du cercle, du côté d’où vient le vent (ouest-nord-ouest), en partie écroulé : abri des bergers.", "statut": "proposition" }
   ],
   "zones_cachees": {
     "statut": "proposition",
     "attestees": [],
     "constat": "Aucune grotte ni zone cachée en jeu (les grottes sont « à faire ensuite », LIVRAISONS.md).",
-    "propositions": [
-      "Clairière cachée derrière les cascades de la rivière 7 (−968, −1243).",
-      "Abri sous l'escarpement du plateau (448, −716)."
-    ]
+    "propositions": ["Clairière cachée derrière les cascades de la rivière 7 (−968, −1243).", "Abri sous l'escarpement du plateau (448, −716)."]
   },
   "verticalite": {
     "statut": "atteste",
     "source": "src/world/islands/gen/plan.js (buildPlan) ; src/world/home/terrain.js (LAYOUT.upperH)",
-    "detail": "De 0 à 166,7 m dans la zone (forêt), 268,2 m au Sommet givré voisin. Ton île : 0 à 3,5 m. Plateau : dessus vers 60 à 71 m (sol mesuré en jeu 60,8 m en (600, −880)). Escarpement de 48,8 m sur 24 m. La côte aux villages reste basse (moyenne 13,2 m)."
+    "detail": "De 0 à 166,7 m dans la zone (forêt), 268,2 m au Sommet givré voisin. Ton île : 0 à 3,5 m. Plateau : dessus vers 60 à 71 m (sol mesuré en jeu 60,8 m en (600, −880)). Escarpement de 48,8 m sur 24 m. La côte aux villages reste basse (moyenne 13,2 m). Plateau (mesure m6, m9 de TASK-ILE-VERTE-006) : terrasse ouest à 22–26 m et plaine sud à 13–19 m au pied d’une table à 60–62 m dont le rebord ouest monte à 66–69 m ; montée proposée de 21 m (pied P0) à 66,3 m (arrivée A) sur 267 m."
   },
   "obstacles": {
     "statut": "atteste",
@@ -127,7 +143,8 @@
       "Détroit d'environ 107 m entre Ton île (bord du disque r 34 m) et la Grande Île (141 m de centre à côte) (fond −3,7 m en (0, −100)) : bateau, nage ou vol.",
       "Escarpement du plateau (48,8 m sur 24 m) ; 2 795 cases de roche sur le plateau.",
       "Pentes rocheuses de la forêt vers le massif : 9 328 cases de roche ; falaises côtières à l'ouest (jusqu'à 37,6 m).",
-      "Rivières 0, 4 et 7 à traverser (aucun pont ni gué en jeu)."
+      "Rivières 0, 4 et 7 à traverser (aucun pont ni gué en jeu).",
+      "Accès au dessus de la table aujourd’hui (grille de 2 m, règle de pente du test ile-verte, sans arbres) : plus court chemin du pied (430, −701) au dessus (470, −729) de 288 m avec un pas à 1,40 (54,5°) ; aucun chemin dont tous les pas restent sous 0,8 dans la fenêtre x −500 à 1 300, z −1 500 à −300 ; sous 1,0, un détour de 1 396 m par l’est."
     ]
   },
   "espaces_vides": [
@@ -135,12 +152,14 @@
     { "description": "Plateau venté (0,604 km²) : table de prairie vide, sans moulin ni lieu ; 69 % de prairie nue.", "statut": "atteste", "source": "src/world/islands/gen/plan.js#buildPlanForme" },
     { "description": "Forêt des souvenirs (1,158 km²) : forêt dense sans clairière aménagée, sans lieu ni sentier.", "statut": "atteste", "source": "src/world/islands/gen/plan.js#buildPlanForme" },
     { "description": "Aucune faune, aucune ressource récoltable hors arbres, aucun élément de la mer dans le détroit (ARCHIPEL.marine vide).", "statut": "atteste", "source": "src/world/archipel.js#ARCHIPEL.marine" },
-    { "description": "Ton île : entièrement conçue (lieux modelés à la main) ; pas d'espace vide recensé.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT" }
+    { "description": "Ton île : entièrement conçue (lieux modelés à la main) ; pas d'espace vide recensé.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT" },
+    { "description": "Plateau venté après aménagement (proposition) : la moitié est de la table, entre le cercle (620, −886) et le moulin du Large (864, −872), reste une prairie ventée sans lieu (≈ 240 m) ; la terrasse ouest au pied de la face reste un couloir nu entre la côte et la corniche.", "statut": "proposition" }
   ],
   "narration": {
     "fonction": "Le souvenir du foyer et du premier départ : Ton île est la maison qu'on quitte, la Grande Île la terre qu'on voit depuis le ponton depuis toujours. La côte garde le souvenir des gens (villages), la forêt celui des personnes disparues (arbres-mémoire), le plateau celui du vent et des promesses du large. C'est l'île où l'on apprend à partir.",
     "statut": "proposition",
-    "appui_dans_le_jeu": "Seuls les noms et sous-titres des zones existent (archipel.js : « Plaine côtière », « Arbres-mémoire », « Prairies et vent du large ») ; aucun texte, quête ni objet narratif en jeu."
+    "appui_dans_le_jeu": "Seuls les noms et sous-titres des zones existent (archipel.js : « Plaine côtière », « Arbres-mémoire », « Prairies et vent du large ») ; aucun texte, quête ni objet narratif en jeu.",
+    "plateau_vente": { "fonction": "Le souvenir du vent et du travail partagé : les moulins moulaient le grain des villages de la côte, les pierres levées sont plus anciennes que les moulins et que les villages. On y monte comme on gravit un souvenir lointain : la corniche longe la falaise, l’arche basse ouvre la table, les menhirs mènent au cercle où les anciens guettaient les voiles au large ; le muret coupe-vent rappelle les bergers. De là-haut on voit tout ce qu’on a quitté : Ton île, la côte, la mer.", "statut": "proposition", "appui_dans_le_jeu": "Seuls le nom « Le Plateau venté » et le sous-titre « Prairies et vent du large » existent (src/world/archipel.js#ZONES_PX) ; aucun texte, quête ni objet narratif." }
   },
   "ambiance": {
     "visuelle": "Aquarelle lumineuse : eau turquoise et plage claire autour de Ton île, prairies vert vif, arbres pompons verts, érables orangés et cerisiers roses dans la forêt, lavande et arbustes sur le plateau. Le massif du Sommet givré ferme l'horizon au nord, enneigé, voilé par la brume de distance. Grands espaces ouverts et calmes sur le plateau ; lisière de forêt colorée.",
@@ -155,11 +174,314 @@
         "captures/ile-verte-foret-des-souvenirs.png"
       ],
       "constat": "Lumière de fin de matinée claire, eau turquoise, prés verts saturés ; la Grande Île se lit depuis Ton île (côte verte, massif enneigé au fond, en partie confondu avec les nuages). Sur le plateau : prairie vide, quelques arbustes et rochers. Dans la forêt : lisière aux couleurs d'automne (érables orange, cerisiers roses).",
-      "limites": "Une seule heure vérifiée (11 h) ; nuit, aube et crépuscule non capturés. Lisibilité du massif contre les nuages : critère observable, sans seuil documenté."
+      "limites": "Une seule heure vérifiée (11 h) ; nuit, aube et crépuscule non capturés. Lisibilité du massif contre les nuages : critère observable, sans seuil documenté.",
+      "constat_captures": "Constat du 2026-10-25 : les trois captures citées (captures/ile-verte-depart-vers-grande-ile.png, captures/ile-verte-plateau-vente-vers-foret.png, captures/ile-verte-foret-des-souvenirs.png) sont absentes du dossier captures/ (aucun fichier « ile-verte* ») : la vérification de la version 1 n’est plus reproductible par ses images ; à refaire dans BRF-PV-13."
     },
     "propositions": [
       "Vent visible sur le Plateau venté (herbes couchées, nuages plus rapides) : à concevoir, rien de propre à la zone en jeu.",
       "Lumière filtrée sous le couvert de la forêt : à concevoir."
-    ]
+    ],
+    "plateau_vente": {
+      "visuelle": "Table de prairie ouverte et ventée au-dessus d’une falaise : herbe en touffes allongées dans le sens du vent, bandes de fleurs orientées par le vent, ailes des moulins qui tournent, pierres grises moussues contre le ciel ; vers le sud et l’ouest, la côte, Ton île et la mer ; au nord, le Lac céleste et le massif enneigé.",
+      "eclairage": "Cycle jour et nuit global (src/world/env/daycycle.js), rien de propre à la zone. Proposé : vérifier les silhouettes des moulins et des menhirs à contre-jour en heure dorée (le soleil couchant éclaire la face ouest, celle de la montée).",
+      "statut": "proposition",
+      "attestes_dans_le_code": [
+        "Touffes d’herbe allongées dans l’axe du vent de l’île (src/world/islands/gen/herbe.js : traits.windAngle, along = x·cos + z·sin).",
+        "Bandes de fleurs orientées par le vent (src/world/islands/gen/zones.js#bloomBand).",
+        "Ailes des moulins animées, vitesse 0,8 × (0,4 + 0,7 × force du vent) rad/s (src/world/islands/IslandManager.js, boucle des anims ; anim « wind » de src/models/batiments/moulin/index.js).",
+        "Vent du jeu en cours de partie : angle 0,6 + 1,3 sin(t/240) + 0,35 sin(t/67 + 1,3) rad, direction vers laquelle il souffle (src/entities/Sailing.js#updateWind, pointOfSail)."
+      ],
+      "verification": { "statut": "non_execute", "constat": "Aucun lieu ni chemin n’existe encore sur le plateau : rien de cette ambiance propre aux éléments proposés n’est vérifiable à cette étape. Seule l’ambiance générale du plateau vide a été capturée par TASK-ILE-VERTE-001 (captures/ile-verte-plateau-vente-vers-foret.png, 11 h), mais ce fichier est absent du dossier captures/.", "prevue": "Après réalisation (brief BRF-PV-13) : captures à 11 h et 19 h depuis le ponton de Ton île, la plage nord, le pied P0 et l’arrivée A ; critères observables listés dans le brief, seuils de lisibilité à formaliser." },
+      "couverture": "F04 hors du périmètre de TASK-ILE-VERTE-006 : vérification par BRF-PV-13 (TASK-ILE-VERTE-009)."
+    }
+  },
+  "historique": [
+    { "version": 1, "tache": "TASK-ILE-VERTE-001", "date": "2026-10-24", "objet": "Fiche de zone : périmètre, relief, biomes, accès, sorties, connexions, repères, points d’intérêt, ambiance vérifiée à 11 h." },
+    { "version": 2, "tache": "TASK-ILE-VERTE-006", "date": "2026-10-25", "objet": "Plan du Plateau venté (OBJ-0002) : moulins, pierres levées, montée en corniche, chemins, bornage des lieux à la zone plateau-vente ; tout le nouveau contenu est en « proposition » (aucun fichier du jeu modifié)." },
+    { "version": 3, "tache": "TASK-ILE-VERTE-006", "date": "2026-10-25", "objet": "Corrections de la revue d’Archipel-Critique (tentative 1) : moulin du Bord déplacé, arche basse éloignée du palier, route complète de la corniche et mesures de référence dans le dépôt, bornage de la petite végétation, seuils alignés ; B04 et F04 retirés du périmètre de la tâche." }
+  ],
+  "plan_plateau_vente": {
+    "statut": "proposition",
+    "objectif": "OBJ-0002 : faire du Plateau venté (zone du jeu plateau-vente, Grande Île) la première zone habitée du monde ouvert.",
+    "conventions": "x, z : monde (m, nord = −Z) ; local : repère de la Grande Île (x + 4, z + 1 164), celui de desc.lieux et des positions du plan ; px : pixels de la carte de référence d’archipel.js (x/4 + 770, z/4 + 690). Altitudes mesurées sur le relief au mètre actuel (Surface du plan réel). Angles : atan2(z, x) en radians, comme le code (0 = +X est, π/2 = +Z sud) ; cap boussole en degrés depuis le nord (−Z).",
+    "mesures": {
+      "source": "buildPlan(ILE_BY_ID.get('grande-ile')) de src/world/islands/gen/plan.js et Surface de src/world/islands/gen/surface.js, graine 1611319869, centre (−4, −1 164), grille de 4 m (897 × 897 cases, ext 1 792 m), plan calculé en 1,26 s dans Node 22.16.",
+      "faits": { "terre": "0,604 km² (37 775 cases), hauteur moyenne 29,2 m, point haut 71,2 m en (716, −980) ; emprise de terre x −84 à 1 288, z −1 260 à −496 (m1).", "escarpement": "En (448, −716) : de 17,4 m en (435, −696) à 65,0 m en (448, −716), soit 47,6 m sur 24 m dans le sens de la pente (cap de montée −57,9°) ; pas maximal 3,33 par mètre (m2). La face sud entre x 420 et 530 passe de 20 à 60 m en 17 à 30 m (m5) ; la face ouest de 22–25 m à 58–68 m en 20 à 30 m (m6b).", "zone": "Tout le coin sud-ouest de la table, la terrasse ouest et le pied de la face sont dans la zone plateau-vente (ZI du plan et zoneAt) ; la case d’une autre zone la plus proche de (448, −716) est (368, −636), Côte aux villages, à 113 m (m4).", "rivieres": "Rivière 0 à 136 m du pied (430, −701), à 127 m de l’axe de la corniche ; rivière 1 (entièrement dans le plateau) à 337 m ; aucune autre à moins de 590 m (m4, m9).", "sections": "Les éléments tombent dans les sections du moteur grande-ile~4-4 (coin sud-ouest, corniche haute, allée, cercle, moulins 1 et 2), grande-ile~4-3 (pied P0, point haut) et grande-ile~5-4 (moulin du Large) (m7, m10)." },
+      "reproduction": {
+        "script_du_depot": "node tests/zones/plateau-vente-mesures.mjs (affiche) ; node tests/zones/plateau-vente-mesures.mjs --ecrire (réécrit production/fiches/ZONE-ILE-VERTE.plateau-vente.mesures.json, identique d’une exécution à l’autre : SHA-1 4315102059122c5b2212c12440fd6b930648c9e8 deux fois de suite le 2026-10-25). Script de mesure, pas un test (non inclus par vite.config.js, test.include = tests/**/*.test.js) ; il ne modifie aucun fichier du jeu.",
+        "donnees_de_reference": "production/fiches/ZONE-ILE-VERTE.plateau-vente.mesures.json : vent, faits du plateau, route complète de la corniche (53 points), mesures de chaque élément, prototype de la retouche.",
+        "couvre": "Vent (traits.windAngle), aire et point haut du plateau, tracé de la corniche, éléments (hauteur, zone du plan et zoneAt, section, replat, distance à la corniche et à A, horizon au vent, lignes de vue), prototype de retouche (pentes, dévers, parcours plafonné, profil frontal du test).",
+        "procedures_hors_script": [
+          "Escarpement (448, −716) : gradient moyen de Surface.height sur ±8 m (pas 4 m, différences centrées de ±2 m), profil de −40 à +40 m dans ce sens au pas de 4 m ; rebord : rayons tous les 5° depuis (640, −848), premier point à h ≥ 45 m en venant de 520 m, pente maximale au pas de 2 m sur ±16 m.",
+          "Accès actuel au dessus : grille de 2 m de Surface.height (fenêtres x 100..1 000, z −1 320..−560 puis x −500..1 300, z −1 500..−300), arête permise si climbable(dy, 2, Infinity, tuningFor('realiste')) et dy/2 ≤ min(tan 55°, plafond) dans les deux sens, Dijkstra de (430, −701) à (470, −729), plafonds ∞, 1,2, 1,0, 0,8, 0,7, 0,6, 0,38, 0,25 ; sans obstacles d’arbres.",
+          "Sites et replats : cases du plan dans la zone (P.ZI), h ≥ 50 m, pas 8 m ; replat naturel par la règle isFlat de pois.js sur r 5 (8 points du cercle).",
+          "Géométrie des faces : pour chaque x (pas 10 m), z où Surface.height franchit 20, 30, 40, 50, 60 m en allant vers le nord depuis z −650 ; cartes de hauteur au pas de 10 m.",
+          "Variantes écartées (lacets sur la face sud) : hauteur visée linéaire en longueur entre les points de passage, écart à Surface.height.",
+          "Chemins : tronçons en ligne droite entre nœuds, pas de 2 m, pente |Δh|/2, types de case P.Z (ROCHE, FORET) et P.ZI."
+        ],
+        "note": "Les scripts exploratoires m1 à m13 de la première passe étaient dans le dossier temporaire de la session : leurs résultats décisifs sont reproduits par le script du dépôt (route identique point pour point à celle de la première passe), les autres par les procédures ci-dessus."
+      }
+    },
+    "vent": {
+      "angle_genere": { "valeur_rad": 0.538, "valeur_deg": 30.8, "vecteur": [0.859, 0.512], "source": "src/world/islands/gen/plan.js (traits.windAngle = (desc.seed % 6283) / 1000 ; graine de la Grande Île 1611319869)", "statut": "atteste" },
+      "usages_attestes": [
+        "src/world/islands/gen/pois.js (moulin_vent) : rot = windAngle + π = 3,680 rad.",
+        "src/models/lieux.js (rotY, « moulin » dans DIRZ) : la face +Z du modèle pointe vers l’angle rot ; src/models/batiments/moulin/index.js : ailes sur la face +Z (pivot [0, 6,6, 2,0]). Les ailes regardent donc vers (−0,859, −0,512), l’ouest-nord-ouest, cap 300,8°.",
+        "src/world/islands/gen/herbe.js : touffes allongées le long de (cos, sin) windAngle (axe seulement, sans sens).",
+        "src/entities/Sailing.js : le vent du jeu souffle vers l’angle wind.angle (pointOfSail : θ ≈ 0 = vent arrière), moyenne 0,6 rad, oscillation ±1,65 rad."
+      ],
+      "lecture": "Vent dominant de la Grande Île : il vient de l’ouest-nord-ouest (cap 300,8°) et souffle vers l’est-sud-est (0,538 rad). Lecture cohérente avec le vent du jeu (moyenne 0,6 rad, 3,6° d’écart) et avec un moulin dont les ailes font face au vent. Le sens n’est écrit nulle part pour windAngle : interprétation tirée de la rotation du moulin.",
+      "exposition": "Horizon au vent : angle maximal du relief vu vers l’ouest-nord-ouest, pas de 2 m, mesuré à hauteur du moyeu des ailes (6,6 m au-dessus du sol, BAT-004) de 4 à 600 m : moulin de la Corniche -4.3°, moulin du Bord -2.9°, moulin du Large -1.5° (rien de plus haut que le moyeu au vent sur 600 m) ; de 600 à 2 500 m : 1.7°, 2°, 3° (forêt et massif). Au ras du sol (œil 0 m), le relief tout proche donne 4.3°, 5.4°, 0.3° : la première passe (œil 0 m, départ à 12 m, pas de 6 m) annonçait −3,6°, −2,3° et −0,6°, valeurs remplacées. Aucun seuil d’exposition documenté : critère à formaliser."
+    },
+    "pente_praticable": { "source": "src/entities/locomotion/motor.js#climbable et src/entities/locomotion/tuning.js (tuningFor('realiste'))", "valeurs": "climbable : montée permise si dy ≤ 0,08 m, ou dy/dist ≤ 1,45 (≈ 55,4°), ou marche dy ≤ stepUp = 0,4 m avec sol plat au-delà (|aheadDy| < 0,15) ; glissade au-delà de slideAngle 55° (tan 1,428), sortie sous slideExitAngle 48° (tan 1,11) ; vitesse en montée × clamp(1 − 0,9 sin α, 0,45, 1) (uphillLoss 0,9, uphillMin 0,45).", "autres_seuils_du_code": "paths.js pose un escalier au-delà de 0,38 de pente le long d’un chemin ; zones.js classe en roche au-delà de 0,68 ; le relief au mètre vient d’une interpolation bicubique de la grille de 4 m (surface.js) : une bande plate doit couvrir au moins deux cases.", "vise": "Proposition (sans seuil de confort documenté) : pente d’axe 0,17 (9,6°, vitesse × 0,85), aucun pas de 2 m au-dessus de 0,20, dévers (±3 m en travers, /6 m) ≤ 0,10, aucune pente du sol au-dessus de tan 48° (1,11) sur ±3 m de l’axe. Mêmes seuils dans le prototype, les briefs et le script de mesure." },
+    "montee": {
+      "nom": "Montée de la corniche du Vent",
+      "principe": "Un grand lacet : la terrasse ouest (naturelle, 22–26 m) mène de l’entrée sud-ouest E0 au pied P0 au nord-ouest, puis une corniche taillée le long de la face ouest remonte vers le sud jusqu’à l’arrivée A au sommet de l’escarpement, à 16 m de REP-03 (448, −716). La corniche suit la courbe de niveau de sa hauteur visée : remblai et déblai d’axe ≤ 3,7 m.",
+      "variantes_ecartees": [
+        "Lacet sur la face sud (m7, m7b, m8) : la face sud est trop mince (20 → 60 m en 17 à 30 m) pour superposer deux rampes sur la grille de 4 m ; il fallait un remblai de 24 à 26 m au palier ou une tranchée de 15 à 17 m.",
+        "Montée frontale à (448, −716) : 47,6 m sur 24 m, impossible sans escalier."
+      ],
+      "pied": { "nom": "P0", "x": 350, "z": -936, "h_actuel": 21.9, "h_visee": 20.9, "local": [354, 228], "px": [857.5, 456] },
+      "arrivee": { "nom": "A", "x": 432, "z": -728, "h_actuel": 66.3, "h_visee": 66.3, "local": [436, 436], "px": [878, 508], "note": "Sur le rebord de la table, à 16 m de REP-03 (448, −716) ; palier d’arrivée de 6 m de rayon à 66,3 m." },
+      "longueur_m": 267,
+      "denivele_m": 45.4,
+      "pente_visee": 0.17,
+      "points": [
+        { "n": 0, "x": 350, "z": -936, "local": [354, 228], "px": [857.5, 456], "h_actuel": 21.9, "h_visee": 20.9, "ecart_m": -1, "pente_actuelle": null, "pente_visee": null, "devers_actuel": 0.02 },
+        { "n": 1, "x": 374, "z": -924, "local": [378, 240], "px": [863.5, 459], "h_actuel": 24.2, "h_visee": 25.5, "ecart_m": 1.3, "pente_actuelle": 0.09, "pente_visee": 0.175, "devers_actuel": 0.01 },
+        { "n": 2, "x": 367, "z": -908, "local": [371, 256], "px": [861.75, 463], "h_actuel": 28.9, "h_visee": 28.5, "ecart_m": -0.4, "pente_actuelle": 0.27, "pente_visee": 0.17, "devers_actuel": 1.48 },
+        { "n": 3, "x": 357, "z": -892, "local": [361, 272], "px": [859.25, 467], "h_actuel": 30.9, "h_visee": 31.7, "ecart_m": 0.8, "pente_actuelle": 0.11, "pente_visee": 0.171, "devers_actuel": 1.84 },
+        { "n": 4, "x": 346, "z": -880, "local": [350, 284], "px": [856.5, 470], "h_actuel": 36.1, "h_visee": 34.5, "ecart_m": -1.6, "pente_actuelle": 0.32, "pente_visee": 0.17, "devers_actuel": 1.99 },
+        { "n": 5, "x": 342, "z": -864, "local": [346, 300], "px": [855.5, 474], "h_actuel": 38.9, "h_visee": 37.4, "ecart_m": -1.5, "pente_actuelle": 0.17, "pente_visee": 0.176, "devers_actuel": 1.69 },
+        { "n": 6, "x": 347, "z": -848, "local": [351, 316], "px": [856.75, 478], "h_actuel": 41.6, "h_visee": 40.3, "ecart_m": -1.3, "pente_actuelle": 0.16, "pente_visee": 0.17, "devers_actuel": 1.53 },
+        { "n": 7, "x": 361, "z": -832, "local": [365, 332], "px": [860.25, 482], "h_actuel": 44.1, "h_visee": 43.9, "ecart_m": -0.2, "pente_actuelle": 0.12, "pente_visee": 0.171, "devers_actuel": 1.59 },
+        { "n": 8, "x": 373, "z": -820, "local": [377, 344], "px": [863.25, 485], "h_actuel": 46.5, "h_visee": 46.8, "ecart_m": 0.3, "pente_actuelle": 0.14, "pente_visee": 0.17, "devers_actuel": 1.76 },
+        { "n": 9, "x": 385, "z": -804, "local": [389, 360], "px": [866.25, 489], "h_actuel": 48.9, "h_visee": 50.3, "ecart_m": 1.4, "pente_actuelle": 0.12, "pente_visee": 0.17, "devers_actuel": 1.54 },
+        { "n": 10, "x": 389, "z": -788, "local": [393, 376], "px": [867.25, 493], "h_actuel": 53.6, "h_visee": 53.1, "ecart_m": -0.5, "pente_actuelle": 0.29, "pente_visee": 0.174, "devers_actuel": 1.42 },
+        { "n": 11, "x": 394, "z": -772, "local": [398, 392], "px": [868.5, 497], "h_actuel": 59, "h_visee": 56, "ecart_m": -3, "pente_actuelle": 0.32, "pente_visee": 0.174, "devers_actuel": 1.8 },
+        { "n": 12, "x": 407, "z": -756, "local": [411, 408], "px": [871.75, 501], "h_actuel": 59.7, "h_visee": 59.6, "ecart_m": -0.1, "pente_actuelle": 0.03, "pente_visee": 0.17, "devers_actuel": 1.78 },
+        { "n": 13, "x": 416, "z": -740, "local": [420, 424], "px": [874, 505], "h_actuel": 65.3, "h_visee": 62.7, "ecart_m": -2.6, "pente_actuelle": 0.31, "pente_visee": 0.17, "devers_actuel": 1.31 },
+        { "n": 14, "x": 432, "z": -728, "local": [436, 436], "px": [878, 508], "h_actuel": 66.3, "h_visee": 66.3, "ecart_m": 0, "pente_actuelle": 0.05, "pente_visee": 0.18, "devers_actuel": 0.97 }
+      ],
+      "lecture_des_points": "pente_actuelle et pente_visee : du point précédent à ce point (≈ 16 m) ; devers_actuel : différence de hauteur sur ±4 m en travers / 8 m. Mesures m9 (relief au mètre actuel). Les points ci-dessus sont un extrait (un sur ≈ 16 m) ; toutes les distances et tous les critères portent sur route_complete (53 points, segments).",
+      "avant": "Le long de l’axe, le relief actuel a déjà une pente modérée (max 0,64 par pas de 4 m) parce que l’axe suit une courbe de niveau, mais le dévers vaut 0,97 à 1,99 : la face fait 44° à 63° en travers, au-delà de la glissade (55°) sur une bonne partie ; on n’y marche pas.",
+      "apres_prototype": { "methode": "Retouche appliquée à une copie en mémoire du plan réel (tests/zones/plateau-vente-mesures.mjs) : bande de roulement de ±6 m à la hauteur visée de route_complete, talus de 8 m fondu vers le relief naturel (au-delà, parois naturelles), relief fin (A) coupé ; mesures sur Surface reconstruite.", "resultats": "503 cases du plan retouchées (0 hors zone) ; 166 pas de 2 m sur l’axe, 166 praticables (règle du test) ; pente maximale 0.23, dévers maximal 0.12, pente du sol maximale 0.59 (30,6°) sur ±3 m ; 6 pas sur 166 dépassent 0,20 de pente ou 0,10 de dévers, aux deux virages (pied : 369 à 374 / −925 à −922 ; arrivée : 421 / −732) ; parcours à pied plafonné à 0,25 de P0 à A : atteint ; profil frontal du test ile-verte : 44.2 m, toujours bloqué.", "reste_a_faire": "Arrondir les deux virages (rayon ≥ 10 m) pour tenir 0,20 et 0,10 partout ; la bande de ±4 m avec talus de 4 m ne suffit pas sur la grille de 4 m (93 pas hors seuil, arrivée non atteinte sous 0,25) ; une largeur de talus proportionnelle à l’écart de hauteur remblaie tout le pied de l’escarpement (profil du test ramené à 18,1 m) : à proscrire." },
+      "garde_fous": [
+        "Toutes les cases retouchées par le prototype (à moins de 14 m de route_complete) sont dans la zone plateau-vente (503 cases, 0 hors zone) ; première passe : 662 cases à moins de 18 m des points de l’axe, aucune hors zone.",
+        "Le profil frontal de l’escarpement du test tests/zones/ile-verte.test.js reste infranchissable (prototype) : le test n’a pas à être assoupli si la réalisation suit ce tracé ; à relancer après réalisation."
+      ],
+      "route_complete": { "source": "tests/zones/plateau-vente-mesures.mjs (corniche.route) ; copie dans production/fiches/ZONE-ILE-VERTE.plateau-vente.mesures.json", "format": "[x, z, hauteur visée, hauteur actuelle] monde, du pied P0 à l’arrivée A, un point tous les 4 m en z", "longueur_m": 267.2, "points": [[349.83, -936, 20.9, 21.93], [356.13, -932, 22.17, 21.75], [359.4, -928, 23.04, 22.15], [373.55, -924, 25.54, 24.2], [372.4, -920, 26.25, 25.96], [370.65, -916, 26.99, 26.82], [368.55, -912, 27.76, 27.78], [366.7, -908, 28.51, 28.91], [364.75, -904, 29.27, 29.6], [362.55, -900, 30.04, 29.13], [359.85, -896, 30.86, 28.82], [356.65, -892, 31.74, 30.9], [352.9, -888, 32.67, 32.6], [349.05, -884, 33.61, 34.54], [345.6, -880, 34.51, 36.08], [343, -876, 35.32, 37.99], [341.45, -872, 36.05, 38.1], [341.35, -868, 36.73, 38.85], [341.75, -864, 37.41, 38.94], [342.6, -860, 38.11, 36.81], [343.8, -856, 38.82, 39.44], [345.1, -852, 39.53, 41.24], [346.6, -848, 40.26, 41.65], [348.95, -844, 41.05, 43.14], [352.25, -840, 41.93, 43.43], [356.45, -836, 42.92, 44.1], [360.95, -832, 43.94, 44.15], [365.3, -828, 44.94, 44], [369.25, -824, 45.9, 45.6], [372.7, -820, 46.8, 46.49], [375.75, -816, 47.65, 48.81], [379.05, -812, 48.53, 50.02], [382.3, -808, 49.41, 49.85], [385.3, -804, 50.26, 48.87], [387.6, -800, 51.04, 48.9], [388.95, -796, 51.76, 49.87], [389.35, -792, 52.45, 52.45], [389.15, -788, 53.13, 53.62], [389.1, -784, 53.81, 55.13], [389.6, -780, 54.49, 56.56], [390.95, -776, 55.21, 57.67], [393.55, -772, 56.02, 59.01], [396.9, -768, 56.91, 58.82], [400.45, -764, 57.82, 57.37], [404.05, -760, 58.73, 58.45], [407.4, -756, 59.62, 59.7], [409.9, -752, 60.42, 60.65], [411.75, -748, 61.17, 60.8], [413.65, -744, 61.92, 62.43], [415.8, -740, 62.69, 65.31], [419.7, -736, 63.64, 67.34], [421.19, -732, 64.37, 65.08], [432, -728, 66.33, 66.33]] },
+      "emprises": "Emprise de la retouche : 14 m de route_complete (bande 6 + talus 8). Palier d’arrivée : rayon 6 m + talus 8 m autour de A. Replat d’un moulin : r 4,5 + chute 6 = 10,5 m. Distances minimales : moulin–axe ≥ 24,5 m ; élément de rayon r–A ou –axe ≥ 14 + r."
+    },
+    "elements": [
+      {
+        "id": "PV-T1",
+        "nom": "Montée de la corniche du Vent",
+        "type": "montee",
+        "role": "terrain",
+        "position": { "x": 432, "z": -728 },
+        "local": [436, 436],
+        "px": [878, 508],
+        "altitude_visee": 66.3,
+        "orientation": "axe de P0 (350, −936) à A (432, −728), cap général vers le sud-sud-est",
+        "fonction": "Franchir l’escarpement à pied (voir montee).",
+        "realisation": { "terrain": "Retouche de relief : liste « terrassements » de la Grande Île dans src/world/archipel.js (polyligne et hauteurs visées) appliquée par une fonction pure de src/world/islands/gen/forme.js appelée dans plan.js juste après buildTerrain (après érosion et rivières).", "lieu": "Aucun lieu posé ; le chemin vient de buildPaths." },
+        "statut": "proposition"
+      },
+      { "id": "PV-T2", "nom": "Palier d’arrivée", "type": "replat", "role": "terrain", "position": { "x": 432, "z": -728 }, "local": [436, 436], "px": [878, 508], "altitude_visee": 66.3, "orientation": "sans objet", "fonction": "Fin de la montée, départ du chemin de crête et de l’allée.", "realisation": { "terrain": "Replat de 6 m de rayon à 66,3 m, dans la même liste de terrassements.", "lieu": "Aucun." }, "statut": "proposition" },
+      {
+        "id": "PV-M1",
+        "nom": "Moulin de la Corniche",
+        "type": "moulin_vent",
+        "role": "lieu",
+        "position": { "x": 418, "z": -786 },
+        "local": [422, 378],
+        "px": [874.5, 493.5],
+        "altitude_visee": 66.4,
+        "orientation": "rot 3,680 rad (windAngle + π) : ailes vers l’ouest-nord-ouest, cap 300,8°",
+        "fonction": "Repère de la montée, vu des quatre points de vue mesurés ; interaction proposée.",
+        "realisation": {
+          "terrain": "Replat automatique du lieu (stamp r 4,5 m, chute 6 m, à la hauteur du centre) ; dénivelé naturel 1,67 m sur r 4,5.",
+          "lieu": "desc.lieux.recette : moulin_vent près de local (422, 378), rayon 3 m (le rayon 12 m de la première passe permettait de descendre à 15,7 m de l’axe), avec la même règle d’exclusion de 24,5 m.",
+          "mesures": { "horizon_vent": { "oeil_0m_4_600": 4.3, "oeil_6_6m_4_600": -4.3, "oeil_6_6m_600_2500": 1.7 }, "vu_depuis": ["plage_nord", "village_prevu", "frontiere_cote", "ponton_ton_ile"], "distance_corniche_m": 27.7, "section": "grande-ile~4-4" }
+        },
+        "statut": "proposition"
+      },
+      {
+        "id": "PV-M2",
+        "nom": "Moulin du Bord",
+        "type": "moulin_vent",
+        "role": "lieu",
+        "position": { "x": 376, "z": -868 },
+        "local": [380, 296],
+        "px": [864, 473],
+        "altitude_visee": 61.8,
+        "orientation": "rot 3,680 rad",
+        "fonction": "Au bord de la face ouest, au-dessus du milieu de la corniche.",
+        "realisation": {
+          "terrain": "Replat automatique (stamp r 4,5, chute 6) ; dénivelé naturel 2,58 m sur r 4,5.",
+          "lieu": "recette : moulin_vent près de local (380, 296), rayon 3 m, et règle d’exclusion : aucune case à moins de 24,5 m de route_complete. Déplacé de 6 m vers l’est et 2 m vers le nord depuis (370, −870), qui n’était qu’à 24,4 m de l’axe publié et 24,8 m de la route complète.",
+          "mesures": { "horizon_vent": { "oeil_0m_4_600": 5.4, "oeil_6_6m_4_600": -2.9, "oeil_6_6m_600_2500": 2 }, "vu_depuis": ["plage_nord", "frontiere_cote", "ponton_ton_ile"], "distance_corniche_m": 30.5, "section": "grande-ile~4-4" }
+        },
+        "statut": "proposition"
+      },
+      {
+        "id": "PV-M3",
+        "nom": "Moulin du Large",
+        "type": "moulin_vent",
+        "role": "lieu",
+        "position": { "x": 864, "z": -872 },
+        "local": [868, 292],
+        "px": [986, 472],
+        "altitude_visee": 68.9,
+        "orientation": "rot 3,680 rad",
+        "fonction": "Sur le rebord est face à la mer ; but de la traversée.",
+        "realisation": {
+          "terrain": "Replat automatique (stamp r 4,5, chute 6) ; dénivelé naturel 1,2 m.",
+          "lieu": "recette : moulin_vent près de local (868, 292), rayon 12 m.",
+          "mesures": { "horizon_vent": { "oeil_0m_4_600": 0.3, "oeil_6_6m_4_600": -1.5, "oeil_6_6m_600_2500": 3 }, "vu_depuis": ["plage_nord", "ponton_ton_ile"], "section": "grande-ile~5-4" },
+          "variante": "Site sud (572, −756), 66,9 m, horizon −0,9°, vu de trois points dont le village prévu."
+        },
+        "statut": "proposition"
+      },
+      {
+        "id": "PV-A",
+        "nom": "Arche basse, porte du plateau",
+        "type": "arche_basse",
+        "role": "lieu",
+        "position": { "x": 465.7, "z": -756.3 },
+        "local": [469.7, 407.7],
+        "px": [886.42, 500.93],
+        "altitude_visee": 59.7,
+        "orientation": "ouverture traversée dans l’axe de l’allée, cap −0,698 rad (vers le cercle)",
+        "fonction": "Porte de la table : au pied de la petite descente du rebord, elle cadre la vue vers les menhirs.",
+        "realisation": { "terrain": "Aucune retouche : à 44 m de A et de la corniche (hors palier et talus, 14 + 3 m), dénivelé naturel 0,36 m sur r 3. La première position (441, −736) était à 12 m de A, dans le palier et son talus.", "lieu": "Nouveau type de lieu « arche_basse » ; recette près de local (469,7 ; 407,7), rayon 2 m." },
+        "statut": "proposition"
+      },
+      {
+        "id": "PV-P1",
+        "nom": "Menhir du Guet",
+        "type": "menhir",
+        "role": "lieu",
+        "position": { "x": 479, "z": -768 },
+        "local": [483, 396],
+        "px": [889.75, 498],
+        "altitude_visee": 59.9,
+        "orientation": "face large vers le vent (rot 3,680 rad)",
+        "fonction": "Jalon 1 de l’allée.",
+        "realisation": { "terrain": "Aucune (0,44 m sur r 1,5).", "lieu": "Nouveau type « menhir » ; recette près de local (483, 396), rayon 4 m.", "mesures": { "h": 59.9, "replat": { "r": 1.5, "denivele": 0.44, "relatif": 0.146 }, "section": "grande-ile~4-4" } },
+        "statut": "proposition"
+      },
+      {
+        "id": "PV-P2",
+        "nom": "Menhir du Milieu",
+        "type": "menhir",
+        "role": "lieu",
+        "position": { "x": 526, "z": -807 },
+        "local": [530, 357],
+        "px": [901.5, 488.25],
+        "altitude_visee": 59.9,
+        "orientation": "rot 3,680 rad",
+        "fonction": "Jalon 2 de l’allée.",
+        "realisation": { "terrain": "Aucune (0,34 m sur r 1,5).", "lieu": "recette près de local (530, 357), rayon 4 m.", "mesures": { "h": 59.9, "replat": { "r": 1.5, "denivele": 0.34, "relatif": 0.112 }, "section": "grande-ile~4-4" } },
+        "statut": "proposition"
+      },
+      {
+        "id": "PV-P3",
+        "nom": "Menhir de la Butte",
+        "type": "menhir",
+        "role": "lieu",
+        "position": { "x": 573, "z": -847 },
+        "local": [577, 317],
+        "px": [913.25, 478.25],
+        "altitude_visee": 65.9,
+        "orientation": "rot 3,680 rad",
+        "fonction": "Jalon 3, sur une butte d’où l’on voit le cercle.",
+        "realisation": { "terrain": "Aucune (0,22 m sur r 1,5).", "lieu": "recette près de local (577, 317), rayon 4 m.", "mesures": { "h": 65.9, "replat": { "r": 1.5, "denivele": 0.23, "relatif": 0.076 }, "section": "grande-ile~4-4" } },
+        "statut": "proposition"
+      },
+      {
+        "id": "PV-C",
+        "nom": "Cercle de pierres du plateau",
+        "type": "cercle_pierres",
+        "role": "lieu",
+        "position": { "x": 620, "z": -886 },
+        "local": [624, 278],
+        "px": [925, 468.5],
+        "altitude_visee": 60.8,
+        "orientation": "cercle régulier ; rot sans effet visible (proposer un intervalle entre deux pierres vers l’allée, cap 2,443 rad)",
+        "fonction": "Cœur ancien de la table, carrefour.",
+        "realisation": { "terrain": "Replat naturel (dénivelé 0,71 m sur r 5, règle isFlat de pois.js satisfaite) ; aucune retouche.", "lieu": "Type existant cercle_pierres (MON-004) ; le constructeur de pois.js tire aujourd’hui 7 à 9 pierres et une rotation au hasard : imposer 9 pierres ou un intervalle vers l’allée est un changement du constructeur (BRF-PV-07). Recette près de local (624, 278), rayon 10 m.", "mesures": { "h": 60.8, "replat": { "r": 5, "denivele": 0.71, "relatif": 0.071 }, "section": "grande-ile~4-4" } },
+        "statut": "proposition"
+      },
+      {
+        "id": "PV-W",
+        "nom": "Muret effondré coupe-vent",
+        "type": "muret_effondre",
+        "role": "lieu",
+        "position": { "x": 608, "z": -893 },
+        "local": [612, 271],
+        "px": [922, 466.75],
+        "altitude_visee": 61.2,
+        "orientation": "mur perpendiculaire au vent : axe le long de l’angle 2,109 rad, de (603, −885) à (613, −902), environ 20 m en trois tronçons",
+        "fonction": "Abri des bergers, côté vent du cercle.",
+        "realisation": { "terrain": "Aucune (0,79 m sur r 2).", "lieu": "Nouveau type « muret_effondre » ; recette près de local (612, 271), rayon 4 m.", "mesures": { "h": 61.1, "replat": { "r": 2, "denivele": 0.78, "relatif": 0.196 }, "section": "grande-ile~4-4" } },
+        "statut": "proposition"
+      },
+      { "id": "PV-E0", "nom": "Entrée sud-ouest", "type": "noeud", "role": "chemin", "position": { "x": 300, "z": -694 }, "local": [304, 470], "px": [845, 516.5], "altitude_visee": 22.8, "orientation": "sans objet", "fonction": "Racine du réseau de chemins du plateau, raccord futur de la route de la côte.", "realisation": { "terrain": "Aucune.", "lieu": "Nœud d’entrée (desc.lieux.entrees, proposition) à local (304, 470)." }, "statut": "proposition" }
+    ],
+    "chemins": {
+      "generation": "buildPaths de src/world/islands/gen/paths.js (A* sur la grille de 4 m, arbre couvrant depuis la racine et quelques boucles, ponts, escaliers au-delà de 0,38, panneaux aux carrefours).",
+      "racine": "Aujourd’hui la racine est une plage proche de lieux.accostage ; ici elle doit être l’entrée E0 (aucune plage du plateau n’est au pied de la montée : la plus proche est à 273 m sous la face sud). Proposition : desc.lieux.entrees, nœuds ajoutés au réseau, accostage facultatif.",
+      "liens_prevus": [
+        { "lien": "E0 → T1 (322, −760) → T2 (318, −840) → T3 (322, −910) → P0", "longueur_m": 258, "mesure_actuelle": "pentes max 0,34 / 0,51 / 0,18 / 0,13, terrasse de 19 à 26 m, sans roche" },
+        { "lien": "P0 → A (corniche)", "longueur_m": 267, "mesure_actuelle": "voir montee" },
+        { "lien": "A → arche → menhirs → cercle", "longueur_m": 246, "mesure_actuelle": "pentes max 0,26 / 0,40 / 0,23 / 0,72 / 0,52 (ligne droite ; la butte du menhir 3 et 27 % de forêt sur le tronçon menhir 2 → 3)" },
+        { "lien": "A → moulin 1 → moulin 2 (crête)", "longueur_m": 157, "mesure_actuelle": "pentes max 0,33 puis 1,17 en (412, −796) en ligne droite : le tracé A* doit contourner" },
+        { "lien": "cercle → point haut → moulin 3 → cercle", "longueur_m": 561, "mesure_actuelle": "pentes max 0,55 / 0,57 / 0,55 en ligne droite" }
+      ],
+      "note": "Mesures en ligne droite entre nœuds (m11) : le tracé réel sera celui de l’A*. Tous les échantillons sont dans la zone plateau-vente."
+    },
+    "bornage": {
+      "probleme": "desc.lieux s’applique à l’île entière (plan.js) : placePOIs cherche ses emplacements sur toute la grille, les cascades de toute l’île deviennent des lieux (deux sont dans la forêt), placeMicro et placeSpawners tirent sur toute la terre, buildPaths relie la plage d’accostage, et cropPlan (src/world/islands/gen/sections.js) vide pois, micro, paths, pathParts et spawners des sections de 512 m, seules chargées par le moteur pour la Grande Île. De plus, buildTile (src/world/islands/gen/surface.js) ne tire la petite végétation des tuiles (touffes, fleurs, roseaux : smallVegetation) que si plan.lieux est vrai, pour toute la tuile : recopier lieux dans les sections de la Grande Île la ferait apparaître sur toute l’île.",
+      "proposition": [
+        "desc.lieux.zone = 'plateau-vente' : placePOIs, placeMicro et placeSpawners n’acceptent que les cases dont P.ZI désigne cette zone ; les cascades hors zone sont ignorées ; generiques: false (pas de petits lieux tirés au hasard).",
+        "Entrées de recette avec indication de lieu : [type, 1, { pres: [x, z, rayon] (repère de l’île), nom }] ; le meilleur emplacement est cherché dans ce disque avec les règles du type.",
+        "buildPaths : coût infini hors de la zone, racine sur desc.lieux.entrees.",
+        "cropPlan : porter dans chaque section les lieux dont le point d’ancrage est dans son carré, recentrés, et les chemins découpés au carré.",
+        "Petite végétation : la borner à la zone plateau-vente (smallVegetation ne tire que sur les cases dont ZI est la zone de desc.lieux.zone), ou ne pas recopier lieux dans les sections hors du plateau ; dans les deux cas, les tuiles hors zone restent identiques."
+      ],
+      "garantie": [
+        "Retouche de la corniche et replats : appliqués après buildTerrain, ils ne modifient que les cases de leur emprise, toutes dans la zone (m9) ; érosion et rivières déjà calculées ne sont pas rejouées.",
+        "Végétation : la boucle principale de placeFloraForme (flora.js) tire six nombres par échantillon avant tout test : la suite aléatoire ne dépend ni du relief ni des lieux, les arbres hors zone gardent position et identifiant (stableId) tant que leur case ne change pas.",
+        "Contrôle à écrire (brief BRF-PV-01) : comparer le plan de la Grande Île avec et sans desc.lieux — H, A, Z, C et la liste items/ids identiques sur toutes les cases et tous les arbres hors de la zone plateau-vente ; tous les pois, micro, spawners et points de chemins dans la zone.",
+        "Tuiles : buildTile hors de la zone plateau-vente doit rendre le même nombre d’éléments et les mêmes identifiants (items, ids) qu’avant (contrôle de BRF-PV-11).",
+        "Risque résiduel de la végétation : la carte d’occupation free de placeFloraForme (flora.js) est partagée par tous les arbres, tirés dans l’ordre de la grille ; un arbre retiré sur le plateau (lieu, chemin) libère de la place qu’un arbre voisin tiré plus tard peut prendre, éventuellement juste de l’autre côté d’une limite de zone. Faible ici (les lieux et chemins sont à ≥ 56 m d’une autre zone, rayons d’encombrement de quelques mètres) et couvert par le test d’égalité hors zone de BRF-PV-01."
+      ],
+      "recette_proposee": {
+        "zone": "plateau-vente",
+        "generiques": false,
+        "moulin": "bleu",
+        "entrees": [[304, 470]],
+        "terrassements": "voir montee (dans la description de l’île, archipel.js)",
+        "recette": [
+          ["moulin_vent", 1, { "pres": [422, 378, 3], "nom": "Moulin de la Corniche" }],
+          ["moulin_vent", 1, { "pres": [380, 296, 3], "nom": "Moulin du Bord" }],
+          ["moulin_vent", 1, { "pres": [868, 292, 12], "nom": "Moulin du Large" }],
+          ["arche_basse", 1, { "pres": [469.7, 407.7, 2] }],
+          ["menhir", 1, { "pres": [483, 396, 4] }],
+          ["menhir", 1, { "pres": [530, 357, 4] }],
+          ["menhir", 1, { "pres": [577, 317, 4] }],
+          ["cercle_pierres", 1, { "pres": [624, 278, 10] }],
+          ["muret_effondre", 1, { "pres": [612, 271, 4] }]
+        ],
+        "statut": "proposition (format à créer : pres, nom, zone, entrees, arche_basse, menhir et muret_effondre n’existent pas dans pois.js)",
+        "exclusions": "Aucun lieu dans l’emprise des terrassements : cases à moins de 14 m + rayon du lieu de route_complete et du palier A refusées ; pour moulin_vent, 24,5 m (replat r 4,5 + chute 6 + emprise 14)."
+      }
+    },
+    "sauvegarde": "Les identifiants des lieux sont tirés de la graine, du type et de la position (stableId) : stables tant que la génération ne change pas. Changer GEN_VERSION (regions.js) abandonnerait les récoltes et terrassements sauvegardés de tout le monde, pas seulement du plateau : à décider par le Technical Artist et un humain (brief BRF-PV-11)."
+  },
+  "perimetre_de_la_tache": {
+    "TASK-ILE-VERTE-006": "Décision tracée de l’utilisateur : B04 (chemins) et F04 (ambiance) retirés de cette tâche. La fiche garde la description des chemins et de l’ambiance ; B04 sera couvert par BRF-PV-04 et BRF-PV-12 (TASK-ILE-VERTE-008), F04 par BRF-PV-13 (TASK-ILE-VERTE-009). Cette tâche couvre B09 et F01."
   }
 }
