@@ -1473,10 +1473,24 @@
    "tags": [
     "village",
     "animé",
-    "teinté"
+    "teinté",
+    "plateau"
    ],
    "usedIn": [],
-   "variants": []
+   "variants": [
+    {
+     "label": "Tour crème",
+     "params": {
+      "v": 0
+     }
+    },
+    {
+     "label": "Pierre du plateau",
+     "params": {
+      "v": 1
+     }
+    }
+   ]
   },
   "BAT-005": {
    "category": "batiments",
@@ -6053,6 +6067,38 @@
     "attr": "50ac27b9e76daa08",
     "mat": "7be4baa6347f77c2",
     "anim": "2ff880697bcff153"
+   },
+   {
+    "tris": 1320,
+    "verts": 3960,
+    "box": [
+     -3.8279,
+     0,
+     -2.3,
+     3.8279,
+     10.4279,
+     2.3
+    ],
+    "pos": "cebf5db53bf89e91",
+    "attr": "50ac27b9e76daa08",
+    "mat": "7be4baa6347f77c2",
+    "anim": "2ff880697bcff153"
+   },
+   {
+    "tris": 3388,
+    "verts": 10164,
+    "box": [
+     -3.8279,
+     -0.005,
+     -2.3,
+     3.8279,
+     10.2279,
+     2.37
+    ],
+    "pos": "4fbeb38846f6c19d",
+    "attr": "3fdf6bf7f6ac78f9",
+    "mat": "90e6d0fca690de70",
+    "anim": "e19d41080420cb99"
    }
   ],
   "BAT-005": [
@@ -9335,6 +9381,50 @@
        0,
        6.6,
        2
+      ],
+      "speed": 0.8,
+      "wind": true
+     }
+    ],
+    "rotY": 1.270796
+   },
+   {
+    "obstacles": [
+     [
+      0,
+      0,
+      2.2
+     ]
+    ],
+    "pivots": [
+     {
+      "axis": "z",
+      "pivot": [
+       0,
+       6.6,
+       2
+      ],
+      "speed": 0.8,
+      "wind": true
+     }
+    ],
+    "rotY": 1.270796
+   },
+   {
+    "obstacles": [
+     [
+      0,
+      0,
+      2.2
+     ]
+    ],
+    "pivots": [
+     {
+      "axis": "z",
+      "pivot": [
+       0,
+       6.4,
+       2.25
       ],
       "speed": 0.8,
       "wind": true
