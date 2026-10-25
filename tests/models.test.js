@@ -218,7 +218,7 @@ describe('usage des modèles', () => {
 
   it('couvre chaque élément de lieu que sait construire le jeu', async () => {
     const { TYPES_DE_LIEUX } = await import('../src/models/lieux.js');
-    expect(TYPES_DE_LIEUX).toHaveLength(56);
+    expect(TYPES_DE_LIEUX).toHaveLength(59);
     const known = refs();
     expect(TYPES_DE_LIEUX.map((t) => `part:${t}`).filter((r) => !known.has(r))).toEqual([]);
   });

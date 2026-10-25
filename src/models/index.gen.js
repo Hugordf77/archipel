@@ -47,9 +47,12 @@ import ouvrages_mobilier from './ouvrages/mobilier/index.js';
 import ouvrages_mobilier_depart from './ouvrages/mobilier-depart/index.js';
 import ouvrages_ponton from './ouvrages/ponton/index.js';
 import ouvrages_puits from './ouvrages/puits/index.js';
+import monuments_arche_basse from './monuments/arche-basse/index.js';
 import monuments_cercle_pierres from './monuments/cercle-pierres/index.js';
 import monuments_curiosites from './monuments/curiosites/index.js';
 import monuments_grotte from './monuments/grotte/index.js';
+import monuments_menhir from './monuments/menhir/index.js';
+import monuments_muret_effondre from './monuments/muret-effondre/index.js';
 import monuments_ruines from './monuments/ruines/index.js';
 import monuments_statue_geante from './monuments/statue-geante/index.js';
 import bateaux_barque from './bateaux/barque/index.js';
@@ -154,9 +157,12 @@ export const FICHES = [
   ...avec(ouvrages_mobilier_depart, 'src/models/ouvrages/mobilier-depart/index.js', 'src/models/ouvrages/mobilier-depart/physique.js'),
   ...avec(ouvrages_ponton, 'src/models/ouvrages/ponton/index.js', 'src/models/ouvrages/ponton/physique.js'),
   ...avec(ouvrages_puits, 'src/models/ouvrages/puits/index.js', 'src/models/ouvrages/puits/physique.js'),
+  ...avec(monuments_arche_basse, 'src/models/monuments/arche-basse/index.js', 'src/models/monuments/arche-basse/physique.js'),
   ...avec(monuments_cercle_pierres, 'src/models/monuments/cercle-pierres/index.js', 'src/models/monuments/cercle-pierres/physique.js'),
   ...avec(monuments_curiosites, 'src/models/monuments/curiosites/index.js', 'src/models/monuments/curiosites/physique.js'),
   ...avec(monuments_grotte, 'src/models/monuments/grotte/index.js', 'src/models/monuments/grotte/physique.js'),
+  ...avec(monuments_menhir, 'src/models/monuments/menhir/index.js', 'src/models/monuments/menhir/physique.js'),
+  ...avec(monuments_muret_effondre, 'src/models/monuments/muret-effondre/index.js', 'src/models/monuments/muret-effondre/physique.js'),
   ...avec(monuments_ruines, 'src/models/monuments/ruines/index.js', 'src/models/monuments/ruines/physique.js'),
   ...avec(monuments_statue_geante, 'src/models/monuments/statue-geante/index.js', 'src/models/monuments/statue-geante/physique.js'),
   ...avec(bateaux_barque, 'src/models/bateaux/barque/index.js'),

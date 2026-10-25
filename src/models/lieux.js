@@ -27,6 +27,9 @@ import { cascade } from './ouvrages/cascade/index.js';
 import { ruines } from './monuments/ruines/index.js';
 import { grotte } from './monuments/grotte/index.js';
 import { cerclePierres } from './monuments/cercle-pierres/index.js';
+import { menhir } from './monuments/menhir/index.js';
+import { muretEffondre } from './monuments/muret-effondre/index.js';
+import { archeBasse } from './monuments/arche-basse/index.js';
 import { statue } from './monuments/statue-geante/index.js';
 import { totem, autel, cairn } from './monuments/curiosites/index.js';
 import { barqueAmarree, barqueEchouee } from './bateaux/canots/index.js';
@@ -51,6 +54,7 @@ const LIEUX = {
   banc_vue: banc, casiers, cascade,
   // ruines et monuments
   ruines, grotte, cercle_pierres: cerclePierres, statue, totem, autel, cairn,
+  menhir, muret_effondre: muretEffondre, arche_basse: archeBasse,
   // bateaux et épaves
   barque_amarree: barqueAmarree, barque_echouee: barqueEchouee, epave: (p) => epave(p), epave_geante: (p) => epave(p, true),
   ancre, bouee_echouee: boueeEchouee,
@@ -61,8 +65,8 @@ const LIEUX = {
 export const TYPES_DE_LIEUX = Object.keys(LIEUX);
 
 // sens des rotations : 'face' (rotation.y = rot), 'dirz' (+Z vers l'angle rot), 'dirx' (+X vers l'angle rot)
-const DIRZ = new Set(['jetee', 'barque_amarree', 'epave', 'epave_geante', 'barque_echouee', 'phare', 'arche', 'grotte', 'tente', 'etal', 'banc', 'banc_vue', 'statue', 'moulin', 'coffre', 'casiers', 'potager', 'cascade']);
-const DIRX = new Set(['pont_corde', 'pont', 'escalier', 'linge', 'cloture_champ', 'moulin_eau', 'rondin']);
+const DIRZ = new Set(['jetee', 'barque_amarree', 'epave', 'epave_geante', 'barque_echouee', 'phare', 'arche', 'grotte', 'tente', 'etal', 'banc', 'banc_vue', 'statue', 'moulin', 'coffre', 'casiers', 'potager', 'cascade', 'menhir', 'arche_basse']);
+const DIRX = new Set(['pont_corde', 'pont', 'escalier', 'linge', 'cloture_champ', 'moulin_eau', 'rondin', 'muret_effondre']);
 export function rotY(t, rot) {
   if (DIRZ.has(t)) return Math.PI / 2 - rot;
   if (DIRX.has(t)) return -rot;
