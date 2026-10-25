@@ -36,10 +36,10 @@ function zoneTerminee(zoneId, sauf = null) {
 }
 
 describe('carte de chantier', () => {
-  it('représente les 19 zones, chacune avec son statut calculé', () => {
+  it('représente les 20 zones, chacune avec son statut calculé', () => {
     const { svg, bilan } = vueCarte(evts());
     const zones = [...svg.matchAll(/data-zone="(ZONE-[A-Z0-9-]+)" data-statut="([a-z_]+)"/g)];
-    expect(zones).toHaveLength(19);
+    expect(zones).toHaveLength(20);
     for (const [, id, statut] of zones) expect(bilan.get(id).statut).toBe(statut);
   });
 

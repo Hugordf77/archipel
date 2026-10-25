@@ -69,7 +69,7 @@ async function main() {
       const { ctx, evenements, integrite, erreurs } = charger();
       const ids = new Set(ctx.zones.map((z) => z.id));
       const donnees = [];
-      if (ctx.zones.length !== 19) donnees.push(`${ctx.zones.length} zones au lieu de 19`);
+      if (ctx.zones.length !== 20) donnees.push(`${ctx.zones.length} zones au lieu de 20`);
       for (const z of ctx.zones) for (const c of [...z.connexions, ...z.dependances.map((d) => d.zone)]) if (!ids.has(c)) donnees.push(`${z.id} → zone inconnue ${c}`);
       console.log(`${evenements.length} événements · chaîne : ${integrite.length ? 'ROMPUE' : 'intègre'} · refusés au rejeu : ${erreurs.length} · données : ${donnees.length ? donnees.join(' ; ') : 'cohérentes'}`);
       for (const e of [...integrite, ...erreurs]) console.log(`  ✗ ${e.evenement || `ligne ${e.ligne}`} : ${e.erreur}`);

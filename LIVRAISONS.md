@@ -253,7 +253,10 @@ et domaine concerné).
 
 ## État courant (22/10/2026)
 
-- **Production de l’open world (24/10/2026)**, non commitée : workflow, checklist des 19 zones et carte de
+- **Décisions du 25/10/2026** : les 12 rapprochements de zones proposés sont confirmés ; Les Cascades Sacrées
+  devient la 20e zone du checklist (`ZONE-CASCADES-SACREES`, 9 constats d’audit) ; pas de PDF, la référence
+  du checklist reste la demande initiale. Commits `a2248c9` (équipe d’agents) et `387dc1b` (production).
+- **Production de l’open world (24/10/2026)**, commitée le 25/10 : workflow, checklist des 19 zones et carte de
   chantier (voir le domaine « Production de l’open world »). Journal `production/journal.jsonl` : audit initial
   (171 constats) puis chantier pilote OBJ-0001 sur L’Île Verte avec les quatre agents et leurs relecteurs :
   fiche de zone (World Designer, acceptée), inventaire des assets (Asset Artist, refusé deux fois puis accepté
@@ -261,10 +264,14 @@ et domaine concerné).
   d’intégration (Technical Artist) ; les quatre tâches sont intégrées (suite sans nouvel échec). Éléments non
   couverts retirés du périmètre par règle de l’utilisateur et laissés en manques. Statut calculé de la zone :
   en construction, non livrable (production 68 %, jouable 50 %).
-- **Défaut trouvé par le pilote (P01)** : aux raccords des sections de la Grande Île, `IslandManager.heightAt`
-  rend un sol plus haut que le relief affiché (marge de 2 cases de `cropPlan` trop étroite pour l’interpolation
-  bicubique, maximum des sections) : marches invisibles jusqu’à 0,465 m dans l’Île Verte, 1,2 m au Sommet
-  givré. Tâche TASK-ILE-VERTE-005 prête (Archipel-Calibrateur), non lancée : elle modifie le code du jeu.
+- **Défaut P01 corrigé (25/10/2026, TASK-ILE-VERTE-005)** : aux raccords des sections de la Grande Île,
+  `IslandManager.heightAt` rendait un sol plus haut que le relief affiché (marge de 2 cases de `cropPlan` trop
+  étroite pour l’interpolation bicubique, maximum des sections) : marches invisibles jusqu’à 0,465 m dans l’Île
+  Verte, 1,2 m au Sommet givré. Correction : relief de la section propre de chaque île parente (carré fermé),
+  marge en secours, maximum entre îles conservé (une première version, refusée en revue, écrasait le relief des
+  îles qui se recouvrent). Écart aux raccords 1,217 m → 0, 0 marche ; test `tests/zones/raccords-grande-ile.test.js`
+  (dont le cas Grande Île + Volcan endormi). Non vérifié en jeu ; le secours (section du carré non chargée) garde
+  l’écart d’origine.
 - **À relancer** : `npm run modeles:releve` (`USAGE` de `releves.gen.js` date des neuf îles d’avant le monde
   ouvert) ; le test « budget du Worker » (`tests/world.test.js`) lit encore l’archipel v3.
 - **Open world, bases** (branche `claude/charming-khorana-a24b36`, non fusionnée). Ce qui est livré :

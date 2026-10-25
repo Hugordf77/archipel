@@ -237,7 +237,7 @@ describe('journal : traçabilité, idempotence, reprise', () => {
     const { ctx } = charger(r);
     const { brouillons, ecarts } = constatsAudit(ctx, RACINE);
     expect(ecarts).toEqual([]);
-    expect(brouillons).toHaveLength(19 * 9);
+    expect(brouillons).toHaveLength(20 * 9);
   });
 
   it('une commande répétée n’écrit rien de plus ; un lot refusé n’écrit rien', () => {

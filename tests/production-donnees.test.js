@@ -16,14 +16,14 @@ const NOMS = [
   'L’Île Verte', 'Les Falaises Oubliées', 'L’Île Volcanique', 'La Forêt Brumeuse', 'Le Lac Céleste', 'L’Archipel des Tempêtes',
   'L’Île de Pierre', 'Les Plaines Colorées', 'L’Île Sous-Marine', 'L’Île des Cieux', 'L’Île Désolée', 'Le Village Englouti',
   'L’Île des Géants', 'La Côte aux Coquillages', 'L’Île de l’Aube Perdue', 'Les Îlots Secrets', 'Les Grottes Cachées',
-  'Le Désert de l’Île Sèche', 'L’Île du Silence',
+  'Le Désert de l’Île Sèche', 'L’Île du Silence', 'Les Cascades Sacrées',
 ];
 
 describe('zones de l’open world', () => {
-  it('enregistre les 19 zones de la liste, dans l’ordre, avec des identifiants stables et uniques', () => {
+  it('enregistre les 19 zones de la liste et la 20e (Cascades Sacrées), dans l’ordre, avec des identifiants stables et uniques', () => {
     expect(ctx.zones.map((z) => z.nom)).toEqual(NOMS);
     const ids = ctx.zones.map((z) => z.id);
-    expect(new Set(ids).size).toBe(19);
+    expect(new Set(ids).size).toBe(20);
     for (const id of ids) expect(id).toMatch(/^ZONE-[A-Z0-9-]+$/);
     expect(ctx.zones.map((z) => z.ordre)).toEqual(NOMS.map((_, i) => i + 1));
   });
@@ -43,7 +43,7 @@ describe('zones de l’open world', () => {
     const utilisees = new Set();
     for (const z of ctx.zones) {
       expect(z.jeu.zones.length, z.id).toBeGreaterThan(0);
-      expect(['nom', 'proposition', 'confirmee']).toContain(z.jeu.correspondance);
+      expect(['nom', 'confirmee']).toContain(z.jeu.correspondance); // toutes validées le 25/10/2026
       for (const id of z.jeu.zones) {
         expect(id === 'home' || ZONE_BY_ID.has(id), `${z.id} : zone du jeu ${id}`).toBe(true);
         expect(utilisees.has(id), `${id} reliée à deux zones`).toBe(false);
@@ -62,7 +62,7 @@ describe('zones de l’open world', () => {
 
 describe('checklist', () => {
   it('donne un identifiant unique à chaque élément de chaque zone', () => {
-    expect(ctx.items).toHaveLength(19 * MODELE_CHECKLIST.length);
+    expect(ctx.items).toHaveLength(20 * MODELE_CHECKLIST.length);
     expect(ctx.itemIds.size).toBe(ctx.items.length);
     for (const i of ctx.items) expect(i.id).toMatch(/^ZONE-[A-Z0-9-]+\.[B-H]\d{2}$/);
   });

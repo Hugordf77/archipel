@@ -1,6 +1,7 @@
 # Production de l'open world — workflow, checklist et carte de chantier
 
-Document de référence du suivi de production des 19 zones de *L'Archipel des Souvenirs*. Il décrit
+Document de référence du suivi de production des 20 zones de *L’Archipel des Souvenirs* (les 19 de la
+demande initiale et Les Cascades Sacrées, ajoutée le 25/10/2026). Il décrit
 l'architecture, les rôles, les contrats, le modèle de données, les règles de calcul et les
 procédures. L'état courant (ce qui est livré, ce qui reste) est dans `LIVRAISONS.md`.
 
@@ -9,7 +10,7 @@ procédures. L'état courant (ce qui est livré, ce qui reste) est dans `LIVRAIS
 - **Source de vérité unique** : le journal `production/journal.jsonl` (événements en ajout seul,
   chaînés par SHA-256). Les statuts des tâches, livrables, validations, intégrations et éléments de
   checklist en sont **rejoués** ; rien n'est recopié à la main ailleurs.
-- **Définitions statiques** : `production/zones.json` (19 zones), `production/agents.json` (quatre
+- **Définitions statiques** : `production/zones.json` (20 zones), `production/agents.json` (quatre
   rôles et relecteurs), modèle du checklist dans `src/production/checklist.js`.
 - **Vues dérivées** : la carte de chantier et les centres du dashboard (`/dashboard.html#chantier`),
   la commande `npm run prod -- etat`.
@@ -224,7 +225,7 @@ Statut calculé de la zone, dans cet ordre :
   par le générateur du jeu (`islandgen.js`, comme la carte M ; `home/terrain.js` ; îles du ciel), et par-dessus
   les aires (ellipses) des zones du jeu de chaque zone du checklist. La carte n’invente donc pas une
   synchronisation : ce qu’elle montre du monde vient du code du jeu. Une zone du jeu sans zone du
-  checklist est signalée sous la carte (`cascades-sacrees` aujourd’hui).
+  checklist serait signalée sous la carte (aucune aujourd’hui).
 - **Carte de référence** : la carte de l’utilisateur dont le monde a été tracé (`dashboard/reference/`),
   posée dans le même repère (4 m par pixel, `PX` et `ORIGINE` d’`archipel.js`), avec les mêmes aires.
 - Statut calculé, motif, icône et libellé par zone (accessibles au clavier, `aria-label`) ; légende
@@ -296,10 +297,8 @@ monde ouvert n’a ni lieux, ni chemins, ni villages, ni faune, ni ressources : 
 
 ## Limites connues et décisions
 
-- Le PDF `checklist_archipel_des_souvenirs_19_zones.pdf` n'a pas été trouvé (ni dans le dépôt, ni sur
-  le poste) : le checklist suit la structure A à H de la demande ; les descriptions des zones viennent
-  de l'illustration. Les correspondances zone ↔ région du jeu et les positions proposées sont des
-  propositions (`confiance`, `correspondance`) à confirmer.
+- Pas de PDF de checklist : par décision de l’utilisateur (25/10/2026), la référence est la structure A
+  à H de la demande initiale ; les descriptions des zones viennent de la carte de référence.
 - Le monde ouvert (GEN_VERSION 4) a 24 zones nommées ; les 19 zones du checklist y renvoient toutes
   (correspondance « nom » quand le jeu porte le même nom, sinon « proposition » à confirmer) ;
   `cascades-sacrees` n’a pas de zone du checklist. Une zone sans zone du jeu verrait ses tâches de

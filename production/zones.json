@@ -1,13 +1,11 @@
 {
-  "version": 2,
-  "mis_a_jour": "2026-10-24",
+  "version": 3,
+  "mis_a_jour": "2026-10-25",
   "reference": {
     "carte": "dashboard/reference/carte-souvenirs.webp (carte de référence, 4 m par pixel : celle dont le monde a été tracé)",
     "monde": "src/world/archipel.js (GEN_VERSION 4, monde ouvert « L’archipel des souvenirs », 24 zones nommées)",
-    "note": "Chaque zone du checklist renvoie aux identifiants des zones du jeu (ZONES d'archipel.js, plus « home » pour Ton île) ; position, aire et biome viennent du jeu, jamais recopiés ici. Correspondance « nom » : même nom dans le jeu ; « proposition » : rapprochement à confirmer. Le PDF checklist_archipel_des_souvenirs_19_zones.pdf n'est pas dans le dépôt.",
-    "zones_du_jeu_hors_checklist": [
-      "cascades-sacrees"
-    ]
+    "note": "Chaque zone du checklist renvoie aux identifiants des zones du jeu (ZONES d'archipel.js, plus « home » pour Ton île) ; position, aire et biome viennent du jeu, jamais recopiés ici. Correspondance « nom » : même nom dans le jeu ; « confirmee » : rapprochement validé par l'utilisateur le 25/10/2026. 20 zones : les 19 de la demande initiale et Les Cascades Sacrées, ajoutée par décision de l'utilisateur du 25/10/2026. Référence du checklist : la demande initiale (pas de PDF, décision du 25/10/2026).",
+    "zones_du_jeu_hors_checklist": []
   },
   "zones": [
     {
@@ -18,7 +16,7 @@
       "type": "île de départ",
       "priorite": "P1",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-PLAINES-COLOREES",
         "ZONE-GROTTES-CACHEES",
@@ -33,7 +31,7 @@
           "foret-des-souvenirs",
           "plateau-vente"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -71,7 +69,7 @@
       "type": "volcan",
       "priorite": "P2",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-ILE-DES-CIEUX",
         "ZONE-LAC-CELESTE"
@@ -87,7 +85,7 @@
         "zones": [
           "volcan-endormi"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -98,7 +96,7 @@
       "type": "forêt",
       "priorite": "P2",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-VILLAGE-ENGLOUTI",
         "ZONE-ARCHIPEL-DES-TEMPETES"
@@ -114,7 +112,7 @@
         "zones": [
           "ile-brumeuse"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -179,7 +177,7 @@
       "type": "îlot-curiosité",
       "priorite": "P3",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-ILE-VERTE",
         "ZONE-ILE-DES-GEANTS"
@@ -195,7 +193,7 @@
         "zones": [
           "ruines-gelees"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -206,7 +204,7 @@
       "type": "champs de fleurs",
       "priorite": "P2",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-ILE-VERTE",
         "ZONE-ILE-DE-L-AUBE-PERDUE"
@@ -222,7 +220,7 @@
         "zones": [
           "ile-aux-fleurs"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -233,7 +231,7 @@
       "type": "sous-marine",
       "priorite": "P3",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-FALAISES-OUBLIEES",
         "ZONE-VILLAGE-ENGLOUTI"
@@ -249,7 +247,7 @@
         "zones": [
           "ocean-sans-fin"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -260,7 +258,7 @@
       "type": "îles flottantes",
       "priorite": "P3",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-ILE-VOLCANIQUE",
         "ZONE-LAC-CELESTE"
@@ -276,7 +274,7 @@
         "zones": [
           "iles-celestes"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -287,7 +285,7 @@
       "type": "île",
       "priorite": "P4",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-GROTTES-CACHEES",
         "ZONE-ILE-DE-L-AUBE-PERDUE"
@@ -303,7 +301,7 @@
         "zones": [
           "place-des-os"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -345,7 +343,7 @@
       "type": "montagne",
       "priorite": "P2",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-ILE-DE-PIERRE",
         "ZONE-ILE-DU-SILENCE"
@@ -361,7 +359,7 @@
         "zones": [
           "sommet-givre"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -372,7 +370,7 @@
       "type": "lagon",
       "priorite": "P3",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-DESERT-ILE-SECHE",
         "ZONE-ILE-DE-L-AUBE-PERDUE"
@@ -388,7 +386,7 @@
         "zones": [
           "ile-du-soleil-couchant"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -399,7 +397,7 @@
       "type": "île",
       "priorite": "P3",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-PLAINES-COLOREES",
         "ZONE-COTE-AUX-COQUILLAGES"
@@ -415,7 +413,7 @@
         "zones": [
           "ile-aux-lueurs"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -452,7 +450,7 @@
       "type": "grottes",
       "priorite": "P3",
       "responsable": "world-designer",
-      "confiance": "proposition",
+      "confiance": "partielle",
       "connexions": [
         "ZONE-ILE-VERTE",
         "ZONE-ILE-DESOLEE"
@@ -469,7 +467,7 @@
           "grottes-de-cristal",
           "grotte-lumineuse"
         ],
-        "correspondance": "proposition"
+        "correspondance": "confirmee"
       }
     },
     {
@@ -523,6 +521,34 @@
       "jeu": {
         "zones": [
           "ile-du-silence"
+        ],
+        "correspondance": "nom"
+      }
+    },
+    {
+      "id": "ZONE-CASCADES-SACREES",
+      "ordre": 20,
+      "nom": "Les Cascades Sacrées",
+      "description": "Chutes d’eau et sanctuaires.",
+      "type": "île",
+      "priorite": "P3",
+      "responsable": "world-designer",
+      "confiance": "partielle",
+      "connexions": [
+        "ZONE-GROTTES-CACHEES",
+        "ZONE-ILOTS-SECRETS",
+        "ZONE-ARCHIPEL-DES-TEMPETES"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "cascades-sacrees"
         ],
         "correspondance": "nom"
       }

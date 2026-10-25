@@ -436,7 +436,7 @@ function rendre() {
     </div>
     <div class="chantier-corps">
       <div class="carte-cadre">${svgCarte()}${legende()}
-        <p class="note">${ui.vue === 'monde' ? `Silhouettes calculées par le générateur du jeu (islandgen.js, home/terrain.js), aires des zones d’archipel.js (GEN_VERSION 4). Zone du jeu sans zone du checklist : ${esc(zonesData.reference.zones_du_jeu_hors_checklist.join(', '))}.` : 'Carte de référence dont le monde a été tracé (4 m par pixel, même repère que le jeu) ; aires des zones du jeu par-dessus.'}</p>
+        <p class="note">${ui.vue === 'monde' ? `Silhouettes calculées par le générateur du jeu (islandgen.js, home/terrain.js), aires des zones d’archipel.js (GEN_VERSION 4).${zonesData.reference.zones_du_jeu_hors_checklist.length ? ` Zone du jeu sans zone du checklist : ${esc(zonesData.reference.zones_du_jeu_hors_checklist.join(', '))}.` : ''}` : 'Carte de référence dont le monde a été tracé (4 m par pixel, même repère que le jeu) ; aires des zones du jeu par-dessus.'}</p>
         ${ui.manques ? listeManques() : ''}
       </div>
       ${sel ? ficheZone(sel) : '<aside class="fiche-zone vide"><p>Sélectionnez une zone sur la carte pour ouvrir sa fiche : checklist, manques, tâches, assets, tests, dépendances et historique.</p></aside>'}
