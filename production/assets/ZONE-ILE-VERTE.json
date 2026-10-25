@@ -1,9 +1,13 @@
 {
   "zone_id": "ZONE-ILE-VERTE",
-  "version": 1,
+  "version": 2,
   "redige_par": "asset-artist",
   "tache": "TASK-ILE-VERTE-002",
-  "date": "2026-10-24",
+  "date": "2026-10-25",
+  "historique": [
+    "v1 (24/10/2026, TASK-ILE-VERTE-002) : inventaire initial (47 existants, 1 manque spécifié).",
+    "v2 (25/10/2026, TASK-ILE-VERTE-007) : modèles du Plateau venté (briefs BRF-PV-05 à 09 de production/fiches/ZONE-ILE-VERTE.plateau-vente.briefs.json) : BAT-004 complété (variante « Pierre du plateau », v 1), MON-004 retenu pour le cercle, MON-009 à MON-011 créés et ajoutés aux existants ; les quatre besoins correspondants sont inscrits dans manquants au statut « produit » avec leur chemin. Aucun de ces éléments n'est encore posé en jeu (recettes de gen/pois.js à faire par le World Designer). Entrées de la v1 conservées."
+  ],
   "fiche": "production/fiches/ZONE-ILE-VERTE.json",
   "conventions": "Identifiants du registre = clés de TAILLES (src/models/releves.gen.js). « employe » : modèle réellement placé ou appelé aujourd'hui dans la zone (GEN_VERSION 4), source = fichier:ligne qui le place ; « propose » : modèle existant du registre retenu pour un besoin de la fiche (lieu en proposition), source = fiche du modèle, rien n'est placé en jeu. USAGE de releves.gen.js (neuf îles d'avant le monde ouvert) n'est pas utilisé comme preuve.",
   "methode": {
@@ -56,11 +60,15 @@
     { "id": "STR-019", "nom": "Casiers", "statut_usage": "propose", "besoin_fiche": "POI-12 Village de pêcheurs de la côte", "usage": "Casiers de pêche (tags village, pêche) sur la grève et la jetée : identité « pêcheurs » du village.", "source": "src/models/ouvrages/mobilier/index.js" },
     { "id": "NAV-005", "nom": "Barque amarrée", "statut_usage": "propose", "besoin_fiche": "POI-12 Village de pêcheurs ; POI-15 Débarcadère", "usage": "Barques de pêche amarrées le long de la jetée du village et du débarcadère (quatre couleurs).", "source": "src/models/bateaux/canots/index.js" },
     { "id": "STR-001", "nom": "Jetée", "statut_usage": "propose", "besoin_fiche": "POI-15 Débarcadère de la plage nord (0, −150)", "usage": "Débarcadère face à Ton île : platelage sur pilotis à longueur réglable, bittes d'amarrage, bouée ; sert aussi de jetée au village de pêcheurs.", "source": "src/models/ouvrages/jetee/index.js" },
-    { "id": "BAT-004", "nom": "Moulin à vent", "statut_usage": "propose", "besoin_fiche": "POI-13 Moulins du Plateau venté (640, −848)", "usage": "Moulins sur la table du plateau (tour crème, ailes qui tournent au vent ; 10,4 m de haut), posés vers le rebord pour être vus depuis la côte, à 46 m au-dessus de la base.", "source": "src/models/batiments/moulin/index.js" },
+    { "id": "BAT-004", "nom": "Moulin à vent", "statut_usage": "propose", "besoin_fiche": "POI-13 Moulins du Plateau venté (640, −848) ; PV-M1 à PV-M3 du plan du plateau (production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.elements)", "usage": "Moulins sur la table du plateau (tour crème, ailes qui tournent au vent ; 10,4 m de haut), posés vers le rebord pour être vus depuis la côte, à 46 m au-dessus de la base. Pour PV-M1 à M3 : variante « Pierre du plateau » (paramètre v = 1, ajoutée le 25/10/2026, BRF-PV-05) : tour trapue en pierre et moellons, toit de bardeaux galbé teinté par recolorPart, mêmes ailes au vent, 10,23 m au repos et 11,1 m ailes à la verticale, envergure 9,4 m, obstacle du pied r 2,2 m, 3 388 triangles. La recette moulin_vent de gen/pois.js doit poser v: 1 (World Designer).", "source": "src/models/batiments/moulin/index.js" },
     { "id": "ARB-015", "nom": "Arbre géant (lieu)", "statut_usage": "propose", "besoin_fiche": "POI-14 Arbre-mémoire de la forêt (−624, −1132) ; REP-05 (variante arbre)", "usage": "Grand arbre de la colline de la forêt, variante « chêne » (13 × 16 m, repère d'île) ; les marques de mémoire qui en font un arbre-mémoire manquent (AST-ILE-VERTE-001). Écart de budget connu : 2 708 triangles (pièce unique).", "source": "src/models/arbres/arbre-geant/index.js" },
     { "id": "BAT-006", "nom": "Phare", "statut_usage": "propose", "besoin_fiche": "REP-05 Phare ou grand arbre-mémoire sur la côte", "usage": "Repère vertical près de la plage d'arrivée (tour rayée, lanterne lumineuse, maison du gardien ; 10,8 m), visible depuis Ton île.", "source": "src/models/batiments/phare/index.js" },
     { "id": "STR-003", "nom": "Pont", "statut_usage": "propose", "besoin_fiche": "chemins.principaux : « franchit la rivière 0 (gué ou pont à placer) » ; autres croisements de rivières", "usage": "Ponts des chemins proposés, longueur réglable de 3 à 10 m (params.len) : rivière 0 large de 5,79 m en (264, −685) sur la route du plateau et de 4,91 m en (76, −1005) sur la traverse (len 8 m environ, berges comprises) ; rivières 4, 7 et 11 larges de 2,96 à 4,29 m aux croisements (len 5 à 6 m). La longueur par défaut (5 m) ne franchit pas la rivière 0.", "source": "src/models/ouvrages/chemins/index.js" },
-    { "id": "MON-003", "nom": "Grotte", "statut_usage": "propose", "besoin_fiche": "zones_cachees : « Abri sous l'escarpement du plateau (448, −716) »", "usage": "Entrée d'abri adossée au pied de l'escarpement (entrée sombre entourée de rochers, coiffée de mousse ; 7,8 × 5,5 m).", "source": "src/models/monuments/grotte/index.js" }
+    { "id": "MON-003", "nom": "Grotte", "statut_usage": "propose", "besoin_fiche": "zones_cachees : « Abri sous l'escarpement du plateau (448, −716) »", "usage": "Entrée d'abri adossée au pied de l'escarpement (entrée sombre entourée de rochers, coiffée de mousse ; 7,8 × 5,5 m).", "source": "src/models/monuments/grotte/index.js" },
+    { "id": "MON-004", "nom": "Cercle de pierres", "statut_usage": "propose", "besoin_fiche": "PV-C Cercle de pierres du plateau (production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.elements) ; BRF-PV-07", "usage": "Cercle du cœur de la table (8,73 × 2,73 × 8,8 m), réutilisé sans changement (constat BRF-PV-07 dans sa FICHE.md) : avec count = 9 et rot = π/9 − 2,443 = 4,189 rad, un intervalle entre deux pierres regarde l'allée (cap 2,443) ; intervalle libre ≈ 1,84 m entre obstacles pour 9 pierres, 2,57 m pour 7. Réglage de la recette cercle_pierres de gen/pois.js à faire par le World Designer.", "source": "src/models/monuments/cercle-pierres/index.js" },
+    { "id": "MON-009", "nom": "Menhir", "statut_usage": "propose", "besoin_fiche": "PV-P1 à PV-P3, menhirs jalons de l'allée (production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.elements) ; BRF-PV-06", "usage": "Pierre levée seule (type de lieu menhir, DIRZ : face large vers rot, 3,680 face au vent), trois variantes v 0 à 2 : 2,65 à 3,34 m hors sol, pied 0,86 à 1,12 × 0,48 à 0,56 m, penchée sous le vent, mousse côté vent ; obstacle unique au pied r 0,55 à 0,65 m ; 526 triangles au plus. Créé le 25/10/2026, brouillon en attente de revue (Evis-critique).", "source": "src/models/monuments/menhir/index.js" },
+    { "id": "MON-010", "nom": "Muret effondré", "statut_usage": "propose", "besoin_fiche": "PV-W Muret effondré coupe-vent (production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.elements) ; BRF-PV-08", "usage": "Mur de pierres sèches en ruine (type de lieu muret_effondre, DIRX : axe du mur le long de rot, 2,109), 20 m par défaut (len 12 à 24, entier) en trois tronçons, deux brèches de 2,2 m (1,9 m libres entre obstacles), 0,6 à 1,02 m de haut, éboulis, mousse côté vent ; cercles d'obstacle le long des tronçons et des éboulis, aucun dans les brèches ; 3 785 triangles. Créé le 25/10/2026, brouillon en attente de revue (Evis-critique).", "source": "src/models/monuments/muret-effondre/index.js" },
+    { "id": "MON-011", "nom": "Arche basse", "statut_usage": "propose", "besoin_fiche": "PV-A Arche basse, porte du plateau (production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.elements) ; BRF-PV-09", "usage": "Porte de pierres levées (type de lieu arche_basse, DIRZ : axe de passage le long de rot, −0,698) : deux montants et un linteau, 3,26 m hors sol, ouverture 2,81 m, 2,66 m libres sous le linteau, obstacles sur les deux montants seulement (2,66 m libres entre eux) ; 1 234 triangles. Créé le 25/10/2026, brouillon en attente de revue (Evis-critique).", "source": "src/models/monuments/arche-basse/index.js" }
   ],
   "manquants": [
     {
@@ -85,6 +93,82 @@
         "Contrôles : planche 6 vues du catalogue, capture en jeu de près et de loin sur l'arbre ARB-015, mesure.mjs avant/après (DA §9)."
       ],
       "statut": "specification"
+    },
+    {
+      "id_propose": "BAT-004 (v 1)",
+      "id_registre": "BAT-004",
+      "nom": "Moulin du plateau (variante « Pierre du plateau »)",
+      "categorie": "batiments",
+      "prefixe_registre": "BAT",
+      "besoin_fiche": "PV-M1 à PV-M3 ; BRF-PV-05",
+      "description": "Variante v 1 du moulin BAT-004 : tour trapue en pierre, toit de bardeaux galbé teinté par recolorPart, ailes animées au vent (wind: true) sur la face +Z, obstacle du pied r 2,2 m conservé. Hauteur 10,23 m au repos et 11,1 m ailes à la verticale (critère 10 à 12 m), envergure 9,4 m (≥ 9 m), 3 388 triangles (budget bâtiments 4 000). Tour crème par défaut inchangée.",
+      "criteres_da": [
+        "Ailes animées au vent, toit teinté par recolorPart, obstacle du pied conservé (BRF-PV-05).",
+        "Silhouette lisible à 15 m : tour, toit et quatre ailes distincts (planche captures/pv05-moulin-pierre-6vues.png ; seuil à formaliser par Evis-critique).",
+        "Budget des bâtiments : 4 000 triangles (DA §8)."
+      ],
+      "statut": "produit",
+      "chemin": "src/models/batiments/moulin/index.js"
+    },
+    {
+      "id_propose": "MON-009",
+      "id_registre": "MON-009",
+      "nom": "Menhir",
+      "categorie": "monuments",
+      "prefixe_registre": "MON",
+      "besoin_fiche": "PV-P1 à PV-P3 ; BRF-PV-06",
+      "description": "Pierre levée seule, plus haute que celles de MON-004 : 2,5 à 3,5 m (mesuré 2,65 à 3,34 m hors sol), base 0,8 à 1,2 m (0,86 à 1,12), épaisseur 0,4 à 0,6 m (0,48 à 0,56), légère inclinaison sous le vent, mousse côté vent, trois variantes ; obstacle unique au pied r 0,5 à 0,7 (0,55 à 0,65) ; type de lieu menhir (DIRZ).",
+      "criteres_da": [
+        "Jouet peint : volumes simples et ronds, sans ombre ni texture peintes (DA §1).",
+        "Design original, sans reprise d'asset ni de silhouette existante (DA §1).",
+        "Silhouette lisible à 15 m (DA §1, §2).",
+        "Teintes du kit de pierre (STONE, STONE_D, MOSS, src/models/kit/lieux.js), jamais de noir pur (DA §3).",
+        "Aucune facette visible vu de près, mousse en taches épousant la surface (patch du kit), aucune pièce plate en autocollant (DA §4).",
+        "Obstacles : ≥ 85 % de l'emprise couverte, débord ≤ 0,4 m (DA §7, mesure.mjs).",
+        "Budget de la catégorie monuments : 4 000 triangles (DA §8)."
+      ],
+      "statut": "produit",
+      "chemin": "src/models/monuments/menhir/index.js"
+    },
+    {
+      "id_propose": "MON-010",
+      "id_registre": "MON-010",
+      "nom": "Muret effondré",
+      "categorie": "monuments",
+      "prefixe_registre": "MON",
+      "besoin_fiche": "PV-W ; BRF-PV-08",
+      "description": "Mur de pierres sèches en ruine, environ 20 m (len 12 à 24) en trois tronçons, 0,6 à 1,2 m de haut (mesuré 0,6 à 1,02 m), deux brèches de 2,2 m praticables (1,9 m libres entre obstacles), obstacles le long des tronçons et aucun dans les brèches ; type de lieu muret_effondre (DIRX).",
+      "criteres_da": [
+        "Jouet peint : volumes simples et ronds, sans ombre ni texture peintes (DA §1).",
+        "Design original, sans reprise d'asset ni de silhouette existante (DA §1).",
+        "Silhouette lisible à 15 m (DA §1, §2).",
+        "Teintes du kit de pierre (STONE, STONE_D, MOSS, src/models/kit/lieux.js), jamais de noir pur (DA §3).",
+        "Aucune facette visible vu de près, mousse en taches épousant la surface (patch du kit), aucune pièce plate en autocollant (DA §4).",
+        "Obstacles : ≥ 85 % de l'emprise couverte, débord ≤ 0,4 m (DA §7, mesure.mjs).",
+        "Budget de la catégorie monuments : 4 000 triangles (DA §8)."
+      ],
+      "statut": "produit",
+      "chemin": "src/models/monuments/muret-effondre/index.js"
+    },
+    {
+      "id_propose": "MON-011",
+      "id_registre": "MON-011",
+      "nom": "Arche basse",
+      "categorie": "monuments",
+      "prefixe_registre": "MON",
+      "besoin_fiche": "PV-A ; BRF-PV-09",
+      "description": "Porte de deux montants et un linteau, 3,2 à 3,8 m de haut (mesuré 3,26 m hors sol), ouverture ≥ 2,6 m (2,81 m) et ≥ 2,2 m libres sous le linteau (2,66 m), obstacles sur les montants seulement, axe de passage par rot ; type de lieu arche_basse (DIRZ).",
+      "criteres_da": [
+        "Jouet peint : volumes simples et ronds, sans ombre ni texture peintes (DA §1).",
+        "Design original, sans reprise d'asset ni de silhouette existante (DA §1).",
+        "Silhouette lisible à 15 m (DA §1, §2).",
+        "Teintes du kit de pierre (STONE, STONE_D, MOSS, src/models/kit/lieux.js), jamais de noir pur (DA §3).",
+        "Aucune facette visible vu de près, mousse en taches épousant la surface (patch du kit), aucune pièce plate en autocollant (DA §4).",
+        "Obstacles : ≥ 85 % de l'emprise couverte, débord ≤ 0,4 m (DA §7, mesure.mjs).",
+        "Budget de la catégorie monuments : 4 000 triangles (DA §8)."
+      ],
+      "statut": "produit",
+      "chemin": "src/models/monuments/arche-basse/index.js"
     }
   ],
   "hors_inventaire": [
@@ -95,8 +179,10 @@
   ],
   "bilan": {
     "existants_employes": 38,
-    "existants_proposes": 9,
-    "manquants": 1,
+    "existants_proposes": 13,
+    "manquants": 5,
+    "manquants_specification": 1,
+    "manquants_produits": 4,
     "especes_grande_ile": 14,
     "especes_grande_ile_sans_modele": 0
   }
