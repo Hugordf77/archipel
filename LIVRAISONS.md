@@ -1,7 +1,7 @@
 # Livraisons — Archipel
 
 Point d'entrée pour une IA ou un nouvel arrivant : ce qui est livré, où ça vit, comment le vérifier, ce
-qui est en cours. Mis à jour le 20/10/2026. À tenir à jour à chaque livraison (section « État courant »
+qui est en cours. Mis à jour le 25/10/2026. À tenir à jour à chaque livraison (section « État courant »
 et domaine concerné).
 
 ## Démarrer
@@ -9,7 +9,7 @@ et domaine concerné).
 - Jeu : `npm run dev`, puis http://localhost:5173 (les agents utilisent la configuration `ile` de
   `.claude/launch.json`, port 5174, pour ne pas gêner la partie de l'utilisateur).
 - Catalogue des modèles : `/catalogue.html` ; tableau de bord de production : `/dashboard.html`.
-- Tests : `npm test` (22 fichiers) ; build : `npm run build`.
+- Tests : `npm test` (27 fichiers) ; build : `npm run build`.
 - Outils de développement en jeu : `window.__ile` (`tp`, `setHour`, `frame`, `look`, `settle`, `capture`,
   `game.skipSave`).
 
@@ -111,7 +111,7 @@ et domaine concerné).
   `index.gen.js`, `releves.gen.js`, `physique.gen.js`.
 - **Outils** : `npm run modeles:mesure -- <id>`, `modeles:empreinte`, `modeles:index`, `modeles:fiches`,
   `modeles:releve` ; captures `scripts/modeles/planche.js` (catalogue) et `scripts/modeles/jeu.js` (jeu).
-- **Repris d'après planche ou description** : vache ANI-003 (commit `0fbb0fe`, troupeau à Pommeraie),
+- **Repris d'après planche ou description** : vache ANI-003 (commit `0fbb0fe`, troupeau posé à la main),
   cerf ANI-004 (`7252b94`), mouton ANI-001 (`10e3a8e`). Chèvre ANI-002 et nouvelle passe sur le mouton :
   en cours, non commitées.
 - **Agents** : Evis (production) et Evis-critique (revue en lecture seule), règles `docs/DA.md`.
@@ -180,10 +180,18 @@ et domaine concerné).
   - Sauvegarde : `state.player.y` est enregistré ; au chargement, on revient sur l'île du ciel.
   - Outil de test : `__ile.tp(x, z, y)` ; sans `y`, on se pose sur le dessus.
   - Tests : `tests/ciel.test.js`.
-- Ancien archipel à archétypes (lieux, villages, chemins, faune) : la chaîne de génération
-  `gen/` (pois, paths, spawns) reste en place pour la suite. Elle est testée sur l'ancien archipel,
-  gardé en fixture (`tests/fixtures/archipel-v3.js`, `tests/helpers/archipel-v3.js`). `archetypes.js`
-  sert encore à ces descriptions.
+- **Lieux, chemins et faune** (passe des lieux, 25/10/2026) : l'ancien archipel de neuf îles rondes à
+  archétypes est supprimé (code, fixtures, textes). Un seul `buildPlan` (`gen/plan.js`) ; lieux et villages
+  (`gen/pois.js`), chemins (`gen/paths.js`), petites découvertes, faune (`gen/spawns.js`) et petite
+  végétation des tuiles ne tournent que pour une île qui décrit ses lieux, `desc.lieux` :
+  - `recette` [[type, probabilité]…] dans l'ordre (1 = obligatoire), `generiques` (petits lieux tirés en
+    plus, minimum selon la taille) ;
+  - `accostage` [x, z] (plage d'arrivée, vers laquelle descend le village), `village`, `epave` (noms),
+    `moulin` (couleur, `MOULINS`), `faune` (troupeaux posés à la main).
+  `placeFloraForme` évite alors les lieux et les chemins et plante haies, vergers et cultures. Aucune île du
+  jeu n'en décrit encore. Banc d'essai : l'île d'essai à forme `tests/fixtures/ile-essai.js` (absente du
+  jeu, 3 zones réelles, 5 variantes). La recette s'applique à l'île entière : pour une zone de la Grande
+  Île (Plateau venté), il faudra la borner à la zone.
 - Carte : `src/ui/mapPanel.js`, brouillard `src/world/fog.js` ; minicarte `src/ui/minimap.js`.
 - **Herbe en tapis** (refonte « façon Breath of the Wild / Genshin », V2 livrée le 21/10/2026) : brins
   procéduraux générés par le shader (`src/render/herbe/` : `placement.js` pur, `materiau.js`,
@@ -251,7 +259,7 @@ et domaine concerné).
 - Tableau de bord de production : `dashboard.html`, `dashboard/` (`management.json` : relations entre
   agents).
 
-## État courant (22/10/2026)
+## État courant (25/10/2026)
 
 - **Décisions du 25/10/2026** : les 12 rapprochements de zones proposés sont confirmés ; Les Cascades Sacrées
   devient la 20e zone du checklist (`ZONE-CASCADES-SACREES`, 9 constats d’audit) ; pas de PDF, la référence
@@ -272,8 +280,21 @@ et domaine concerné).
   îles qui se recouvrent). Écart aux raccords 1,217 m → 0, 0 marche ; test `tests/zones/raccords-grande-ile.test.js`
   (dont le cas Grande Île + Volcan endormi). Non vérifié en jeu ; le secours (section du carré non chargée) garde
   l’écart d’origine.
-- **À relancer** : `npm run modeles:releve` (`USAGE` de `releves.gen.js` date des neuf îles d’avant le monde
-  ouvert) ; le test « budget du Worker » (`tests/world.test.js`) lit encore l’archipel v3.
+- **Nettoyage de l'ancien monde (25/10/2026)**, commits `6f3f0ef` (suppression, passe des lieux, tests) et
+  `f3128c5` (relevé `USAGE` par zone du monde ouvert, `usedIn` des empreintes seul mis à jour). Le monde
+  généré est identique octet pour octet (178 empreintes : plans, LOD1, LOD2, sections, tuiles). Budget du
+  Worker mesuré sur le monde ouvert : 36 îles entières, plan + LOD1 de 14 à 17 ms en moyenne (au pire
+  100 ms, Cascades sacrées) ; plan de la Grande Île 1,1 à 1,5 s ; section + LOD1 au plus 13 ms ; tuile
+  p95 7 ms. Copie principale : les fichiers non suivis de l'ancien système de production sont déplacés
+  dans `/Users/hugo/developer/archipel-sauvegarde-ancien-monde-2026-10-25/` (voir son `LISEZMOI.md`) ;
+  restent jusqu'à la fusion ceux qu'importe `vite.config.js` et les agents identiques.
+- **Constats sur le monde ouvert, à trancher** (relevés en migrant les tests, non corrigés) :
+  - carte d'herbe discontinue entre deux tuiles de biomes différents (palette par tuile) : raccord visible
+    possible aux frontières de biomes (section `grande-ile~3-3`, île d'essai) ; continue dans un même biome ;
+  - carte d'herbe à 0,70–0,83 ms par tuile dans les sections de la Grande Île (0,92–0,94 ms sous la suite
+    complète) contre un budget de 0,5 ms mesuré sur l'ancien archipel : plafond provisoire du test à 1,2 ms ;
+  - l'échec connu des empreintes couvre plus que PER-001 à PER-004 : tout le personnage (PER-005 à PER-023)
+    et la grimpe des palmiers de la maison (`ileDepart.obstacles.44` à `49`), déjà avant le nettoyage.
 - **Open world, bases** (branche `claude/charming-khorana-a24b36`, non fusionnée). Ce qui est livré :
   - les îles de la carte de référence, avec leur relief, leurs côtes, l'eau douce et les arbres ;
   - les 24 zones étiquetées ;
@@ -289,7 +310,8 @@ et domaine concerné).
   - grottes ;
   - faune, ressources et éléments de la mer.
 
-  La chaîne à archétypes (`pois`, `paths`, `spawns`) est prête à être rebranchée par zone.
+  La passe des lieux (`pois`, `paths`, `spawns`) tourne sur les îles à forme qui décrivent leurs lieux
+  (`desc.lieux`) ; à borner par zone pour la Grande Île.
 - **Bouleau** écarté des forêts du monde ouvert (`LOURDS` de `gen/flora.js`) : son modèle fait
   environ 1 800 triangles contre 100 à 180 pour les autres arbres. À revoir avec les arbres V2.
 - **Budget mesuré en jeu** (Forêt des souvenirs, onglet caché) : 4,3 M triangles, ombres comprises.
@@ -304,10 +326,10 @@ et domaine concerné).
 - **Non commité** (hors de ce chantier) : tableau de bord (`dashboard.html`, `dashboard/`,
   `vite.config.js`), agents d'équipe et skill `modele-3d`, `README.md`, chèvre, mouton et fleurs
   (PLA-015), `tests/fixtures/empreintes.json`.
-- **Tests** : 251 sur 252. Échec : `tests/empreintes.test.js` (personnage PER-001 à PER-003, 160
-  triangles de l'épée, changement voulu à valider puis `npm run modeles:empreinte -- --ecrire` ; fleurs
-  PLA-015 en cours). « Budget du Worker » de `tests/world.test.js` : mesure de temps sensible à la
-  charge (peut échouer sous la suite complète, vert seul).
+- **Tests** : 302 sur 303. Échec connu : `tests/empreintes.test.js` (personnage : 160 triangles de
+  l'épée, changement voulu à valider puis `npm run modeles:empreinte -- --ecrire` ; voir aussi les
+  constats ci-dessus). « Budget du Worker » (`tests/world.test.js`) et coût de la carte d'herbe
+  (`tests/herbe-champ.test.js`) : mesures de temps, sensibles à la charge.
 - **Graphe du code** : mis à jour le 22/10/2026 après l'open world.
   - Commande : `graphify update src`, sans LLM, code seul.
   - Résultat : 2 502 nœuds, 6 523 liens, 171 communautés, nommées automatiquement d’après leur nœud

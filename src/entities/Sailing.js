@@ -217,7 +217,7 @@ export class Sailing {
         g.ui.toast(`Le courant te ramène : avec ${spec.name === 'Radeau' ? 'un radeau' : `ta ${spec.name.toLowerCase()}`}, on ne dépasse pas ${spec.zone / 1000} km. Il faudra un bateau plus solide.`, { icon: 'boat', duration: 5200 });
       }
     } else if (dHome < spec.zone - 100) this.warned.zone = false;
-    // limite de l'archipel : brume et courant doux au-delà de 1,2 km, demi-tour à 1,4 km
+    // limite du monde (worldLimit) : courant doux au-delà du bord de l'emprise, demi-tour 250 m plus loin
     const lim = worldLimit(this.pos.x, this.pos.z);
     if (lim.pull > 0) {
       px += lim.ux * lim.pull * 2.4;

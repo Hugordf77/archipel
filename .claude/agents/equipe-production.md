@@ -10,7 +10,7 @@ Cette note décrit une organisation de travail, pas une hiérarchie ni une autom
 | Evis | `.claude/agents/evis.md` | Production et correction d'un modèle 3D selon `.claude/skills/modele-3d/SKILL.md` | Dossier du modèle demandé, selon sa consigne |
 | Evis-critique | `.claude/agents/evis-critique.md` | Revue indépendante en lecture seule d'un modèle | Aucun fichier |
 | Archipel-Calibrateur | `.claude/agents/archipel-calibrateur.md` | Correction ciblée de la génération/calibration d'une île existante | Sources ciblées sous `src/world/islands/`, tests directement concernés si nécessaires |
-| Archipel-Critique | `.claude/agents/archipel-critique.md` | Revue indépendante en lecture seule d'une île ou d'un archétype | Aucun fichier |
+| Archipel-Critique | `.claude/agents/archipel-critique.md` | Revue indépendante en lecture seule d'une île ou d'une zone | Aucun fichier |
 | Locomotion-Physique | `.claude/agents/locomotion-physique.md` | Physique déterministe du personnage à pied, ses trajectoires et son intégration au sol/collisions | Moteur et réglages de locomotion ; `Player.js` et navigation seulement avec mandat ciblé |
 | Archipel-Intégrateur | `.claude/agents/archipel-integrateur.md` | Technical Artist du workflow de l’open world : intégration, contrôles techniques et rapport d’intégration d’une zone | `production/integration/`, tests d’intégration sous `tests/` |
 
@@ -26,7 +26,7 @@ Les rôles « coordinateur » et « responsable » décrivent l'affectation et l
 
 ## Workflow îles
 
-1. Le coordinateur transmet à Archipel-Calibrateur une île/archétype, un défaut observable, les contraintes préservées et les critères d'acceptation.
+1. Le coordinateur transmet à Archipel-Calibrateur une île ou une zone, un défaut observable, les contraintes préservées et les critères d'acceptation.
 2. Archipel-Calibrateur inspecte les dépendances utiles, apporte une correction bornée et livre les fichiers ainsi que les contrôles exécutés.
 3. Les tests et scripts déterministes du dépôt sont exécutés pour les contraintes couvertes.
 4. Archipel-Critique examine les changements indépendamment si la génération, la composition ou le rendu a changé, ou à la demande de diagnostic. Il ne modifie rien.

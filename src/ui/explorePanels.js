@@ -98,7 +98,7 @@ export { openMapPanel } from './mapPanel.js';
 export function openCartographerPanel(game) {
   const body = h('div', { class: 'stack' },
     h('div', { class: 'owl-line' }, h('span', { class: 'icon owl-ic', html: ICON.owl }),
-      h('div', { class: 'owl-say' }, 'Hou hou ! Je range mes livres et je déroule mes cartes : neuf îles nous entourent, et presque tout y reste à découvrir.')),
+      h('div', { class: 'owl-say' }, 'Hou hou ! Je range mes livres et je déroule mes cartes : tout un archipel nous entoure, et presque tout y reste à découvrir.')),
     h('p', {}, 'Bientôt, je te confierai des expéditions. Pour commencer, regarde l\'horizon depuis le ponton.'));
   game.ui.openPanel(body, { title: 'Le cartographe', icon: 'owl' });
 }

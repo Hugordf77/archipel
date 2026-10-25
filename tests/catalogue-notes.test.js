@@ -51,7 +51,7 @@ describe('notes du catalogue', () => {
   it('passe par le middleware de dev : POST enregistre, GET relit, sans perte', async () => {
     const file = tmpFile();
     const mw = notesMiddleware(file, '/projet');
-    const note = 'Toit à recolorer\nvoir la maison de Pommeraie';
+    const note = 'Toit à recolorer\nvoir la maison du village';
     const post = await call(mw, 'POST', { id: 'BAT-001', status: 'a-retravailler', note });
     expect(post.status).toBe(200);
     expect(post.body.note.status).toBe('a-retravailler');

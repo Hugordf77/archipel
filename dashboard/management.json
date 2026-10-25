@@ -83,7 +83,7 @@
   ],
   "roles": {
     "archipel-calibrateur": {
-      "inputs": "Île/archétype, défaut observé, contraintes et critères d’acceptation",
+      "inputs": "Île ou zone, défaut observé, contraintes et critères d’acceptation",
       "outputs": "Correction ciblée, fichiers touchés, contrôles et limites"
     },
     "archipel-critique": {

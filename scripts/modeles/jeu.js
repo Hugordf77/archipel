@@ -4,7 +4,7 @@
 // Dans la page du jeu :
 //   const { jeu } = await import('/scripts/modeles/jeu.js');
 //   await jeu({ espece: 'mouton', nom: 'mouton-v4' });     // un animal de la faune des îles
-//   await jeu({ x: -150, z: 379, nom: 'pommeraie' });      // ou un endroit (x, z absolus)
+//   await jeu({ x: 716, z: -980, nom: 'plateau-vente' });  // ou un endroit (x, z absolus)
 // Piège : remettre __ile.game.skipSave = true après chaque rechargement à chaud (fait ici à chaque appel).
 
 const tris = (g) => (g.index ? g.index.count : g.attributes.position.count) / 3;

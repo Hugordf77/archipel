@@ -1,7 +1,7 @@
 # Archipel
 
-Un jeu d'exploration 3D en Three.js où l'on découvre un archipel de neuf îles, récolte des
-ressources, aménage son île et navigue entre des paysages peints. Le rendu pastel et les formes
+Un jeu d'exploration 3D en Three.js où l'on découvre un monde ouvert, « L'archipel des souvenirs »
+(6 × 4 km, une grande île et une quarantaine d'îles et d'îlots), récolte des ressources, aménage son île et navigue entre des paysages peints. Le rendu pastel et les formes
 douces gardent une ambiance chaleureuse et contemplative.
 
 ## Lancer le jeu
@@ -91,43 +91,32 @@ Tests : `tests/locomotion.test.js` (moteur et poses) et `tests/gamepad.test.js`.
 
 ## Archipel
 
-Le monde est un archipel fini : un carré de 2,4 × 2,4 km, l'île de départ au centre et neuf îles
-fixes, une par archétype. `src/world/archipel.js` est la seule source de vérité : nom, position,
-rayon, biome, graine et retouches de chaque île, ainsi que les éléments de la mer.
+Le monde est un monde ouvert, « L'archipel des souvenirs » : un rectangle de 6 × 4 km tracé d'après la
+carte de référence (4 m par pixel), l'île de départ en (0, 0) au sud de la Grande Île, nord = −Z.
+`src/world/archipel.js` est la seule source de vérité : 42 îles (17 îles et 25 îlots, pitons et bancs)
+avec leur silhouette et leurs reliefs tracés à la main, 24 zones nommées (biome, part de forêt, arbres,
+décor), 5 Îles célestes flottantes et la limite du monde. Détail et état d'avancement : `LIVRAISONS.md`.
 
-| Île | Identifiant | Archétype · biome | Centre (x, z) | Rayon |
-| --- | --- | --- | --- | --- |
-| Village de Pommeraie | `village-pommeraie` | village au moulin · prairie | (−170, 400) | 80 m |
-| Île aux Mille Fleurs | `ile-aux-mille-fleurs` | champs de fleurs · prairie | (250, 430) | 66 m |
-| Rocher Percé | `rocher-perce` | îlot-curiosité · glace | (−320, −330) | 42 m |
-| Falaises de Nacre | `falaises-de-nacre` | falaises au phare · tropical | (760, −160) | 74 m |
-| Mont des Aigles | `mont-des-aigles` | montagne · pins | (−700, −480) | 135 m |
-| Bois des Lanternes | `bois-des-lanternes` | forêt profonde · champignons | (−820, 160) | 100 m |
-| Cratère de Braise | `cratere-de-braise` | cratère · volcan | (180, −820) | 95 m |
-| Dunes du Mirage | `dunes-du-mirage` | dunes · dunes | (820, 330) | 88 m |
-| Lagon Turquoise | `lagon-turquoise` | lagon · atoll | (640, 700) | 72 m |
+- **Génération** : la chaîne de `src/world/islands/gen/` (dans un Web Worker) produit relief, côtes,
+  eau douce, zones et végétation de chaque île (`forme.js`, `plan.js`). Les îles de plus de 420 m de
+  rayon sont découpées en sections de 512 m (`sections.js`). Lieux, villages, chemins et faune
+  (`pois.js`, `paths.js`, `spawns.js`) ne tournent que pour une île qui décrit ses lieux (`lieux` :
+  recette, accostage, noms, troupeaux) ; aucune zone du jeu n'en décrit encore (étape « bases »).
+- **Niveaux de détail** : silhouettes de toutes les îles au démarrage, puis l'île (ou la section) à 4 m
+  à moins de 600 m et les tuiles au mètre à moins de 220 m.
+- **Mer** : éléments à positions fixes (`ARCHIPEL.marine`), vides à l'étape « bases ».
+- **Limite du monde** : brume du large dès 100 m avant le bord de l'emprise, courant qui ramène le
+  bateau (et l'albatros) au-delà du bord, demi-tour automatique 250 m plus loin (`worldLimit`). Le
+  radeau va jusqu'à 600 m du départ, la barque jusqu'à 1 050 m, voilier et goélette jusqu'à la limite.
+- **Carte et journal** : la carte est bornée à l'emprise, les zones y sont nommées (pâles tant qu'on ne
+  les a pas découvertes), les îles inconnues en pointillés ; un bandeau annonce chaque zone en jeu.
+- **Migration** (`GEN_VERSION` 4) : une ancienne partie se charge, le monde repart de zéro (brouillard,
+  îles notées, lieux, récoltes, terrassements, épingles) ; inventaire, maison et bateaux sont gardés,
+  joueur et bateau ramenés au départ.
 
-- **Génération** : relief, eau, végétation, lieux et chemins restent produits par la chaîne de
-  `src/world/islands/gen/` (dans un Web Worker), mais pour cette liste fixe. Les retouches à la main
-  passent par `overrides` : `pois` (lieux imposés), `removePois` (lieux interdits), `name`, `traits`
-  (nom du village, couleur du moulin, curiosité…).
-- **Niveaux de détail** : toutes les silhouettes sont chargées au démarrage, puis l'île entière à 4 m
-  (moins de 600 m) et les tuiles au mètre (moins de 220 m).
-- **Mer** : 48 éléments à positions fixes (bouées, bouteilles, caisses, algues, récifs, bancs de
-  poissons).
-- **Limite du monde** : dès 1,1 km du centre, la brume du large referme la vue ; au-delà de 1,2 km,
-  un courant doux ramène le bateau (et l'albatros) vers l'archipel ; au-delà de 1,4 km, demi-tour
-  automatique. Le radeau va jusqu'à 600 m, la barque jusqu'à 1 050 m, voilier et goélette jusqu'à la
-  limite.
-- **Carte et journal** : la carte est bornée à l'archipel (« Tout l'archipel » le montre en entier),
-  les îles inconnues y sont en pointillés ; le journal compte « X / 9 îles » et la part de
-  l'archipel découverte.
-- **Migration** (`GEN_VERSION` 3) : une sauvegarde du monde infini rattache chaque île de son journal
-  à l'île de l'archipel du même archétype ; récoltes, terrassements, éléments marins ramassés,
-  épingles et brouillard sont ramenés à l'archipel.
-
-Tests : `tests/world.test.js` (archipel, limite du large avec le vrai bateau, migration, et la chaîne
-de génération sur les 9 îles et 45 variantes), `tests/marine.test.js`.
+Tests : `tests/world.test.js` (archipel, sections, limite du large avec le vrai bateau, migration,
+budget du Worker, et la passe des lieux sur l'île d'essai `tests/fixtures/ile-essai.js` et ses 5
+variantes), `tests/ciel.test.js`, `tests/marine.test.js`, tests de zone `tests/zones/`.
 
 ## Catalogue des modèles
 
@@ -165,7 +154,7 @@ les voir, les comparer et les retravailler.
   - `npm run modeles:index` : après l'ajout ou le renommage d'un dossier, réécrit `index.gen.js` (les
     fiches) et `physique.gen.js` (l'encombrement de chaque espèce, lu par la génération des îles) ;
   - `npm run modeles:releve` : après un changement voulu d'un modèle, remesure les tailles et recense
-    l'usage de chaque modèle sur les neuf îles (`releves.gen.js`) ;
+    l'usage de chaque modèle par zone du monde ouvert (`releves.gen.js`) ;
   - `npm run modeles:empreinte` : vérifie que chaque modèle et chaque variante gardent exactement leur
     géométrie, leur physique et leur fiche (`-- --ecrire` après un changement voulu) ;
   - `npm run modeles:fiches` : crée le `FICHE.md` des dossiers qui n'en ont pas.

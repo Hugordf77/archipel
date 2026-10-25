@@ -5,7 +5,7 @@
     {
       "fichier": "tests/empreintes.test.js",
       "test": "empreintes des modèles sont identiques à la référence (géométrie, physique, tables du jeu)",
-      "raison": "Sur la branche du monde ouvert : empreintes du personnage PER-001 à PER-004 différentes de la fixture (changement de l’épée antérieur, à valider puis npm run modeles:empreinte -- --ecrire)",
+      "raison": "Sur la branche du monde ouvert : empreintes du personnage (PER-001 à PER-023) et de la grimpe des palmiers de la maison (ileDepart.obstacles.44 à 49) différentes de la fixture (changements antérieurs, dont l’épée, à valider puis npm run modeles:empreinte -- --ecrire) ; constat complété le 25/10/2026",
       "depuis": "2026-10-21",
       "accepte_par": "état courant documenté dans LIVRAISONS.md"
     }

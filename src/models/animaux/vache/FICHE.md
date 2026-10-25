@@ -46,8 +46,9 @@ soit 1,21 m).
 - **Version allégée** (au-delà de 20 m) : mêmes 8 pièces, pivots, animations et parents ; 3 104 triangles.
 - **Physique** : le jeu ne fait buter ni le joueur ni la faune sur les animaux. `okAt` (faune) ne regarde que le
   relief et l'eau ; `obstacleAt` (joueur) ne lit que les obstacles fixes des îles. Pas de `physique.js`.
-- **En jeu** : troupeau de 3 vaches aux robes mêlées sur le pré de Pommeraie, à l'ouest du verger
-  (`archipel.js`, `overrides.faune`).
+- **En jeu** : pas encore placée dans le monde ouvert (étape « bases » : pas de faune). Un troupeau de 3 vaches
+  aux robes mêlées se pose à la main par les lieux d'une île (`lieux.faune`, `gen/spawns.js`) : c'est le cas
+  de l'île d'essai des tests (`tests/fixtures/ile-essai.js`).
 
 Mesures (`node scripts/modeles/mesure.mjs ANI-003`) : 8 pièces (allégé : 8), 9 785 triangles fin et 3 104
 allégé, gabarit 0,84 × 1,59 × 1,98 m, pattes / garrot 34 %, jonctions patte-corps à 0 cm, tête / corps 62 %,

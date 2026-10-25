@@ -1,7 +1,8 @@
 # Archipel — consignes pour l'IA
 
-Jeu web 3D (Three.js r170, Vite, Vitest) : un archipel de neuf îles peintes, explorées à pied, en bateau
-et en vol. Tout le code, les commentaires et les documents sont en français.
+Jeu web 3D (Three.js r170, Vite, Vitest) : un monde ouvert peint, « L'archipel des souvenirs » (6 × 4 km,
+`src/world/archipel.js`), exploré à pied, en bateau et en vol. Tout le code, les commentaires et les
+documents sont en français.
 
 ## Lire d'abord
 

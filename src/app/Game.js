@@ -81,7 +81,7 @@ export class Game {
     this.state = migrate(await loadSave());
     this.audio = new AudioEngine(this.state.settings.volumes);
 
-    // --- archipel : les neuf îles fixes d'archipel.js ---
+    // --- archipel : les îles du monde ouvert (archipel.js), sections comprises ---
     this.islands = new IslandManager({
       root: this.world.root,
       leafTex: this.world.leafTex,
@@ -1020,7 +1020,7 @@ export class Game {
     if (zn && zn.id !== 'home') this.ui.zoneBanner(zn.name, zn.sous);
   }
 
-  // Ancienne génération : les îles notées gardent leur entrée, rattachée à l'île du même archétype
+  // Ancienne génération : seules les îles notées qui existent encore gardent leur entrée
   relinkDiscoveries() {
     if (relinkDiscoveries(this.state)) this.markDirty();
   }

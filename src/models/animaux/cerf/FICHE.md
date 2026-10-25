@@ -53,7 +53,8 @@ Reprise complète du 19/10/2026, G étant la hauteur au garrot (0,97 m avant l'�
   moins de facettes ; sans naseaux ni reflet de truffe. 2 184 triangles.
 - **Physique** : comme la vache, pas de `physique.js` : le jeu ne fait buter ni le joueur ni la faune sur les animaux
   (`okAt` ne regarde que le relief et l'eau ; `obstacleAt` ne lit que les obstacles fixes des îles).
-- **En jeu** : Île aux Mille Fleurs (un cerf, clairière), farouche (`shy: 7`), il s'écarte du joueur.
+- **En jeu** : pas encore placé dans le monde ouvert (étape « bases » : pas de faune) ; tiré par la faune des
+  prés et des clairières (`gen/spawns.js`), farouche (`shy: 7`), il s'écarte du joueur.
 
 Mesures (`node scripts/modeles/mesure.mjs ANI-004`) : 8 pièces (allégé : 8), 5 909 triangles fin et 2 184 allégé,
 gabarit 0,86 × 2,16 × 1,51 m, pattes / garrot 42 % (exception de la fiche), jonctions patte-corps à 0 cm, tête / corps

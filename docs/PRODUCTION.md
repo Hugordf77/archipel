@@ -303,9 +303,9 @@ monde ouvert n’a ni lieux, ni chemins, ni villages, ni faune, ni ressources : 
   (correspondance « nom » quand le jeu porte le même nom, sinon « proposition » à confirmer) ;
   `cascades-sacrees` n’a pas de zone du checklist. Une zone sans zone du jeu verrait ses tâches de
   gameplay et d’intégration suspendues (clarification).
-- Le relevé d’usage des modèles (`USAGE` de `releves.gen.js`) date encore des neuf îles d’avant le monde
-  ouvert : `npm run modeles:releve` est à relancer ; la carte relie donc les assets par les espèces de
-  chaque zone, pas par ce relevé.
+- Le relevé d’usage des modèles (`USAGE` de `releves.gen.js`) est recensé par zone du monde ouvert depuis
+  le 25/10/2026 (`npm run modeles:releve`) ; la carte relie encore les assets par les espèces de chaque
+  zone, pas par ce relevé.
 - Les agents ne s'exécutent pas d'eux-mêmes : le coordinateur les lance avec le brief. Le temps et le
   coût des agents ne sont pas mesurés (l'hôte ne les expose pas au dépôt).
 - Le contrôle `suite` compare aux échecs connus de `production/echecs-connus.json` ; `build` lance
