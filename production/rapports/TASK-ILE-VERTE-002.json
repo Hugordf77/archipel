@@ -1,0 +1,81 @@
+{
+  "task_id": "TASK-ILE-VERTE-002",
+  "agent": "asset-artist",
+  "etat_final": "termine",
+  "resume": "Tentative 3 après second refus d'Evis-critique (gabarit de AST-ILE-VERTE-001 : borne intérieure hors du tronc d'ARB-015). Inventaire des assets de L'Île Verte (Ton île + Côte aux villages, Forêt des souvenirs, Plateau venté) relié au registre : 47 existants (38 employés aujourd'hui en jeu, dont les 5 trésors du jour de Ton île OBJ-012 à OBJ-016 ajoutés ; 9 proposés pour les lieux de la fiche) et 1 manquant spécifié (AST-ILE-VERTE-001, marques de mémoire de l'arbre-mémoire, statut specification, gabarit recalé sur la géométrie réelle d'ARB-015). Les 14 espèces placées par placeFloraForme sur la Grande Île ont toutes un modèle au registre via kind:<espèce>. Aucun modèle 3D créé ni modifié.",
+  "fichiers": [
+    {
+      "path": "production/assets/ZONE-ILE-VERTE.json",
+      "action": "cree",
+      "nature": "specification"
+    }
+  ],
+  "livrables_attendus": [
+    "production/assets/ZONE-ILE-VERTE.json"
+  ],
+  "livrables_fournis": [
+    "production/assets/ZONE-ILE-VERTE.json"
+  ],
+  "tests": [
+    {
+      "commande": "node <scratchpad>/inv-ile-verte.mjs (depuis le worktree)",
+      "resultat": "reussi",
+      "detail": "buildPlan(grande-ile), graine 1611319869, GEN_VERSION 4, 1,3 s : 32 282 éléments, 0 lieu, 0 chemin, 0 spawner. Par zone (case ZI) : 14 espèces, toutes reliées au registre par kind: (ARB-001, 002, 003, 007, 009, 010 ; PLA-001, 003, 006, 007, 013 ; ROC-001, 002, 007), aucune sans modèle. Comptes identiques à ceux de la fiche (ex. forêt 7 293 pompons, 3 101 érables, 645 saules, 467 cerisiers)."
+    },
+    {
+      "commande": "node <scratchpad>/inv-rivieres.mjs",
+      "resultat": "reussi",
+      "detail": "Largeur d'eau aux croisements des chemins proposés : rivière 0 5,79 m en (264, −685) et 4,91 m en (76, −1005) ; rivières 4, 7, 11 de 2,96 à 4,29 m. STR-003 Pont (len réglable 3 à 10 m) les franchit ; sa longueur par défaut (5 m) ne franchit pas la rivière 0."
+    },
+    {
+      "commande": "node <scratchpad>/inv-verif.mjs <scratchpad>/inv-ile-verte.json",
+      "resultat": "reussi",
+      "detail": "Pré-contrôle local (relancé à la tentative 2) : verifierInventaire (src/production/contrats.js) avec idsCatalogue (clés de TAILLES) : 0 erreur ; 47 identifiants sans doublon (38 employés, 9 proposés) ; chaque espèce mesurée figure dans existants ; chaque fichier source cité existe et chaque numéro de ligne est dans le fichier."
+    },
+    {
+      "commande": "grep et lecture de src/gameplay/collectibles.js, src/models/objets/tresors/index.js, src/app/Game.js",
+      "resultat": "reussi",
+      "detail": "Trésors du jour de Ton île : Collectibles créé en src/app/Game.js:143 et régénéré chaque jour en src/app/Game.js:914 ; refresh tire 9 trésors de plage (src/gameplay/collectibles.js:79-94, espèce à la ligne 92 : perle, coquillage, verre, étoile) et 2 pêches sous l'arbre fruitier (lignes 96-101), maillage collectibleMesh (ligne 106) des fiches OBJ-012 à OBJ-016 (collect:<espèce>, src/models/objets/tresors/index.js:43-50)."
+    },
+    {
+      "commande": "node -e (hauteur des branches et du dessous du houppier d'ARB-015, formules de src/models/arbres/arbre-geant/index.js:18-28)",
+      "resultat": "reussi",
+      "detail": "Formules de src/models/arbres/arbre-geant/index.js:18-28 : tronc G.cyl(1.1, 1.8, 7) de rayon 1,8 − 0,1 × y (1,21 m à 5,9 m, 1,17 m à 6,27 m, 1,11 m à 6,9 m, 1,10 m à 7 m) ; branche y = 6,5 + 3 × (d − 0,5) / 3,5, sortie du tronc vers 1,08 m de l'axe ; 7,27 m à 1,4 m, 8,21 m à 2,5 m ; dessous du houppier 7,86 / 8,13 / 8,50 m à 2 / 2,5 / 3 m. Gabarit (tentative 3) : attaches de 1,4 à 2,5 m de l'axe (7,3 à 8,2 m), bas des marques de 6,27 à 7,61 m (6,3 à 7,6 m), anneau de 1,4 à 2,6 m, marge au tronc 0,23 m pour la marque la plus basse, encombrement 5,2 × 1,9 × 5,2 m."
+    },
+    {
+      "commande": "grep des appels de constructeurs du registre dans src/world/home/ (props.js, details.js, flowers.js) et des instanciations sur Ton île (Owl.js, homeFauna.js, Game.js, state.js, Sailing.js)",
+      "resultat": "reussi",
+      "detail": "19 modèles du registre appelés ou instanciés pour Ton île hors trésors (lignes citées dans l'inventaire), plus les 5 trésors du jour (ligne suivante) ; petits arbres, palmiers et fleurs de Ton île faits main, hors registre."
+    },
+    {
+      "commande": "Capture en jeu / planche du catalogue",
+      "resultat": "non_execute",
+      "detail": "Livrable d'inventaire sans modèle créé : aucun contrôle visuel lancé, aucun serveur ouvert."
+    }
+  ],
+  "erreurs": [],
+  "hypotheses": [
+    "L'Île Verte = home + cote-aux-villages + foret-des-souvenirs + plateau-vente (correspondance de la fiche validée). Appartenance d'un élément de la Grande Île = zone de sa case dans le plan (ZI), comme la fiche.",
+    "USAGE de src/models/releves.gen.js (neuf îles d'avant le monde ouvert) n'est jamais pris comme preuve d'usage ; seules comptent la génération mesurée et les appels de code cités.",
+    "Pour Ton île, sont comptés comme employés les modèles appelés par src/world/home/ ainsi que le hibou (Owl.js, au repère spots.owl), la faune de départ (homeFauna.js), le radeau de départ amarré au ponton (state.js, Sailing.js) et les trésors du jour (collectibles.js), instanciés par le jeu sur Ton île. Le nombre de coquillages, verres, étoiles et perles varie chaque jour (9 trésors de plage tirés au hasard) : leur compte est laissé à null.",
+    "Les 9 existants « propose » répondent à des lieux en proposition dans la fiche (village, débarcadère, moulins, arbre-mémoire, phare, pont, abri) : rien n'est placé en jeu ; leur adéquation visuelle (échelle, lisibilité sur place) reste à vérifier à l'intégration.",
+    "Le manque AST-ILE-VERTE-001 découle du POI-14 et de la narration (en proposition) de la fiche : ARB-015 seul est un repère générique, sans signe de mémoire.",
+    "Les marques de AST-ILE-VERTE-001 pendent sous le houppier d'ARB-015, entre 6,3 et 8,2 m : leur lisibilité depuis le sol et à 15 m n'est pas vérifiée ; si elle est insuffisante, ARB-015 devra recevoir des branches basses (modification d'un modèle validé, sur autorisation)."
+  ],
+  "decisions": [
+    "Un besoin couvert par un modèle du registre est inscrit dans existants (statut_usage « propose ») plutôt qu'inventé comme manque : village (BAT-001, STR-019, NAV-005), débarcadère (STR-001), moulins (BAT-004), arbre-mémoire (ARB-015), phare (BAT-006), pont (STR-003, longueur à régler pour la rivière 0), abri sous l'escarpement (MON-003).",
+    "Effets d'ambiance (vent visible, lumière sous le couvert), rampe du plateau et végétation faite main de Ton île listés en « hors_inventaire » : ce ne sont pas des modèles du registre.",
+    "Checklist : seul D10 est coché (D01, D02 et D07 retirés du périmètre de la tâche par décision humaine tracée).",
+    "Tentative 2 : corrections limitées aux deux défauts relevés en revue (trésors du jour OBJ-012 à OBJ-016 ajoutés en employés, bilan à 38 employés ; gabarit de AST-ILE-VERTE-001 calé sur la géométrie réelle d'ARB-015).",
+    "Tentative 3 : seule correction, le gabarit de AST-ILE-VERTE-001 : borne intérieure de l'anneau portée de 1,0 à 1,4 m de l'axe (hors du tronc), attaches 7,3 à 8,2 m, bas des marques 6,3 à 7,6 m, anneau 1,4 à 2,6 m, encombrement 5,2 × 1,9 × 5,2 m."
+  ],
+  "checklist": [
+    "ZONE-ILE-VERTE.D10"
+  ],
+  "dependances_restantes": [
+    "Revue indépendante de l'inventaire par evis-critique.",
+    "AST-ILE-VERTE-001 à produire selon la skill modele-3d (nouvel identifiant OBJ du registre) quand l'arbre-mémoire sera placé.",
+    "Placement des lieux proposés (village, débarcadère, moulins, arbre-mémoire, phare, ponts, abri) : étape lieux du monde ouvert, hors de cette tâche."
+  ],
+  "prochaine_etape": "Revue par evis-critique (npm run prod -- revue TASK-ILE-VERTE-002 --acteur evis-critique …)."
+}

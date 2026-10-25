@@ -1,0 +1,531 @@
+{
+  "version": 2,
+  "mis_a_jour": "2026-10-24",
+  "reference": {
+    "carte": "dashboard/reference/carte-souvenirs.webp (carte de référence, 4 m par pixel : celle dont le monde a été tracé)",
+    "monde": "src/world/archipel.js (GEN_VERSION 4, monde ouvert « L’archipel des souvenirs », 24 zones nommées)",
+    "note": "Chaque zone du checklist renvoie aux identifiants des zones du jeu (ZONES d'archipel.js, plus « home » pour Ton île) ; position, aire et biome viennent du jeu, jamais recopiés ici. Correspondance « nom » : même nom dans le jeu ; « proposition » : rapprochement à confirmer. Le PDF checklist_archipel_des_souvenirs_19_zones.pdf n'est pas dans le dépôt.",
+    "zones_du_jeu_hors_checklist": [
+      "cascades-sacrees"
+    ]
+  },
+  "zones": [
+    {
+      "id": "ZONE-ILE-VERTE",
+      "ordre": 1,
+      "nom": "L’Île Verte",
+      "description": "Ton île de départ et le cœur de la Grande Île : côte aux villages, forêt des souvenirs, plateau venté.",
+      "type": "île de départ",
+      "priorite": "P1",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-PLAINES-COLOREES",
+        "ZONE-GROTTES-CACHEES",
+        "ZONE-ILE-DE-PIERRE"
+      ],
+      "dependances": [],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "home",
+          "cote-aux-villages",
+          "foret-des-souvenirs",
+          "plateau-vente"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-FALAISES-OUBLIEES",
+      "ordre": 2,
+      "nom": "Les Falaises Oubliées",
+      "description": "Grottes, ponts naturels et villages en ruines.",
+      "type": "falaises",
+      "priorite": "P2",
+      "responsable": "world-designer",
+      "confiance": "partielle",
+      "connexions": [
+        "ZONE-DESERT-ILE-SECHE",
+        "ZONE-ILE-SOUS-MARINE"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "falaises-oubliees"
+        ],
+        "correspondance": "nom"
+      }
+    },
+    {
+      "id": "ZONE-ILE-VOLCANIQUE",
+      "ordre": 3,
+      "nom": "L’Île Volcanique",
+      "description": "Volcan endormi : cratères, lave et créatures préhistoriques.",
+      "type": "volcan",
+      "priorite": "P2",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-ILE-DES-CIEUX",
+        "ZONE-LAC-CELESTE"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "volcan-endormi"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-FORET-BRUMEUSE",
+      "ordre": 4,
+      "nom": "La Forêt Brumeuse",
+      "description": "Brouillard et créatures étranges.",
+      "type": "forêt",
+      "priorite": "P2",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-VILLAGE-ENGLOUTI",
+        "ZONE-ARCHIPEL-DES-TEMPETES"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "ile-brumeuse"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-LAC-CELESTE",
+      "ordre": 5,
+      "nom": "Le Lac Céleste",
+      "description": "Eau cristalline et îles suspendues.",
+      "type": "lac",
+      "priorite": "P3",
+      "responsable": "world-designer",
+      "confiance": "partielle",
+      "connexions": [
+        "ZONE-ILE-VOLCANIQUE",
+        "ZONE-ILE-DES-CIEUX"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "lac-celeste"
+        ],
+        "correspondance": "nom"
+      }
+    },
+    {
+      "id": "ZONE-ARCHIPEL-DES-TEMPETES",
+      "ordre": 6,
+      "nom": "L’Archipel des Tempêtes",
+      "description": "Îles changeantes et cieux en colère.",
+      "type": "archipel",
+      "priorite": "P3",
+      "responsable": "world-designer",
+      "confiance": "partielle",
+      "connexions": [
+        "ZONE-FORET-BRUMEUSE",
+        "ZONE-ILE-DU-SILENCE"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "archipel-des-tempetes"
+        ],
+        "correspondance": "nom"
+      }
+    },
+    {
+      "id": "ZONE-ILE-DE-PIERRE",
+      "ordre": 7,
+      "nom": "L’Île de Pierre",
+      "description": "Îlot rocheux à arche ; vestiges d’une ancienne civilisation.",
+      "type": "îlot-curiosité",
+      "priorite": "P3",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-ILE-VERTE",
+        "ZONE-ILE-DES-GEANTS"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "ruines-gelees"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-PLAINES-COLOREES",
+      "ordre": 8,
+      "nom": "Les Plaines Colorées",
+      "description": "Champs de fleurs, forêts enchantées et faune rare.",
+      "type": "champs de fleurs",
+      "priorite": "P2",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-ILE-VERTE",
+        "ZONE-ILE-DE-L-AUBE-PERDUE"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "ile-aux-fleurs"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-ILE-SOUS-MARINE",
+      "ordre": 9,
+      "nom": "L’Île Sous-Marine",
+      "description": "Récifs mystérieux et créatures abyssales ; demande une mécanique de plongée.",
+      "type": "sous-marine",
+      "priorite": "P3",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-FALAISES-OUBLIEES",
+        "ZONE-VILLAGE-ENGLOUTI"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "ocean-sans-fin"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-ILE-DES-CIEUX",
+      "ordre": 10,
+      "nom": "L’Île des Cieux",
+      "description": "Îles flottantes et temples célestes ; accès par le vol.",
+      "type": "îles flottantes",
+      "priorite": "P3",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-ILE-VOLCANIQUE",
+        "ZONE-LAC-CELESTE"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "iles-celestes"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-ILE-DESOLEE",
+      "ordre": 11,
+      "nom": "L’Île Désolée",
+      "description": "Épaves et créatures marines.",
+      "type": "île",
+      "priorite": "P4",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-GROTTES-CACHEES",
+        "ZONE-ILE-DE-L-AUBE-PERDUE"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "place-des-os"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-VILLAGE-ENGLOUTI",
+      "ordre": 12,
+      "nom": "Le Village Englouti",
+      "description": "Une ville sous la mer, visible à marée basse.",
+      "type": "village sous-marin",
+      "priorite": "P3",
+      "responsable": "world-designer",
+      "confiance": "partielle",
+      "connexions": [
+        "ZONE-FORET-BRUMEUSE",
+        "ZONE-ILE-SOUS-MARINE"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        },
+        {
+          "zone": "ZONE-ILE-SOUS-MARINE",
+          "raison": "mécanique de plongée ou de marée à concevoir d’abord (proposition)"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "village-englouti"
+        ],
+        "correspondance": "nom"
+      }
+    },
+    {
+      "id": "ZONE-ILE-DES-GEANTS",
+      "ordre": 13,
+      "nom": "L’Île des Géants",
+      "description": "Grande montagne aux sommets enneigés et ruines anciennes.",
+      "type": "montagne",
+      "priorite": "P2",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-ILE-DE-PIERRE",
+        "ZONE-ILE-DU-SILENCE"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "sommet-givre"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-COTE-AUX-COQUILLAGES",
+      "ordre": 14,
+      "nom": "La Côte aux Coquillages",
+      "description": "Lagon, rochers et plages.",
+      "type": "lagon",
+      "priorite": "P3",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-DESERT-ILE-SECHE",
+        "ZONE-ILE-DE-L-AUBE-PERDUE"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "ile-du-soleil-couchant"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-ILE-DE-L-AUBE-PERDUE",
+      "ordre": 15,
+      "nom": "L’Île de l’Aube Perdue",
+      "description": "Forêts bioluminescentes et vie sauvage.",
+      "type": "île",
+      "priorite": "P3",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-PLAINES-COLOREES",
+        "ZONE-COTE-AUX-COQUILLAGES"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "ile-aux-lueurs"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-ILOTS-SECRETS",
+      "ordre": 16,
+      "nom": "Les Îlots Secrets",
+      "description": "Petites îles et trésors cachés.",
+      "type": "îlots",
+      "priorite": "P4",
+      "responsable": "world-designer",
+      "confiance": "partielle",
+      "connexions": [
+        "ZONE-VILLAGE-ENGLOUTI"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "ilots-secrets"
+        ],
+        "correspondance": "nom"
+      }
+    },
+    {
+      "id": "ZONE-GROTTES-CACHEES",
+      "ordre": 17,
+      "nom": "Les Grottes Cachées",
+      "description": "Réseaux souterrains et lacs luminescents.",
+      "type": "grottes",
+      "priorite": "P3",
+      "responsable": "world-designer",
+      "confiance": "proposition",
+      "connexions": [
+        "ZONE-ILE-VERTE",
+        "ZONE-ILE-DESOLEE"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "grottes-de-cristal",
+          "grotte-lumineuse"
+        ],
+        "correspondance": "proposition"
+      }
+    },
+    {
+      "id": "ZONE-DESERT-ILE-SECHE",
+      "ordre": 18,
+      "nom": "Le Désert de l’Île Sèche",
+      "description": "Sables, cendres et vestiges.",
+      "type": "dunes",
+      "priorite": "P2",
+      "responsable": "world-designer",
+      "confiance": "partielle",
+      "connexions": [
+        "ZONE-FALAISES-OUBLIEES",
+        "ZONE-COTE-AUX-COQUILLAGES"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "desert-ile-sechee",
+          "royaume-des-ruines"
+        ],
+        "correspondance": "nom"
+      }
+    },
+    {
+      "id": "ZONE-ILE-DU-SILENCE",
+      "ordre": 19,
+      "nom": "L’Île du Silence",
+      "description": "Le phare abandonné et ses secrets.",
+      "type": "île",
+      "priorite": "P3",
+      "responsable": "world-designer",
+      "confiance": "partielle",
+      "connexions": [
+        "ZONE-ARCHIPEL-DES-TEMPETES",
+        "ZONE-ILE-DES-GEANTS"
+      ],
+      "dependances": [
+        {
+          "zone": "ZONE-ILE-VERTE",
+          "raison": "point de départ : bateau et progression"
+        }
+      ],
+      "non_applicable": [],
+      "jeu": {
+        "zones": [
+          "ile-du-silence"
+        ],
+        "correspondance": "nom"
+      }
+    }
+  ]
+}

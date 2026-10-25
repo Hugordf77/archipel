@@ -199,6 +199,14 @@ dans la skill `modele-3d` (`.claude/skills/modele-3d/SKILL.md`).
   `kit/` employée ailleurs se demande ; les empreintes des autres modèles restent identiques ; `git add`
   avec des chemins explicites.
 
+## Production de l’open world
+
+Tableau de bord : `/dashboard.html` (section « Chantier ») avec la carte de chantier des 19 zones, leur
+checklist, les tâches des quatre agents, les validations et les assets. Ligne de commande :
+`npm run prod -- etat`, `npm run prod -- chantier ZONE-ILE-VERTE`, `npm run prod -- verifier`. Source de vérité :
+le journal `production/journal.jsonl` ; définitions : `production/zones.json`, `production/agents.json`.
+Référence complète : `docs/PRODUCTION.md`.
+
 ## Rendu (shaders GLSL sur mesure)
 
 1. **Toon** : rampe douce à 4 paliers, ombres teintées violet/bleu (jamais noires), rim light chaude,

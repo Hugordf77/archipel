@@ -1,0 +1,69 @@
+{
+  "task_id": "TASK-ILE-VERTE-003",
+  "agent": "gameplay",
+  "etat_final": "partiel",
+  "resume": "Test fonctionnel de L'Île Verte écrit sur les vrais modules, hors navigateur (tests/zones/ile-verte.test.js, 14 tests, vert en 5,4 s). Le vrai plan de la Grande Île (buildPlan + Surface) est branché sur navigation.js comme le fait IslandManager (sol, eau douce, obstacles des arbres et du décor). Accès (C10) : le départ (0, 4) est sur l'herbe sèche, le radeau amarré par Sailing.mooring en (12,9, 30,4) flotte, le détroit est navigable (règle clearWater de Sailing) du ponton à la plage nord, la première terre au nord du départ est entre z −156 et −140, dans la Côte aux villages, dans la portée du radeau ; le vrai radeau s'échoue en (2,5, −143,4), landingSpot trouve la plage en (2,5, −146,6), et le vrai Player monte à pied jusqu'à la prairie (6,8 m, z −207). Sortie (C11) : chaque zone touche plus de 200 m de côte praticable reliée à pied (2 457, 2 183 et 849 nœuds de 2 m) ; les cinq sorties par la mer de la fiche (SOR-01 à SOR-05) sont atteintes à pied, le vrai bateau y trouve une eau où flotter et une plage où débarquer, et leur mer est reliée au ponton de Ton île ; la plage nord est dans le même parcours à pied que tous les points de la fiche. Exploration (C02) : les trois zones sont contiguës deux à deux et sur la même terre ; les neuf points de la fiche sont dans leur zone et à pied d'œuvre depuis le débarquement ; plus de 95 % des nœuds de terre de chaque zone sont praticables (mesuré : côte 100 %, forêt 99,8 %, plateau 99,4 %) ; l'escarpement du Plateau venté (REP-03, 44 m entre (430, −701) et (460, −722)) est infranchissable de face mais contourné. Collecte (C04) : des arbres récoltables à la hache en bois poussent dans chaque zone (pompons, cerisiers, fruitiers, palmiers, érables, saules), et le vrai Gather abat un arbre de chaque zone avec la hache de départ (bois 3, branche 1), le marque récolté sous son identifiant stable dans sa section ; le décor (buissons, rochers…) n'est pas une cible. C01, C03, C08 et C09 ne sont pas couverts : rien n'est simulé.",
+  "fichiers": [
+    {
+      "path": "tests/zones/ile-verte.test.js",
+      "action": "cree",
+      "nature": "test"
+    }
+  ],
+  "livrables_attendus": [
+    "tests/zones/ile-verte.test.js"
+  ],
+  "livrables_fournis": [
+    "tests/zones/ile-verte.test.js"
+  ],
+  "tests": [
+    {
+      "commande": "npx vitest run tests/zones/ile-verte.test.js",
+      "resultat": "reussi",
+      "detail": "Test Files 1 passed (1) ; Tests 14 passed (14) ; 5,4 s (plan de la Grande Île, grille à pied de 2 m sur 1 361 × 941 nœuds, mer de 8 m)."
+    },
+    {
+      "commande": "npx vitest run tests/locomotion.test.js tests/player-movement.test.js",
+      "resultat": "reussi",
+      "detail": "Test Files 2 passed (2) ; Tests 53 passed (53). Contrôle de rôle : aucun fichier de locomotion modifié."
+    },
+    {
+      "commande": "npm test",
+      "resultat": "echoue",
+      "detail": "Test Files 1 failed | 25 passed (26) ; Tests 1 failed | 297 passed (298). Le nouveau test passe. Seul échec : tests/empreintes.test.js (empreinte de PER-001 : tris 7784 → 7944, etc.), sans rapport avec cette tâche (aucun fichier de src/ modifié ici) ; non corrigé, hors périmètre."
+    },
+    {
+      "commande": "copies du test hors du dépôt (scratchpad) avec un relief altéré, lancées par vitest",
+      "resultat": "reussi",
+      "detail": "Le test échoue quand l'accès ou la sortie disparaît : chenal comblé (fond à +0,2 m pour |x| < 80, −110 < z < −70) → 2 échecs (détroit, radeau) ; côte déplacée de 80 m au nord → 9 échecs ; côte en falaise de 6 m → 3 échecs (Player sur la plage, côtes praticables, sorties) ; côte est du plateau en falaise de 8 m (x > 1 150) → 1 échec (SOR-05 à pied). Copies non versionnées, rien d'écrit dans le dépôt."
+    }
+  ],
+  "erreurs": [],
+  "hypotheses": [
+    "Le raccord au sol reproduit IslandManager.heightAt / waterLevelAt sur le plan entier de la Grande Île (Surface sans terrassements ni ponts : il n'y en a pas à l'étape « bases ») ; le jeu, lui, charge des sections de 512 m taillées dans ce même plan (cropPlan), au relief identique aux raccords (tests/world.test.js).",
+    "Praticabilité à pied : grille de 2 m ; arête praticable si la pente passe climbable (motor.js) et reste sous slideAngle (55°, tuning « realiste ») dans les deux sens ; eau peu profonde (≤ 0,32 m) marchable, rivières et lacs traversés à la nage (Player nage en eau profonde), berge à moins de stepUp (0,4 m) au-dessus de l'eau ; mer profonde exclue ; nœud dans un obstacle (tronc, rocher, encombrement × échelle comme IslandManager) bloqué. Le relief fin entre deux nœuds de 2 m n'est pas vu ; les petites plantes des tuiles (herbes) ne sont pas des obstacles.",
+    "Mer navigable vers Ton île : grille de 8 m, profondeur > 0,45 m (règle du bateau) ; Ton île et la Grande Île au relief réel, les autres îles au relief de base (baseHeight, avant érosion).",
+    "Récolte : Gather, Inventory et harvest.js réels ; l'IslandManager est remplacé par une partie factice qui lit le plan de section (cropPlan) comme itemsNear (partie plan, sans les tuiles), et playAction appelle sa fin immédiatement (pas d'animation)."
+  ],
+  "decisions": [
+    "Aucune modification du code du jeu : le seul fichier écrit dans le dépôt (hors ce rapport) est tests/zones/ile-verte.test.js.",
+    "Le parcours à pied est un graphe non orienté (même règle de pente en montée et en descente) : un point atteint depuis la plage du débarquement peut aussi la rejoindre, ce qui sert à la fois l'accès et la sortie.",
+    "L'escarpement du Plateau venté est signalé par une assertion (franchissement de face impossible) plutôt que traité comme un défaut : le dessus du plateau reste atteint par une autre pente.",
+    "Les points et sorties testés sont ceux de la fiche ZONE-ILE-VERTE (positions monde) ; aucun nouveau seuil de conception n'est introduit hors des règles du jeu (Sailing, Player, climbable, slideAngle) : les seuils de comptage (100 nœuds de côte, 95 % de terre praticable, 50 contacts, 50 arbres échantillonnés) sont des planchers de non-régression, nettement sous les valeurs mesurées."
+  ],
+  "checklist": [
+    "ZONE-ILE-VERTE.C02",
+    "ZONE-ILE-VERTE.C04",
+    "ZONE-ILE-VERTE.C10",
+    "ZONE-ILE-VERTE.C11"
+  ],
+  "dependances_restantes": [
+    "ZONE-ILE-VERTE.C01 (Activités principales) non couvert : à l'étape « bases », aucune activité propre à la zone en jeu (ni lieux, ni villages, ni faune) ; seule la récolte d'arbres existe (testée sous C04). Rien n'est simulé.",
+    "ZONE-ILE-VERTE.C03 (Interactions) non couvert : aucune interaction de zone en jeu (pas de lieu, de personnage ni d'objet sur la Grande Île) ; celles de Ton île ne sont pas testées ici.",
+    "ZONE-ILE-VERTE.C08 (Récompenses) non couvert : aucune récompense de zone définie ; les ressources de récolte sont testées sous C04, sans valeur de récompense.",
+    "ZONE-ILE-VERTE.C09 (Progression) non couvert : place de la zone dans la progression non définie ; seul fait vérifié : la plage nord est dans la portée du radeau de départ (600 m), les sorties lointaines (SOR-01, SOR-02, SOR-04, SOR-05, à plus de 1 km de Ton île) ne le sont pas.",
+    "Accès en vol (ACC-04, SOR-08) non testé : AirRide n'est pas exercé.",
+    "Test d'intégration en jeu (IslandManager réel, sections chargées, obstacles des tuiles) laissé à TASK-ILE-VERTE-004."
+  ],
+  "prochaine_etape": "Revue indépendante (archipel-critique ou humain) du test et des critères non couverts (C01, C03, C08, C09) ; puis TASK-ILE-VERTE-004 (intégration et QA en jeu)."
+}

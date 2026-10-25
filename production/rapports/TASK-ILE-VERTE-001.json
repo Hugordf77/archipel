@@ -1,0 +1,78 @@
+{
+  "task_id": "TASK-ILE-VERTE-001",
+  "agent": "world-designer",
+  "etat_final": "termine",
+  "resume": "Fiche de zone de L'Île Verte rédigée (production/fiches/ZONE-ILE-VERTE.json) à partir de la vraie génération (GEN_VERSION 4) : périmètre englobant mesuré (centre (−58, −1246), rayon 1 384 m) sur les terres des zones cote-aux-villages, foret-des-souvenirs et plateau-vente du plan réel de la Grande Île et le disque de Ton île ; relief, biome (prairie), eau douce, végétation, repères, accès, sorties et connexions mesurés ; lieux de Ton île attestés par LAYOUT et spots. Chemins, lieux de la Grande Île, zones cachées et narration restent des propositions (étape « bases » : ni lieux ni chemins en jeu). Ambiance vérifiée en jeu à 11 h par trois captures.",
+  "fichiers": [
+    { "path": "production/fiches/ZONE-ILE-VERTE.json", "action": "cree", "nature": "specification" }
+  ],
+  "livrables_attendus": ["production/fiches/ZONE-ILE-VERTE.json"],
+  "livrables_fournis": ["production/fiches/ZONE-ILE-VERTE.json"],
+  "tests": [
+    {
+      "commande": "node <scratchpad>/mesure-ile-verte.mjs (depuis le worktree)",
+      "resultat": "reussi",
+      "detail": "Mesure sur buildPlan(grande-ile) (1,3 s) : 0 lieu et 0 chemin dans le plan ; aires de terre 0,567 / 1,158 / 0,604 km² ; points hauts 31,9 m (côte), 166,7 m (forêt), 71,2 m (plateau), 268,2 m (Sommet givré voisin) ; biome prairie sur 100 % des cases des trois zones ; cercle englobant minimal centre (−58, −1246), rayon 1 384 m ; zoneAt rend la zone attendue aux centroïdes, aux étiquettes et « home » en (0, 0) et (0, 4) ; terre la plus proche du départ en (−20, −140), plage en (0, −148)."
+    },
+    {
+      "commande": "node <scratchpad>/mesure-ile-verte-2.mjs",
+      "resultat": "reussi",
+      "detail": "Lac unique de la Grande Île au Lac céleste (886, −1294), hors zone ; cascades de la rivière 7 en forêt (−968, −1243) 3,7 m et (−1284, −1612) 3,6 m ; escarpement du plateau 48,8 m sur 24 m en (448, −716) ; sommets des collines posées."
+    },
+    {
+      "commande": "node <scratchpad>/mesure-ile-verte-3.mjs",
+      "resultat": "reussi",
+      "detail": "Plus courtes traversées de mer depuis les cases de côte des trois zones : Ruines gelées 141 m, Île des tempêtes 174 m, Grotte lumineuse 214 m (260 m depuis Ton île), Falaises oubliées 251 m, Île des cristaux 388 m, Île aux fleurs 409 m, Île séchée 500 m."
+    },
+    {
+      "commande": "node <scratchpad>/mesure-ile-verte-4.mjs",
+      "resultat": "reussi",
+      "detail": "Frontières terrestres (zoneAt sur l'axe des centroïdes) : forêt → Sommet givré vers (−410, −1472) à 99,9 m ; plateau → Lac céleste en (659, −1059) à 24,2 m ; côte → plateau (242, −672) ; côte → forêt (−278, −689) ; plateau → forêt (−29, −1030)."
+    },
+    {
+      "commande": "Navigateur intégré, http://localhost:5181 : __ile.game.skipSave = true ; __ile.setHour(11) ; __ile.tp / __ile.look / __ile.capture (fenêtre 1 280 × 720)",
+      "resultat": "reussi",
+      "detail": "Trois captures enregistrées : captures/ile-verte-depart-vers-grande-ile.png, captures/ile-verte-plateau-vente-vers-foret.png, captures/ile-verte-foret-des-souvenirs.png. Une première capture à fenêtre nulle (canvas 0 × 0, fichier de 3 octets) a été refaite après redimensionnement. Sol mesuré en jeu 60,8 m en (600, −880) et 66,1 m en (−760, −1000). Joueur ramené en (0, 4,5), heure rendue au cycle, sauvegarde jamais écrite (skipSave)."
+    },
+    {
+      "commande": "node -e (verifierFiche de src/production/contrats.js + existence des sources, comme le contrôle fiche-zone)",
+      "resultat": "reussi",
+      "detail": "Pré-contrôle local avant soumission : aucune erreur."
+    }
+  ],
+  "erreurs": [],
+  "hypotheses": [
+    "L'Île Verte = home + cote-aux-villages + foret-des-souvenirs + plateau-vente (correspondance « proposition » de production/zones.json, reprise telle quelle).",
+    "Les distances de mer vers les autres îles utilisent la hauteur de base (islandHeight, avant érosion) pour l'île d'arrivée et le plan réel pour la Grande Île : écart possible de quelques mètres.",
+    "Les points de frontière terrestre sont pris sur l'axe entre centroïdes, à la hauteur de base ; la pente du passage n'est pas mesurée : praticabilité à pied non vérifiée.",
+    "L'accès et la sortie en vol sont attestés par le code (AirRide.summon, touche G) mais aucun vol n'a été fait dans cette tâche.",
+    "« Falaise côtière » mesurée comme case à plus de 8 m à moins de 24 m de la côte : critère de mesure choisi ici, sans seuil documenté."
+  ],
+  "decisions": [
+    "Périmètre : cercle englobant minimal des terres réelles (et non des ellipses d'archipel.js, plus larges que la terre) ; il couvre aussi des parties du Sommet givré et du Lac céleste, l'appartenance se lit avec zoneAt.",
+    "Connexions : en plus des trois de production/zones.json, la fiche déclare les voisines mesurées (Île des géants et Lac céleste par la terre ; Archipel des tempêtes et Falaises oubliées par la mer) ; Îles des cieux et Île désolée restent en proposition. production/zones.json n'est pas modifié.",
+    "Le Sommet givré est cité comme repère attesté bien qu'hors zone : c'est le repère visible de loin depuis toute la zone (captures).",
+    "Rivières et cascades générées sont listées en points d'intérêt attestés comme éléments naturels, sans fonction de jeu ; tous les lieux de la Grande Île (village, moulins, arbre-mémoire, débarcadère) sont des propositions."
+  ],
+  "checklist": [
+    "ZONE-ILE-VERTE.B01",
+    "ZONE-ILE-VERTE.B02",
+    "ZONE-ILE-VERTE.B03",
+    "ZONE-ILE-VERTE.B04",
+    "ZONE-ILE-VERTE.B06",
+    "ZONE-ILE-VERTE.B07",
+    "ZONE-ILE-VERTE.B08",
+    "ZONE-ILE-VERTE.B09",
+    "ZONE-ILE-VERTE.B13",
+    "ZONE-ILE-VERTE.F01",
+    "ZONE-ILE-VERTE.F04"
+  ],
+  "dependances_restantes": [
+    "B04 : les chemins ne sont que proposés ; aucun chemin n'existe en jeu (rebrancher buildPaths par zone, LIVRAISONS.md « À faire ensuite »).",
+    "B09 : aucun lieu en jeu sur la Grande Île ; seuls les lieux de Ton île sont attestés.",
+    "F01 : narration en proposition, sans support en jeu au-delà des noms et sous-titres des zones.",
+    "F04 : une seule heure vérifiée (11 h) ; nuit, aube et crépuscule non capturés ; ambiance non propre à la zone (cycle global).",
+    "Déclarer éventuellement dans production/zones.json les connexions mesurées en plus (ZONE-ILE-DES-GEANTS, ZONE-LAC-CELESTE, ZONE-ARCHIPEL-DES-TEMPETES, ZONE-FALAISES-OUBLIEES) : hors du périmètre de cette tâche."
+  ],
+  "prochaine_etape": "Revue indépendante par archipel-critique (fiche et captures), puis TASK-ILE-VERTE-003 pour tester en jeu accès, sorties et passages (nage du détroit, accostage, frontières à pied, vol)."
+}

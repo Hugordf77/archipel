@@ -1,0 +1,98 @@
+{
+  "relations": [
+    {
+      "from": "coordinateur",
+      "to": "evis",
+      "label": "Brief modèle ciblé",
+      "kind": "production"
+    },
+    {
+      "from": "evis",
+      "to": "evis-critique",
+      "label": "Modèle, fiche, mesures",
+      "kind": "review"
+    },
+    {
+      "from": "evis-critique",
+      "to": "coordinateur",
+      "label": "Verdict et corrections",
+      "kind": "review"
+    },
+    {
+      "from": "coordinateur",
+      "to": "archipel-calibrateur",
+      "label": "Brief île / défaut observé",
+      "kind": "production"
+    },
+    {
+      "from": "archipel-calibrateur",
+      "to": "archipel-critique",
+      "label": "Diff et contrôles ciblés",
+      "kind": "review"
+    },
+    {
+      "from": "archipel-critique",
+      "to": "coordinateur",
+      "label": "Constats et recommandations",
+      "kind": "review"
+    },
+    {
+      "from": "coordinateur",
+      "to": "locomotion-physique",
+      "label": "Brief défaut / résultat attendu",
+      "kind": "production"
+    },
+    {
+      "from": "locomotion-physique",
+      "to": "coordinateur",
+      "label": "Reproducteur, correction et tests",
+      "kind": "production"
+    }
+  ],
+  "pipeline": [
+    {
+      "label": "Référence",
+      "detail": "Brief, intention et contraintes visuelles",
+      "owner": "À préciser"
+    },
+    {
+      "label": "Création",
+      "detail": "Modèle en code et fiche dans son dossier",
+      "owner": "evis"
+    },
+    {
+      "label": "Mesures",
+      "detail": "Dimensions, budget et contrôles automatisés",
+      "owner": "Scripts modeles:mesure"
+    },
+    {
+      "label": "Revue visuelle",
+      "detail": "Critique en lecture seule, défauts et corrections",
+      "owner": "evis-critique"
+    },
+    {
+      "label": "Catalogue",
+      "detail": "Registre partagé et statut de travail",
+      "owner": "Jeu + catalogue"
+    },
+    {
+      "label": "Vérification en jeu",
+      "detail": "Lisibilité et intégration dans l'archipel",
+      "owner": "À préciser"
+    }
+  ],
+  "roles": {
+    "archipel-calibrateur": {
+      "inputs": "Île/archétype, défaut observé, contraintes et critères d’acceptation",
+      "outputs": "Correction ciblée, fichiers touchés, contrôles et limites"
+    },
+    "archipel-critique": {
+      "inputs": "Brief, diff, tests et vues ciblées si disponibles",
+      "outputs": "Verdict, preuves, constats prioritaires et recommandations"
+    },
+    "locomotion-physique": {
+      "inputs": "Scénario reproductible, comportement attendu, profil et périmètre physique",
+      "outputs": "Cause vérifiée, correction ciblée, tests et limites de couverture"
+    }
+  }
+}

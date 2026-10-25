@@ -214,6 +214,36 @@ et domaine concerné).
     `captures/references-herbe/mesure-couleurs.py` (aide de cadrage : `captures/_herbe2.js`).
 - Agents : `archipel-calibrateur` (corrections ciblées d'une île) et `archipel-critique` (revue).
 
+### Production de l’open world (workflow, checklist des 19 zones, carte de chantier)
+
+- **Référence** : `docs/PRODUCTION.md` (architecture, rôles, contrats, statuts, calcul de complétude,
+  procédures, schéma Mermaid). Livré le 24/10/2026 sur le monde ouvert (GEN_VERSION 4).
+- **Source de vérité** : journal en ajout seul `production/journal.jsonl` (événements chaînés SHA-256, clés
+  d’idempotence, lots atomiques, verrou). Définitions : `production/zones.json` (19 zones `ZONE-…`, chacune
+  reliée aux identifiants des `ZONES` d’`archipel.js`, `home` pour Ton île ; `cascades-sacrees` sans zone du
+  checklist), `production/agents.json` (4 rôles, relecteurs, chemins autorisés), `production/echecs-connus.json`.
+- **Modules purs** `src/production/` : `statuts.js` (production / validation / intégration séparés,
+  transitions), `checklist.js` (57 éléments par zone, sections B à H), `contrats.js` (tâche, rapport, fiche de
+  zone, inventaire, rapport d’intégration), `etat.js` (rejeu et règles : relecteur indépendant, 3 tentatives,
+  livrable validé protégé, intégration après validation, périmètre réduit par un humain), `completude.js`
+  (conception, production, jouable, statut de zone, non livrable si critique), `orchestrateur.js` (objectif →
+  4 tâches, dépendances, clarifications, brief).
+- **Node** `scripts/production/` : `depot.mjs` (journal), `controles.mjs` (fichiers, json, perimetre,
+  fiche-zone, references-catalogue, tests, suite, build), `actions.mjs` (opérations et middleware
+  `/__production` de `vite.config.js`), `audit.mjs` (171 constats vérifiés sur le monde ouvert), `prod.mjs`
+  (`npm run prod -- etat | verifier | audit | chantier | brief | demarrer | rapport | valider | revue |
+  integrer | perimetre | livraison`).
+- **Carte de chantier** : `dashboard/chantier.js` dans le tableau de bord (`/dashboard.html#chantier`) :
+  silhouettes réelles du monde ouvert (islandgen, comme la carte M), aires des zones du jeu, statut calculé par
+  zone (couleur, motif, icône, libellé), filtres, recherche d’asset, fiche de zone à onglets, centres
+  production / validation / agents / assets, actions réelles en dev ; carte de référence alignée (4 m par pixel).
+  Le tableau de bord (`dashboard.html`, `dashboard/`) vient de la copie principale, où il n’était pas commité.
+- **Agents** (`.claude/agents/`, copiés de la copie principale) : rôles du workflow ajoutés à
+  `archipel-calibrateur` (World Designer), `evis` (Asset Artist), `locomotion-physique` (Gameplay) ; nouvel
+  agent `archipel-integrateur` (Technical Artist) ; relecteurs `archipel-critique` et `evis-critique`.
+- **Tests** : `tests/production-donnees.test.js`, `tests/production-workflow.test.js`,
+  `tests/production-carte.test.js` (32).
+
 ### Manette, audio, interface
 
 - Manette DualSense : `src/core/Gamepad.js` (vibrations, aide contextuelle), tests `tests/gamepad.test.js`.
@@ -223,6 +253,20 @@ et domaine concerné).
 
 ## État courant (22/10/2026)
 
+- **Production de l’open world (24/10/2026)**, non commitée : workflow, checklist des 19 zones et carte de
+  chantier (voir le domaine « Production de l’open world »). Journal `production/journal.jsonl` : audit initial
+  (171 constats) puis chantier pilote OBJ-0001 sur L’Île Verte avec les quatre agents et leurs relecteurs :
+  fiche de zone (World Designer, acceptée), inventaire des assets (Asset Artist, refusé deux fois puis accepté
+  à la 3e tentative), test de zone `tests/zones/ile-verte.test.js` (Gameplay, 14 tests), rapport
+  d’intégration (Technical Artist) ; les quatre tâches sont intégrées (suite sans nouvel échec). Éléments non
+  couverts retirés du périmètre par règle de l’utilisateur et laissés en manques. Statut calculé de la zone :
+  en construction, non livrable (production 68 %, jouable 50 %).
+- **Défaut trouvé par le pilote (P01)** : aux raccords des sections de la Grande Île, `IslandManager.heightAt`
+  rend un sol plus haut que le relief affiché (marge de 2 cases de `cropPlan` trop étroite pour l’interpolation
+  bicubique, maximum des sections) : marches invisibles jusqu’à 0,465 m dans l’Île Verte, 1,2 m au Sommet
+  givré. Tâche TASK-ILE-VERTE-005 prête (Archipel-Calibrateur), non lancée : elle modifie le code du jeu.
+- **À relancer** : `npm run modeles:releve` (`USAGE` de `releves.gen.js` date des neuf îles d’avant le monde
+  ouvert) ; le test « budget du Worker » (`tests/world.test.js`) lit encore l’archipel v3.
 - **Open world, bases** (branche `claude/charming-khorana-a24b36`, non fusionnée). Ce qui est livré :
   - les îles de la carte de référence, avec leur relief, leurs côtes, l'eau douce et les arbres ;
   - les 24 zones étiquetées ;

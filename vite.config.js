@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { notesMiddleware } from './catalogue/notesStore.js';
+import { productionMiddleware } from './scripts/production/actions.mjs';
 
 // Petit plugin de dev : POST /__capture?name=xxx enregistre un PNG dans ./captures
 // (sert à produire les captures de chaque étape directement depuis le canvas).
@@ -58,16 +59,28 @@ function catalogueNotesPlugin() {
   };
 }
 
+// Suivi de production de l'open world : GET / POST /__production lit le journal
+// (production/journal.jsonl) et y exécute les actions du dashboard (docs/PRODUCTION.md)
+function productionPlugin() {
+  return {
+    name: 'production',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use('/__production', productionMiddleware(process.cwd()));
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [capturePlugin(), catalogueNotesPlugin()],
+  plugins: [capturePlugin(), catalogueNotesPlugin(), productionPlugin()],
   // IPv4 explicite : « localhost » et 127.0.0.1 fonctionnent dans tous les navigateurs ;
   // les notes du catalogue s'écrivent sans recharger la page
-  server: { host: '127.0.0.1', port: 5173, strictPort: true, watch: { ignored: ['**/catalogue/notes.json'] } },
+  server: { host: '127.0.0.1', port: 5173, strictPort: true, watch: { ignored: ['**/catalogue/notes.json', '**/production/journal.jsonl', '**/production/.journal.lock'] } },
   build: {
     target: 'es2022',
     chunkSizeWarningLimit: 1500,
-    // deux pages : le jeu et le catalogue des modèles
-    rollupOptions: { input: { main: path.resolve('index.html'), catalogue: path.resolve('catalogue.html') } },
+    // pages : le jeu, le catalogue des modèles et le tableau de bord
+    rollupOptions: { input: { main: path.resolve('index.html'), catalogue: path.resolve('catalogue.html'), dashboard: path.resolve('dashboard.html') } },
   },
   // l'ancienne version (archive/) n'est plus testée
   test: { include: ['tests/**/*.test.js'] },

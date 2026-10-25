@@ -1,0 +1,217 @@
+{
+  "zone_id": "ZONE-ILE-VERTE",
+  "version": 1,
+  "redige_par": "technical-artist",
+  "tache": "TASK-ILE-VERTE-004",
+  "date": "2026-10-24",
+  "commit": "7540ec4 + modifications non commitées",
+  "etape_du_monde": "bases (GEN_VERSION 4) : la Grande Île est un plan entier (buildPlan) découpé en 30 sections de 512 m (sectionsOf, regions.js), chacune taillée par cropPlan (gen/sections.js) dans le Worker ; Ton île (« home ») est construite à part (src/world/home/). Ni lieux, ni chemins, ni interactions de zone sur la Grande Île.",
+  "environnement": {
+    "execution": "Hors navigateur : Node v22.16.0, vitest 2.1.8, vite 5.4.11, sur le worktree claude/charming-khorana-a24b36. Aucun jeu lancé, aucun serveur démarré (consigne).",
+    "scripts_de_mesure": "Scripts en lecture seule, hors dépôt, dans le scratchpad de la session : /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/int004-mesures.mjs (E01, E02, E04, E05, E07), int004-raccords.mjs, int004-raccords2.mjs, int004-raccords3.mjs et int004-marches.mjs (sol des sections). Ils importent les vrais modules du jeu (regions.js, plan.js, sections.js, surface.js, IslandManager.js, registry.js…) et n'écrivent rien dans le dépôt. Lancement : node <script> \"$PWD\" depuis la racine du worktree."
+  },
+  "entrees": [
+    "production/fiches/ZONE-ILE-VERTE.json",
+    "production/assets/ZONE-ILE-VERTE.json",
+    "tests/zones/ile-verte.test.js",
+    "src/world/islands/IslandManager.js",
+    "production/echecs-connus.json"
+  ],
+  "controles": [
+    {
+      "id": "E01",
+      "nom": "Région chargée par le moteur : sections de la Grande Île dans ISLANDS, zoneAt aux points de la fiche",
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/int004-mesures.mjs \"$PWD\" (partie E01)",
+      "resultat": "reussi",
+      "detail": "GEN_VERSION 4. grande-ile (forme, r 1 421,8 m ≥ SECTION_MIN_R 420) n'est pas chargée entière : ISLANDS en porte 30 sections « grande-ile~i-j » (sectionsOf), que IslandManager.refresh parcourt (for desc of ISLANDS). Les trois zones (cote-aux-villages, foret-des-souvenirs, plateau-vente) sont dans ZONE_BY_ID ; Ton île est ARCHIPEL.home (0, 0, r 34), construite par World/src/world/home. zoneAt rend la zone attendue aux 18 points testés (départ (0, 4) et (0, 0) : home ; centre du cercle (−58, −1246), étiquettes, plage nord (0, −148), prairie, cœur de forêt, colline REP-04, cascade POI-10, passage plateau/forêt, dessus et point haut du plateau, embouchure POI-11, sorties SOR-01 à SOR-05) ; pour chaque point de la Grande Île, la section qui le porte existe et passe en LOD0 (distance au disque < LOD_DIST[0] = 220 m, règle de refresh). Couverture : les 226 479 cases de terre (4 m) du plan entier sont toutes dans le carré d'une section (0 hors section) ; les 32 282 éléments du plan se répartissent sans perte ni doublon (somme des sections 32 282, mêmes identifiants). Sections portant de la terre des trois zones : 21."
+    },
+    {
+      "id": "E02",
+      "nom": "Références de l'inventaire résolues dans le registre ; espèces placées reliées au registre",
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/int004-mesures.mjs \"$PWD\" (partie E02)",
+      "resultat": "reussi",
+      "detail": "47 références « existants » de production/assets/ZONE-ILE-VERTE.json : 47 dans BY_ID de src/models/registry.js, toutes au statut « valide », aucune retirée ; toutes ont une taille dans TAILLES (releves.gen.js) ; toutes les sources citées (fichier:ligne) existent et la ligne est dans le fichier. Le manque AST-ILE-VERTE-001 est au statut « specification ». Espèces réellement placées dans les trois zones (plan réel, appartenance par zoneAt) : 16, chacune reliée à un modèle du registre par sa référence kind:<espèce> (arbre_pompon ARB-001 8 302, arbuste PLA-001 5 726, erable ARB-010 3 201, fougere PLA-006 1 668, buisson_fleuri PLA-003 1 008, lavande PLA-007 825, rocher_mousse ROC-002 765, rocher ROC-001 712, arbre_cerisier ARB-003 682, saule ARB-009 648, souche ROC-007 608, champi_petit PLA-013 355, arbre_fruitier ARB-002 92, palmier ARB-007 24, pin ARB-004 5, sapin_neige ARB-006 3). Deux espèces placées (pin, sapin_neige : 8 instances) manquent à l'inventaire : voir problème P02 (incomplétude de l'inventaire, pas une référence cassée)."
+    },
+    {
+      "id": "E05",
+      "nom": "Dépendances techniques : imports des modules du chargement, modèles des espèces de la zone",
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/int004-mesures.mjs \"$PWD\" (partie E05) ; npx vitest run tests/models.test.js",
+      "resultat": "reussi",
+      "detail": "13 modules importés sans erreur sous Node : src/world/islands/IslandManager.js, regions.js, archipel.js, navigation.js, World.js, home/terrain.js, home/props.js, gen/plan.js, gen/sections.js, gen/surface.js, farveg.js, src/models/vegetation.js, src/models/registry.js. kindModel(espèce) rend un modèle pour les 16 espèces placées. Le Worker (worldWorker.js, qui pose self.onmessage) n'est pas importable sous Node : il est vérifié par le build (E06, chunk worldWorker-*.js de 126,94 kB). tests/models.test.js : « se chargent depuis chaque point d'entrée (aucun cycle d'import cassé) » vert. Limite : sous Node nu, la construction de ARB-001 lève « document is not defined » (pas de DOM hors navigateur) ; la construction de tous les modèles est vérifiée sous vitest par tests/models.test.js (vert). Aucune dépendance npm ajoutée."
+    },
+    {
+      "id": "E03-a",
+      "nom": "Collisions : physique du catalogue (obstacles des lieux, encombrement des espèces et du décor, planchers)",
+      "commande": "npx vitest run tests/collisions.test.js",
+      "resultat": "reussi",
+      "detail": "Test Files 1 passed (1) ; Tests 3 passed (3) ; 841 ms."
+    },
+    {
+      "id": "E03-b",
+      "nom": "Sol et obstacles praticables sur le plan entier (test de zone : navigation.js, obstacles des arbres, vrai Player)",
+      "commande": "npx vitest run tests/zones/ile-verte.test.js",
+      "resultat": "reussi",
+      "detail": "Test Files 1 passed (1) ; Tests 14 passed (14) ; 6,16 s. Le test branche navigation.js sur la Surface du plan ENTIER de la Grande Île (pas sur les sections du moteur) : ≥ 95 % des nœuds de 2 m praticables par zone, Player qui monte de la plage à la prairie, obstacles au rayon KIND_RADIUS × échelle comme IslandManager."
+    },
+    {
+      "id": "E03-c",
+      "nom": "Sol du moteur aux raccords des sections (IslandManager.heightAt reconstitué) comparé au relief rendu",
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/int004-raccords.mjs \"$PWD\" ; node …/int004-raccords2.mjs \"$PWD\" ; node …/int004-raccords3.mjs \"$PWD\" ; node …/int004-marches.mjs \"$PWD\" (même dossier scratchpad)",
+      "resultat": "echoue",
+      "detail": "Pas de chute à travers le monde : sur 626 337 points de 2 m des trois zones, le sol reconstitué comme IslandManager.heightAt (maximum des sections dont la grille couvre le point, |l| ≤ ext − 1 = 263 m) existe partout (0 sans sol, 0 non fini) et l'eau douce (waterLevelAt, section du carré) est identique au plan entier (0 écart). Mais ce sol dépasse le relief rendu (tuiles des carrés de 512 m) près des raccords : écart maximal 0,394 m en (−388, −1426) sur la grille de 2 m ; dans les bandes de 8 m autour des bords de section (641 156 points au pas de 0,5 m), 21 672 points à plus de 5 cm au-dessus du relief rendu, 2 099 à plus de 20 cm, maximum 0,465 m en (−389, −1426,5) ; en traversant les raccords au pas de 0,1 m, 1 266 sauts de plus de 10 cm absents du relief rendu (max 0,458 m) et 2 marches de plus de stepUp (0,4 m), max 0,415 m en (−402, −1426,9). Voir problème P01."
+    },
+    {
+      "id": "E04",
+      "nom": "Échelles : modèles employés à la taille déclarée du registre (±25 %), budgets de triangles",
+      "commande": "npx vitest run tests/models.test.js",
+      "resultat": "reussi",
+      "detail": "Test Files 1 passed (1) ; Tests 17 passed (17) ; 11,28 s. Dont « construit chaque modèle et chaque variante : non vide, sans NaN, à la taille déclarée (±25 %) » (tous les modèles, donc les 47 de l'inventaire et les 16 espèces placées) et « budgets de triangles (docs/DA.md) ». Mesure complémentaire (int004-mesures.mjs, partie E04) : l'échelle de placement des instances dans la zone va de 0,70 à 1,33 (arbres 0,78 à 1,33, décor 0,70 à 1,30, réglage voulu de src/world/islands/gen/flora.js:179 et :355) ; 82,8 % à 87,0 % des instances selon l'espèce sont entre 0,75 et 1,25. Le ±25 % de docs/DA.md vise le modèle du registre ; son application aux instances placées est une question ouverte : problème P03."
+    },
+    {
+      "id": "E06",
+      "nom": "Build de production (sortie hors de dist/)",
+      "commande": "npx vite build --outDir /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/int004-build",
+      "resultat": "reussi",
+      "detail": "Code de sortie 0 ; « ✓ 328 modules transformed » ; « ✓ built in 1.62s ». Seul avertissement : outDir hors de la racine du projet, non vidé (dossier neuf). Chunks : main-*.js 299,22 kB, vegetation-*.js 889,37 kB, worldWorker-*.js 126,94 kB, dashboard-*.js 371,31 kB. dist/ n'est pas touché (absent avant et après). Équivalent de npm run build (vite build) à l'outDir près ; le contrôle automatique « build » du workflow le relance."
+    },
+    {
+      "id": "E07-a",
+      "nom": "Budget du Worker (test existant) et LOD1",
+      "commande": "npx vitest run tests/world.test.js ; npx vitest run tests/lod1.test.js",
+      "resultat": "reussi",
+      "detail": "world.test.js : Tests 27 passed (27) ; 15,18 s ; « Worker : plan + LOD1 moyenne 11.0 ms (9 îles), grande île 25.8 ms, tuile médiane 2.0 ms, p95 10.1 ms » (seuils 60 ms, 120 ms, 15 ms). lod1.test.js : Tests 2 passed (2). Attention : ce test du budget lit tests/helpers/archipel-v3.js (îles de l'ancien archipel), pas la Grande Île de GEN_VERSION 4 : voir problème P04 et la mesure E07-b."
+    },
+    {
+      "id": "E07-b",
+      "nom": "Budget du Worker et triangles de la Grande Île mesurés sur les sections de L'Île Verte",
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/int004-mesures.mjs \"$PWD\" (partie E07)",
+      "resultat": "reussi",
+      "detail": "Plan entier de la Grande Île (buildPlan, 32 282 éléments) : 1 362, 1 200, 1 238, 1 073 ms (1re mesure à froid), calculé une fois par partie dans le Worker (worldWorker.js, cache parents), comme le documente LIVRAISONS.md (1,2 s ; 1,5 à 2,2 s). Par section (21 sections de la zone) : cropPlan + buildLOD1 + buildFarVeg moyenne 7,4 ms, max 19 ms (seuils du test existant : 60 ms en moyenne, 120 ms pour une grande île) ; buildLOD2 2,6 à 18,4 ms ; tuiles au mètre (buildTile, 1 344 tuiles de 64 m) médiane 2,19 ms, p95 3,10 ms, max 11,03 ms (seuil 15 ms au p95). Triangles : LOD1 ≤ 32 768 par section (grille 129 × 129), LOD2 ≤ 1 922 ; budgets de triangles des modèles verts (E04). Non mesuré : le budget du fil principal (BUDGET_MS 4 ms d'IslandManager.update, stats over4/over8) et les triangles de la scène en jeu, qui demandent le jeu lancé (E07-c)."
+    },
+    {
+      "id": "E07-c",
+      "nom": "Budget du fil principal et triangles en jeu (IslandManager.stats, renderer.info) dans la zone",
+      "commande": "non lancé : demanderait le jeu sur le port 5174 et __ile.game.islands.stats après téléportation dans les trois zones",
+      "resultat": "non_execute",
+      "detail": "Consigne de la tâche : ni jeu ni navigateur, aucun serveur lancé. Dernière mesure documentée (LIVRAISONS.md, hors de cette tâche) : 4,3 M triangles en jeu dans la Forêt des souvenirs, ombres comprises, sans seuil documenté."
+    },
+    {
+      "id": "G02",
+      "nom": "Test automatisé d'accès et de sortie de la zone",
+      "commande": "npx vitest run tests/zones/ile-verte.test.js",
+      "resultat": "reussi",
+      "detail": "Test Files 1 passed (1) ; Tests 14 passed (14) ; 6,16 s seul, 8,61 s dans la suite complète. Accès (C10) : départ, radeau, détroit, échouage, Player sur la plage ; sortie (C11) : côtes praticables par zone, SOR-01 à SOR-05, mer reliée au ponton ; exploration et récolte."
+    },
+    {
+      "id": "G03",
+      "nom": "Tests de collisions",
+      "commande": "npx vitest run tests/collisions.test.js ; npx vitest run tests/zones/ile-verte.test.js",
+      "resultat": "reussi",
+      "detail": "collisions.test.js 3/3 ; ile-verte.test.js 14/14 (obstacles des troncs et du décor, blockedByObstacle, canStand au départ). Ces tests ne passent pas par le sol des sections du moteur : le défaut des raccords (E03-c, P01) n'est couvert par aucun test."
+    },
+    {
+      "id": "G06",
+      "nom": "Sauvegarde et chargement de l'état de la zone",
+      "commande": "npx vitest run tests/progression.test.js ; npx vitest run tests/world.test.js (migration v4) ; node --input-type=module -e '<aller-retour migrate(JSON) avec des récoltes sous « grande-ile~1-3 » et « grande-ile~4-4 »>'",
+      "resultat": "reussi",
+      "detail": "progression.test.js : Tests 4 passed (4) (dont « préserve stations posées et ressources dans une sauvegarde migrée »). world.test.js « migration v4 (open world) » vert : une sauvegarde de génération 3 est remise à zéro, une sauvegarde à jour (genVersion 4) garde ses récoltes, terrassements et position. Aller-retour : migrate(JSON.parse(JSON.stringify(migrate(s)))) garde harvest { \"grande-ile~1-3\": { \"123456\": 1 }, \"grande-ile~4-4\": { \"77\": 1 } }, joueur (−900, −1240), genVersion 4. L'état de la zone à l'étape « bases » se réduit aux récoltes, rangées par identifiant de section (Gather.js:231) et réappliquées au chargement (Game.js:90, hiddenItems) ; le test de zone vérifie la clé de section et l'identifiant stable. Rechargement dans le navigateur non fait (consigne)."
+    },
+    {
+      "id": "G07",
+      "nom": "Régression : suite complète sans nouvel échec (comparée à production/echecs-connus.json)",
+      "commande": "npm test",
+      "resultat": "reussi",
+      "detail": "Code de sortie 1 : Test Files 1 failed | 25 passed (26) ; Tests 1 failed | 298 passed (299) ; Duration 17,21 s. Seul échec : tests/empreintes.test.js « empreintes des modèles > sont identiques à la référence (géométrie, physique, tables du jeu) », 41 écarts, tous sur PER-001 (24), PER-002 (6), PER-003 (6) et PER-004 (5) (ex. modeles.PER-001.0.tris : 7784 → 7944) : c'est l'échec connu de production/echecs-connus.json (personnage PER-001 à PER-004, depuis le 21/10/2026). Aucun nouvel échec."
+    },
+    {
+      "id": "G08",
+      "nom": "Mesure de budget enregistrée",
+      "commande": "npx vitest run tests/world.test.js ; node /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/int004-mesures.mjs \"$PWD\"",
+      "resultat": "reussi",
+      "detail": "Mesures consignées en E07-a et E07-b (temps du Worker par section et par tuile, plan entier, triangles LOD1/LOD2). Cadence d'image en jeu non mesurée (E07-c)."
+    },
+    {
+      "id": "G01",
+      "nom": "Exploration complète : points d'intérêt atteignables",
+      "commande": "aucune : pas de point d'intérêt généré dans la zone",
+      "resultat": "non_execute",
+      "detail": "À l'étape « bases », buildPlan de la Grande Île rend pois: [] et paths: [] (tests/world.test.js, « pose relief, eau douce, arbres et décor naturel (ni lieux, ni chemins…) », vert). Les points de la fiche sont des propositions ; leur accès à pied sur le plan entier est vérifié par le test de zone (G02), mais aucun point d'intérêt n'existe en jeu : rien n'est simulé."
+    },
+    {
+      "id": "G04",
+      "nom": "Interactions de la zone",
+      "commande": "aucune : pas d'interaction de zone en jeu",
+      "resultat": "non_execute",
+      "detail": "Ni lieu, ni personnage, ni objet interactif sur la Grande Île à l'étape « bases ». Seule la récolte des arbres existe (testée par le test de zone, critère C04, hors de G04). Les interactions de Ton île ne sont pas propres à cette zone et ne sont pas testées ici."
+    },
+    {
+      "id": "G09",
+      "nom": "Revue indépendante de cohérence visuelle",
+      "commande": "revue d'Archipel-Critique (archipel-critique) sur ce livrable",
+      "resultat": "non_execute",
+      "detail": "Pas encore faite : elle revient à Archipel-Critique ou à un humain, après ce rapport. Le Technical Artist n'approuve pas son propre livrable."
+    }
+  ],
+  "problemes": [
+    {
+      "id": "P01",
+      "gravite": "moyenne",
+      "titre": "Sol physique au-dessus du relief rendu aux raccords des sections de la Grande Île",
+      "domaine": "src/world/islands/ (IslandManager.heightAt, gen/sections.js cropPlan, gen/surface.js Surface) : Archipel-Calibrateur ; effet sur la marche : Locomotion-Physique à consulter",
+      "constat": "IslandManager.heightAt (src/world/islands/IslandManager.js:1093) prend le maximum des hauteurs de toutes les entrées dont la grille couvre le point (|lx|, |lz| ≤ plan.ext − 1, soit 263 m pour une section : 256 m de carré + 8 m de marge − 1). Dans son carré, chaque section rend exactement le relief du plan entier (écart 0 à toutes les distances du bord) ; dans sa marge de 8 m hors du carré, sa Surface.height diffère du plan entier (la grille de 4 m, elle, est identique). Le maximum retient alors parfois la marge du voisin : le joueur marche jusqu'à 0,47 m au-dessus du sol dessiné (tuiles du carré seulement), avec des marches invisibles en bord de marge.",
+      "preuve": [
+        "int004-raccords2.mjs : en (−388, −1426), section grande-ile~2-2 (lx 128, lz 250, dans son carré) h 84,935 m = plan entier 84,935 m ; section grande-ile~2-3 (lx 128, lz −262, dans sa marge) h 85,330 m ; grille de 4 m 85,060 m des deux côtés ; écart propre à chaque section dans son carré : 0 (< 2 m, 2-8 m, 8-32 m et ≥ 32 m du bord).",
+        "int004-raccords.mjs : 626 337 points de 2 m des trois zones, 0 sans sol, 0 non fini, eau douce identique ; écart maximal 0,394 m en (−388, −1426) (85,33 au lieu de 84,935).",
+        "int004-raccords3.mjs : bandes de 8 m autour des bords, pas de 0,5 m, 641 156 points (587 663 sur terre) : 21 672 à plus de 5 cm au-dessus du relief rendu, 2 099 à plus de 20 cm, max 0,465 m en (−389, −1426,5) (86,172 au lieu de 85,707).",
+        "int004-marches.mjs : 1 801 173 paires de points à 0,1 m en traversée des raccords : 1 266 sauts de plus de 10 cm absents du relief rendu (max 0,458 m en (−389, −1426,9)) ; 2 marches de plus de stepUp 0,4 m (tuning « realiste »), max 0,415 m en (−402, −1426,9) où le relief rendu ne monte que de 0,023 m."
+      ],
+      "consequences": "Aucune chute à travers le monde (le sol physique est toujours au-dessus ou au niveau du sol rendu). Pieds du personnage visiblement au-dessus de l'herbe dans des bandes étroites le long des raccords ; deux marches invisibles un peu plus hautes que stepUp sur la zone. Effet en jeu non observé (pas de navigateur dans cette tâche).",
+      "couverture_tests": "Non couvert : tests/world.test.js ne compare les raccords que sur la grille de 4 m (bilinear de H), et tests/zones/ile-verte.test.js branche navigation.js sur le plan entier, pas sur les sections.",
+      "piste": "À décider par le responsable du domaine : prendre la hauteur de la section dont le carré contient le point (comme entryAt / waterLevelAt), ou rendre la marge identique au plan entier ; ajouter un test du relief au mètre (Surface.height) de part et d'autre des raccords. Non corrigé : hors du périmètre du Technical Artist.",
+      "bloquant_pour": "ZONE-ILE-VERTE.E03"
+    },
+    {
+      "id": "P02",
+      "gravite": "faible",
+      "titre": "Deux espèces placées dans la zone absentes de l'inventaire des assets",
+      "domaine": "production/assets/ZONE-ILE-VERTE.json : asset-artist (TASK-ILE-VERTE-002)",
+      "constat": "Selon zoneAt, 8 instances d'espèces non listées sont placées dans la Forêt des souvenirs, en bordure du Sommet givré : pin ARB-004 (5) en (−741, −1751), (−700, −1687), (−666, −1654), (123, −1322), (114, −1293) ; sapin_neige ARB-006 (3) en (−794, −1777), (−738, −1750), (−300, −1425). Les modèles existent au registre (statut « valide ») : la référence est résolue, l'inventaire est incomplet. Les comptes des autres espèces diffèrent aussi de quelques unités (ex. ARB-001 8 302 ici contre 8 308 dans l'inventaire), parce que l'inventaire compte par zone de case du plan (ZI) et cette mesure par zoneAt.",
+      "preuve": [
+        "int004-mesures.mjs, E02.especes_hors_inventaire : [\"sapin_neige\", \"pin\"] ; positions relevées sur buildPlan(grande-ile) filtré par zoneAt."
+      ],
+      "piste": "Ajouter ARB-004 et ARB-006 aux existants (ou documenter la règle d'appartenance retenue)."
+    },
+    {
+      "id": "P03",
+      "gravite": "information",
+      "titre": "Échelle des instances placées hors de ±25 % pour 13 à 17 % d'entre elles",
+      "domaine": "décision humaine (portée du critère E04) ; réglage dans src/world/islands/gen/flora.js : Archipel-Calibrateur",
+      "constat": "placeFloraForme donne aux arbres une échelle 0,78 + sr × 0,55 (0,78 à 1,33) et au décor 0,70 + sr × 0,60 (0,70 à 1,30) (flora.js:179, :355). Mesuré dans la zone : 82,8 % (buisson_fleuri) à 87,0 % (arbre_fruitier) des instances entre 0,75 et 1,25 ; extrêmes 0,70 et 1,33. Le ±25 % de docs/DA.md (ligne 26) s'applique au modèle du registre, vérifié vert par tests/models.test.js.",
+      "preuve": [
+        "int004-mesures.mjs, E04.echelles_placement (min, p05, médiane, p95, max, part dans [0,75 ; 1,25] par espèce)."
+      ],
+      "piste": "Confirmer que le critère E04 porte sur le modèle (lecture retenue ici) et non sur chaque instance placée ; aucun changement de critère fait par le Technical Artist."
+    },
+    {
+      "id": "P04",
+      "gravite": "information",
+      "titre": "Le test « budget du Worker » ne couvre pas la Grande Île du monde ouvert",
+      "domaine": "tests/world.test.js : coordinateur (test à ajouter ou à adapter)",
+      "constat": "Le test lit tests/helpers/archipel-v3.js (îles de l'ancien archipel, génération 3). La Grande Île de GEN_VERSION 4 n'est pas mesurée : son plan entier prend 1,07 à 1,36 s dans Node, une fois par partie, dans le Worker (bloquant les autres messages du Worker pendant ce temps), ce que LIVRAISONS.md documente ; ses sections tiennent les seuils du test (E07-b). Aucune régression automatique ne protège ce budget.",
+      "preuve": [
+        "tests/world.test.js:659 (import de ./helpers/archipel-v3.js) ; int004-mesures.mjs, E07.plan_grande_ile_ms [1362, 1200, 1238, 1073]."
+      ],
+      "piste": "Ajouter au test du budget les sections de la Grande Île (cropPlan + LOD1, tuiles) et un plafond pour le plan entier, à fixer par décision humaine."
+    }
+  ],
+  "bilan": {
+    "couverts": ["ZONE-ILE-VERTE.E01", "ZONE-ILE-VERTE.E02", "ZONE-ILE-VERTE.E04", "ZONE-ILE-VERTE.E05", "ZONE-ILE-VERTE.E06", "ZONE-ILE-VERTE.E07", "ZONE-ILE-VERTE.G02", "ZONE-ILE-VERTE.G03", "ZONE-ILE-VERTE.G06", "ZONE-ILE-VERTE.G07", "ZONE-ILE-VERTE.G08"],
+    "non_couverts": {
+      "ZONE-ILE-VERTE.E03": "Échoue : sol physique au-dessus du relief rendu aux raccords des sections (P01). Pas de chute à travers le monde.",
+      "ZONE-ILE-VERTE.G01": "Non exécuté : aucun point d'intérêt généré à l'étape « bases ».",
+      "ZONE-ILE-VERTE.G04": "Non exécuté : aucune interaction de zone en jeu.",
+      "ZONE-ILE-VERTE.G09": "Non exécuté : revue d'Archipel-Critique à venir sur ce livrable."
+    },
+    "limites": "Tout est mesuré hors navigateur sur les vrais modules ; ni cadence d'image ni triangles de la scène en jeu (E07-c), ni rechargement réel dans le navigateur (G06)."
+  }
+}

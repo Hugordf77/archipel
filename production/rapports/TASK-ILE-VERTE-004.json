@@ -1,0 +1,112 @@
+{
+  "task_id": "TASK-ILE-VERTE-004",
+  "agent": "technical-artist",
+  "etat_final": "partiel",
+  "resume": "Intégration technique de L'Île Verte contrôlée hors navigateur sur les vrais modules, rapport dans production/integration/ZONE-ILE-VERTE.json (19 contrôles, 4 problèmes). Région chargée (E01) : la Grande Île est chargée en 30 sections de ISLANDS, toute sa terre (226 479 cases de 4 m) et ses 32 282 éléments sont répartis sans perte ; zoneAt rend la zone attendue aux 18 points de la fiche, dont chaque section passe en LOD0. Références (E02) : 47/47 au registre, valides, sources existantes ; les 16 espèces placées se relient au registre, mais pin (ARB-004) et sapin_neige (ARB-006) manquent à l'inventaire (P02). Dépendances (E05) : 13 modules importés, Worker vérifié par le build. Échelles (E04) : tests/models.test.js vert (±25 % du registre) ; échelles de placement 0,70 à 1,33 signalées (P03). Build (E06) vert dans le scratchpad. Budget (E07, G08) : sections de la zone 7,4 ms en moyenne (max 19 ms), tuiles p95 3,1 ms, plan entier 1,07 à 1,36 s une fois par partie ; le test existant du budget ne couvre pas la Grande Île (P04). Tests de zone, collisions, sauvegarde, migration verts ; npm test : seul échec, l'échec connu des empreintes PER-001 à PER-004. Défaut trouvé (E03 échoue) : le sol physique (IslandManager.heightAt, maximum des sections) dépasse le relief rendu jusqu'à 0,47 m le long des raccords de sections, avec deux marches invisibles de plus de stepUp (P01) ; pas de chute à travers le monde. G01, G04 et G09 non exécutés (ni lieux ni interactions à l'étape « bases » ; revue à venir).",
+  "fichiers": [
+    {
+      "path": "production/integration/ZONE-ILE-VERTE.json",
+      "action": "cree",
+      "nature": "rapport"
+    }
+  ],
+  "livrables_attendus": [
+    "production/integration/ZONE-ILE-VERTE.json"
+  ],
+  "livrables_fournis": [
+    "production/integration/ZONE-ILE-VERTE.json"
+  ],
+  "tests": [
+    {
+      "commande": "npx vitest run tests/zones/ile-verte.test.js",
+      "resultat": "reussi",
+      "detail": "Test Files 1 passed (1) ; Tests 14 passed (14) ; 6,16 s."
+    },
+    {
+      "commande": "npx vitest run tests/collisions.test.js",
+      "resultat": "reussi",
+      "detail": "Tests 3 passed (3)."
+    },
+    {
+      "commande": "npx vitest run tests/models.test.js",
+      "resultat": "reussi",
+      "detail": "Tests 17 passed (17) : tailles ±25 % du registre, budgets de triangles, imports depuis chaque point d'entrée."
+    },
+    {
+      "commande": "npx vitest run tests/world.test.js",
+      "resultat": "reussi",
+      "detail": "Tests 27 passed (27) ; « Worker : plan + LOD1 moyenne 11.0 ms (9 îles), grande île 25.8 ms, tuile médiane 2.0 ms, p95 10.1 ms » (îles de l'ancien archipel) ; migration v4 verte."
+    },
+    {
+      "commande": "npx vitest run tests/lod1.test.js",
+      "resultat": "reussi",
+      "detail": "Tests 2 passed (2)."
+    },
+    {
+      "commande": "npx vitest run tests/progression.test.js",
+      "resultat": "reussi",
+      "detail": "Tests 4 passed (4)."
+    },
+    {
+      "commande": "npm test",
+      "resultat": "echoue",
+      "detail": "Test Files 1 failed | 25 passed (26) ; Tests 1 failed | 298 passed (299) ; 17,21 s. Seul échec : tests/empreintes.test.js (41 écarts, tous PER-001 à PER-004), échec connu de production/echecs-connus.json : aucun nouvel échec."
+    },
+    {
+      "commande": "npx vite build --outDir /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/int004-build",
+      "resultat": "reussi",
+      "detail": "Sortie 0 ; 328 modules ; built in 1.62s ; dist/ non touché."
+    },
+    {
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/int004-mesures.mjs \"$PWD\"",
+      "resultat": "reussi",
+      "detail": "Mesures E01, E02, E04, E05, E07 (sections, zoneAt, références, imports, échelles, temps du Worker, triangles) : exécution sans erreur ; constats P02, P03, P04."
+    },
+    {
+      "commande": "node …/scratchpad/int004-raccords.mjs, int004-raccords2.mjs, int004-raccords3.mjs, int004-marches.mjs \"$PWD\"",
+      "resultat": "echoue",
+      "detail": "Sol reconstitué comme IslandManager.heightAt au-dessus du relief rendu aux raccords de sections : max 0,465 m, 2 099 points à plus de 20 cm dans les bandes de 8 m, 2 marches de plus de stepUp (max 0,415 m en (−402, −1426,9)). Aucun point sans sol. Problème P01."
+    },
+    {
+      "commande": "jeu sur le port 5174 (budget du fil principal, triangles en jeu, rechargement réel)",
+      "resultat": "non_execute",
+      "detail": "Consigne de la tâche : ni jeu, ni navigateur, ni serveur."
+    }
+  ],
+  "erreurs": [
+    "E03 échoue : sol physique au-dessus du relief rendu aux raccords des sections de la Grande Île (P01, src/world/islands/IslandManager.js:1093, hors périmètre ; non corrigé)."
+  ],
+  "hypotheses": [
+    "Le sol du moteur est reconstitué hors navigateur comme IslandManager.heightAt (maximum des Surface des sections dont |l| ≤ ext − 1) et waterLevelAt (section dont le carré contient le point), toutes sections chargées ; le relief rendu est celui du carré de la section (tuiles de 64 m dans le carré seulement). Les ponts et terrassements n'existent pas à l'étape « bases ».",
+    "Appartenance à la zone par zoneAt (regions.js), comme le jeu ; l'inventaire compte par zone de case du plan, d'où de petits écarts de comptes.",
+    "Le ±25 % du critère E04 est lu comme la tolérance du registre sur la taille du modèle (docs/DA.md, tests/models.test.js) ; l'échelle des instances placées est consignée à part (P03).",
+    "Les seuils de temps appliqués aux sections sont ceux du test existant « budget du Worker » (60 ms en moyenne, 120 ms pour une grande île, 15 ms au p95 des tuiles) ; le plan entier de la Grande Île (1,1 à 1,4 s, une fois par partie) est un coût documenté dans LIVRAISONS.md, sans seuil fixé."
+  ],
+  "decisions": [
+    "Aucun fichier du jeu ni test modifié : seul production/integration/ZONE-ILE-VERTE.json est écrit (plus ce rapport). Les scripts de mesure restent dans le scratchpad de la session, cités par chemin complet.",
+    "Le défaut des raccords (P01) est consigné avec sa preuve et routé, pas corrigé : IslandManager.js, sections.js et surface.js relèvent d'Archipel-Calibrateur.",
+    "G01, G04 et G09 déclarés non exécutés, sans simulation ; E07-c (fil principal et triangles en jeu) non exécuté faute de jeu lancé.",
+    "G07 jugé sans nouvel échec : l'unique échec de npm test est l'échec connu des empreintes PER-001 à PER-004."
+  ],
+  "checklist": [
+    "ZONE-ILE-VERTE.E01",
+    "ZONE-ILE-VERTE.E02",
+    "ZONE-ILE-VERTE.E04",
+    "ZONE-ILE-VERTE.E05",
+    "ZONE-ILE-VERTE.E06",
+    "ZONE-ILE-VERTE.E07",
+    "ZONE-ILE-VERTE.G02",
+    "ZONE-ILE-VERTE.G03",
+    "ZONE-ILE-VERTE.G06",
+    "ZONE-ILE-VERTE.G07",
+    "ZONE-ILE-VERTE.G08"
+  ],
+  "dependances_restantes": [
+    "ZONE-ILE-VERTE.E03 (Collisions) non couvert : le sol physique dépasse le relief rendu jusqu'à 0,47 m aux raccords des sections, avec 2 marches de plus de stepUp (P01) ; correction à router vers Archipel-Calibrateur (IslandManager.heightAt / cropPlan), puis nouveau contrôle.",
+    "ZONE-ILE-VERTE.G01 (Exploration complète) non exécuté : aucun point d'intérêt généré à l'étape « bases ».",
+    "ZONE-ILE-VERTE.G04 (Interactions testées) non exécuté : aucune interaction de zone en jeu.",
+    "ZONE-ILE-VERTE.G09 (Cohérence visuelle revue) : revue indépendante d'Archipel-Critique à faire sur ce livrable.",
+    "P02 : inventaire à compléter (pin ARB-004, sapin_neige ARB-006) par l'asset-artist ; P03 : portée du critère E04 à confirmer par un humain ; P04 : test du budget du Worker à étendre à la Grande Île (décision du coordinateur)."
+  ],
+  "prochaine_etape": "Revue d'Archipel-Critique (ou humaine) du rapport d'intégration ; routage de P01 vers Archipel-Calibrateur (sol des raccords de sections), puis nouveau contrôle E03 ; P02 à l'asset-artist ; décisions humaines sur P03 et P04."
+}

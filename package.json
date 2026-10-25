@@ -14,7 +14,8 @@
     "modeles:empreinte": "node scripts/modeles/empreinte.mjs",
     "modeles:index": "node scripts/modeles/index.mjs",
     "modeles:fiches": "node scripts/modeles/fiches.mjs",
-    "modeles:mesure": "node scripts/modeles/mesure.mjs"
+    "modeles:mesure": "node scripts/modeles/mesure.mjs",
+    "prod": "node scripts/production/prod.mjs"
   },
   "dependencies": {
     "@fontsource/fredoka": "5.1.0",

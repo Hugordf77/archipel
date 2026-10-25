@@ -1,0 +1,165 @@
+{
+  "zone_id": "ZONE-ILE-VERTE",
+  "version": 1,
+  "redige_par": "world-designer",
+  "tache": "TASK-ILE-VERTE-001",
+  "date": "2026-10-24",
+  "etape_du_monde": "bases (GEN_VERSION 4) : relief, côtes, eau douce, arbres et décor naturel ; ni lieux, ni chemins, ni villages, ni faune sur la Grande Île (buildPlanForme rend pois: [] et paths: [], mesuré : 0 lieu, 0 chemin).",
+  "conventions": "Coordonnées monde en mètres, nord = −Z, départ en (0, 0). Hauteurs en mètres au-dessus de la mer (niveau 0). « atteste » : vérifié dans le code ou mesuré sur la vraie génération (scripts de mesure cités dans le rapport) ; « proposition » : à concevoir ou à confirmer.",
+  "perimetre": {
+    "regions": ["home", "cote-aux-villages", "foret-des-souvenirs", "plateau-vente"],
+    "centre": { "x": -58, "z": -1246 },
+    "rayon": 1384,
+    "statut": "atteste",
+    "source": "src/world/islands/gen/plan.js (buildPlan de la Grande Île) ; src/world/islands/regions.js (zoneAt) ; src/world/archipel.js (ARCHIPEL.home)",
+    "methode": "Cercle englobant minimal (Welzl) de toutes les cases de terre (hauteur > 0, grille de 4 m) des trois zones de la Grande Île dans le plan réel, plus le disque de Ton île (centre (0, 0), r 34 m). 145 582 points.",
+    "emprise_rectangle": { "minX": -1352, "minZ": -1944, "maxX": 1288, "maxZ": 34 },
+    "appartenance": "Le cercle est une enveloppe : il couvre aussi une partie du Sommet givré, du Lac céleste et de la mer. L'appartenance d'un point se lit avec zoneAt(x, z) (regions.js) : « home » à moins de 84 m de (0, 0) ; sur la Grande Île, la zone la plus proche au bord bruité (formeZone).",
+    "zones_du_jeu": [
+      { "id": "home", "nom": "Ton île", "centre": { "x": 0, "z": 0 }, "rayon": 34, "rayon_zoneAt": 84, "source": "src/world/archipel.js#ARCHIPEL.home" },
+      { "id": "cote-aux-villages", "nom": "La Côte aux villages", "aire_ellipse": { "x": -100, "z": -400, "rx": 800, "rz": 240 }, "terre_km2": 0.567, "emprise_terre": { "minX": -840, "minZ": -820, "maxX": 912, "maxZ": -128 }, "source": "src/world/archipel.js#ZONES_PX" },
+      { "id": "foret-des-souvenirs", "nom": "La Forêt des souvenirs", "aire_ellipse": { "x": -900, "z": -1240, "rx": 520, "rz": 680 }, "terre_km2": 1.158, "emprise_terre": { "minX": -1352, "minZ": -1944, "maxX": 144, "maxZ": -536 }, "source": "src/world/archipel.js#ZONES_PX" },
+      { "id": "plateau-vente", "nom": "Le Plateau venté", "aire_ellipse": { "x": 620, "z": -840, "rx": 420, "rz": 260 }, "terre_km2": 0.604, "emprise_terre": { "minX": -84, "minZ": -1260, "maxX": 1288, "maxZ": -496 }, "source": "src/world/archipel.js#ZONES_PX" }
+    ],
+    "controle_zoneAt": "zoneAt rend « home » en (0, 0) et au point d'apparition (0, 4) ; la zone attendue au centroïde de terre et à l'étiquette de chacune des trois zones ; « foret-des-souvenirs » au centre du cercle (−58, −1246)."
+  },
+  "relief": {
+    "statut": "atteste",
+    "source": "src/world/islands/gen/forme.js (formeHeightL, reliefs) ; src/world/archipel.js (ILES_PX grande-ile : base h 16 m, plage 20 m, falaise 0,25) ; src/world/home/terrain.js (heightAt)",
+    "ton_ile": "Îlot rond modelé à la main (r 34 m) : plage tout autour, prés à 1 m, plateau supérieur à 3,4 m (centre (2, −17), 15 × 8 m) avec rampe, rivière, cascade et bassin (−2, −7) ; point haut mesuré 3,5 m en (−5, −15).",
+    "cote_aux_villages": "Plaine côtière basse : hauteur moyenne 13,2 m, point haut 31,9 m en (−460, −688). Plage continue face au départ (case PLAGE en (0, −148), prairie à 1,5 m dès (0, −160), 7 m en (0, −200)). Collines de zone 7 m / 160 m. Pas de falaise côtière notable (4 cases > 8 m à moins de 24 m de la côte, maximum 9,7 m).",
+    "foret_des_souvenirs": "Collines boisées qui montent vers le massif du Sommet givré : hauteur moyenne 36 m, point haut 166,7 m en (−424, −1572) (épaulement de la chaîne sud-ouest du massif). Collines posées : (−680, −1080) sommet 80,9 m ; (−1000, −1560) sommet 78,4 m ; (−1060, −1080) sommet 50,7 m. Côte ouest à falaises (706 cases > 8 m près de la côte, jusqu'à 37,6 m en (−1140, −1156)). 9 328 cases de roche (pentes > 0,68).",
+    "plateau_vente": "Table de prairie : plateau posé (centre (640, −848), 288 × 176 m, 46 m au-dessus de la base) ; hauteur moyenne 29,2 m, point haut 71,2 m en (716, −980). Escarpement net : 48,8 m de dénivelé sur 24 m en (448, −716). Collines de zone 8 m / 140 m.",
+    "eau_douce": "Rivières tracées par la génération qui traversent la zone : n° 0 (1 619 m, de (−268, −1460) à la mer en (376, −344), par la forêt, le plateau et la côte) ; n° 4 (932 m, de (−332, −924) à (−644, −320), forêt puis côte) ; n° 7 (797 m, forêt, vers la côte ouest en (−1328, −1636)) ; n° 11 (330 m, côte, embouchure (60, −212)) ; n° 2 (337 m, forêt) ; et quatre ruisseaux de 80 à 127 m. Deux cascades sur la rivière 7 dans la forêt : (−968, −1243), chute 3,7 m ; (−1284, −1612), chute 3,6 m. Aucun lac dans les trois zones (le seul lac de la Grande Île est le Lac céleste, centre (886, −1294), zone voisine).",
+    "mesures": "Plan réel de la Grande Île (buildPlan, graine 1611319869, grille 4 m, 897 × 897 cases, ext 1 792 m), calculé en 1,3 s dans Node."
+  },
+  "biomes": ["prairie"],
+  "biomes_detail": {
+    "statut": "atteste",
+    "source": "src/world/archipel.js#ZONES_PX ; src/world/islands/gen/zones.js (computeZonesForme, grille B)",
+    "detail": "Les trois zones de la Grande Île sont en biome « prairie » (100 % des cases de terre de chaque zone, grille B du plan). Ton île est modelée à la main (src/world/home/), hors de la chaîne des biomes. Part de forêt voulue : côte 0,16 ; forêt 0,72 ; plateau 0,07. Couverture mesurée (cases de terre) : côte 68 % prairie, 6 % fleurs, 5 % forêt ; forêt 42 % forêt, 19 % prairie, 13 % roche, 10 % lisière ; plateau 69 % prairie, 9 % fleurs, 7 % roche.",
+    "vegetation_mesuree": "Arbres et décor placés par placeFloraForme : forêt 7 293 arbres pompons, 3 101 érables, 645 saules, 467 cerisiers, plus fougères, arbustes, rochers moussus, souches ; plateau 374 pompons, 104 érables, 761 lavandes, 1 801 arbustes, 367 rochers ; côte 641 pompons, 216 cerisiers, 92 fruitiers, 24 palmiers (plages), 2 050 arbustes, 570 buissons fleuris."
+  },
+  "chemins": {
+    "statut": "proposition",
+    "constat": "Aucun chemin en jeu sur la Grande Île (buildPlanForme : paths: [] ; mesuré : 0). Les seuls chemins existants sont ceux de Ton île (LAYOUT.paths de src/world/home/terrain.js : maison, ponton, jardin, boutique, rampe du plateau).",
+    "principaux": [
+      { "nom": "Route de la plage du départ au Plateau venté", "trace": [[0, -150], [-100, -400], [242, -672], [600, -880]], "fonction": "Relie l'accès principal (plage face à Ton île) au cœur du plateau en passant par la côte aux villages ; franchit la rivière 0 (gué ou pont à placer).", "statut": "proposition", "a_verifier": "Montée sur le plateau : l'escarpement nord-ouest (48,8 m sur 24 m vers (448, −716)) n'est pas praticable ; une rampe reste à trouver par mesure de pente." },
+      { "nom": "Route de la côte à la Forêt des souvenirs", "trace": [[-100, -400], [-278, -689], [-680, -1080], [-900, -1240]], "fonction": "Relie la côte au cœur de la forêt (colline (−680, −1080)) en longeant la rivière 4.", "statut": "proposition" },
+      { "nom": "Traverse du plateau à la forêt", "trace": [[600, -880], [-29, -1030], [-680, -1080]], "fonction": "Boucle entre les deux régions hautes, passage de frontière mesuré en (−29, −1030), hauteur de base 26,4 m.", "statut": "proposition" }
+    ],
+    "secondaires": [
+      { "nom": "Sentier côtier sud", "trace": [[-808, -480], [-484, -204], [0, -150], [884, -516]], "fonction": "Longe la plage de la côte aux villages et dessert les départs en bateau vers la Grotte lumineuse et l'Île des cristaux.", "statut": "proposition" },
+      { "nom": "Sentier de la rivière 0", "trace": [[376, -344], [-268, -1460]], "fonction": "Remonte la plus longue rivière de la zone jusqu'au pied du massif.", "statut": "proposition" },
+      { "nom": "Montée vers le Sommet givré", "trace": [[-680, -1080], [-410, -1472]], "fonction": "Sort de la forêt vers le massif (frontière mesurée vers (−410, −1472), hauteur de base 99,9 m).", "statut": "proposition" },
+      { "nom": "Passage vers le Lac céleste", "trace": [[600, -880], [659, -1059]], "fonction": "Sort du plateau vers le lac (frontière mesurée en (659, −1059), hauteur de base 24,2 m).", "statut": "proposition" }
+    ]
+  },
+  "acces": [
+    { "id": "ACC-01", "nom": "Point de départ de Ton île", "type": "apparition", "position": { "x": 0, "z": 4 }, "fonction": "Le joueur commence la partie ici (observé en jeu en (0, 4,5)).", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.spawn" },
+    { "id": "ACC-02", "nom": "Ponton de Ton île et amarrage du bateau", "type": "ponton", "position": { "x": 10.5, "z": 32 }, "fonction": "Ponton de z 20,5 à 32 (largeur 2,4 m, tablier à 0,86 m) ; le bateau est amarré par défaut en (12,9, 30,4). Arrivée et départ en bateau.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.pier ; src/entities/Sailing.js#mooring" },
+    { "id": "ACC-03", "nom": "Plage nord de la Côte aux villages, face au départ", "type": "plage", "position": { "x": 0, "z": -148 }, "fonction": "Première terre de la Grande Île au nord de Ton île : terre la plus proche en (−20, −140), à 141 m du centre de Ton île, soit environ 107 m de mer depuis le bord de son disque (r 34 m), fond à −3,7 m en (0, −100). Accostage en bateau ou à la nage ; prairie à 1,5 m dès (0, −160).", "statut": "atteste", "source": "src/world/islands/gen/forme.js#formeHeightL ; src/world/archipel.js#ILES_PX" },
+    { "id": "ACC-04", "nom": "Arrivée par les airs (aigle)", "type": "vol", "fonction": "L'aigle s'appelle partout (touche G) et se pose sur toute terre : la zone entière est accessible en vol. Praticabilité en vol dans cette zone non vérifiée en jeu dans cette tâche.", "statut": "atteste", "source": "src/entities/AirRide.js#summon ; src/app/Game.js#KeyG" }
+  ],
+  "sorties": [
+    { "id": "SOR-01", "nom": "Côte ouest de la forêt vers les Ruines gelées", "type": "mer", "position": { "x": -1044, "z": -1900 }, "fonction": "141 m de mer jusqu'à (−1092, −2032) (zone ruines-gelees).", "statut": "atteste", "source": "src/world/archipel.js#ILES_PX" },
+    { "id": "SOR-02", "nom": "Côte ouest de la forêt vers l'Île des tempêtes", "type": "mer", "position": { "x": -1164, "z": -1020 }, "fonction": "174 m de mer jusqu'à (−1331, −971) (zone archipel-des-tempetes).", "statut": "atteste", "source": "src/world/archipel.js#ILES_PX" },
+    { "id": "SOR-03", "nom": "Côte sud-ouest vers la Grotte lumineuse", "type": "mer", "position": { "x": -484, "z": -204 }, "fonction": "214 m de mer jusqu'à (−494, 10) (zone grotte-lumineuse) ; 260 m depuis Ton île.", "statut": "atteste", "source": "src/world/archipel.js#ILES_PX" },
+    { "id": "SOR-04", "nom": "Côte ouest de la forêt vers l'Île aux fleurs", "type": "mer", "position": { "x": -1348, "z": -1532 }, "fonction": "409 m de mer jusqu'à (−1738, −1410) (zone ile-aux-fleurs).", "statut": "atteste", "source": "src/world/archipel.js#ILES_PX" },
+    { "id": "SOR-05", "nom": "Côte est du plateau vers les Falaises oubliées", "type": "mer", "position": { "x": 1288, "z": -956 }, "fonction": "251 m de mer jusqu'à (1522, −866) (zone falaises-oubliees).", "statut": "atteste", "source": "src/world/archipel.js#ILES_PX" },
+    { "id": "SOR-06", "nom": "Frontière terrestre vers le Sommet givré", "type": "passage", "position": { "x": -410, "z": -1472 }, "fonction": "La forêt touche le Sommet givré sur une longue frontière (767 contacts de cases) ; point de passage mesuré à 99,9 m (hauteur de base) sur l'axe forêt–sommet. Pente du passage non mesurée.", "statut": "atteste", "source": "src/world/islands/regions.js#zoneAt" },
+    { "id": "SOR-07", "nom": "Frontière terrestre vers le Lac céleste", "type": "passage", "position": { "x": 659, "z": -1059 }, "fonction": "Le plateau touche le Lac céleste (548 contacts de cases) ; point de passage mesuré à 24,2 m (hauteur de base).", "statut": "atteste", "source": "src/world/islands/regions.js#zoneAt" },
+    { "id": "SOR-08", "nom": "Départ en vol (aigle)", "type": "vol", "fonction": "Depuis n'importe quel point de la zone, l'aigle mène aux autres îles et aux Îles célestes (au nord de la Grande Île, de 92 à 228 m d'altitude).", "statut": "atteste", "source": "src/entities/AirRide.js#summon ; src/world/archipel.js#CIEL_PX" }
+  ],
+  "connexions": [
+    { "zone": "ZONE-PLAINES-COLOREES", "moyen": "bateau ou vol : 409 m de mer de la côte ouest de la forêt à l'Île aux fleurs", "statut": "atteste", "note": "Distance mesurée ; connexion déclarée dans production/zones.json." },
+    { "zone": "ZONE-GROTTES-CACHEES", "moyen": "bateau ou vol : 214 m de mer jusqu'à la Grotte lumineuse (260 m depuis Ton île) ; 388 m jusqu'à l'Île des cristaux", "statut": "atteste", "note": "Distances mesurées ; connexion déclarée dans production/zones.json. Les grottes elles-mêmes n'existent pas encore en jeu." },
+    { "zone": "ZONE-ILE-DE-PIERRE", "moyen": "bateau ou vol : 141 m de mer de la côte nord-ouest de la forêt aux Ruines gelées", "statut": "atteste", "note": "Distance mesurée ; connexion déclarée dans production/zones.json." },
+    { "zone": "ZONE-ILE-DES-GEANTS", "moyen": "à pied : frontière terrestre forêt / Sommet givré (même île)", "statut": "atteste", "note": "Frontière mesurée ; non déclarée dans production/zones.json (à ajouter par qui tient ce fichier)." },
+    { "zone": "ZONE-LAC-CELESTE", "moyen": "à pied : frontière terrestre plateau / Lac céleste (même île)", "statut": "atteste", "note": "Frontière mesurée ; non déclarée dans production/zones.json." },
+    { "zone": "ZONE-ARCHIPEL-DES-TEMPETES", "moyen": "bateau ou vol : 174 m de mer jusqu'à l'Île des tempêtes", "statut": "atteste", "note": "Distance mesurée ; non déclarée dans production/zones.json." },
+    { "zone": "ZONE-FALAISES-OUBLIEES", "moyen": "bateau ou vol : 251 m de mer depuis la côte est du plateau", "statut": "atteste", "note": "Distance mesurée ; non déclarée dans production/zones.json." },
+    { "zone": "ZONE-ILE-DES-CIEUX", "moyen": "vol (aigle) vers les Îles célestes au nord de la Grande Île", "statut": "proposition", "note": "Accès par le vol attesté par le code (AirRide, îles praticables) mais trajet non vérifié depuis cette zone." },
+    { "zone": "ZONE-ILE-DESOLEE", "moyen": "bateau : bancs de la Place des os à 585 m au sud de Ton île", "statut": "proposition", "note": "Distance mesurée ; rapprochement Place des os / Île désolée lui-même en « proposition » dans production/zones.json." }
+  ],
+  "reperes": [
+    { "id": "REP-01", "nom": "Le Sommet givré (hors zone, visible de partout)", "type": "sommet enneigé", "position": { "x": -144, "z": -1860 }, "fonction": "Point le plus haut de la Grande Île, 268,2 m, neige au-dessus d'environ 114 m à cette latitude ; à 1 866 m du départ. Vu depuis Ton île, le Plateau venté et la Forêt (captures). Repère d'orientation : le nord.", "statut": "atteste", "source": "src/world/archipel.js#ILES_PX ; src/world/islands/gen/forme.js#snowLine" },
+    { "id": "REP-02", "nom": "Épaulement de la chaîne sud-ouest", "type": "crête", "position": { "x": -424, "z": -1572 }, "fonction": "Point haut de la Forêt des souvenirs, 166,7 m : la forêt monte vers lui.", "statut": "atteste", "source": "src/world/archipel.js#ILES_PX" },
+    { "id": "REP-03", "nom": "Escarpement du Plateau venté", "type": "falaise intérieure", "position": { "x": 448, "z": -716 }, "fonction": "Rebord de la table : 48,8 m de dénivelé sur 24 m (dessus à 65,3 m) ; silhouette horizontale lisible depuis la côte. Point haut du plateau 71,2 m en (716, −980).", "statut": "atteste", "source": "src/world/islands/gen/forme.js#reliefs" },
+    { "id": "REP-04", "nom": "Colline de la forêt", "type": "colline boisée", "position": { "x": -624, "z": -1132 }, "fonction": "Sommet 80,9 m au cœur de la forêt (colline posée en (−680, −1080)).", "statut": "atteste", "source": "src/world/archipel.js#ILES_PX" },
+    { "id": "REP-05", "nom": "Phare ou grand arbre-mémoire sur la côte", "type": "construction", "fonction": "Repère vertical à proposer près de la plage d'arrivée pour guider depuis Ton île.", "statut": "proposition" }
+  ],
+  "points_interet": [
+    { "id": "POI-01", "nom": "Maison", "type": "habitation", "position": { "x": 9, "z": -1.2 }, "fonction": "Maison du joueur sur Ton île.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.house ; src/world/home/props.js#spots.house" },
+    { "id": "POI-02", "nom": "Bibliothèque", "type": "bâtiment", "position": { "x": 6.5, "z": -18.2 }, "fonction": "Sur le plateau supérieur de Ton île.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.library" },
+    { "id": "POI-03", "nom": "Hibou et lutrin", "type": "personnage", "position": { "x": 6.5, "z": -14.6 }, "fonction": "Perchoir et lutrin devant la bibliothèque.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.owl ; src/world/home/props.js#spots.owl" },
+    { "id": "POI-04", "nom": "Grand arbre", "type": "arbre", "position": { "x": -12.2, "z": -0.6 }, "fonction": "Arbre de Ton île.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.tree ; src/world/home/props.js#spots.tree" },
+    { "id": "POI-05", "nom": "Bureau", "type": "mobilier", "position": { "x": -11, "z": 2.4 }, "fonction": "Bureau en plein air (siège, pot).", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.desk ; src/world/home/props.js#spots.desk" },
+    { "id": "POI-06", "nom": "Jardin", "type": "potager", "position": { "x": -3, "z": 9 }, "fonction": "Parcelles cultivables.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.garden ; src/world/home/props.js#spots.garden" },
+    { "id": "POI-07", "nom": "Boutique", "type": "commerce", "position": { "x": 16.5, "z": 6.5 }, "fonction": "Boutique de Ton île.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.shop ; src/world/home/props.js#spots.shop" },
+    { "id": "POI-08", "nom": "Ponton", "type": "ponton", "position": { "x": 10.5, "z": 32 }, "fonction": "Bout du ponton (s'y asseoir, bateau amarré).", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.pier ; src/world/home/props.js#spots.pierEnd" },
+    { "id": "POI-09", "nom": "Cascade et bassin de Ton île", "type": "eau", "position": { "x": -2, "z": -7 }, "fonction": "Rivière du plateau supérieur et bassin (r 2,2 m).", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT.pond" },
+    { "id": "POI-10", "nom": "Cascades de la rivière 7", "type": "cascade", "position": { "x": -968, "z": -1243 }, "fonction": "Chute de 3,7 m dans la forêt ; une seconde en (−1284, −1612), 3,6 m. Éléments naturels générés, sans fonction de jeu.", "statut": "atteste", "source": "src/world/islands/gen/hydro.js#findWaterfalls" },
+    { "id": "POI-11", "nom": "Embouchure de la rivière 0", "type": "embouchure", "position": { "x": 376, "z": -344 }, "fonction": "Fin de la plus longue rivière de la zone (1 619 m) sur la côte aux villages. Élément naturel généré, sans fonction de jeu.", "statut": "atteste", "source": "src/world/islands/gen/hydro.js#traceRivers" },
+    { "id": "POI-12", "nom": "Village de pêcheurs de la côte", "type": "village", "position": { "x": -100, "z": -400 }, "fonction": "Premier village rencontré en venant de Ton île (nom de la zone : « La Côte aux villages »).", "statut": "proposition" },
+    { "id": "POI-13", "nom": "Moulins du Plateau venté", "type": "moulins", "position": { "x": 640, "z": -848 }, "fonction": "Moulins sur la table du plateau, visibles depuis la côte (prévus dans LIVRAISONS.md, « À faire ensuite »).", "statut": "proposition" },
+    { "id": "POI-14", "nom": "Arbre-mémoire de la forêt", "type": "arbre remarquable", "position": { "x": -624, "z": -1132 }, "fonction": "Grand arbre au sommet de la colline de la forêt (sous-titre de la zone : « Arbres-mémoire »).", "statut": "proposition" },
+    { "id": "POI-15", "nom": "Débarcadère de la plage nord", "type": "ponton", "position": { "x": 0, "z": -150 }, "fonction": "Ponton d'arrivée en face de Ton île.", "statut": "proposition" }
+  ],
+  "zones_cachees": {
+    "statut": "proposition",
+    "attestees": [],
+    "constat": "Aucune grotte ni zone cachée en jeu (les grottes sont « à faire ensuite », LIVRAISONS.md).",
+    "propositions": [
+      "Clairière cachée derrière les cascades de la rivière 7 (−968, −1243).",
+      "Abri sous l'escarpement du plateau (448, −716)."
+    ]
+  },
+  "verticalite": {
+    "statut": "atteste",
+    "source": "src/world/islands/gen/plan.js (buildPlan) ; src/world/home/terrain.js (LAYOUT.upperH)",
+    "detail": "De 0 à 166,7 m dans la zone (forêt), 268,2 m au Sommet givré voisin. Ton île : 0 à 3,5 m. Plateau : dessus vers 60 à 71 m (sol mesuré en jeu 60,8 m en (600, −880)). Escarpement de 48,8 m sur 24 m. La côte aux villages reste basse (moyenne 13,2 m)."
+  },
+  "obstacles": {
+    "statut": "atteste",
+    "source": "src/world/islands/gen/plan.js (buildPlan) ; src/world/islands/gen/zones.js (ROCHE : pente > 0,68)",
+    "detail": [
+      "Détroit d'environ 107 m entre Ton île (bord du disque r 34 m) et la Grande Île (141 m de centre à côte) (fond −3,7 m en (0, −100)) : bateau, nage ou vol.",
+      "Escarpement du plateau (48,8 m sur 24 m) ; 2 795 cases de roche sur le plateau.",
+      "Pentes rocheuses de la forêt vers le massif : 9 328 cases de roche ; falaises côtières à l'ouest (jusqu'à 37,6 m).",
+      "Rivières 0, 4 et 7 à traverser (aucun pont ni gué en jeu)."
+    ]
+  },
+  "espaces_vides": [
+    { "description": "Côte aux villages (0,567 km² de terre) : aucun village, aucun lieu, aucun chemin ; prairie, fleurs et arbustes seulement.", "statut": "atteste", "source": "src/world/islands/gen/plan.js#buildPlanForme" },
+    { "description": "Plateau venté (0,604 km²) : table de prairie vide, sans moulin ni lieu ; 69 % de prairie nue.", "statut": "atteste", "source": "src/world/islands/gen/plan.js#buildPlanForme" },
+    { "description": "Forêt des souvenirs (1,158 km²) : forêt dense sans clairière aménagée, sans lieu ni sentier.", "statut": "atteste", "source": "src/world/islands/gen/plan.js#buildPlanForme" },
+    { "description": "Aucune faune, aucune ressource récoltable hors arbres, aucun élément de la mer dans le détroit (ARCHIPEL.marine vide).", "statut": "atteste", "source": "src/world/archipel.js#ARCHIPEL.marine" },
+    { "description": "Ton île : entièrement conçue (lieux modelés à la main) ; pas d'espace vide recensé.", "statut": "atteste", "source": "src/world/home/terrain.js#LAYOUT" }
+  ],
+  "narration": {
+    "fonction": "Le souvenir du foyer et du premier départ : Ton île est la maison qu'on quitte, la Grande Île la terre qu'on voit depuis le ponton depuis toujours. La côte garde le souvenir des gens (villages), la forêt celui des personnes disparues (arbres-mémoire), le plateau celui du vent et des promesses du large. C'est l'île où l'on apprend à partir.",
+    "statut": "proposition",
+    "appui_dans_le_jeu": "Seuls les noms et sous-titres des zones existent (archipel.js : « Plaine côtière », « Arbres-mémoire », « Prairies et vent du large ») ; aucun texte, quête ni objet narratif en jeu."
+  },
+  "ambiance": {
+    "visuelle": "Aquarelle lumineuse : eau turquoise et plage claire autour de Ton île, prairies vert vif, arbres pompons verts, érables orangés et cerisiers roses dans la forêt, lavande et arbustes sur le plateau. Le massif du Sommet givré ferme l'horizon au nord, enneigé, voilé par la brume de distance. Grands espaces ouverts et calmes sur le plateau ; lisière de forêt colorée.",
+    "eclairage": "Cycle jour et nuit global (palettes nuit, aube, matin, midi doré, après-midi, heure dorée, crépuscule, heure bleue de src/world/env/daycycle.js) ; ombres teintées violet-bleu, jamais noires. Rien n'est propre à la zone : même lumière et même brume que le reste de l'archipel.",
+    "statut": "atteste",
+    "source": "src/world/env/daycycle.js",
+    "verification": {
+      "methode": "En jeu sur le serveur du monde ouvert (http://localhost:5181), __ile.game.skipSave = true avant tout déplacement, heure forcée à 11 h (__ile.setHour(11)), fenêtre 1 280 × 720, téléportation (__ile.tp), cadrage (__ile.look), capture (__ile.capture).",
+      "captures": [
+        "captures/ile-verte-depart-vers-grande-ile.png",
+        "captures/ile-verte-plateau-vente-vers-foret.png",
+        "captures/ile-verte-foret-des-souvenirs.png"
+      ],
+      "constat": "Lumière de fin de matinée claire, eau turquoise, prés verts saturés ; la Grande Île se lit depuis Ton île (côte verte, massif enneigé au fond, en partie confondu avec les nuages). Sur le plateau : prairie vide, quelques arbustes et rochers. Dans la forêt : lisière aux couleurs d'automne (érables orange, cerisiers roses).",
+      "limites": "Une seule heure vérifiée (11 h) ; nuit, aube et crépuscule non capturés. Lisibilité du massif contre les nuages : critère observable, sans seuil documenté."
+    },
+    "propositions": [
+      "Vent visible sur le Plateau venté (herbes couchées, nuages plus rapides) : à concevoir, rien de propre à la zone en jeu.",
+      "Lumière filtrée sous le couvert de la forêt : à concevoir."
+    ]
+  }
+}

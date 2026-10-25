@@ -13,7 +13,9 @@ et en vol. Tout le code, les commentaires et les documents sont en français.
    `/graphify src --update`.
 3. Selon la tâche : `README.md` (commandes, déplacements, sauvegarde, arborescence), `docs/DA.md` (règles
    des modèles 3D), `docs/modeles-arborescence.md`, `.claude/agents/equipe-production.md` (équipe
-   d'agents : Evis, Evis-critique, archipel-calibrateur, archipel-critique, locomotion-physique).
+   d’agents : Evis, Evis-critique, archipel-calibrateur, archipel-critique, locomotion-physique,
+   archipel-integrateur), `docs/PRODUCTION.md` (workflow des 19 zones : journal `production/journal.jsonl`,
+   `npm run prod`, carte de chantier `/dashboard.html#chantier`).
 
 ## Règles essentielles
 

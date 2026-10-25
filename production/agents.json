@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "note": "Rôles fonctionnels du workflow de l'open world, associés aux agents du dépôt (.claude/agents/). Aucun rôle n'approuve son propre livrable : la revue est faite par un relecteur différent, après les contrôles automatiques.",
+  "roles": [
+    {
+      "id": "world-designer",
+      "role": "World Designer",
+      "agent": "archipel-calibrateur",
+      "fichier": ".claude/agents/archipel-calibrateur.md",
+      "sections": ["B", "F"],
+      "mission": "Structure de l'open world : fiches de zone, points d'intérêt, connexions, besoins en assets et critères de complétude.",
+      "chemins_autorises": ["production/fiches/", "src/world/archipel.js", "src/world/islands/", "tests/"]
+    },
+    {
+      "id": "asset-artist",
+      "role": "Asset Artist",
+      "agent": "evis",
+      "fichier": ".claude/agents/evis.md",
+      "sections": ["D"],
+      "mission": "Assets du monde : inventaire lié au catalogue, spécifications des manques, modèles 3D en code selon docs/DA.md.",
+      "chemins_autorises": ["production/assets/", "src/models/", "tests/fixtures/empreintes.json"]
+    },
+    {
+      "id": "gameplay",
+      "role": "Gameplay Agent",
+      "agent": "locomotion-physique",
+      "fichier": ".claude/agents/locomotion-physique.md",
+      "sections": ["C"],
+      "mission": "Zones explorables et fonctionnelles : interactions, accès, sorties, récompenses, avec tests fonctionnels.",
+      "chemins_autorises": ["tests/", "src/gameplay/", "src/entities/", "src/world/navigation.js", "src/data/"]
+    },
+    {
+      "id": "technical-artist",
+      "role": "Technical Artist",
+      "agent": "archipel-integrateur",
+      "fichier": ".claude/agents/archipel-integrateur.md",
+      "sections": ["E", "G"],
+      "mission": "Intégration et qualité technique : références, collisions, échelles, performances, tests post-intégration, rapports reproductibles.",
+      "chemins_autorises": ["production/integration/", "tests/"]
+    }
+  ],
+  "relecteurs": [
+    { "id": "archipel-critique", "fichier": ".claude/agents/archipel-critique.md", "revoit": ["world-designer", "gameplay", "technical-artist"] },
+    { "id": "evis-critique", "fichier": ".claude/agents/evis-critique.md", "revoit": ["asset-artist"] },
+    { "id": "humain", "fichier": null, "revoit": ["world-designer", "asset-artist", "gameplay", "technical-artist"] }
+  ],
+  "acteurs_systeme": {
+    "orchestrateur": "Règles déterministes de src/production/orchestrateur.js (création, dépendances, préparation des tâches)",
+    "controles": "Contrôles automatiques de scripts/production/controles.mjs",
+    "audit": "Constats d'audit initial, chacun avec une preuve vérifiable",
+    "humain": "Décisions humaines : critères, réouverture, remplacement d'un livrable validé, livraison"
+  }
+}
