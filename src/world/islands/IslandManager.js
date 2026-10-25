@@ -1090,7 +1090,23 @@ export class IslandManager {
     return fallback;
   }
 
+  // sol pour la marche : maximum des îles qui couvrent le point (ponts compris). Pour une section, le relief
+  // est celui de la section de la MÊME île (desc.parent) dont le carré propre porte le point : au-delà de 4 m
+  // hors du carré, la marge de deux cases (gen/sections.js) fausse le bicubique et passait au-dessus du relief
+  // rendu (marches invisibles aux raccords). La marge ne donne le relief que si cette section n'est pas
+  // chargée. Deux îles sectionnées qui se recouvrent gardent chacune leur relief (maximum entre îles).
+  // Carré fermé : sur un raccord ou un bord extérieur, le relief de la section est encore exact (marge à 0 m).
   heightAt(x, z) {
+    // île parente → relief de sa section dont le carré porte le point (table réutilisée : appel fréquent)
+    const own = (this._own ||= new Map());
+    own.clear();
+    for (const e of this.entries.values()) {
+      const c = e.surf && e.plan.core;
+      if (!c || own.has(e.desc.parent)) continue;
+      const lx = x - e.desc.x;
+      const lz = z - e.desc.z;
+      if (Math.abs(lx) <= c && Math.abs(lz) <= c) own.set(e.desc.parent, e.surf.height(lx, lz));
+    }
     let best = null;
     for (const e of this.entries.values()) {
       if (!e.surf) continue;
@@ -1098,7 +1114,8 @@ export class IslandManager {
       const lz = z - e.desc.z;
       const ext = e.plan.ext - 1;
       if (Math.abs(lx) > ext || Math.abs(lz) > ext) continue;
-      let h = e.surf.height(lx, lz);
+      const o = e.plan.core ? own.get(e.desc.parent) : undefined;
+      let h = o !== undefined ? o : e.surf.height(lx, lz);
       for (const d of e.decks) {
         const dx = d.x1 - d.x0;
         const dz = d.z1 - d.z0;

@@ -1,0 +1,98 @@
+{
+  "task_id": "TASK-ILE-VERTE-005",
+  "agent": "world-designer",
+  "etat_final": "termine",
+  "resume": "Tentative 2. P01 corrigé dans IslandManager.heightAt. Le relief d'une section vient de la section de la MÊME île parente (desc.parent) dont le carré fermé ([−256, 256]²) porte le point. La marge d'une section (deux cases de 4 m, bicubique faussé au-delà de 4 m hors du carré) ne sert plus que de secours quand cette section propre n'est pas chargée. Le maximum entre îles parentes et les ponts (decks) évalués sur toutes les entrées sont conservés. Refus de la tentative 1 corrigé : une section propre est retenue par île parente, et non plus une seule pour toutes les îles ; deux îles sectionnées qui se recouvrent gardent chacune leur relief. Rendu, génération, plans, empreintes et identifiants inchangés. Le test tests/zones/raccords-grande-ile.test.js compte 4 cas. (1) Les 48 raccords des 30 sections de la Grande Île, bandes de 8 m au pas de 0,5 m (1 623 600 points). (2) Le recouvrement de grande-ile~6-2 et volcan-endormi~2-2, au mètre (78 077 points), avec toutes les sections des deux îles chargées dans les deux ordres. Mesures sur la Grande Île : avant la tentative 1, écart max 1,217 m, 145 297 points à plus de 1 cm, 1 938 marches invisibles (Île Verte : 0,465 m, 537 marches) ; après, 0 m, 0 point, 0 marche. Cas des deux îles : avec la version de la tentative 1, écart 164,03 m et 73 632 points hors tolérance (sol −16 m au lieu de 148,03 m en (1689 ; −1932)) ; après, 0 point hors tolérance dans les deux ordres. Les 55 paires inter-îles chargées seules dans les deux ordres donnent un écart max de 0. Sur l'archipel entier, le script du relecteur trouve 0,046 m (1 762 points du bord extérieur côté mer, dans les deux ordres), identique à sa proposition.",
+  "fichiers": [
+    {
+      "path": "src/world/islands/IslandManager.js",
+      "action": "modifie",
+      "nature": "fichier"
+    },
+    {
+      "path": "tests/zones/raccords-grande-ile.test.js",
+      "action": "cree",
+      "nature": "test"
+    }
+  ],
+  "livrables_attendus": [
+    "tests/zones/raccords-grande-ile.test.js"
+  ],
+  "livrables_fournis": [
+    "tests/zones/raccords-grande-ile.test.js"
+  ],
+  "tests": [
+    {
+      "commande": "npx vitest run tests/zones/raccords-grande-ile.test.js (code d'origine, avant la tentative 1)",
+      "resultat": "echoue",
+      "detail": "Résultat : Tests 2 failed | 1 passed (3) [test des raccords seul, avant l'ajout du cas inter-îles]. horsTolerance 145297, ecartMax 1.2167 m en (−415,5 ; −1925,5) ; marches 1938, marcheMax 0,667 m ; surplusMax 0,518 m."
+    },
+    {
+      "commande": "npx vitest run tests/zones/raccords-grande-ile.test.js (version de la tentative 1)",
+      "resultat": "echoue",
+      "detail": "Tests 1 failed | 3 passed (4) ; cas « Îles sectionnées qui se recouvrent » : {ordre « Grande Île d’abord », points 78077, ecartMax 164.026, point (1689 ; −1932) sol −16, plans 148.026, horsTolerance 73632, absents 0}."
+    },
+    {
+      "commande": "npx vitest run tests/zones/raccords-grande-ile.test.js",
+      "resultat": "reussi",
+      "detail": "✓ tests/zones/raccords-grande-ile.test.js (4 tests) 4098ms ; Tests 4 passed (4) ; Duration 4.54s."
+    },
+    {
+      "commande": "npx vitest run tests/zones/raccords-grande-ile.test.js tests/world.test.js tests/zones/ile-verte.test.js",
+      "resultat": "reussi",
+      "detail": "Test Files 3 passed (3) ; Tests 45 passed (45) ; Duration 13.53s."
+    },
+    {
+      "commande": "npm test",
+      "resultat": "echoue",
+      "detail": "Test Files 1 failed | 26 passed (27) ; Tests 1 failed | 302 passed (303) ; Duration 19.37s. Seul échec : tests/empreintes.test.js (écarts PER-001 à PER-004 uniquement), échec connu de production/echecs-connus.json : aucun nouvel échec."
+    },
+    {
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/t005/mesure.mjs \"$PWD\"",
+      "resultat": "reussi",
+      "detail": "Grande Île seule, 48 raccords : tout {n 1623600, max 0, >1 cm 0, marches 0, surplus 0} ; Île Verte {n 657546, max 0, >1 cm 0, marches 0, surplus 0}. Avant (copie temporaire du module d'origine, supprimée) : tout {max 1.2167, >1 cm 145297, marches 1938, surplus 0.5177} ; Île Verte {max 0.4646, >1 cm 65018, marches 537, surplus 0.3816}."
+    },
+    {
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/t005/inter2.mjs \"$PWD\"",
+      "resultat": "reussi",
+      "detail": "55 paires de sections d'îles différentes qui se recouvrent, chargées seules, deux ordres, pas de 2 m : {points 2049256, >1 cm 0, max 0}."
+    },
+    {
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/critique/t005-fix.mjs \"$PWD\"",
+      "resultat": "reussi",
+      "detail": "Script du relecteur, archipel sectionné entier chargé, bords de 16 m au pas de 2 m : direct et inverse {n 622592, heightAt livré : >1 cm 1762, max 0.046 ; proposition : >1 cm 1762, max 0.046}. Le reste est le bord extérieur côté mer, sans section propre (secours), inchangé."
+    },
+    {
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/80ef0e7d-589a-46af-942d-f13767a3a9ae/scratchpad/critique/t005-inter.mjs \"$PWD\"",
+      "resultat": "reussi",
+      "detail": "paires 55, paires avec perte > 5 cm 0, paires avec terre 38."
+    },
+    {
+      "commande": "jeu sur le port 5174 (marche réelle sur un raccord)",
+      "resultat": "non_execute",
+      "detail": "Consigne de la tâche : pas de jeu à lancer."
+    }
+  ],
+  "erreurs": [],
+  "hypotheses": [
+    "Le test charge des sections seules (sans les îles non sectionnées), sans ponts ni terrassements : il n'y en a pas à l'étape « bases ».",
+    "« Marche invisible » : saut du sol physique supérieur à stepUp (0,4 m, tuning « realiste ») entre deux points voisins de 0,5 m là où le relief du plan entier ne saute pas de plus de stepUp ; le surplus (saut du sol − saut du plan) est aussi borné.",
+    "Le relief rendu près d'un raccord est celui du plan entier (les tuiles d'une section ne couvrent que son carré, où le relief de section est identique au plan entier) ; c'est la référence du critère de 1 cm. Pour deux îles qui se recouvrent, la référence est le maximum des deux plans entiers."
+  ],
+  "decisions": [
+    "Piste (a) retenue, étendue par île parente sur demande du relecteur : une section propre par desc.parent, substitution limitée aux sections de la même île, maximum entre îles. (b) laissait des trous sans sol, (c) MARGE = 3 changeait grilles, lacs et coût du Worker.",
+    "Carré fermé (|l| ≤ core) : sur une ligne de raccord ou un bord extérieur, le carré ouvert d'entryAt ne retient aucune section et la marge d'une section en diagonale reprenait la main (0,57 m mesuré) ; à 0 m hors du carré, le relief de section est exact.",
+    "La table île parente → relief est réutilisée d'un appel à l'autre (this._own, vidée à chaque appel) : heightAt est appelé souvent par image, pas d'allocation par appel.",
+    "entryAt, waterLevelAt, cropPlan et Surface non modifiés ; waterDepth (navigation.js) = waterLevelAt − ce sol redevient cohérent ; les obstacles des arbres ne dépendent pas de heightAt.",
+    "Le test appelle la vraie méthode IslandManager.prototype.heightAt (Object.create, comme tests/lod1.test.js) ; le cas inter-îles charge toutes les sections des deux îles dans les deux ordres."
+  ],
+  "checklist": [
+    "ZONE-ILE-VERTE.E03"
+  ],
+  "dependances_restantes": [
+    "Revue indépendante d'Archipel-Critique de la tentative 2.",
+    "Secours : si la section propre d'une île n'est pas chargée (bord extérieur côté mer, ou chargement partiel), le sol vient encore de la marge, faussée au-delà de 4 m (0,046 m max mesuré sur l'archipel) ; inchangé par rapport à l'origine.",
+    "Contrôle en jeu (port 5174) d'une traversée de raccord non exécuté."
+  ],
+  "prochaine_etape": "Revue d'Archipel-Critique (tentative 2 : section propre par île parente, cas inter-îles dans le test), puis nouveau contrôle E03 de l'intégration de L'Île Verte."
+}
