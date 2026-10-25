@@ -286,8 +286,15 @@ et domaine concerné).
   Worker mesuré sur le monde ouvert : 36 îles entières, plan + LOD1 de 14 à 17 ms en moyenne (au pire
   100 ms, Cascades sacrées) ; plan de la Grande Île 1,1 à 1,5 s ; section + LOD1 au plus 13 ms ; tuile
   p95 7 ms. Copie principale : les fichiers non suivis de l'ancien système de production sont déplacés
-  dans `/Users/hugo/developer/archipel-sauvegarde-ancien-monde-2026-10-25/` (voir son `LISEZMOI.md`) ;
-  restent jusqu'à la fusion ceux qu'importe `vite.config.js` et les agents identiques.
+  dans `/Users/hugo/developer/archipel-sauvegarde-ancien-monde-2026-10-25/` (voir son `LISEZMOI.md`).
+- **Fusion (25/10/2026)** : `v3-archipel` avancée (avance rapide) sur `claude/charming-khorana-a24b36` : le
+  monde ouvert est la ligne principale. Avant la fusion, les doublons non suivis de la copie principale ont
+  rejoint la sauvegarde (`avant-fusion/`, avec le correctif complet du travail en cours) ; le travail en cours
+  (chèvre, mouton, fleurs PLA-015, skill `modele-3d`, section Evis du README, notes du catalogue,
+  `launch.json`) a été remis puis réappliqué, toujours non commité. Avec la reprise de PLA-015 en cours (216
+  triangles par touffe au lieu de 68), « champs de fleurs » de `tests/world.test.js` échoue : 1,36 M
+  triangles sur une tuile entièrement fleurie de l'île d'essai pour un plafond de 800 000 (l'ancienne île
+  aux Mille Fleurs, moins dense, passait à 0,71 M).
 - **Constats sur le monde ouvert, à trancher** (relevés en migrant les tests, non corrigés) :
   - carte d'herbe discontinue entre deux tuiles de biomes différents (palette par tuile) : raccord visible
     possible aux frontières de biomes (section `grande-ile~3-3`, île d'essai) ; continue dans un même biome ;
@@ -295,7 +302,7 @@ et domaine concerné).
     complète) contre un budget de 0,5 ms mesuré sur l'ancien archipel : plafond provisoire du test à 1,2 ms ;
   - l'échec connu des empreintes couvre plus que PER-001 à PER-004 : tout le personnage (PER-005 à PER-023)
     et la grimpe des palmiers de la maison (`ileDepart.obstacles.44` à `49`), déjà avant le nettoyage.
-- **Open world, bases** (branche `claude/charming-khorana-a24b36`, non fusionnée). Ce qui est livré :
+- **Open world, bases** (branche `claude/charming-khorana-a24b36`, fusionnée dans `v3-archipel` le 25/10/2026). Ce qui est livré :
   - les îles de la carte de référence, avec leur relief, leurs côtes, l'eau douce et les arbres ;
   - les 24 zones étiquetées ;
   - les sections de 512 m ;
