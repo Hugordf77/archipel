@@ -1,0 +1,138 @@
+{
+  "task_id": "TASK-ILE-VERTE-010",
+  "agent": "asset-artist",
+  "etat_final": "termine",
+  "resume": "BAT-013 « Moulin-tour du plateau » (src/models/batiments/moulin-tour/) repris après le refus d'Evis-critique (ressemblance à la référence), 2e tour. Étages en tronc de pyramide (2,7 → 1,92 m) aux pans de bois inclinés et cou en tronc (1,92 → 1,5 m) : la silhouette s'affine sans marche. Tête allongée vers l'arrière (−2,4 m) sous un capot en demi-couronne centré sur le moyeu et un toit cintré en arc surbaissé. Ailes à toiles en trapèze (0,35 → 0,85 m), rive fine, deux lattes discrètes. Maisonnette plus discrète (piédroits 0,45 m, passage toujours de 2,5 m). Avancée à pignon sur +Z à la place de l'auvent. Socles en boîtes arrondies. mesure.mjs : aucune règle en échec ; 7 884 triangles de près, 3 814 allégé (budget 8 000 / 4 000) ; 13 obstacles, 95 % de l'emprise, débord 0,38 m. Proportions sur la vue comparable (soleil depuis +X) : H/W du corps 2,82 contre 3,10 (−9,3 %), rayon des ailes / hauteur de la tour 0,346 contre 0,342 (+1,4 %). Commits 42152a7 (création) et 1bf1d47 (correction) sur claude/plateau-vente-modeles.",
+  "fichiers": [
+    {
+      "path": "src/models/batiments/moulin-tour/index.js",
+      "action": "cree",
+      "nature": "fichier"
+    },
+    {
+      "path": "src/models/batiments/moulin-tour/FICHE.md",
+      "action": "cree",
+      "nature": "specification"
+    },
+    {
+      "path": "src/models/batiments/moulin-tour/reference.png",
+      "action": "cree",
+      "nature": "fichier"
+    },
+    {
+      "path": "src/models/batiments/moulin-tour/physique.js",
+      "action": "cree",
+      "nature": "fichier"
+    },
+    {
+      "path": "src/models/lieux.js",
+      "action": "modifie",
+      "nature": "fichier"
+    },
+    {
+      "path": "src/models/index.gen.js",
+      "action": "modifie",
+      "nature": "fichier"
+    },
+    {
+      "path": "src/models/releves.gen.js",
+      "action": "modifie",
+      "nature": "fichier"
+    },
+    {
+      "path": "tests/fixtures/empreintes.json",
+      "action": "modifie",
+      "nature": "fichier"
+    }
+  ],
+  "livrables_attendus": [
+    "src/models/batiments/moulin-tour/index.js",
+    "src/models/batiments/moulin-tour/FICHE.md",
+    "src/models/batiments/moulin-tour/reference.png"
+  ],
+  "livrables_fournis": [
+    "src/models/batiments/moulin-tour/index.js",
+    "src/models/batiments/moulin-tour/FICHE.md",
+    "src/models/batiments/moulin-tour/reference.png"
+  ],
+  "tests": [
+    {
+      "commande": "node scripts/modeles/mesure.mjs BAT-013 --json (avant et après la correction)",
+      "resultat": "reussi",
+      "detail": "Aucune règle en échec, avant comme après. Avant (1er tour) : Triangles 6 792 fin · budget 8 000 / 4 000 ; Gabarit 8,12 × 15,3 × 9,84 ; Couleurs aucun noir ; Physique / forme 12 obstacles, 88 %, débord 0,35 m. Après : Triangles 7 884 fin · budget 8 000 / 4 000 (ok) ; Gabarit 8,24 × 15,3 × 9,65 m (ok) ; Couleurs aucun noir (ok) ; Physique / forme 13 obstacles, 95 % de l'emprise, débord 0,38 m (ok) ; Pièces 2 maillages (null) ; Facettes aucune primitive sous le seuil (null, indicatif). Essai intermédiaire sans dalles quadrillées : Physique / forme 77 %, débord 1,27 m (ok: false)."
+    },
+    {
+      "commande": "node scripts/modeles/empreinte.mjs BAT-013",
+      "resultat": "reussi",
+      "detail": "Triangles par variante : 7 884 (défaut et v 0), 3 814 (v 1, allégé) ; au 1er tour 6 792 et 3 578. Essai intermédiaire : 7 764 / 4 654 (allégé au-dessus de 4 000), puis 8 008 de près avec les dalles au pas de 0,42 m (au-dessus de 8 000), corrigés avant le commit."
+    },
+    {
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/6eb40e02-5008-4129-ac6a-2819f4de34eb/scratchpad/evis/scripts/diag-physique.mjs <worktree> ; node /private/tmp/claude-501/-Users-hugo-developer-Island-test/6eb40e02-5008-4129-ac6a-2819f4de34eb/scratchpad/evis/scripts/opt-obstacles.mjs <worktree> (hors dépôt, même calcul que mesure.mjs)",
+      "resultat": "reussi",
+      "detail": "Avec les dalles : 94,7 % de l'emprise couverte, débord maximal 0,38 m (piédroits centraux) ; passage de l'arche 2,5 m entre cercles (bord intérieur à 1,25 m de l'axe). Sans dalles : recherche gloutonne à 26 petits cercles en chapelet (88,5 %, trous entre cercles) : écartée."
+    },
+    {
+      "commande": "Vue comparable au catalogue (vite du worktree sur 5174, arrêté ensuite), script hors dépôt /private/tmp/claude-501/-Users-hugo-developer-Island-test/6eb40e02-5008-4129-ac6a-2819f4de34eb/scratchpad/evis/scripts/captures-bat013-t2.js, soleil U.uSunDir = (0,78 ; 0,55 ; 0,3)",
+      "resultat": "reussi",
+      "detail": "Référence : H/W 3,10, R/H tour 0,342, R/H corps 0,457. Modèle (2e tour) : H/W 2,82 (−9,3 %), R/H tour 0,346 (+1,4 %, sommet du capot à 12,2 m), R/H corps 0,465 (+1,8 %). Au 1er tour : 2,86 et 0,348. Tolérance ± 15 % tenue."
+    },
+    {
+      "commande": "npm run modeles:index ; npm run modeles:releve",
+      "resultat": "reussi",
+      "detail": "index.gen.js inchangé au 2e tour ; releves.gen.js : seule la ligne BAT-013 passe de [8.12, 15.3, 9.84] à [8.24, 15.3, 9.65]."
+    },
+    {
+      "commande": "node /private/tmp/claude-501/-Users-hugo-developer-Island-test/6eb40e02-5008-4129-ac6a-2819f4de34eb/scratchpad/evis/scripts/empreinte-bat013.mjs <worktree> --ecrire (hors dépôt ; corrigé pour remplacer l'entrée BAT-013 existante), puis comparaison JSON de tests/fixtures/empreintes.json avec HEAD~ clé par clé",
+      "resultat": "reussi",
+      "detail": "Clés différentes de la version du 1er tour : fiches.BAT-013, modeles.BAT-013, physique.BAT-013 seulement. Comparaison complète sans plafond : 162 écarts, tous connus (PER-001 à PER-023, ileDepart.obstacles 44 à 49), 0 inconnu. npm run modeles:empreinte -- --ecrire jamais lancé."
+    },
+    {
+      "commande": "npx vitest run tests/models.test.js tests/mesure.test.js tests/kit.test.js tests/empreintes.test.js",
+      "resultat": "echoue",
+      "detail": "43/44 ; seul échec : l'échec connu de tests/empreintes.test.js (« expected … length of 196 but got 200 »)."
+    },
+    {
+      "commande": "npx vitest run (suite complète)",
+      "resultat": "echoue",
+      "detail": "302/303 ; seul échec : tests/empreintes.test.js, échec connu ; le test de coût de la carte d’herbe est passé."
+    },
+    {
+      "commande": "Contrôle visuel au catalogue (rendu « jeu »)",
+      "resultat": "reussi",
+      "detail": "captures/bat013-moulin-tour-4-faces.png, -trois-quarts.png, -reference-vs-modele.png (soleil depuis +X), -gros-plans.png, -lod.png refaites ; celles du 1er tour gardées en -t1.png."
+    },
+    {
+      "commande": "Capture en jeu (scripts/modeles/jeu.js)",
+      "resultat": "non_execute",
+      "detail": "Modèle posé sur aucune île (pose par le World Designer)."
+    }
+  ],
+  "erreurs": [],
+  "hypotheses": [
+    "Lecture de la référence : la face large visible est le flanc +X et la face étroite à gauche la face +Z (ailes) ; azimut de la vue comparable ≈ 29° depuis +X vers +Z (faces de 43 et 24 px).",
+    "Hauteur de la tour mesurée du pied (y 420, caché dans la falaise : ± 5 px) au faîte de la tête ; le corps s'arrête à la dernière sablière (y 212).",
+    "Échelle : hauteur hors tout visée ≈ 15,3 m, d'où 1 px ≈ 0,043 m dans la référence ; personnage de 1,1 m : portes de 1,5 à 1,62 m, garde-corps de 0,78 m."
+  ],
+  "decisions": [
+    "Correction 1 (fort) : étages en tronc(s, t) avec t = côté du suivant + 0,06 (2,7 → 2,59 ; 2,53 → 2,42 ; 2,36 → 2,25 ; 2,19 → 2,09 ; 2,03 → 1,92), pans de bois inclinés de atan((s − t) / 2h), poteaux d'angle le long des arêtes inclinées ; sablière = côté en tête + 0,12 (et non côté au pied + 0,10, qui aurait débordé de 0,1 m sur la tête de l'étage) ; cou en tronc(1,92, 1,5), la jupe de bardeaux est retirée. Effet : silhouette continue (captures 4 faces et comparaison) ; H/W 2,86 → 2,82.",
+    "Correction 2 (fort) : tête de 3,4 à 4,05 m (ar −1,75 → −2,4, deux jambes de force), capot avant en archivolte de 0,92 à 1,0 m centrée sur le moyeu, fermée par un demi-disque crème ; toit cintré (coque en arc surbaissé, 8 segments, corde 1,72 m, flèche 0,52 m) au lieu des deux pans et des pignons droits ; pignon arrière en segment de disque. Sommet de la tête 12,12 → 12,2 m ; R/H tour 0,348 → 0,346.",
+    "Correction 3 (moyen) : toiles en trapèze de 0,35 à 0,85 m, rive fine (4 cm), 2 lattes en TOILE_B au lieu de 7 lattes brunes ; environ −300 triangles de près.",
+    "Correction 4 : piédroits de la maisonnette de 0,7 à 0,45 m, demi-profondeur 1,2 → 1,1 m (2,2 × 3,4 m au lieu de 2,4 × 3,9) ; passage de 2,5 m entre obstacles conservé.",
+    "Correction 5 : avancée à pignon sur la face +Z (porte, fenêtres latérales, pignon à poinçon, toit de bois) à la place de l'auvent ; la face +Z du rez de la tour n'a plus de porte.",
+    "Correction 6 : socles en boîtes arrondies du kit (bx) ; dalles, faîtages et poteaux chanfreinés ; arêtes des murs couvertes par les poteaux d'angle et les sablières ; toit de tête cintré.",
+    "Correction 7 : dalles quadrillées gardées de près (pas porté de 0,42 à 0,5 m pour tenir 8 000) et signalées comme limite de l'outil dans la FICHE : sans elles, mesure.mjs donne un débord de 1,27 m (la couverture seule passerait) ; obstacles recalculés (13).",
+    "Correction 8 : comparaison refaite avec le soleil depuis +X ; le kit (warmShadow, uShadowTint) n'est pas touché.",
+    "Version allégée retouchée pour rester sous 4 000 : socles en prismes simples, dalles et faîtages à section carrée, sans fenêtres latérales d'avancée, une fenêtre par flanc de tête.",
+    "Compte de TYPES_DE_LIEUX porté de 59 à 60 dans tests/models.test.js:221 au 1er tour (commit 42152a7), autorisé par le coordinateur, hors périmètre, non listé dans « fichiers » ; moulin_tour en DIRZ dans src/models/lieux.js.",
+    "Statut : brouillon dans la FICHE ; catalogue/notes.json non touché."
+  ],
+  "checklist": [],
+  "dependances_restantes": [
+    "Nouvelle revue d'Evis-critique (je n'approuve pas mon livrable).",
+    "Pose sur le Plateau venté (World Designer), puis captures en jeu de près et de loin.",
+    "Bascule de la version allégée v 1 au-delà de 20 m : intégration (moteur).",
+    "Ombre lavande de l'enduit : réglage warmShadow du matériau struct à soumettre à l'utilisateur (kit).",
+    "LIVRAISONS.md et graphe Graphify non mis à jour (hors périmètre) ; rapport et journal non commités."
+  ],
+  "prochaine_etape": "Nouvelle revue d'Evis-critique de BAT-013 sur les captures du 2e tour (4 faces, trois-quarts, référence / modèle au soleil de +X, gros plans, allégé) et la FICHE."
+}
