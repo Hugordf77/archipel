@@ -33,6 +33,7 @@ import batiments_etal_marche from './batiments/etal-marche/index.js';
 import batiments_maison_village from './batiments/maison-village/index.js';
 import batiments_moulin from './batiments/moulin/index.js';
 import batiments_moulin_eau from './batiments/moulin-eau/index.js';
+import batiments_moulin_tour from './batiments/moulin-tour/index.js';
 import batiments_observatoire from './batiments/observatoire/index.js';
 import batiments_phare from './batiments/phare/index.js';
 import batiments_temple from './batiments/temple/index.js';
@@ -143,6 +144,7 @@ export const FICHES = [
   ...avec(batiments_maison_village, 'src/models/batiments/maison-village/index.js', 'src/models/batiments/maison-village/physique.js'),
   ...avec(batiments_moulin, 'src/models/batiments/moulin/index.js', 'src/models/batiments/moulin/physique.js'),
   ...avec(batiments_moulin_eau, 'src/models/batiments/moulin-eau/index.js', 'src/models/batiments/moulin-eau/physique.js'),
+  ...avec(batiments_moulin_tour, 'src/models/batiments/moulin-tour/index.js', 'src/models/batiments/moulin-tour/physique.js'),
   ...avec(batiments_observatoire, 'src/models/batiments/observatoire/index.js', 'src/models/batiments/observatoire/physique.js'),
   ...avec(batiments_phare, 'src/models/batiments/phare/index.js', 'src/models/batiments/phare/physique.js'),
   ...avec(batiments_temple, 'src/models/batiments/temple/index.js', 'src/models/batiments/temple/physique.js'),
