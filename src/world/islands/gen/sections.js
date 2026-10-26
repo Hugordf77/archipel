@@ -84,6 +84,8 @@ export function cropPlan(P, sec) {
     lakes.push({ id: L.id, level: L.level, cells: Int32Array.from(cells), box: [x0, z0, x1, z1], area: L.area, clip: [MARGE, MARGE, n - 2 - MARGE, n - 2 - MARGE] });
   }
   const falls = (P.falls || []).filter((f) => inCore(f.x - cx, f.z - cz)).map((f) => ({ ...f, x: f.x - cx, z: f.z - cz }));
+  // lieux dont le point d'ancrage est dans le carré, recentrés avec leurs éléments (lieux posés à la main)
+  const pois = (P.pois || []).filter((p) => inCore(p.x - cx, p.z - cz)).map((p) => ({ ...p, x: p.x - cx, z: p.z - cz, parts: p.parts.map((q) => ({ ...q, x: q.x - cx, z: q.z - cz })) }));
   let hmax = 0;
   const H = crop(P.H, Float32Array);
   for (let k = 0; k < N; k++) hmax = Math.max(hmax, H[k]);
@@ -110,7 +112,7 @@ export function cropPlan(P, sec) {
     rivers,
     lakes,
     falls,
-    pois: [],
+    pois,
     micro: [],
     paths: [],
     pathParts: [],

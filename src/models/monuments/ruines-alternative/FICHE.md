@@ -49,7 +49,8 @@ de l'utilisateur le 26/10/2026, au-dessus des 4 000 de la catégorie, comme MON-
   fûts à 6 côtés, sans feuilles d'acanthe, lierre plus clairsemé, fougères à 3 feuilles, bannière à
   maillage réduit.
 - Type de lieu `ruines_alternative` (`src/models/lieux.js`), rangé en DIRZ : l'axe de la nef (+Z,
-  l'entrée) regarde l'angle `rot`.
+  l'entrée) regarde l'angle `rot`. Posé sur le Plateau venté (`poses` de la Grande Île, `archipel.js`) :
+  repère de l'île (756, 312), entrée tournée vers le cercle de pierres (rot 3,39).
 
 ## Physique
 
@@ -93,7 +94,9 @@ variantes) : 3 760 relevés en construisant `ruinesAlternative({ v: 1 })`.
 - `captures/mon014-ruines-alternative-gros-plans.png` : portail et escalier, arcade, bannière et baie,
   colonnes brisées et tambours ;
 - `captures/mon014-ruines-alternative-lod.png` : version allégée (avant, gauche, 3/4) ;
-- `captures/mon014-ruines-alternative-reference-vs-modele.png` : planche et modèle.
+- `captures/mon014-ruines-alternative-reference-vs-modele.png` : planche et modèle ;
+- `captures/plateau-nef-effondree-jeu.png` : en jeu sur le Plateau venté (planchers vérifiés : 0,3 et
+  0,6 m sur les marches, 0,9 m dans la nef).
 
 ## Historique
 
@@ -103,3 +106,4 @@ variantes) : 3 760 relevés en construisant `ruinesAlternative({ v: 1 })`.
   (ils le dépassaient de 0,5 m dans le vide), plancher des marches élargi à 3,14 m, largeur libre du
   portail corrigée (3,22 m).
 - 26/10/2026 : 2e tour d'Evis-critique : valide, aucun défaut restant.
+- 26/10/2026 : posé sur le Plateau venté (pose simple demandée par l'utilisateur).

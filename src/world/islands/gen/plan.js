@@ -5,7 +5,7 @@
 // la zone de l'île (ZI) de chaque case.
 import { buildTerrain } from './terrain.js';
 import { computeZonesForme, zoneColors, Z } from './zones.js';
-import { placePOIs, placeMicro, applyStamps, traitsLieux } from './pois.js';
+import { placePOIs, placeMicro, applyStamps, traitsLieux, poserLieux } from './pois.js';
 import { buildPaths } from './paths.js';
 import { sealLakes } from './hydro.js';
 import { placeFloraForme } from './flora.js';
@@ -37,17 +37,21 @@ export function buildPlan(desc) {
     const a = Math.atan2(-desc.z, -desc.x);
     P.accostage = lieux.accostage ? { x: lieux.accostage[0], z: lieux.accostage[1] } : { x: Math.cos(a) * desc.r, z: Math.sin(a) * desc.r };
     pois = placePOIs(P);
+  }
+  // lieux posés à la main (desc.poses), aplanis avec ceux du tirage
+  if (desc.poses) pois.push(...poserLieux(P));
+  if (lieux || desc.poses) {
     applyStamps(P);
     lap('lieux');
-    net = buildPaths(P, pois);
   }
+  if (lieux) net = buildPaths(P, pois);
   const rim = sealLakes(P.H, P.n, P.lakes, P.water);
   // pentes à jour après aplanissement et chemins (la végétation en dépend)
   for (let j = 0; j < P.n; j++) for (let i = 0; i < P.n; i++) P.slope[j * P.n + i] = slopeAt(P.H, P.n, P.s, i, j);
   lap('chemins');
   const { C, A } = zoneColors(P, desc);
-  if (lieux) {
-    // pas de relief fin sur les plates-formes ni sur les chemins
+  // pas de relief fin sur les plates-formes ni sur les chemins
+  if (P.stamps) {
     for (const st of P.stamps) {
       const reach = st.r + 2;
       for (let j = Math.max(0, Math.floor((st.z - reach + P.ext) / P.s)); j <= Math.min(P.n - 1, Math.ceil((st.z + reach + P.ext) / P.s)); j++) {
@@ -58,8 +62,8 @@ export function buildPlan(desc) {
         }
       }
     }
-    for (let k = 0; k < A.length; k++) if (net.pathMask[k]) A[k] = Math.min(A[k], 4);
   }
+  if (net) for (let k = 0; k < A.length; k++) if (net.pathMask[k]) A[k] = Math.min(A[k], 4);
   for (const k of rim) A[k] = 0;
   P.A = A;
   lap('couleurs');

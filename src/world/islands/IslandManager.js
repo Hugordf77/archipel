@@ -568,14 +568,13 @@ export class IslandManager {
     return k;
   }
 
-  // planchers praticables (jetées, ponts) en coordonnées locales à l'île
+  // planchers praticables (jetées, ponts, dallages et marches des ruines…) en coordonnées locales à l'île
   collectDecks(e, plan) {
     const decks = [];
     const parts = [...plan.pois.flatMap((p) => p.parts), ...plan.pathParts];
     for (const p of parts) {
-      if (p.t !== 'jetee' && p.t !== 'pont' && p.t !== 'pont_corde') continue;
       const c = partGeometries(p);
-      if (!c) continue;
+      if (!c?.decks.length) continue;
       const ry = rotY(p.t, p.rot || 0);
       const cs = Math.cos(ry);
       const sn = Math.sin(ry);

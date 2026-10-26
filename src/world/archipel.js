@@ -80,6 +80,16 @@ const ILES_PX = [
       { t: 'colline', at: [978, 360, 17, 49] },
       { t: 'colline', at: [1004, 386, 12, 45] },
     ],
+    // lieux posés à la main (repère de l'île, m ; gen/pois.js, poserLieux) : moulins-tours (BAT-013) sur
+    // les sites PV-M1 à M3 du plan du Plateau venté (production/fiches/ZONE-ILE-VERTE.json), ailes face au
+    // vent (rot = windAngle + π) ; nef effondrée (MON-014) sur la traversée du cercle au Moulin du Large,
+    // entrée tournée vers le cercle. r : rayon aplani
+    poses: [
+      { t: 'moulin_tour', at: [422, 378], rot: 3.68, r: 7.5, nom: 'Moulin de la Corniche' },
+      { t: 'moulin_tour', at: [380, 296], rot: 3.68, r: 7.5, nom: 'Moulin du Bord' },
+      { t: 'moulin_tour', at: [868, 292], rot: 3.68, r: 7.5, nom: 'Moulin du Large' },
+      { t: 'ruines_alternative', at: [756, 312], rot: 3.39, r: 9.5, nom: 'Nef effondrée' },
+    ],
   },
   {
     id: 'ruines-gelees', name: 'Les Ruines gelées', zone: 'ruines-gelees', biome: 'glace', base: { h: 14, larg: 160 }, plage: 12, falaise: 0.45,
@@ -284,6 +294,7 @@ function ileM(isl) {
     seed: hash(isl.id),
     ilot: !!isl.ilot,
     zone,
+    ...(isl.poses ? { poses: isl.poses } : {}),
     forme: {
       cote: local,
       rEq,

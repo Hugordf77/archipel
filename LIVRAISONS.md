@@ -115,8 +115,21 @@ et domaine concerné).
   cerf ANI-004 (`7252b94`), mouton ANI-001 (`10e3a8e`). Chèvre ANI-002 et nouvelle passe sur le mouton :
   en cours, non commitées.
 - **Agents** : Evis (production) et Evis-critique (revue en lecture seule), règles `docs/DA.md`.
+- **Nef effondrée du plateau MON-014** (26/10/2026, branche `claude/ruine-alternative`) : ruine alternative
+  à MON-012, même planche (`production/references/ruines-plateau.png`), autre composition (nef de chapelle,
+  colonnade, chevet à baie haute, bannière) ; `src/models/monuments/ruines-alternative/`, type de lieu
+  `ruines_alternative`, budget propre 8 000 / 4 000 (7 860 / 3 760) ; Evis-critique valide au 2e tour.
+  `forme.js` reprend le code de MON-013 (non commité) : à fusionner.
 
 ### Îles et monde
+
+- **Lieux posés à la main** (26/10/2026, branche `claude/ruine-alternative`) : champ `poses` d'une île
+  (`archipel.js`, repère de l'île), `poserLieux` (`gen/pois.js`) : un lieu par pose, plate-forme aplanie de
+  rayon r, sans tirage. Les sections (`gen/sections.js`) gardent les lieux dont l'ancrage est dans leur
+  carré ; `IslandManager.collectDecks` prend les planchers de tout élément qui en déclare. Plateau venté :
+  trois moulins-tours BAT-013 sur les sites PV-M1 à M3 du plan, nef effondrée MON-014 sur la traversée
+  (local 756, 312). Test `tests/zones/plateau-vente-poses.test.js`. Ni corniche, ni chemins (BRF-PV-01 à
+  04 restent à faire) : les moulins de la crête ouest ne sont pas encore atteignables à pied par la montée.
 
 - **Open world, bases** (22/10/2026, génération 4) : « L'archipel des souvenirs », 6 × 4 km tracé
   d'après la carte de référence de l'utilisateur (4 m par pixel, départ en (0, 0) au sud de la Grande
@@ -259,7 +272,13 @@ et domaine concerné).
 - Tableau de bord de production : `dashboard.html`, `dashboard/` (`management.json` : relations entre
   agents).
 
-## État courant (25/10/2026)
+## État courant (26/10/2026)
+
+- **Branche `claude/ruine-alternative`** (worktree `.claude/worktrees/ruine-alternative`, depuis `d33a27a`) :
+  MON-014 et la pose des moulins-tours et de la nef sur le Plateau venté. `tests/models.test.js`
+  (« numérotés sans trou ») échoue sur cette branche tant que MON-012/013 (non commités, worktree
+  `plateau-vente-modeles`) n'y sont pas. Rapport `production/rapports/RUINE-ALTERNATIVE.json`, non
+  enregistré dans le journal.
 
 - **Décisions du 25/10/2026** : les 12 rapprochements de zones proposés sont confirmés ; Les Cascades Sacrées
   devient la 20e zone du checklist (`ZONE-CASCADES-SACREES`, 9 constats d’audit) ; pas de PDF, la référence

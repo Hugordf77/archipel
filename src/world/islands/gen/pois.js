@@ -683,6 +683,24 @@ export function placeMicro(P, pois) {
   return out;
 }
 
+// lieux posés à la main (desc.poses : { t, at: [x, z] repère de l'île, rot, r, nom }) : un lieu par pose,
+// sans tirage, sur une plate-forme de rayon r à la hauteur moyenne du site ; ses aplanissements
+// rejoignent P.stamps (applyStamps) et ses emprises P.placed
+export function poserLieux(P) {
+  const { H, n, s, ext, desc } = P;
+  const hAt = (x, z) => bilinear(H, n, (x + ext) / s, (z + ext) / s);
+  P.stamps ||= [];
+  P.placed ||= [];
+  return desc.poses.map(({ t, at: [x, z], rot = 0, r = 4, nom }) => {
+    let y = hAt(x, z);
+    for (let a = 0; a < 8; a++) y += hAt(x + Math.cos(a * 0.785) * r * 0.7, z + Math.sin(a * 0.785) * r * 0.7);
+    y /= 9;
+    P.stamps.push({ x, z, r, y, fall: 6 });
+    P.placed.push({ x, z, r });
+    return { id: stableId(desc.seed, TYPE_ID[t] ?? 99, x, z), type: t, label: nom || POI_LABELS[t] || t, x, z, y, r, parts: [{ t, x, z, y, rot }] };
+  });
+}
+
 // aplanissement des plates-formes (après érosion et rivières, avant les grilles finales)
 export function applyStamps(P) {
   const { H, A, n, s, ext } = P;

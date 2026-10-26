@@ -229,4 +229,6 @@ export const USAGE = {
   'kind:sapin_neige': ['Le Sommet givré', 'Les Ruines gelées'],
   'kind:saule': ['La Forêt des souvenirs', 'Le Lac céleste', 'La Grotte lumineuse', 'Les Cascades sacrées', 'L’Île brumeuse', 'L’Île aux lueurs', 'L’Île du soleil couchant', 'Le Volcan endormi'],
   'kind:souche': ['Le Sommet givré', 'La Forêt des souvenirs', 'Le Lac céleste', 'Le Plateau venté', 'La Côte aux villages', 'L’Archipel des tempêtes', 'Les Grottes de cristal', 'Les Îlots secrets', 'La Grotte lumineuse', 'Les Falaises oubliées', 'L’Océan sans fin', 'Le Désert de l’île séchée', 'Les Ruines gelées', 'L’Île du silence', 'L’Île aux fleurs', 'Les Cascades sacrées', 'L’Île brumeuse', 'L’Île aux lueurs', 'L’Île du soleil couchant', 'Le Volcan endormi'],
+  'part:moulin_tour': ['Le Plateau venté'],
+  'part:ruines_alternative': ['Le Plateau venté'],
 };
