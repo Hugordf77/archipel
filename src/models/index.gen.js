@@ -55,6 +55,7 @@ import monuments_grotte from './monuments/grotte/index.js';
 import monuments_menhir from './monuments/menhir/index.js';
 import monuments_muret_effondre from './monuments/muret-effondre/index.js';
 import monuments_ruines from './monuments/ruines/index.js';
+import monuments_ruines_alternative from './monuments/ruines-alternative/index.js';
 import monuments_statue_geante from './monuments/statue-geante/index.js';
 import bateaux_barque from './bateaux/barque/index.js';
 import bateaux_canots from './bateaux/canots/index.js';
@@ -166,6 +167,7 @@ export const FICHES = [
   ...avec(monuments_menhir, 'src/models/monuments/menhir/index.js', 'src/models/monuments/menhir/physique.js'),
   ...avec(monuments_muret_effondre, 'src/models/monuments/muret-effondre/index.js', 'src/models/monuments/muret-effondre/physique.js'),
   ...avec(monuments_ruines, 'src/models/monuments/ruines/index.js', 'src/models/monuments/ruines/physique.js'),
+  ...avec(monuments_ruines_alternative, 'src/models/monuments/ruines-alternative/index.js', 'src/models/monuments/ruines-alternative/physique.js'),
   ...avec(monuments_statue_geante, 'src/models/monuments/statue-geante/index.js', 'src/models/monuments/statue-geante/physique.js'),
   ...avec(bateaux_barque, 'src/models/bateaux/barque/index.js'),
   ...avec(bateaux_canots, 'src/models/bateaux/canots/index.js', 'src/models/bateaux/canots/physique.js'),

@@ -1,0 +1,116 @@
+{
+ "task_id": "RUINE-ALTERNATIVE",
+ "agent": "asset-artist",
+ "etat_final": "termine",
+ "resume": "MON-014 « Nef effondrée du plateau » (src/models/monuments/ruines-alternative/), ruine alternative à MON-012 d'après la planche de l'utilisateur (production/references/ruines-plateau.png) : même style et même palette, autre composition (A, choisie par l'utilisateur parmi trois) : nef de chapelle ouverte au ciel sur un dallage de 0,9 m (deux marches de 0,3 m), colonnade de deux rangées de quatre colonnes à chapiteau dont trois brisées, arcade de deux arcs brisés sur trois colonnes, chevet au pignon brisé (8,5 m) percé d'une baie haute à meneau, bannière bleu ardoise côté nef, façade réduite à deux moignons et au départ du portail effondré, contrefort, tambours et chapiteau tombés, éboulis, mousse, lierre, fougères. Hauteur 8,62 m ; nef 4,26 m libres, portail 3,22 m. mesure.mjs : aucune règle en échec ; 7 860 triangles de près, 3 760 allégé (budget propre 8 000 / 4 000, accord de l'utilisateur) ; 178 obstacles, 87 % de l'emprise, débord 0,4 m ; planchers à 0,7–0,8 cm. Evis-critique : à reprendre au 1er tour (moignons au-dessus du vide, plancher des marches étroit, largeur du portail mal notée), valide au 2e tour. Type de lieu ruines_alternative.",
+ "fichiers": [
+  {
+   "path": "src/models/monuments/ruines-alternative/index.js",
+   "action": "cree",
+   "nature": "fichier"
+  },
+  {
+   "path": "src/models/monuments/ruines-alternative/physique.js",
+   "action": "cree",
+   "nature": "fichier"
+  },
+  {
+   "path": "src/models/monuments/ruines-alternative/forme.js",
+   "action": "cree",
+   "nature": "fichier"
+  },
+  {
+   "path": "src/models/monuments/ruines-alternative/FICHE.md",
+   "action": "cree",
+   "nature": "specification"
+  },
+  {
+   "path": "src/models/monuments/ruines-alternative/reference.png",
+   "action": "cree",
+   "nature": "fichier"
+  },
+  {
+   "path": "src/models/lieux.js",
+   "action": "modifie",
+   "nature": "fichier"
+  },
+  {
+   "path": "src/models/index.gen.js",
+   "action": "modifie",
+   "nature": "fichier"
+  },
+  {
+   "path": "src/models/releves.gen.js",
+   "action": "modifie",
+   "nature": "fichier"
+  },
+  {
+   "path": "tests/models.test.js",
+   "action": "modifie",
+   "nature": "test"
+  },
+  {
+   "path": "tests/fixtures/empreintes.json",
+   "action": "modifie",
+   "nature": "fichier"
+  }
+ ],
+ "livrables_attendus": [
+  "src/models/monuments/ruines-alternative/index.js",
+  "src/models/monuments/ruines-alternative/FICHE.md",
+  "src/models/monuments/ruines-alternative/reference.png"
+ ],
+ "livrables_fournis": [
+  "src/models/monuments/ruines-alternative/index.js",
+  "src/models/monuments/ruines-alternative/FICHE.md",
+  "src/models/monuments/ruines-alternative/reference.png"
+ ],
+ "tests": [
+  {
+   "commande": "node scripts/modeles/mesure.mjs MON-014 --json",
+   "resultat": "reussi",
+   "detail": "Aucune règle en échec. Triangles 7 860 fin (budget 8 000 / 4 000) ; Gabarit 10,17 × 8,78 × 14,41 m ; Couleurs aucun noir ; Physique / forme 178 obstacles, 87 %, débord 0,4 m ; Planchers 2 × (0,45 × 3,14 m) à 0,8 cm, dallage 9,9 × 6,3 m à 0,7 cm ; Pièces 1 maillage (null) ; Facettes aucune primitive sous le seuil (null). Premier jet : 9 076 triangles, 70 %, débord 0,87 m (corrigés : bordure de pavés, budget resserré)."
+  },
+  {
+   "commande": "ruinesAlternative({ v: 1 }) (variante allégée, script de comptage)",
+   "resultat": "reussi",
+   "detail": "3 760 triangles (≤ 4 000)."
+  },
+  {
+   "commande": "empreintes : clés MON-014 seules ajoutées avec calculer() de scripts/modeles/empreinte.mjs (jamais --ecrire), puis comparaison complète sans limite de 40",
+   "resultat": "reussi",
+   "detail": "Seuls les écarts connus restent : modeles.PER-001 à PER-023, ileDepart.obstacles 44 à 49. Diff du fichier : insertions seules."
+  },
+  {
+   "commande": "npm run modeles:index ; npm run modeles:releve",
+   "resultat": "reussi",
+   "detail": "index.gen.js : 2 lignes (MON-014) ; releves.gen.js : 1 ligne de taille (MON-014)."
+  },
+  {
+   "commande": "npx vitest run",
+   "resultat": "echoue",
+   "detail": "Échecs : tests/empreintes.test.js (connu, PER-001 à 023 et ileDepart.obstacles 44–49) ; tests/herbe-champ.test.js coût de la carte d'herbe (mesure de temps, passe seul hors charge : médiane 0,95 ms) ; tests/models.test.js:43 « numérotés sans trou » : monuments 1 à 11 puis 14, car MON-012/013 ne sont pas sur cette branche (identifiant MON-014 imposé)."
+  }
+ ],
+ "erreurs": [
+  "tests/models.test.js:43 échoue tant que MON-012 et MON-013 ne sont pas dans la base de la branche."
+ ],
+ "hypotheses": [
+  "forme.js reprend le code des éléments modulaires (MON-013, non commités) pour garder le même style de pierre ; à fusionner une fois MON-013 commité.",
+  "Hauteur hors tout comptée à la géométrie (8,62 m) ; le registre (8,78 m) inclut la boîte des feuilles."
+ ],
+ "decisions": [
+  "Composition A (nef et colonnade) choisie par l'utilisateur.",
+  "Dallage en grandes dalles traversantes bordées de pavés : sommets assez serrés au bord pour la règle de débord des obstacles.",
+  "Un joint forcé sur chaque marche des gradins dans pan() : plus aucun bloc en surplomb.",
+  "Contrefort droit retiré pour tenir le budget.",
+  "Revue Evis-critique : tour 1 à reprendre (3 défauts), tour 2 valide (0 défaut)."
+ ],
+ "checklist": [],
+ "dependances_restantes": [
+  "Commit sur claude/ruine-alternative (bloqué par le test de numérotation : décision de l'utilisateur).",
+  "Fusion de forme.js avec ruines-modules/forme.js quand MON-013 sera commité.",
+  "Enregistrement de ce rapport dans production/journal.jsonl (plus tard, hors de ce worktree)."
+ ],
+ "prochaine_etape": "Décision de l'utilisateur sur le commit malgré le trou de numérotation, ou rebase sur la branche qui contiendra MON-012/013."
+}
