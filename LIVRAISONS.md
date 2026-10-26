@@ -274,6 +274,12 @@ et domaine concerné).
 
 ## État courant (26/10/2026)
 
+- **Forteresse-navire du Plateau venté (à construire)** : l'utilisateur a retenu le concept « Navire de
+  maisons » (village-forteresse en navire échoué, esprit château ambulant, DA des moulins), budget
+  ≈ 60 000 triangles en pièces, au centre du dôme. Rien n'est construit : plan détaillé, étapes, pièges
+  et scripts dans `docs/forteresse-navire/memory.md` (à lire en premier), référence
+  `production/references/forteresse-navire.png` (aperçu ; pleine taille dans Canva).
+
 - **Branche `claude/ruine-alternative`** (worktree `.claude/worktrees/ruine-alternative`, depuis `d33a27a`) :
   MON-014 et la pose des moulins-tours et de la nef sur le Plateau venté. `tests/models.test.js`
   (« numérotés sans trou ») échoue sur cette branche tant que MON-012/013 (non commités, worktree
