@@ -1,13 +1,15 @@
 // Moulin-tour du plateau (BAT-013), d'après la référence de l'utilisateur (reference.png) : tour carrée à
-// colombages sur cinq étages en léger retrait (enduit crème, poutres brun-orangé : poteaux, sablières,
-// décharges, baies encadrées sur chaque face), galerie à garde-corps, tête de bois débordant à l'avant et
-// à l'arrière sous un petit toit, six ailes longues à lattis sur la face +Z, qui tournent au vent ;
-// annexe à colombages au toit de mousse accolée à la face +X ; maisonnette au toit de mousse percée d'une
-// arche traversante (passage voûté le long de X). Variante 1 : version allégée, pour la vue lointaine.
+// colombages sur cinq étages en tronc de pyramide qui s'affinent sans marche jusqu'au cou (enduit crème,
+// poutres brun-orangé : poteaux, sablières, décharges, baies encadrées sur chaque face), galerie à
+// garde-corps, tête de bois débordant à l'avant sous un capot en demi-couronne et loin à l'arrière sous un
+// toit cintré, six ailes longues à lattis (toiles en trapèze) sur la face +Z, qui tournent au vent ;
+// avancée à pignon sur +Z ; annexe à colombages au toit de mousse accolée à la face +X ; maisonnette au
+// toit de mousse percée d'une arche traversante (passage voûté le long de X). Variante 1 : version
+// allégée, pour la vue lointaine.
 import * as THREE from 'three';
 import { Builder, G } from '../../../render/builder.js';
 import { nextId } from '../../../core/globals.js';
-import { STONE_D, lire } from '../../kit/lieux.js';
+import { STONE_D, bx, lire } from '../../kit/lieux.js';
 import { fiche, part } from '../../kit/fiches.js';
 import physique, { MAISONNETTE, PASSAGE } from './physique.js';
 
@@ -68,6 +70,8 @@ function prisme(profil, len, ouvert = false) {
 const rect = (w, d) => [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]];
 // rectangle aux angles abattus (c) : section des poteaux, des dalles et des pans de toit
 const octo = (w, d, c) => [[-w / 2 + c, -d / 2], [w / 2 - c, -d / 2], [w / 2, -d / 2 + c], [w / 2, d / 2 - c], [w / 2 - c, d / 2], [-w / 2 + c, d / 2], [-w / 2, d / 2 - c], [-w / 2, -d / 2 + c]];
+// section des dalles et faîtages : chanfreinée de près, rectangulaire en version allégée
+const oc = (o, w, d, c) => (o.leger ? rect(w, d) : octo(w, d, c));
 // planche plaquée : face avant et deux chanfreins, dos ouvert contre le mur (z = 0 à d)
 const plaque = (w, d) => [[w / 2, 0], [w / 2 - d * 0.6, d], [-w / 2 + d * 0.6, d], [-w / 2, 0]];
 // pan de toit : largeur w (pente), épaisseur e, longueur L le long de Z (panZ) ou de X (panX)
@@ -132,17 +136,39 @@ function voute(r, naissance, haut, p, seg) {
   return new THREE.ExtrudeGeometry(s, { depth: p, bevelEnabled: false, curveSegments: seg }).rotateY(Math.PI / 2);
 }
 
-// socle de pierre w × d, haut de h, au dessus quadrillé au pas d'environ 0,42 m (l'emprise mesurée par
-// mesure.mjs ne voit que des sommets : le quadrillage lui donne l'assise pleine ; pas en version allégée)
+// socle de pierre w × d, haut de h : boîte arrondie du kit (aucune arête vive), simple prisme au loin.
+// De près, une dalle quadrillée (pas d'environ 0,5 m) repose sur son dessus : l'emprise que mesure
+// mesure.mjs ne voit que des sommets, et sans elle l'intérieur de la tour et de l'annexe passerait pour du
+// vide (limite de l'outil, consignée dans la FICHE)
 function socle(b, w, d, h, x, z, leger) {
-  const [nx, nz] = leger ? [1, 1] : [Math.max(1, Math.round(w / 0.42)), Math.max(1, Math.round(d / 0.42))];
-  b.add(new THREE.PlaneGeometry(w, d, nx, nz).rotateX(-Math.PI / 2), STONE_D, { p: [x, h, z], ...F });
-  const L = [];
-  for (const [ax, az, bx2, bz] of [[-w, -d, w, -d], [w, -d, w, d], [w, d, -w, d], [-w, d, -w, -d]]) {
-    const n = V(ax + bx2, 0, az + bz);
-    L.push([V(ax / 2, 0, az / 2), V(bx2 / 2, 0, bz / 2), V(bx2 / 2, h, bz / 2), n], [V(ax / 2, 0, az / 2), V(bx2 / 2, h, bz / 2), V(ax / 2, h, az / 2), n]);
-  }
-  b.add(tris(L), STONE_D, { p: [x, 0, z], ...F });
+  b.add(leger ? prisme(rect(w, d), h) : bx(w, h, d, 0.07), STONE_D, { p: [x, h / 2, z], ...F });
+  if (leger) return;
+  const [nx, nz] = [Math.max(1, Math.round(w / 0.5)), Math.max(1, Math.round(d / 0.5))];
+  b.add(new THREE.PlaneGeometry(w - 0.12, d - 0.12, nx, nz).rotateX(-Math.PI / 2), STONE_D, { p: [x, h + 0.005, z], ...F });
+}
+// barre de section prof (profil [[x, z]…]) du point A au point B
+const _q = new THREE.Quaternion();
+const _e = new THREE.Euler();
+const _d = new THREE.Vector3();
+const HAUT = new THREE.Vector3(0, 1, 0);
+function barre(b, col, A, B, prof, opts = {}) {
+  _d.set(B[0] - A[0], B[1] - A[1], B[2] - A[2]);
+  const len = _d.length();
+  _e.setFromQuaternion(_q.setFromUnitVectors(HAUT, _d.normalize()));
+  b.add(prisme(prof, len), col, { p: [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2, (A[2] + B[2]) / 2], r: [_e.x, _e.y, _e.z], ...F, ...opts });
+}
+// coque en arc de cercle (centre (0 ; 0), rayons r à r + e, de l'angle a0 à a1), extrudée sur p le long de Z
+function coque(r, e, a0, a1, p, seg) {
+  const s = new THREE.Shape();
+  s.absarc(0, 0, r + e, a0, a1, false);
+  s.absarc(0, 0, r, a1, a0, true);
+  return new THREE.ExtrudeGeometry(s, { depth: p, bevelEnabled: false, curveSegments: seg });
+}
+// segment de disque (sous un arc de rayon r centré en (0 ; 0), de a0 à a1, fermé par la corde), épaisseur p
+function segmentDisque(r, a0, a1, p, seg) {
+  const s = new THREE.Shape();
+  s.absarc(0, 0, r, a0, a1, false);
+  return new THREE.ExtrudeGeometry(s, { depth: p, bevelEnabled: false, curveSegments: seg });
 }
 
 // --- pans de bois -------------------------------------------------------------------------------
@@ -196,9 +222,12 @@ function panDeBois(f, L, y0, y1, baies, o) {
     else planche(f, POUTRE, b, ya, a, yb, 0.11, 0.05);
   }
 }
-// une face du repère local ajoutée au bâti, tournée de a autour de Y et posée à (x, z)
-function poser(b, f, a, x, z) {
-  b.addBuilt(f.build(), { p: [x, 0, z], r: [0, a, 0] });
+// une face du repère local ajoutée au bâti, tournée de a autour de Y et posée à (x, z) ; inclinée de
+// theta vers l'intérieur autour de son pied y0 (faces d'un tronc de pyramide)
+function poser(b, f, a, x, z, theta = 0, y0 = 0) {
+  const g = f.build();
+  if (theta) g.translate(0, -y0, 0).rotateX(-theta).translate(0, y0, 0);
+  b.addBuilt(g, { p: [x, 0, z], r: [0, a, 0] });
 }
 // poteau d'angle (section chanfreinée, ou carrée en version allégée)
 function poteau(b, x, z, y0, y1, w, o) {
@@ -206,40 +235,51 @@ function poteau(b, x, z, y0, y1, w, o) {
 }
 
 // --- la tour ------------------------------------------------------------------------------------
-// étages : bas, haut, côté ; baies de chaque face (0 : +Z, 1 : +X, 2 : −Z, 3 : −X) ; null : face cachée
+// étages en tronc de pyramide : bas, haut, côté au pied s et en tête t (t = côté du suivant + 0,06 : la
+// silhouette s'affine sans marche, jusqu'au cou) ; baies de chaque face (0 : +Z, 1 : +X, 2 : −Z, 3 : −X) ;
+// null : face cachée
 const W = (w, h, yc) => [{ x: 0, w, h, yc }];
 const ETAGES = [
-  { y0: 0.45, y1: 2.45, s: 2.8, faces: [[{ x: 0, w: 0.95, h: 1.62, yb: 0.47, porte: true }], null, W(0.6, 0.75, 1.55), W(0.6, 0.75, 1.55)] },
-  { y0: 2.45, y1: 4.35, s: 2.56, faces: [W(0.62, 0.8, 3.45), W(0.6, 0.66, 3.85), W(0.62, 0.8, 3.45), W(0.62, 0.8, 3.45)] },
-  { y0: 4.35, y1: 6.05, s: 2.32, faces: [W(0.56, 0.74, 5.22), W(0.56, 0.74, 5.22), W(0.56, 0.74, 5.22), W(0.56, 0.74, 5.22)] },
-  { y0: 6.05, y1: 7.55, s: 2.1, faces: [W(0.5, 0.66, 6.8), W(0.5, 0.66, 6.8), W(0.5, 0.66, 6.8), W(0.5, 0.66, 6.8)] },
-  { y0: 7.55, y1: 9.0, s: 1.92, faces: [[{ x: 0, w: 0.62, h: 1.12, yb: 7.64, porte: true }], W(0.46, 0.6, 8.3), W(0.46, 0.6, 8.3), W(0.46, 0.6, 8.3)] },
+  { y0: 0.45, y1: 2.45, s: 2.7, t: 2.59, faces: [[], null, W(0.6, 0.75, 1.55), W(0.6, 0.75, 1.55)] },
+  { y0: 2.45, y1: 4.35, s: 2.53, t: 2.42, faces: [W(0.6, 0.72, 3.62), W(0.58, 0.64, 3.85), W(0.6, 0.78, 3.45), W(0.6, 0.78, 3.45)] },
+  { y0: 4.35, y1: 6.05, s: 2.36, t: 2.25, faces: [W(0.54, 0.72, 5.22), W(0.54, 0.72, 5.22), W(0.54, 0.72, 5.22), W(0.54, 0.72, 5.22)] },
+  { y0: 6.05, y1: 7.55, s: 2.19, t: 2.09, faces: [W(0.5, 0.64, 6.8), W(0.5, 0.64, 6.8), W(0.5, 0.64, 6.8), W(0.5, 0.64, 6.8)] },
+  { y0: 7.55, y1: 9.0, s: 2.03, t: 1.92, faces: [[{ x: 0, w: 0.6, h: 1.1, yb: 7.64, porte: true }], W(0.44, 0.58, 8.3), W(0.44, 0.58, 8.3), W(0.44, 0.58, 8.3)] },
 ];
 const GALERIE = { y: 7.55, demi: 1.6, haut: 0.78 };
 const MOYEU = [0, 11.2, 2.05];
 
+// poteaux d'angle d'un tronc (côté s au pied y0, t en tête y1), section chanfreinée de w
+function angles(b, s, t, y0, y1, w, o) {
+  const prof = o.leger ? rect(w, w) : octo(w, w, w * 0.25);
+  for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) barre(b, POUTRE_F, [(sx * s) / 2, y0, (sz * s) / 2], [(sx * t) / 2, y1, (sz * t) / 2], prof, { id: o.idBois });
+}
+// pans de bois des quatre faces d'un tronc, inclinées de atan((s − t) / 2h)
+function facesTronc(b, s, t, y0, y1, faces, o, sens = 0) {
+  const theta = Math.atan((s - t) / (2 * (y1 - y0)));
+  faces.forEach((baies, k) => {
+    if (!baies) return;
+    const f = new Builder(o.idBois);
+    panDeBois(f, t + 0.02, y0, y1, baies, { ...o, sens: sens + k });
+    const a = (k * Math.PI) / 2;
+    poser(b, f, a, (Math.sin(a) * s) / 2, (Math.cos(a) * s) / 2, theta, y0);
+  });
+}
 function tour(b, o) {
   socle(b, 3.0, 3.0, 0.45, 0, 0, o.leger);
   ETAGES.forEach((e, i) => {
-    const h = e.y1 - e.y0;
-    b.add(prisme(rect(e.s, e.s), h), ENDUIT, { p: [0, (e.y0 + e.y1) / 2, 0], ...F });
-    for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) poteau(b, (sx * e.s) / 2, (sz * e.s) / 2, e.y0, e.y1, 0.22, o);
-    e.faces.forEach((baies, k) => {
-      if (!baies) return;
-      const f = new Builder(o.idBois);
-      panDeBois(f, e.s, e.y0, e.y1, baies, { ...o, sens: i + k });
-      const a = (k * Math.PI) / 2;
-      poser(b, f, a, (Math.sin(a) * e.s) / 2, (Math.cos(a) * e.s) / 2);
-    });
-    // sablière haute en encorbellement (plancher de l'étage suivant), sauf sous la galerie
-    if (e.y1 !== GALERIE.y) b.add(prisme(octo(e.s + 0.22, e.s + 0.22, 0.08), 0.16), POUTRE_F, { p: [0, e.y1 + 0.02, 0], id: o.idBois, ...F });
+    b.add(tronc(e.s, e.t, e.y1 - e.y0), ENDUIT, { p: [0, e.y0, 0], ...F });
+    angles(b, e.s, e.t, e.y0, e.y1, 0.22, o);
+    facesTronc(b, e.s, e.t, e.y0, e.y1, e.faces, o, i);
+    // sablière haute (plancher de l'étage suivant), à peine débordante, sauf sous la galerie
+    if (e.y1 !== GALERIE.y) b.add(prisme(oc(o, e.t + 0.12, e.t + 0.12, 0.06), 0.16), POUTRE_F, { p: [0, e.y1 + 0.02, 0], id: o.idBois, ...F });
   });
 }
 
 // galerie à garde-corps autour du dernier étage : plancher, consoles, lisses, montants et croix
 function galerie(b, o) {
   const { y, demi, haut } = GALERIE;
-  b.add(prisme(octo(2 * demi + 0.1, 2 * demi + 0.1, 0.1), 0.14), POUTRE_F, { p: [0, y, 0], id: o.idBois, ...F });
+  b.add(prisme(oc(o, 2 * demi + 0.1, 2 * demi + 0.1, 0.1), 0.14), POUTRE_F, { p: [0, y, 0], id: o.idBois, ...F });
   for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) b.add(prisme(rect(0.1, 0.1), haut + 0.06), POUTRE, { p: [sx * demi, y + 0.07 + haut / 2, sz * demi], id: o.idBois, ...F });
   for (let k = 0; k < 4; k++) {
     const a = (k * Math.PI) / 2;
@@ -255,7 +295,7 @@ function galerie(b, o) {
         f.add(prisme(rect(0.06, 0.05), len), POUTRE, { p: [(x1 + x2) / 2, y + 0.07 + (0.14 + haut) / 2, 0], r: [0, 0, Math.atan2(-(x2 - x1), haut - 0.2)], ...F });
       }
       // consoles sous le plancher, du mur de l'étage inférieur au bord de la galerie
-      const zm = ETAGES[3].s / 2;
+      const zm = (ETAGES[3].s + ETAGES[3].t) / 4;
       for (const sx of [-0.7, 0.7]) {
         const [z1, y1, z2, y2] = [zm, y - 0.75, demi - 0.25, y - 0.07];
         f.add(prisme(rect(0.09, 0.09), Math.hypot(z2 - z1, y2 - y1)), POUTRE_F, { p: [sx, (y1 + y2) / 2, (z1 + z2) / 2 - demi], r: [Math.atan2(z2 - z1, y2 - y1), 0, 0], ...F });
@@ -265,81 +305,129 @@ function galerie(b, o) {
   }
 }
 
-// chapeau, cou et tête : la tête de bois déborde à l'avant (+Z, côté ailes) et à l'arrière
-const TETE = { y0: 10.42, y1: 11.45, faite: 11.97, demi: 0.82, av: 1.65, ar: -1.75 };
+// cou et tête : le cou prolonge l'affinement de la tour (tronc 1,92 → 1,5) ; la tête de bois déborde à
+// l'avant (+Z, côté ailes) sous un capot en demi-couronne centré sur le moyeu, et loin à l'arrière, sous un
+// toit cintré en arc surbaissé
+const TETE = { y0: 10.42, y1: 11.45, faite: 11.97, demi: 0.82, av: 1.65, ar: -2.4 };
+const COU = { y0: 9.1, s: 1.92, t: 1.5 };
+const CAPOT = { r: 0.92, e: 0.08, prof: 0.6 };
 function tete(b, o) {
-  b.add(tronc(2.42, 1.5, 0.48), BOIS_TOIT, { p: [0, 9.08, 0], id: o.idBois, ...F });
-  b.add(prisme(rect(1.3, 1.3), 1.0), ENDUIT, { p: [0, 9.92, 0], ...F });
-  for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) poteau(b, sx * 0.65, sz * 0.65, 9.4, 10.42, 0.16, o);
+  const { y0, y1, faite, demi, av, ar } = TETE;
+  // cou : tronc enduit, poteaux d'angle inclinés, entretoise et décharge sur chaque face
+  b.add(tronc(COU.s, COU.t, y0 - COU.y0), ENDUIT, { p: [0, COU.y0, 0], ...F });
+  angles(b, COU.s, COU.t, COU.y0, y0, 0.16, o);
   if (!o.leger) {
+    const theta = Math.atan((COU.s - COU.t) / (2 * (y0 - COU.y0)));
     for (let k = 0; k < 4; k++) {
       const a = (k * Math.PI) / 2;
       const f = new Builder(o.idBois);
-      planche(f, POUTRE, -0.5, 9.62, 0.5, 9.62, 0.1, 0.05);
-      planche(f, POUTRE, -0.48, 9.66, 0.48, 10.32, 0.1, 0.045);
-      poser(b, f, a, Math.sin(a) * 0.65, Math.cos(a) * 0.65);
+      planche(f, POUTRE, -0.66, COU.y0 + 0.5, 0.66, COU.y0 + 0.5, 0.1, 0.05);
+      planche(f, POUTRE, (k % 2 ? 1 : -1) * 0.6, COU.y0 + 0.56, (k % 2 ? -1 : 1) * 0.56, y0 - 0.08, 0.1, 0.045);
+      poser(b, f, a, (Math.sin(a) * COU.s) / 2, (Math.cos(a) * COU.s) / 2, theta, COU.y0);
     }
   }
-  const { y0, y1, faite, demi, av, ar } = TETE;
   const lg = av - ar;
   const zc = (av + ar) / 2;
-  b.add(prisme(octo(2 * demi + 0.14, lg + 0.14, 0.05), 0.12), POUTRE_F, { p: [0, y0 + 0.02, zc], id: o.idBois, ...F });
+  b.add(prisme(oc(o, 2 * demi + 0.14, lg + 0.14, 0.05), 0.12), POUTRE_F, { p: [0, y0 + 0.02, zc], id: o.idBois, ...F });
   b.add(prisme(rect(2 * demi, lg), y1 - y0), ENDUIT, { p: [0, (y0 + y1) / 2, zc], ...F });
   for (const sx of [-1, 1]) for (const z of [ar, av]) poteau(b, sx * demi, z, y0, y1, 0.15, o);
-  b.add(prisme(octo(2 * demi + 0.12, lg + 0.12, 0.04), 0.1), POUTRE_F, { p: [0, y1, zc], id: o.idBois, ...F });
-  // flancs (±X) : deux poteaux, une fenêtre au milieu, décharges vers l'avant et l'arrière
+  b.add(prisme(oc(o, 2 * demi + 0.12, lg + 0.12, 0.04), 0.1), POUTRE_F, { p: [0, y1, zc], id: o.idBois, ...F });
+  // jambes de force sous le débord arrière, du cou au dessous de la tête
+  for (const sx of [-1, 1]) barre(b, POUTRE_F, [sx * 0.55, y0 - 0.85, -COU.t / 2 - 0.05], [sx * 0.55, y0 - 0.02, ar + 0.45], rect(0.1, 0.1), { id: o.idBois });
+  // flancs (±X) : deux fenêtres, décharges ; arrière : une petite fenêtre
   for (const sx of [-1, 1]) {
     const f = new Builder(o.idBois);
-    panDeBois(f, lg, y0 + 0.06, y1 - 0.04, [{ x: 0, w: 0.46, h: 0.44, yc: (y0 + y1) / 2 + 0.04 }], { ...o, leger: true });
+    const yf = (y0 + y1) / 2 + 0.04;
+    panDeBois(f, lg, y0 + 0.06, y1 - 0.04, o.leger ? [{ x: 0, w: 0.42, h: 0.42, yc: yf }] : [{ x: -0.95, w: 0.42, h: 0.42, yc: yf }, { x: 0.95, w: 0.42, h: 0.42, yc: yf }], { ...o, leger: true });
     poser(b, f, (sx * Math.PI) / 2, sx * demi, zc);
   }
-  // arrière : petite fenêtre ; avant : le palier de l'arbre des ailes
   const fa = new Builder(o.idBois);
   panDeBois(fa, 2 * demi, y0 + 0.06, y1 - 0.04, [{ x: 0, w: 0.4, h: 0.4, yc: (y0 + y1) / 2 + 0.04 }], { ...o, leger: true });
   poser(b, fa, Math.PI, 0, ar);
-  b.add(G.cyl(0.26, 0.3, 0.1, 12), POUTRE_F, { p: [0, MOYEU[1], av + 0.05], r: [Math.PI / 2, 0, 0], id: o.idBois, ...F });
-  b.add(G.cyl(0.13, 0.13, MOYEU[2] - av + 0.1, 10), POUTRE_F, { p: [0, MOYEU[1], (av + MOYEU[2]) / 2], r: [Math.PI / 2, 0, 0], id: o.idBois, ...F });
-  // petit toit à deux pans (faîtage le long de Z), qui déborde devant et derrière ; pignons crème
-  const ev = demi + 0.24;
-  const ang = Math.atan2(faite - y1, ev);
-  const w = Math.hypot(ev, faite - y1) + 0.06;
-  for (const sx of [-1, 1]) b.add(panZ(w, 0.09, lg + 0.5), BOIS_TOIT, { p: [(sx * ev) / 2, (y1 + faite) / 2 + 0.06, zc], r: [0, 0, -sx * ang], id: o.idBois, ...F });
-  for (const z of [ar, av]) b.add(pignonZ(2 * demi, faite - y1 - 0.02, 0.08), ENDUIT, { p: [0, y1 + 0.03, z], ...F });
-  b.add(prisme(octo(0.14, 0.14, 0.04), lg + 0.56).clone().rotateX(Math.PI / 2), POUTRE_F, { p: [0, faite + 0.08, zc], id: o.idBois, ...F });
+  // capot avant : demi-couronne de bois autour du moyeu, fermée par un demi-disque crème
+  const ym = MOYEU[1];
+  b.add(archivolte(CAPOT.r, CAPOT.r + CAPOT.e, CAPOT.prof, o.leger ? 8 : 12), BOIS_TOIT, { p: [0, ym, av - CAPOT.prof / 2 + 0.04], id: o.idBois, ...F });
+  b.add(segmentDisque(CAPOT.r + 0.01, 0, Math.PI, 0.06, o.leger ? 8 : 12), ENDUIT, { p: [0, ym, av - 0.05], ...F });
+  b.add(G.cyl(0.26, 0.3, 0.1, 12), POUTRE_F, { p: [0, ym, av + 0.06], r: [Math.PI / 2, 0, 0], id: o.idBois, ...F });
+  b.add(G.cyl(0.13, 0.13, MOYEU[2] - av + 0.1, 10), POUTRE_F, { p: [0, ym, (av + MOYEU[2]) / 2], r: [Math.PI / 2, 0, 0], id: o.idBois, ...F });
+  // toit cintré : arc surbaissé (corde 2 × 0,86 m, flèche 0,52 m, 8 segments), de l'arrière jusque dans
+  // le capot ; pignon arrière en segment de disque
+  const ev = 0.86;
+  const fl = faite - y1;
+  const R = (ev * ev + fl * fl) / (2 * fl);
+  const al = Math.asin(ev / R);
+  const yc = faite - R;
+  const z0 = ar - 0.28;
+  b.add(coque(R, 0.09, Math.PI / 2 - al, Math.PI / 2 + al, av - CAPOT.prof / 2 - z0, 8), BOIS_TOIT, { p: [0, yc, z0], id: o.idBois, ...F });
+  b.add(segmentDisque(R - 0.01, Math.PI / 2 - al, Math.PI / 2 + al, 0.06, 8), ENDUIT, { p: [0, yc, ar - 0.03], ...F });
 }
 
-// ailes : six bras à 60°, longeron brun, toile crème sur un lattis (lattes en façade), bord de rive
+// ailes : six bras à 60°, longeron brun, toile crème en trapèze (0,35 m au pied, 0,85 m au bout) décalée
+// sur le côté du longeron, rive fine sur le bord extérieur, deux lattes discrètes en façade
 const R_AILE = 4.1;
+const TOILE_AILE = { r0: 0.95, r1: 4.05, w0: 0.35, w1: 0.85, v0: 0.06, z0: 0.0875, z1: 0.1125 };
 function ailes(o) {
   const s = new Builder(o.idBois);
   s.add(G.cyl(0.3, 0.3, 0.26, 12), POUTRE_F, { p: [0, 0, 0.13], r: [Math.PI / 2, 0, 0], ...F });
   s.add(G.cone(0.17, 0.2, 12), POUTRE, { p: [0, 0, 0.36], r: [Math.PI / 2, 0, 0], ...F });
+  const { r0, r1, w0, w1, v0, z0, z1 } = TOILE_AILE;
+  const largeur = (r) => w0 + ((w1 - w0) * (r - r0)) / (r1 - r0);
   for (let k = 0; k < 6; k++) {
     const a = (k * Math.PI) / 3 + Math.PI / 2;
     const [ux, uy] = [Math.cos(a), Math.sin(a)];
     const [vx, vy] = [-uy, ux];
-    const rot = [0, 0, a - Math.PI / 2];
     const at = (r, v, z) => [ux * r + vx * v, uy * r + vy * v, z];
-    s.add(prisme(o.leger ? rect(0.12, 0.1) : octo(0.12, 0.1, 0.03), R_AILE - 0.1), POUTRE, { p: at(R_AILE / 2 + 0.05, 0, 0.17), r: rot, ...F });
-    s.add(prisme(rect(0.6, 0.025), 3.1), k % 2 ? TOILE : TOILE_B, { p: at(2.5, 0.36, 0.1), r: rot, ...F });
+    s.add(prisme(o.leger ? rect(0.12, 0.1) : octo(0.12, 0.1, 0.03), R_AILE - 0.1), POUTRE, { p: at(R_AILE / 2 + 0.05, 0, 0.17), r: [0, 0, a - Math.PI / 2], ...F });
+    // toile : prisme à base trapézoïdale, chaque face orientée vers l'extérieur
+    const P = [[r0, v0], [r1, v0], [r1, v0 + w1], [r0, v0 + w0]];
+    const bas = P.map(([r, v]) => V(...at(r, v, z0)));
+    const haut = P.map(([r, v]) => V(...at(r, v, z1)));
+    const [cx, cy] = at(2.5, v0 + 0.3, 0);
+    const L = [[bas[0], bas[1], bas[2], V(0, 0, -1)], [bas[0], bas[2], bas[3], V(0, 0, -1)], [haut[0], haut[1], haut[2], V(0, 0, 1)], [haut[0], haut[2], haut[3], V(0, 0, 1)]];
+    for (let i = 0; i < 4; i++) {
+      const j = (i + 1) % 4;
+      const n = V((bas[i].x + bas[j].x) / 2 - cx, (bas[i].y + bas[j].y) / 2 - cy, 0);
+      L.push([bas[i], bas[j], haut[j], n], [bas[i], haut[j], haut[i], n]);
+    }
+    s.add(tris(L), k % 2 ? TOILE : TOILE_B, F);
     if (o.leger) continue;
-    s.add(prisme(rect(0.05, 0.05), 3.14), POUTRE, { p: at(2.5, 0.66, 0.11), r: rot, ...F });
-    for (let j = 0; j < 7; j++) s.add(prisme(plaque(0.045, 0.03), 0.62, true), POUTRE, { p: at(1.0 + j * 0.5, 0.36, 0.1125), r: [0, 0, a], ...F });
+    barre(s, POUTRE, at(r0 - 0.02, v0 + w0, 0.1), at(r1 + 0.02, v0 + w1, 0.1), octo(0.04, 0.04, 0.01));
+    for (const r of [2.0, 3.3]) s.add(prisme(plaque(0.04, 0.02), largeur(r) - 0.04, true), TOILE_B, { p: at(r, v0 + largeur(r) / 2, z1), r: [0, 0, a], ...F });
   }
   return s;
 }
 
-// auvent de la porte (face +Z) : deux pans de bois sur consoles
-function auvent(b, o) {
-  const z0 = ETAGES[0].s / 2;
-  const [y, ev, faite] = [2.12, 0.78, 2.5];
-  const ang = Math.atan2(faite - y, ev);
-  for (const sx of [-1, 1]) b.add(panZ(Math.hypot(ev, faite - y) + 0.05, 0.08, 0.86), BOIS_TOIT, { p: [(sx * ev) / 2, (y + faite) / 2 + 0.04, z0 + 0.4], r: [0, 0, -sx * ang], id: o.idBois, ...F });
-  b.add(pignonZ(1.3, faite - y - 0.02, 0.06), ENDUIT, { p: [0, y + 0.02, z0 + 0.8], ...F });
-  if (o.leger) return;
-  // consoles : du mur (z0, 1,65 m) au-dessous du pan (z0 + 0,55, 2,15 m)
-  const [dz, dy] = [0.53, 0.5];
-  for (const sx of [-1, 1]) b.add(prisme(rect(0.08, 0.08), Math.hypot(dz, dy)), POUTRE_F, { p: [sx * 0.6, 1.65 + dy / 2, z0 + 0.02 + dz / 2], r: [Math.atan2(dz, dy), 0, 0], id: o.idBois, ...F });
+// avancée à pignon sur la face +Z (comme à gauche de la tour dans la référence) : porte en façade, une
+// fenêtre sur chaque côté, pignon à poinçon et contrefiches, petit toit de bois à deux pans
+const AVANCEE = { demi: 0.85, z0: 1.2, z1: 2.25, y0: 0.25, y1: 2.3, faite: 3.05 };
+function avancee(b, o) {
+  const { demi, z0, z1, y0, y1, faite } = AVANCEE;
+  const zc = (z0 + z1) / 2;
+  const lz = z1 - z0;
+  socle(b, 2 * demi + 0.12, lz + 0.12, y0, 0, zc, o.leger);
+  b.add(prisme(rect(2 * demi, lz), y1 - y0), ENDUIT, { p: [0, (y0 + y1) / 2, zc], ...F });
+  for (const sx of [-1, 1]) for (const z of [z0 + 0.25, z1]) poteau(b, sx * demi, z, y0, y1, 0.18, o);
+  b.add(prisme(oc(o, 2 * demi + 0.16, lz + 0.16, 0.05), 0.12), POUTRE_F, { p: [0, y1, zc], id: o.idBois, ...F });
+  const ff = new Builder(o.idBois);
+  panDeBois(ff, 2 * demi, y0, y1, [{ x: 0, w: 0.8, h: 1.52, yb: y0 + 0.02, porte: true }], o);
+  poser(b, ff, 0, 0, z1);
+  for (const sx of [-1, 1]) {
+    const f = new Builder(o.idBois);
+    panDeBois(f, lz, y0, y1, o.leger ? [] : [{ x: 0, w: 0.38, h: 0.48, yc: 1.5 }], o);
+    poser(b, f, (sx * Math.PI) / 2, sx * demi, zc);
+  }
+  b.add(pignonZ(2 * demi + 0.1, faite - y1, 0.1), ENDUIT, { p: [0, y1 + 0.06, z1 - 0.02], ...F });
+  if (!o.leger) {
+    const fp = new Builder(o.idBois);
+    planche(fp, POUTRE, 0, y1 + 0.1, 0, faite - 0.02, 0.1, 0.05);
+    for (const sx of [-1, 1]) planche(fp, POUTRE, sx * 0.05, y1 + 0.42, sx * 0.62, y1 + 0.12, 0.08, 0.045);
+    poser(b, fp, 0, 0, z1 + 0.03);
+  }
+  const ev = demi + 0.22;
+  const ang = Math.atan2(faite - y1, ev);
+  const w = Math.hypot(ev, faite - y1) + 0.06;
+  for (const sx of [-1, 1]) b.add(panZ(w, 0.1, lz + 0.3), BOIS_TOIT, { p: [(sx * ev) / 2, (y1 + faite) / 2 + 0.07, zc + 0.15], r: [0, 0, -sx * ang], id: o.idBois, ...F });
+  b.add(prisme(oc(o, 0.14, 0.14, 0.04), lz + 0.34).clone().rotateX(Math.PI / 2), POUTRE_F, { p: [0, faite + 0.1, zc + 0.15], id: o.idBois, ...F });
 }
 
 // --- annexes ------------------------------------------------------------------------------------
@@ -352,7 +440,7 @@ function toitMousse(b, x0, x1, zc, demi, y1, faite, o) {
   const w = Math.hypot(ev, faite - y1) + 0.1;
   const L = x1 - x0 + 0.5;
   for (const sz of [-1, 1]) b.add(panX(w, 0.22, L), sz > 0 ? MOUSSE : MOUSSE_C, { p: [(x0 + x1) / 2, (y1 + faite) / 2 + 0.1, zc + (sz * ev) / 2], r: [sz * ang, 0, 0], id: o.idToit, ...F });
-  b.add(prisme(octo(0.3, 0.3, 0.1), L - 0.1).clone().rotateZ(Math.PI / 2), MOUSSE, { p: [(x0 + x1) / 2, faite + 0.17, zc], id: o.idToit, ...F });
+  b.add(prisme(oc(o, 0.3, 0.3, 0.1), L - 0.1).clone().rotateZ(Math.PI / 2), MOUSSE, { p: [(x0 + x1) / 2, faite + 0.17, zc], id: o.idToit, ...F });
 }
 function annexe(b, o) {
   const { x0, x1, demi, y0, y1, faite } = ANNEXE;
@@ -361,7 +449,7 @@ function annexe(b, o) {
   socle(b, lx + 0.12, 2 * demi + 0.12, y0, xc, 0, o.leger);
   b.add(prisme(rect(lx, 2 * demi), y1 - y0), ENDUIT, { p: [xc, (y0 + y1) / 2, 0], ...F });
   for (const sz of [-1, 1]) for (const x of [x0 + 0.15, x1]) poteau(b, x, sz * demi, y0, y1, 0.2, o);
-  b.add(prisme(octo(lx + 0.2, 2 * demi + 0.2, 0.06), 0.13), POUTRE_F, { p: [xc, y1, 0], id: o.idBois, ...F });
+  b.add(prisme(oc(o, lx + 0.2, 2 * demi + 0.2, 0.06), 0.13), POUTRE_F, { p: [xc, y1, 0], id: o.idBois, ...F });
   // façade +Z : porte et fenêtre ; dos −Z : deux fenêtres ; pignon +X : fenêtre
   const fz = new Builder(o.idBois);
   panDeBois(fz, lx, y0, y1, [{ x: -0.55, w: 0.56, h: 0.66, yc: 1.45 }, { x: 0.62, w: 0.78, h: 1.5, yb: y0 + 0.02, porte: true }], { ...o, sens: 1 });
@@ -383,7 +471,7 @@ function annexe(b, o) {
 }
 
 // maisonnette percée d'une arche : passage voûté le long de X, 2 × PASSAGE libres entre les piédroits
-const MAISON = { demiX: 1.2, mur: 0.7, naissance: 1.2, y1: 2.75, faite: 3.62 };
+const MAISON = { demiX: 1.1, mur: 0.45, naissance: 1.2, y1: 2.72, faite: 3.5 };
 function maisonnette(b, o) {
   const [cx, cz] = MAISONNETTE;
   const { demiX, mur, naissance, y1, faite } = MAISON;
@@ -413,7 +501,7 @@ function maisonnette(b, o) {
     panDeBois(f, 2 * demiX, 0.2, y1, [{ x: 0, w: 0.5, h: 0.6, yc: 1.5 }], o);
     poser(b, f, sz > 0 ? 0 : Math.PI, cx, cz + sz * demi);
   }
-  b.add(prisme(octo(2 * demiX + 0.18, 2 * demi + 0.18, 0.06), 0.12), POUTRE_F, { p: [cx, y1, cz], id: o.idBois, ...F });
+  b.add(prisme(oc(o, 2 * demiX + 0.18, 2 * demi + 0.18, 0.06), 0.12), POUTRE_F, { p: [cx, y1, cz], id: o.idBois, ...F });
   toitMousse(b, cx - demiX, cx + demiX, cz, demi, y1 + 0.04, faite, o);
 }
 
@@ -424,7 +512,7 @@ export function moulinTour(p) {
   tour(b, o);
   galerie(b, o);
   tete(b, o);
-  auvent(b, o);
+  avancee(b, o);
   annexe(b, o);
   maisonnette(b, o);
   return { solid: b, anim: [{ builder: ailes(o), pivot: [...MOYEU], axis: 'z', speed: 0.7, wind: true }], obstacles: lire(physique.obstacles, p) };
