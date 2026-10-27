@@ -23,7 +23,7 @@ colonne Notes).
 | E1 | Formes communes `forme.js` (copie des aides de BAT-013 + nouvelles) | fait | (ce commit, voir journal) | sans objet (aucun modèle) ; aides : loft 256 tri. pour 5 stations × 32, plaque 9 × 5 : 144, hublot : 96, rivet : 12, voile 9 × 7 : 320 | §5 ; copies vérifiées identiques à leurs sources |
 | E2 | BAT-014 Coque et berceau | fait | `95ecdfd` | 11 966 / 4 336 ; aucune règle en échec ; 74 planchers (pire 2,9 cm), aucun obstacle (voulu) | §6.1 ; écarts et décisions en « Fait le 27/10 » de §6.1 ; Evis-critique : 3 tours, dernier point corrigé selon sa proposition |
 | E3 | BAT-015 Maison de pont (3 variantes) | fait | `43e6198` | forme 0 : 3 144 / 1 248 ; forme 1 : 2 506 / 1 142 ; forme 2 : 1 504 / 568 ; aucune règle en échec (physique des 3 formes : 95 à 98 %, débord ≤ 0,36 m) | §6.2 ; Evis-critique : valide au 2e tour ; notes de pose en « Fait le 27/10 » de §6.2 |
-| E4 | BAT-016 Tourelle (2 variantes) | fait | (commit de E4, voir journal) | forme 0 (ardoise) : 1 590 / 578 ; forme 1 (coupole) : 1 934 / 614 ; aucune règle en échec (100 % de l'emprise, débord 0,24 m) | §6.3 ; Evis-critique : valide au 2e tour ; aide `flamme()` ajoutée à `forme.js` |
+| E4 | BAT-016 Tourelle (2 variantes) | fait | `7aad718` | forme 0 (ardoise) : 1 590 / 578 ; forme 1 (coupole) : 1 934 / 614 ; aucune règle en échec (100 % de l'emprise, débord 0,24 m) | §6.3 ; Evis-critique : valide au 2e tour ; aide `flamme()` ajoutée à `forme.js` |
 | E5 | BAT-017 Tour-moulin centrale | à faire | | | §6.4 |
 | E6 | BAT-018 Mât et voile (2 variantes) | à faire | | | §6.5 |
 | E7 | BAT-019 Escalier et passerelle | à faire | | | §6.6 |
