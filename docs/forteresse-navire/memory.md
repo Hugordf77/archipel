@@ -437,6 +437,38 @@ flanc +X depuis l'arrivée de l'escalier (x = +9, z = −6). Budget de ce plan :
 4, 5, 7, 10 ; 11 en plus si le budget le permet) + 2 × 2 000 + 9 000 + 3 × 1 500 + 2 500 + passerelle
 (≈ 600) ≈ **46 600** sans la maison 11, **50 100** avec ; reste ≈ 10 000 de marge.
 
+### Premier montage (27/10/2026, catalogue, rien de commité dans le code)
+
+Assemblage rapide dans la page du catalogue (script « montage » de §15) : coque BAT-014, maisons BAT-015,
+et en **maquette** (volumes simples aux dimensions des fiches) tour-moulin, tourelles, mâts, escalier,
+passerelle. Captures `captures/navire-montage-1.png` (6 vues) et `captures/navire-montage-1-grand.png`.
+
+Ce que dit le contrôle des emprises (`plan-emprises.mjs`, §15) sur le plan ci-dessus :
+- **Château de poupe trop étroit** pour les maisons 10 (grande, 9 × 7) et 11 (étroite) côte à côte, et
+  pour le mât d'artimon en (−5, −29) : 10 × 11 et 10 × 12 se chevauchent ; la maison 11 déborde du pont
+  de 0,85 m (le château se resserre vers le tableau).
+- **Tourelle de proue** en z = +28 : au-delà de la rambarde de la pointe (POINTE = 28, E2).
+- **Maison 4** : touche le pavois (0,13 m de débord, obstacles compris).
+- **Maison 5** (étroite, en (+5, +7)) : à 0,42 m du pavois +X, elle ferme l'allée de 2,5 m demandée le
+  long du flanc +X depuis l'arrivée de l'escalier.
+
+Variante utilisée pour le montage (sans chevauchement ; à trancher en E8, pas une décision) : tourelle de
+proue en (0, +25,8) ; mât de misaine en (0, +19,5) ; maison 4 en (−3,1, +11,8) (marge 0,19 m au pavois,
+obstacles compris) ; maison 10 = **étroite** (forme 1) en (−3,3, −25,3), rot −π/2 ; maison 11 = **basse**
+(forme 2) en (+4,4, −24,4), rot π/2 ; mât d'artimon en (+0,8, −30) ; le reste comme le plan. Les maisons
+de poupe de la référence sont d'ailleurs « en gradins à petits pignons » (§2) : de petites maisons y vont
+mieux qu'une grande.
+
+À voir sur les captures :
+- La silhouette tient : la tour-moulin est le point le plus haut (≈ 42 m hors tout, 0,66 de la longueur
+  contre 0,63 visé), les toits de mousse et d'ardoise, les voiles et les cheminées se lisent de loin.
+- **Escalier** : dans la référence, il descend du flanc vers la **poupe** (arrivée vers x ≈ 640 px, pied
+  vers x ≈ 690, proue à gauche) ; le tracé de §6.6 descend vers la proue (pied en z = +26). À reconsidérer
+  en E7 (arrivée plus vers la proue, pied vers la poupe), avec l'ouverture du pavois (`OUVERTURE`) à
+  déplacer d'autant si besoin.
+- Le pont paraît encore vide entre la tour-moulin et le château, et peu chargé à la poupe par rapport à
+  la référence (poupe « plus haute, chargée de galeries ») : la marge de budget (≈ 10 000) peut y aller.
+
 ## 9. DA et palette
 
 - **Base** : DA de BAT-013 (jouet peint, volumes doux, aucune arête vive, `docs/DA.md` §2 ; aucun noir,
@@ -571,6 +603,11 @@ npx vitest run                                   # échecs connus seulement (§1
   de §13) passe relancé seul : restent les deux échecs connus. Planches :
   `captures/navire-maison-{0,1,2}-6vues.png`, `-allege-6vues.png`, `navire-maison-gros-plans.png`.
   Prochaine étape : E4, BAT-016 tourelle (2 formes).
+- 27/10/2026 : **premier montage** à la demande de l'utilisateur (catalogue, maquettes pour les pièces à
+  venir ; aucun code du monde) : captures `navire-montage-1.png` et `navire-montage-1-grand.png`. Le plan
+  de §8 a des chevauchements à la poupe, une tourelle de proue au-delà de la rambarde de la pointe et une
+  maison qui ferme l'allée +X : constats et variante en « Premier montage » de §8. E4 reste la prochaine
+  étape.
 
 ## 15. Scripts (à recopier dans le scratchpad de la session ; `R` = chemin du worktree + `/`)
 
@@ -741,6 +778,53 @@ for (const forme of [0, 1, 2]) {
   console.log(forme, t, md.obstacles.length, (c.dedans * 100).toFixed(0) + ' %', c.debord.toFixed(2), c.dedans >= 0.85 && c.debord <= 0.4);
 }
 ```
+
+`plan-emprises.mjs` (montage du 27/10) — emprises au sol du plan (repère du navire) : chevauchements et
+marge au pavois. Maisons : rectangle de `FORMES` (encorbellement et débord des obstacles compris) ; autres
+pièces : disque (tourelle 2 m, mât 0,6 m, tour-moulin 3,6 m). Rotation du modèle dans le repère du navire :
+`−rot` (DIRZ).
+
+```js
+const R = '/Users/hugo/developer/Island test/.claude/worktrees/ruine-alternative/';
+const P = await import(R + 'src/models/batiments/navire-coque/physique.js');
+const M = await import(R + 'src/models/batiments/navire-maison/physique.js');
+const PI = Math.PI;
+const PLAN = [ // [#, nom, t, forme, dx, dz, rot]
+  [2, 'tourelle de proue', 'tourelle', 1, 0, 28, 0], [4, 'grande maison', 'maison', 0, -3, 12, 0],
+  [5, 'maison étroite', 'maison', 1, 5, 7, PI / 2], [6, 'tour-moulin', 'moulin', 0, 1, -1, -PI / 2],
+  // … les autres éléments du tableau
+];
+const coins = ([, , t, forme, dx, dz, rot]) => {
+  const ry = -rot;
+  const tourne = ([x, z]) => [dx + x * Math.cos(ry) + z * Math.sin(ry), dz - x * Math.sin(ry) + z * Math.cos(ry)];
+  if (t === 'maison') {
+    const f = M.FORMES[forme];
+    const [l, p] = [f.L / 2 + 0.36, f.P / 2 + f.encorbellement + 0.36];
+    return [[-l, -p], [l, -p], [l, p], [-l, p]].map(tourne);
+  }
+  const r = { tourelle: 2.0, mat: 0.6, moulin: 3.6 }[t];
+  return Array.from({ length: 16 }, (_, i) => tourne([Math.cos((i / 16) * 2 * PI) * r, Math.sin((i / 16) * 2 * PI) * r]));
+};
+const sep = (A, B) => { // axe séparateur entre deux polygones convexes
+  for (const Q of [A, B]) for (let i = 0; i < Q.length; i++) {
+    const [x0, z0] = Q[i], [x1, z1] = Q[(i + 1) % Q.length], n = [z1 - z0, x0 - x1];
+    const pa = A.map(([x, z]) => x * n[0] + z * n[1]), pb = B.map(([x, z]) => x * n[0] + z * n[1]);
+    if (Math.max(...pa) < Math.min(...pb) || Math.max(...pb) < Math.min(...pa)) return true;
+  }
+  return false;
+};
+const E = PLAN.map((e) => ({ e, c: coins(e) }));
+for (let i = 0; i < E.length; i++) for (let j = i + 1; j < E.length; j++) if (!sep(E[i].c, E[j].c)) console.log('chevauchement', E[i].e[1], E[j].e[1]);
+const demi = (z) => P.demiLargeur(P.station(z), Math.min(P.pont(z), P.station(z).H)) - P.BORDE;
+for (const { e, c } of E) console.log(e[1], 'marge au pavois', (-Math.max(...c.map(([x, z]) => Math.abs(x) - demi(z)))).toFixed(2));
+```
+
+Montage dans le catalogue (27/10, dans la page `catalogue.html#BAT-014`, via `javascript_tool`) : ouvrir
+la coque, puis ajouter au groupe `v.items[0].holder` (repère du navire) les pièces construites
+(`R.BY_ID.get('BAT-015').build({ forme, v: 0 }).object3d`, position `(dx, pont(dz), dz)`, `rotation.y = −rot`)
+et, pour les pièces à venir, des maquettes : un `Builder` des formes communes dont la géométrie remplace
+celle d'un clone d'un maillage de la coque (`proto.clone()`, `m.geometry = b.build()`), pour garder le
+matériau du jeu. Caméra placée à la main comme pour les gros plans, `v.snapshot()`, `/__capture`.
 
 Captures du catalogue (dans la page, via `javascript_tool`) : `const v = window.__catalogue.ouvrir(id,
 params)`, `v.pipeline.setSize(900, 900)`, couper rotation, animation, grille ; placer `v.camera` à la
