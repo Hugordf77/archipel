@@ -21,7 +21,7 @@ colonne Notes).
 | --- | --- | --- | --- | --- | --- |
 | E0 | Préparation : branche, image pleine taille, emplacement tranché | en cours | `8003a33` | | §2, §7. Fait : branche `claude/forteresse-navire`, emplacement (b) tranché le 27/10 (§1, §7). Reste : **fichier** de l'image pleine taille (envoyée le 27/10 dans le chat seulement, rien sur le disque) à déposer dans `production/references/forteresse-navire.png` **avant la planche référence / modèle de E2**, puis la copier en `reference.png` dans chaque dossier de pièce. |
 | E1 | Formes communes `forme.js` (copie des aides de BAT-013 + nouvelles) | fait | (ce commit, voir journal) | sans objet (aucun modèle) ; aides : loft 256 tri. pour 5 stations × 32, plaque 9 × 5 : 144, hublot : 96, rivet : 12, voile 9 × 7 : 320 | §5 ; copies vérifiées identiques à leurs sources |
-| E2 | BAT-014 Coque et berceau | fait | (commit de E2, voir journal) | 11 966 / 4 336 ; aucune règle en échec ; 74 planchers (pire 2,9 cm), aucun obstacle (voulu) | §6.1 ; écarts et décisions en « Fait le 27/10 » de §6.1 ; Evis-critique : 3 tours, dernier point corrigé selon sa proposition |
+| E2 | BAT-014 Coque et berceau | fait | `95ecdfd` | 11 966 / 4 336 ; aucune règle en échec ; 74 planchers (pire 2,9 cm), aucun obstacle (voulu) | §6.1 ; écarts et décisions en « Fait le 27/10 » de §6.1 ; Evis-critique : 3 tours, dernier point corrigé selon sa proposition |
 | E3 | BAT-015 Maison de pont (3 variantes) | à faire | | | §6.2 |
 | E4 | BAT-016 Tourelle (2 variantes) | à faire | | | §6.3 |
 | E5 | BAT-017 Tour-moulin centrale | à faire | | | §6.4 |
@@ -513,7 +513,7 @@ npx vitest run                                   # échecs connus seulement (§1
 - **Fuites et saut** (27/10, E2) : un plancher n'arrête que le centre du joueur (rayon 0,3 m, `Player.js:45`)
   et qu'à pied (montée < 0,4 m) ; en l'air, on franchit jusqu'à ≈ 1,23 m. Contrôles du scratchpad de la
   session E2 à recopier : `fuites.mjs` (remplissage du pont), `critique/fuites-saut.mjs 1.23`,
-  `critique/penetration.mjs`, `critique/berceau.mjs`.
+  `critique/penetration.mjs`, `critique/berceau.mjs` : `fuites.mjs` et `penetration.mjs` sont en §15.
 - **Panneau du navigateur masqué** (27/10, E2) : `requestAnimationFrame` ne tourne plus et `planche()`
   ne rend rien ; dans la page, `window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16)`
   avant les captures (à refaire après chaque rechargement).
@@ -626,6 +626,65 @@ const p = buildPlan(ILE_BY_ID.get('grande-ile'));
 const ZPL = p.zones.indexOf('plateau-vente');
 const cell = (x, z) => Math.round((z + p.ext) / p.s) * p.n + Math.round((x + p.ext) / p.s);
 // rectangle 64 × 18 m centré en (cx, cz), axe à l'angle rot : min, max de p.H, cases où p.ZI !== ZPL
+```
+
+`fuites.mjs` (E2) — depuis le milieu du pont, avec la règle du jeu (sol = plus haut plancher qui contient
+le point, sinon le sol ; on monte moins que le seuil, on descend toujours) : sorties vers le sol hors de
+l'ouverture de l'escalier. Seuil 0.4 (à pied) puis 1.23 (saut). Pour la pose composée (E8), remplacer
+`PLANCHERS` par les planchers de toutes les pièces, ramenés au repère du navire :
+
+```js
+const R = '/Users/hugo/developer/Island test/.claude/worktrees/ruine-alternative/';
+const SEUIL = +(process.argv[2] || 0.4);
+const { PLANCHERS } = await import(R + 'src/models/batiments/navire-coque/physique.js');
+const h = (x, z) => {
+  let best = 0;
+  for (const d of PLANCHERS) {
+    const dx = d.x1 - d.x0, dz = d.z1 - d.z0, l2 = dx * dx + dz * dz || 1e-9;
+    const t = ((x - d.x0) * dx + (z - d.z0) * dz) / l2;
+    if (t < 0 || t > 1) continue;
+    const ex = x - d.x0 - dx * t, ez = z - d.z0 - dz * t;
+    if (ex * ex + ez * ez > (d.w / 2) ** 2) continue;
+    best = Math.max(best, d.y0 + (d.y1 - d.y0) * t);
+  }
+  return best;
+};
+const S = 0.1, X0 = -11, Z0 = -34, NX = 221, NZ = 681;
+const H = new Float32Array(NX * NZ);
+for (let j = 0; j < NZ; j++) for (let i = 0; i < NX; i++) H[j * NX + i] = h(X0 + i * S, Z0 + j * S);
+const vu = new Uint8Array(NX * NZ);
+const pile = [Math.round(-Z0 / S) * NX + Math.round(-X0 / S)];
+vu[pile[0]] = 1;
+const fuites = [];
+while (pile.length) {
+  const k = pile.pop();
+  const [i, j] = [k % NX, Math.floor(k / NX)];
+  for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const [a, c] = [i + di, j + dj];
+    if (a < 0 || c < 0 || a >= NX || c >= NZ) continue;
+    const q = c * NX + a;
+    if (vu[q] || H[q] - H[k] >= SEUIL) continue;
+    vu[q] = 1;
+    if (H[q] === 0) { fuites.push([+(X0 + a * S).toFixed(1), +(Z0 + c * S).toFixed(1)]); continue; }
+    pile.push(q);
+  }
+}
+const hors = fuites.filter(([x, z]) => !(x > 0 && z > -7.5 && z < -4.5));
+console.log('sorties :', fuites.length, '; hors de l\'ouverture de l\'escalier :', hors.length, JSON.stringify(hors.slice(0, 10)));
+```
+
+`penetration.mjs` (E2) — de combien le corps du joueur (rayon 0,3 m) entre dans le pavois en longeant le
+bord intérieur des planchers de crête (attendu : ≈ 0) :
+
+```js
+const R = '/Users/hugo/developer/Island test/.claude/worktrees/ruine-alternative/';
+const P = await import(R + 'src/models/batiments/navire-coque/physique.js');
+let pire = 0;
+for (const d of P.PLANCHERS.filter((d) => d.w === 0.7)) for (const t of [0, 0.5, 1]) {
+  const z = d.z0 + (d.z1 - d.z0) * t, x = Math.abs(d.x0 + (d.x1 - d.x0) * t);
+  pire = Math.max(pire, x - d.w / 2 + 0.3 - (P.station(z).W - P.BORDE));
+}
+console.log('pénétration max :', pire.toFixed(2), 'm');
 ```
 
 Captures du catalogue (dans la page, via `javascript_tool`) : `const v = window.__catalogue.ouvrir(id,
