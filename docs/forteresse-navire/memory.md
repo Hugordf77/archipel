@@ -19,7 +19,7 @@ colonne Notes).
 
 | Étape | Contenu | Statut | Commit | Mesures (triangles de près / allégé, règles en échec) | Notes |
 | --- | --- | --- | --- | --- | --- |
-| E0 | Préparation : branche, image pleine taille, emplacement tranché | à faire | | | §2, §7 |
+| E0 | Préparation : branche, image pleine taille, emplacement tranché | en cours | | | §2, §7. Fait : branche `claude/forteresse-navire`, emplacement (b) tranché le 27/10 (§1, §7). Reste : image pleine taille à déposer par l'utilisateur, puis la copier en `reference.png` dans chaque dossier de pièce (au fil des étapes E2–E7). |
 | E1 | Formes communes `forme.js` (copie des aides de BAT-013 + nouvelles) | à faire | | | §5 |
 | E2 | BAT-014 Coque et berceau | à faire | | | §6.1 |
 | E3 | BAT-015 Maison de pont (3 variantes) | à faire | | | §6.2 |
@@ -44,6 +44,7 @@ Budget cumulé (à tenir à jour) : **0 / 60 000** triangles de près, posés en
 | 26/10/2026 | Emplacement : **plein centre du dôme** du plateau ; le cercle de pierres prévu par le plan devient le parvis. |
 | 26/10/2026 | Après des concepts en pierre puis dans la DA des moulins : « plus dans la DA du château ambulant » ; retenu : **concept « Navire de maisons »** (« le bateau est excellent »). |
 | 26/10/2026 | « Ne fais pas de chantier ce soir » ; ce document doit permettre de construire **étape par étape, en plusieurs parties**. |
+| 27/10/2026 | Emplacement (§7) : **option (b)**, centre du dôme **(644, 316)**, navire tourné de 90° (**rot = 5,25 rad**, flanc au vent), escalier côté cercle de pierres (parvis). Les ailes de la tour-moulin restent face au vent (élément tourné de −π/2 dans le plan, §8 : 5,25 − π/2 = 3,68, comme les moulins-tours). |
 
 Contrainte de `docs/DA.md` §1 : **design original**. On garde l'esprit (accumulation fantaisiste de
 maisons, bois, enduit et cuivre mêlés, cheminées qui fument, voiles), jamais la silhouette d'un film :
@@ -290,6 +291,24 @@ les chevalets seulement, **aucun sur les marches**.
 - Aplanissement : un stamp de rayon ≈ 34 m, ou une file de stamps le long de l'axe ; le berceau peut
   absorber 2 à 3 m de dénivelé (piliers plus longs du côté bas).
 
+### Tranché le 27/10/2026 : option (b)
+
+Mesures (`site.mjs` de §15, plan réel avec les poses de `e97d344`, emprise 64 × 18 m puis avec
+l'escalier jusqu'à x = +15, pas de 2 m) :
+
+| Mesure | (a) (660, 340), rot 3,68 | **(b) (644, 316), rot 5,25** | centre, rot 3,68 (réf.) |
+| --- | --- | --- | --- |
+| Dénivelé sous la coque | 7,0 m (61,2 → 68,3) | **5,6 m (60,7 → 66,3)** | 5,9 m |
+| Hors zone `plateau-vente` | 0 / 429 | 0 / 429 | 0 / 429 |
+| Cercle : bord de coque / pied d'escalier | 40 m / 60 m, côté −X | **28 m / 24 m, côté +X** | 14 m / 37 m, côté −X |
+| Muret, menhir P3, nef (bord de coque) | 51, 53, 74 m | 42, 48, 90 m | 23, 36, 81 m |
+| Hauteurs proue / poupe / flanc +X / flanc −X | 61,2 / 65,5 / 64,5 / 65,3 | 61,4 / 61,2 / 61,3 / 65,0 | 63,1 / 64,3 / 61,9 / 64,7 |
+
+En (a), le cercle tombe devant la proue du côté opposé à l'escalier : pas de parvis. En (b), le sommet
+du dôme est sous le flanc −X (≈ 4 m plus haut que le flanc +X) : le stamp et des piliers plus longs
+côté +X l'absorbent. Pied de l'escalier (13, 26) → île (646, 287) ; route de la corniche à plus de
+200 m.
+
 ## 8. Pose composée (E8 : code du monde)
 
 État actuel (commit `e97d344`) :
@@ -332,7 +351,7 @@ les chevalets seulement, **aucun sur les marches**.
 | 3 | Mât de misaine (petit) | `navire_mat` / 1 | 0 | +23 | 22,0 | 0 |
 | 4 | Grande maison à pignon | `navire_maison` / 0 | −3 | +12 | 20,1 | 0 |
 | 5 | Maison étroite et haute | `navire_maison` / 1 | +5 | +7 | 20,0 | π/2 |
-| 6 | Tour-moulin centrale | `navire_moulin` | +1 | −1 | 20,0 | 0 |
+| 6 | Tour-moulin centrale | `navire_moulin` | +1 | −1 | 20,0 | −π/2 (ailes au vent) |
 | 7 | Maison basse à appentis | `navire_maison` / 2 | −5 | −6 | 20,0 | −π/2 |
 | 8 | Tourelle ronde ardoise | `navire_tourelle` / 0 | +6 | −11 | 20,1 | 0 |
 | 9 | Grand mât | `navire_mat` / 0 | 0 | −15 | 20,2 | 0 |
@@ -432,6 +451,10 @@ npx vitest run                                   # échecs connus seulement (§1
 
 - 26/10/2026 : concept validé ; budget, emplacement de principe, découpage et plan rédigés (ce
   document : commit `d83e2b7`, puis renforcé pour un chantier en plusieurs sessions). Rien de construit.
+- 27/10/2026 : E0 en cours. Branche `claude/forteresse-navire` créée depuis `26d1fe8` dans le worktree
+  `ruine-alternative`. Emplacement mesuré (`site.mjs`) et tranché par l'utilisateur : option (b), centre
+  (644, 316), rot 5,25 ; tour-moulin à −π/2 dans le plan. Image pleine taille demandée, pas encore
+  déposée (l'aperçu 199 × 112 reste en place).
 
 ## 15. Scripts (à recopier dans le scratchpad de la session ; `R` = chemin du worktree + `/`)
 
