@@ -1815,6 +1815,57 @@
     }
    ]
   },
+  "BAT-016": {
+   "category": "batiments",
+   "defaults": {
+    "forme": 0
+   },
+   "name": "Tourelle du navire-forteresse",
+   "params": {},
+   "ref": "part:navire_tourelle",
+   "size": [
+    4.8,
+    14.37,
+    4.8
+   ],
+   "slug": "navire-tourelle",
+   "status": "valide",
+   "tags": [
+    "plateau",
+    "forteresse"
+   ],
+   "usedIn": [],
+   "variants": [
+    {
+     "label": "Toit d'ardoise",
+     "params": {
+      "forme": 0,
+      "v": 0
+     }
+    },
+    {
+     "label": "Toit d'ardoise, allégée (au loin)",
+     "params": {
+      "forme": 0,
+      "v": 1
+     }
+    },
+    {
+     "label": "Coupole de cuivre (proue)",
+     "params": {
+      "forme": 1,
+      "v": 0
+     }
+    },
+    {
+     "label": "Coupole de cuivre, allégée (au loin)",
+     "params": {
+      "forme": 1,
+      "v": 1
+     }
+    }
+   ]
+  },
   "STR-001": {
    "category": "ouvrages",
    "defaults": {},
@@ -6764,6 +6815,83 @@
     ],
     "pos": "cd79baf258e31680",
     "attr": "821e32eea733aa68",
+    "mat": "3e3855df496215fc"
+   }
+  ],
+  "BAT-016": [
+   {
+    "tris": 1590,
+    "verts": 4770,
+    "box": [
+     -2.4,
+     0,
+     -2.4,
+     2.4,
+     14.37,
+     2.4
+    ],
+    "pos": "378a4e664d36d9b7",
+    "attr": "cb681c28fb372e6d",
+    "mat": "3e3855df496215fc"
+   },
+   {
+    "tris": 1590,
+    "verts": 4770,
+    "box": [
+     -2.4,
+     0,
+     -2.4,
+     2.4,
+     14.37,
+     2.4
+    ],
+    "pos": "378a4e664d36d9b7",
+    "attr": "cb681c28fb372e6d",
+    "mat": "3e3855df496215fc"
+   },
+   {
+    "tris": 578,
+    "verts": 1734,
+    "box": [
+     -2.4,
+     0,
+     -2.4,
+     2.4,
+     14.37,
+     2.4
+    ],
+    "pos": "5209270c3da6bf04",
+    "attr": "dfea20771b1d8fc5",
+    "mat": "3e3855df496215fc"
+   },
+   {
+    "tris": 1934,
+    "verts": 5802,
+    "box": [
+     -2.2,
+     0,
+     -2.2692,
+     2.2,
+     11.2042,
+     2.2692
+    ],
+    "pos": "ea25cc571ada28f7",
+    "attr": "367a51bbfe356c2d",
+    "mat": "3e3855df496215fc"
+   },
+   {
+    "tris": 614,
+    "verts": 1842,
+    "box": [
+     -2.2,
+     0,
+     -2.2,
+     2.2,
+     10.9692,
+     2.2
+    ],
+    "pos": "b7904229489ed531",
+    "attr": "a7b88e66b6dc747b",
     "mat": "3e3855df496215fc"
    }
   ],
@@ -17052,6 +17180,58 @@
       3.2,
       1.7,
       0.55
+     ]
+    ],
+    "rotY": 1.270796
+   }
+  ],
+  "BAT-016": [
+   {
+    "obstacles": [
+     [
+      0,
+      0,
+      1.85
+     ]
+    ],
+    "rotY": 1.270796
+   },
+   {
+    "obstacles": [
+     [
+      0,
+      0,
+      1.85
+     ]
+    ],
+    "rotY": 1.270796
+   },
+   {
+    "obstacles": [
+     [
+      0,
+      0,
+      1.85
+     ]
+    ],
+    "rotY": 1.270796
+   },
+   {
+    "obstacles": [
+     [
+      0,
+      0,
+      1.85
+     ]
+    ],
+    "rotY": 1.270796
+   },
+   {
+    "obstacles": [
+     [
+      0,
+      0,
+      1.85
      ]
     ],
     "rotY": 1.270796

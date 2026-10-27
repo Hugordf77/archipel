@@ -629,3 +629,30 @@ export function rivets(b, o, points, { t = 0.12, couleur = RIVET, id } = {}) {
   if (o.leger) return;
   for (const p of points) b.add(hexa(coinsBoite(t, t, t, o.rand, { jit: t * 0.08 }), 0, true), couleur, { p, id, ...F });
 }
+
+// flamme : banderole effilée de L × H, accrochée par son bord à x = 0 (le long de Y), qui flotte vers +X en
+// ondulant ; deux faces (face vers +Z, dos vers −Z) ; le balancement au vent (aSway) croît vers la pointe
+export function flamme(o, L, H, { face = BLEU, dos = BLEU_F, ondes = 1.5 } = {}) {
+  const n = o.leger ? 3 : 6;
+  const t = new Builder(nextId());
+  for (const sens of [1, -1]) {
+    const pt = (k, s) => {
+      const u = k / n;
+      return [u * L, (s * H * (1 - u * 0.85)) / 2, Math.sin(u * ondes * Math.PI * 2) * 0.12 * u + sens * 0.01];
+    };
+    const pos = [];
+    for (let i = 0; i < n; i++) {
+      const q = [pt(i, -1), pt(i + 1, -1), pt(i + 1, 1), pt(i, 1)];
+      for (const k of sens > 0 ? [0, 1, 2, 0, 2, 3] : [0, 2, 1, 0, 3, 2]) pos.push(...q[k]);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.computeVertexNormals();
+    t.add(g, sens > 0 ? face : dos, F);
+  }
+  const g = t.build();
+  const sw = g.attributes.aSway.array;
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) sw[i] = 2.2 * Math.min(1, Math.max(0, p.getX(i) / L));
+  return g;
+}

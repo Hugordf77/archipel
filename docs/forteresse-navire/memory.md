@@ -23,7 +23,7 @@ colonne Notes).
 | E1 | Formes communes `forme.js` (copie des aides de BAT-013 + nouvelles) | fait | (ce commit, voir journal) | sans objet (aucun modèle) ; aides : loft 256 tri. pour 5 stations × 32, plaque 9 × 5 : 144, hublot : 96, rivet : 12, voile 9 × 7 : 320 | §5 ; copies vérifiées identiques à leurs sources |
 | E2 | BAT-014 Coque et berceau | fait | `95ecdfd` | 11 966 / 4 336 ; aucune règle en échec ; 74 planchers (pire 2,9 cm), aucun obstacle (voulu) | §6.1 ; écarts et décisions en « Fait le 27/10 » de §6.1 ; Evis-critique : 3 tours, dernier point corrigé selon sa proposition |
 | E3 | BAT-015 Maison de pont (3 variantes) | fait | `43e6198` | forme 0 : 3 144 / 1 248 ; forme 1 : 2 506 / 1 142 ; forme 2 : 1 504 / 568 ; aucune règle en échec (physique des 3 formes : 95 à 98 %, débord ≤ 0,36 m) | §6.2 ; Evis-critique : valide au 2e tour ; notes de pose en « Fait le 27/10 » de §6.2 |
-| E4 | BAT-016 Tourelle (2 variantes) | à faire | | | §6.3 |
+| E4 | BAT-016 Tourelle (2 variantes) | fait | (commit de E4, voir journal) | forme 0 (ardoise) : 1 590 / 578 ; forme 1 (coupole) : 1 934 / 614 ; aucune règle en échec (100 % de l'emprise, débord 0,24 m) | §6.3 ; Evis-critique : valide au 2e tour ; aide `flamme()` ajoutée à `forme.js` |
 | E5 | BAT-017 Tour-moulin centrale | à faire | | | §6.4 |
 | E6 | BAT-018 Mât et voile (2 variantes) | à faire | | | §6.5 |
 | E7 | BAT-019 Escalier et passerelle | à faire | | | §6.6 |
@@ -31,7 +31,7 @@ colonne Notes).
 | E9 | Vérification en jeu, captures, réglages | à faire | | | §10 |
 | E10 | Livraison : LIVRAISONS.md, rapport, graphe | à faire | | | §11 |
 
-Budget cumulé (à tenir à jour) : **21 764 / 60 000** triangles de près selon le plan de §8 : BAT-014 (11 966) + maisons 4, 5, 7, 10 (formes 0, 1, 2, 0 : 3 144 + 2 506 + 1 504 + 3 144 = 10 298 ; 24 270 avec la maison 11, forme 1). Rien n'est encore posé en jeu (E8).
+Budget cumulé (à tenir à jour) : **26 654 / 60 000** triangles de près selon la **variante du montage** (§8, gardée par l'utilisateur le 27/10/2026) : BAT-014 (11 966) + maisons 4, 5, 7, 10, 11 (formes 0, 1, 2, 1, 2 : 3 144 + 2 506 + 1 504 + 2 506 + 1 504 = 11 164) + tourelles 2 et 8 (formes 1 et 0 : 1 934 + 1 590 = 3 524). Rien n'est encore posé en jeu (E8).
 
 ---
 
@@ -315,6 +315,14 @@ Tourelle ronde en bois et enduit sur encorbellement de consoles ; diamètre 3,5 
 `forme` `0` : toit conique bleu ardoise très pointu + flamme bleue ; `forme` `1` (proue) : **coupole de
 cuivre** `#cf8f5c` à côtes et **lanterne** vitrée au sommet. Profils tournés (`G.lathe`, ≥ 8 côtés).
 Physique : un cercle au rayon visible du fût (± 15 %).
+
+#### Fait le 27/10/2026 (E4) : notes pour la pose et les mâts
+
+- `navire-tourelle/physique.js` : `SOCLE` (r 1,7, h 2,2), `FUT` (r 1,95, de 2,3 à 7) ; un cercle de 1,85 m.
+  Porte vers +Z ; type `navire_tourelle`, DIRZ.
+- Nouvelle aide `flamme(o, L, H, { face, dos, ondes })` dans `navire-coque/forme.js` : banderole effilée
+  qui flotte vers +X local (pour les mâts en E6). Avec la fumée de BAT-015 (−Z local), un **angle de vent
+  commun** donné par la pose est à prévoir (E8), sinon flammes et fumées tournent avec leur pièce.
 
 ### 6.4 BAT-017 — Tour-moulin centrale (`navire-moulin`, type `navire_moulin`) — 9 000 / 4 000
 
@@ -608,6 +616,16 @@ npx vitest run                                   # échecs connus seulement (§1
   de §8 a des chevauchements à la poupe, une tourelle de proue au-delà de la rambarde de la pointe et une
   maison qui ferme l'allée +X : constats et variante en « Premier montage » de §8. E4 reste la prochaine
   étape.
+- 27/10/2026 : l'utilisateur garde la **variante du montage** pour l'instant. **E4 fait** : BAT-016
+  `navire-tourelle` (index.js, physique.js, FICHE.md, reference.png = aperçu), type `navire_tourelle`
+  (lieux.js, DIRZ), compte des types 63 → 64 ; aide `flamme()` ajoutée à `forme.js` (BAT-014 et BAT-015
+  inchangés). Deux formes et leurs allégés. Avant revue : fenêtres latérales entre deux poteaux, consoles
+  dégagées de la porte. Evis-critique : 1er tour « à reprendre » (côtes de la coupole en tronçons à crans,
+  consoles réduites à des dents), 2e tour **valide**. Mesures : aucune règle en échec ; 1 590 / 1 934
+  triangles de près, 578 / 614 allégés ; 100 % de l'emprise, débord 0,24 m. Index et relevé : seules les
+  lignes de BAT-016 ; empreinte ajoutée (180 lignes, aucune retirée) ; écarts : seulement les connus ;
+  `npx vitest run` 305 / 307 (échecs connus). Planches : `captures/navire-tourelle-{0,1}-6vues.png`,
+  `-allege-6vues.png`, `navire-tourelle-gros-plans.png`. Prochaine étape : E5, BAT-017 tour-moulin.
 
 ## 15. Scripts (à recopier dans le scratchpad de la session ; `R` = chemin du worktree + `/`)
 
