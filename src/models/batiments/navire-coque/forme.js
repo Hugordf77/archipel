@@ -610,11 +610,14 @@ export function plaqueBombee(L, H, f, seg = 16) {
 }
 
 // hublot : cerclage tourné de rayon intérieur r (anneau arrondi en saillie de 0,11 m), axe le long de +Z,
-// pied en z = −0,04 (enfoncé dans la coque) ; la vitre (disque VITRE) se pose à part, en retrait
-export function hublot(r, cotes = 12) {
+// pied en z = −0,04 (enfoncé dans la coque) ; la vitre (disque VITRE) se pose à part, en retrait.
+// simple : profil de trois points (4 × cotes triangles au lieu de 8 × cotes), pour les hublots vus de loin
+export function hublot(r, cotes = 12, simple = false) {
   const e = Math.max(0.08, r * 0.28);
   // profil du dehors vers le dedans (faces vers l'extérieur une fois tourné)
-  const prof = [[r + e * 1.08, -0.04], [r + e, 0.06], [r + e * 0.6, 0.11], [r + e * 0.15, 0.09], [r, 0.02]];
+  const prof = simple
+    ? [[r + e * 1.08, -0.04], [r + e * 0.6, 0.11], [r, 0.02]]
+    : [[r + e * 1.08, -0.04], [r + e, 0.06], [r + e * 0.6, 0.11], [r + e * 0.15, 0.09], [r, 0.02]];
   // profil tourné autour de Y (y du profil = saillie), puis axe ramené sur +Z
   return G.lathe(prof, cotes).rotateX(Math.PI / 2);
 }

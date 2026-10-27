@@ -21,7 +21,7 @@ colonne Notes).
 | --- | --- | --- | --- | --- | --- |
 | E0 | Préparation : branche, image pleine taille, emplacement tranché | en cours | `8003a33` | | §2, §7. Fait : branche `claude/forteresse-navire`, emplacement (b) tranché le 27/10 (§1, §7). Reste : **fichier** de l'image pleine taille (envoyée le 27/10 dans le chat seulement, rien sur le disque) à déposer dans `production/references/forteresse-navire.png` **avant la planche référence / modèle de E2**, puis la copier en `reference.png` dans chaque dossier de pièce. |
 | E1 | Formes communes `forme.js` (copie des aides de BAT-013 + nouvelles) | fait | (ce commit, voir journal) | sans objet (aucun modèle) ; aides : loft 256 tri. pour 5 stations × 32, plaque 9 × 5 : 144, hublot : 96, rivet : 12, voile 9 × 7 : 320 | §5 ; copies vérifiées identiques à leurs sources |
-| E2 | BAT-014 Coque et berceau | à faire | | | §6.1 |
+| E2 | BAT-014 Coque et berceau | fait | (commit de E2, voir journal) | 11 966 / 4 336 ; aucune règle en échec ; 74 planchers (pire 2,9 cm), aucun obstacle (voulu) | §6.1 ; écarts et décisions en « Fait le 27/10 » de §6.1 ; Evis-critique : 3 tours, dernier point corrigé selon sa proposition |
 | E3 | BAT-015 Maison de pont (3 variantes) | à faire | | | §6.2 |
 | E4 | BAT-016 Tourelle (2 variantes) | à faire | | | §6.3 |
 | E5 | BAT-017 Tour-moulin centrale | à faire | | | §6.4 |
@@ -31,7 +31,7 @@ colonne Notes).
 | E9 | Vérification en jeu, captures, réglages | à faire | | | §10 |
 | E10 | Livraison : LIVRAISONS.md, rapport, graphe | à faire | | | §11 |
 
-Budget cumulé (à tenir à jour) : **0 / 60 000** triangles de près, posés en jeu.
+Budget cumulé (à tenir à jour) : **11 966 / 60 000** triangles de près (BAT-014 ; rien n'est encore posé en jeu, E8).
 
 ---
 
@@ -253,6 +253,34 @@ dessus dans cette pièce (les maisons sont d'autres pièces).
 - planchers : le pont en tronçons le long de Z (`{ x0: 0, z0, x1: 0, z1, w, y0, y1 }`, pente = tonture),
   largeur `w` = largeur du pont − 0,6 m ; le château et le gaillard à part ; contrôler chaque plancher
   à ± 5 cm avec `mesure.mjs`.
+
+#### Fait le 27/10/2026 (E2) : écarts à cette fiche et ce que les pièces suivantes doivent savoir
+
+- **Aucun obstacle** : les obstacles n'ont pas de hauteur (`navigation.js:137` ; le `ymin` des îles
+  célestes n'est pas transmis par la pose des lieux, `IslandManager.js:566`) ; des cercles sous la quille
+  bloqueraient aussi le pont. Le berceau est tout entier sous les planchers ; le bord des planchers fait
+  mur au sol. **Valable pour toutes les pièces posées sur le pont** : leurs obstacles bloqueront aussi
+  le sol dessous, qui est sous les planchers du pont (sans effet), mais ils ne doivent pas déborder hors
+  de l'emprise du pont.
+- **Quille relevée aux bouts** (planche référence / modèle) : K = 8,5 / 5,2 / 4,2 / 4 / 4,3 / 6 / 9,5 / 16
+  aux huit stations ; le haut de la coque suit le pont principal (`pontPrincipal`).
+- **Pavois de 1,1 m** (et non 0,9) en **ressauts francs** à z = −20 et z = 22, poteaux aux ressauts ;
+  lisse de mousse en coussin, crête à 1,32 m du pont : plus haut que le saut du joueur (≈ 1,23 m :
+  `tuning.js`, `Player.js:227`), marge 7 cm. Planchers étroits sur le coussin (bord intérieur à W − 0,6) :
+  on ne traverse pas le pavois, ni à pied ni d'un saut. Rambardes de 1,27 m (plancher à 1,3 m) au
+  château, au gaillard et en travers de la **pointe (z = 28)** : au-delà, la proue n'est pas accessible.
+- **Pont** : planchers jusqu'au pavois, chaque tronçon à la largeur de son bout le plus large (débord
+  ≤ 0,45 m sous les planchers du pavois). Hauteurs : `pont(z)` de `navire-coque/physique.js` (château
+  +3, gaillard +2) ; les pièces posées dessus prennent `dy = pont(z)` à leur emplacement.
+- **Ouverture de l'escalier** : flanc +X, z −7,4 → −4,6 (`OUVERTURE`), deux poteaux ; le bord du plancher
+  du pont y est à x ≈ W − 0,3 + débord (≈ 8,7 à 9,1). E7 : le palier d'arrivée doit chevaucher ce bord ;
+  c'est aujourd'hui la seule sortie du pont (contrôle `fuites.mjs`).
+- **Château et gaillard** ne sont pas encore accessibles depuis le pont principal (ressauts de 3 et 2 m
+  sous des rambardes de 1,27 m) : à prévoir en E7 et E8 (escalier ou passerelle avec planchers, et une
+  ouverture dans la rambarde ; refaire `fuites.mjs` et le contrôle de saut).
+- Beaupré de 13,8 m né dans sa bitte (z = 29, au-delà de la rambarde de la pointe), nacelle et échelle
+  de corde au-dessus de 2,3 m (hors de l'emprise mesurée des obstacles).
+- Formes communes : `hublot(r, cotes, simple)` a gagné l'option `simple` (profil de trois points).
 
 ### 6.2 BAT-015 — Maison de pont (`navire-maison`, type `navire_maison`) — 3 500 / 1 500
 
@@ -477,6 +505,19 @@ npx vitest run                                   # échecs connus seulement (§1
   commande jugée destructive, ils demandent d'énoncer les faits (demande, effet, retour arrière).
   `git commit --amend` refusé : faire un commit de correction.
 
+- **Planchers sur une pente** (27/10, E2) : `mesure.mjs` compare la hauteur d'un plancher, en chaque
+  échantillon, au plus haut sommet à moins de 0,3 m ; sur une pente de 0,9, le sommet de la crête voisine
+  est à ± 0,27 m : échec assuré. D'où les ressauts francs du pavois. Un sommet décoratif à moins de
+  0,3 m et moins de 0,2 m au-dessus d'un plancher le fait échouer (seuil de porte, pied de beaupré,
+  coulure trop près de la crête là où la coque rentre).
+- **Fuites et saut** (27/10, E2) : un plancher n'arrête que le centre du joueur (rayon 0,3 m, `Player.js:45`)
+  et qu'à pied (montée < 0,4 m) ; en l'air, on franchit jusqu'à ≈ 1,23 m. Contrôles du scratchpad de la
+  session E2 à recopier : `fuites.mjs` (remplissage du pont), `critique/fuites-saut.mjs 1.23`,
+  `critique/penetration.mjs`, `critique/berceau.mjs`.
+- **Panneau du navigateur masqué** (27/10, E2) : `requestAnimationFrame` ne tourne plus et `planche()`
+  ne rend rien ; dans la page, `window.requestAnimationFrame = (f) => setTimeout(() => f(performance.now()), 16)`
+  avant les captures (à refaire après chaque rechargement).
+
 ## 14. Journal du chantier (une ligne datée par session)
 
 - 26/10/2026 : concept validé ; budget, emplacement de principe, découpage et plan rédigés (ce
@@ -494,6 +535,18 @@ npx vitest run                                   # échecs connus seulement (§1
   empreintes : seuls les écarts connus (162, PER-001 à 023 et `ileDepart.obstacles`), `npx vitest run`
   305 / 307 (échecs connus : empreintes, numérotation MON). Pas de planche ni de revue evis-critique :
   E1 ne produit aucun modèle. Prochaine étape : E2, BAT-014 coque et berceau.
+- 27/10/2026 : l'utilisateur dit avoir déposé l'image pleine taille, mais le fichier du worktree est
+  toujours l'aperçu (199 × 112, 26/10 22:11) et aucune autre copie n'existe : **E0 reste ouvert**,
+  `reference.png` de BAT-014 = l'aperçu. **E2 fait** : BAT-014 `navire-coque` (index.js, physique.js,
+  FICHE.md, reference.png), type `navire_coque` (lieux.js, DIRZ), compte des types 61 → 62. Evis-critique,
+  3 tours : 1er « à reprendre » (berceau en caisses lavande, pavois traversable, planches de 2,2 m),
+  2e « à reprendre » (corps dans le pavois, saut par-dessus bord, coulures plates), 3e « à reprendre »
+  pour le seul pied du beaupré, corrigé selon sa proposition (bitte) et vérifié en gros plan. Mesures :
+  aucune règle en échec, 11 966 / 4 336 triangles, 74 planchers (pire 2,9 cm). Index et relevé : seules
+  les lignes de BAT-014 ; empreinte ajoutée par `ajout-empreinte.mjs` (2 098 lignes ajoutées, aucune
+  retirée), écarts : seulement les connus (162) ; `npx vitest run` 305 / 307 (échecs connus). Planches :
+  `captures/navire-coque-{6vues,allege-6vues,reference-vs-modele,gros-plans,beaupre}.png`. Prochaine
+  étape : E3, BAT-015 maison de pont (3 formes).
 
 ## 15. Scripts (à recopier dans le scratchpad de la session ; `R` = chemin du worktree + `/`)
 
