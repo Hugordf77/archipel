@@ -24,7 +24,7 @@ colonne Notes).
 | E2 | BAT-014 Coque et berceau | fait | `95ecdfd` | 11 966 / 4 336 ; aucune règle en échec ; 74 planchers (pire 2,9 cm), aucun obstacle (voulu) | §6.1 ; écarts et décisions en « Fait le 27/10 » de §6.1 ; Evis-critique : 3 tours, dernier point corrigé selon sa proposition |
 | E3 | BAT-015 Maison de pont (3 variantes) | fait | `43e6198` | forme 0 : 3 144 / 1 248 ; forme 1 : 2 506 / 1 142 ; forme 2 : 1 504 / 568 ; aucune règle en échec (physique des 3 formes : 95 à 98 %, débord ≤ 0,36 m) | §6.2 ; Evis-critique : valide au 2e tour ; notes de pose en « Fait le 27/10 » de §6.2 |
 | E4 | BAT-016 Tourelle (2 variantes) | fait | `7aad718` | forme 0 (ardoise) : 1 590 / 578 ; forme 1 (coupole) : 1 934 / 614 ; aucune règle en échec (100 % de l'emprise, débord 0,24 m) | §6.3 ; Evis-critique : valide au 2e tour ; aide `flamme()` ajoutée à `forme.js` |
-| E5 | BAT-017 Tour-moulin centrale | fait | (commit de E5, voir journal) | 6 056 / 2 328 (ailes comprises : 464 / 168) ; aucune règle en échec (9 cercles, 86 %, débord 0,38 m) | §6.4 ; Evis-critique : valide au 1er tour ; 9 cercles au lieu de 5 (voir FICHE) |
+| E5 | BAT-017 Tour-moulin centrale | fait | `4951dd6` | 6 056 / 2 328 (ailes comprises : 464 / 168) ; aucune règle en échec (9 cercles, 86 %, débord 0,38 m) | §6.4 ; Evis-critique : valide au 1er tour ; 9 cercles au lieu de 5 (voir FICHE) |
 | E6 | BAT-018 Mât et voile (2 variantes) | à faire | | | §6.5 |
 | E7 | BAT-019 Escalier et passerelle | à faire | | | §6.6 |
 | E8 | Pose composée (code du monde) et plan d'implantation | à faire | | | §8 |
