@@ -19,8 +19,8 @@ colonne Notes).
 
 | Étape | Contenu | Statut | Commit | Mesures (triangles de près / allégé, règles en échec) | Notes |
 | --- | --- | --- | --- | --- | --- |
-| E0 | Préparation : branche, image pleine taille, emplacement tranché | en cours | | | §2, §7. Fait : branche `claude/forteresse-navire`, emplacement (b) tranché le 27/10 (§1, §7). Reste : image pleine taille à déposer par l'utilisateur, puis la copier en `reference.png` dans chaque dossier de pièce (au fil des étapes E2–E7). |
-| E1 | Formes communes `forme.js` (copie des aides de BAT-013 + nouvelles) | à faire | | | §5 |
+| E0 | Préparation : branche, image pleine taille, emplacement tranché | en cours | `8003a33` | | §2, §7. Fait : branche `claude/forteresse-navire`, emplacement (b) tranché le 27/10 (§1, §7). Reste : **fichier** de l'image pleine taille (envoyée le 27/10 dans le chat seulement, rien sur le disque) à déposer dans `production/references/forteresse-navire.png` **avant la planche référence / modèle de E2**, puis la copier en `reference.png` dans chaque dossier de pièce. |
+| E1 | Formes communes `forme.js` (copie des aides de BAT-013 + nouvelles) | fait | (ce commit, voir journal) | sans objet (aucun modèle) ; aides : loft 256 tri. pour 5 stations × 32, plaque 9 × 5 : 144, hublot : 96, rivet : 12, voile 9 × 7 : 320 | §5 ; copies vérifiées identiques à leurs sources |
 | E2 | BAT-014 Coque et berceau | à faire | | | §6.1 |
 | E3 | BAT-015 Maison de pont (3 variantes) | à faire | | | §6.2 |
 | E4 | BAT-016 Tourelle (2 variantes) | à faire | | | §6.3 |
@@ -166,6 +166,36 @@ dans l'en-tête :
   `hublot(r)` (anneau tourné), `rivets(...)` (petits hexaèdres alignés, seulement de près).
 
 Les pièces suivantes importent ce `forme.js`. Aucune modification de `src/models/kit/` sans accord.
+
+### Fait le 27/10/2026 : `src/models/batiments/navire-coque/forme.js`
+
+Tout est exporté. Contexte `o = { rand, leger, idBois, idMur, idToit }` (BAT-013 lit `leger`, `idBois`,
+`idMur`, `idToit`, `sens` ; MON-014 lit `rand`, `leger`).
+
+- **Palette** : `ENDUIT`, `POUTRE`, `POUTRE_F`, `BOIS_TOIT`, `PORTE`, `VITRE`, `TOILE`, `TOILE_B`, `MOUSSE`,
+  `MOUSSE_C` (BAT-013) ; `BLEU`, `BLEU_F`, `BLASON`, `PIERRES`, `MOUSSE_ROC`, `MOUSSE_ROC_F`, `FEUILLES`
+  (MON-014 ; sa `MOUSSE` devient `MOUSSE_ROC`) ; nouvelles : `BORDAGE`, `BORDAGE_F`, `PONT`, `CUIVRE`,
+  `CUIVRE_F`, `RIVET`, `CORDAGE`, `FUMEE`.
+- **Copies** (texte identique à la source, contrôlé par `verif-forme.mjs` du scratchpad de la session) :
+  celles de la liste ci-dessus, plus `archivolte`, `coque`, `segmentDisque` (tête de la tour-moulin, E5) et
+  `teinte`. Pas copiées : `voute`, `galerie`, `tete`, `ailes` de BAT-013 (propres au moulin : BAT-017 les
+  réécrit à son échelle).
+- **`toile(o, L, H, { face, dos, blason, ech, encoche, creux, cols, rows, ourlet })`** : sans option,
+  sommets, couleurs et balancement identiques à la bannière de MON-014 (écart 0, de près et allégée).
+  Voile : `{ face: TOILE, dos: TOILE_B, blason: BLEU, ech: 4, encoche: 0, creux: 0.8, cols: 6, rows: 8 }`
+  → 320 triangles pour 9 × 7 m (allégée : quadrillage divisé par deux, sans feuilles du blason).
+- **`loft(stations, n, section, { bandes, inverser })`** : `section(st, t)` → `[x, y]`, t de 0 à 1,
+  n + 1 points ; une section de −X à +X **par le bas** donne des normales vers l'extérieur. `bandes: k` :
+  une géométrie par bande de k rangées (couleurs alternées le long des lignes de la coque, normales
+  lissées communes). Renvoie une liste de géométries indexées. 2 triangles par case :
+  (stations − 1) × n × 2.
+- **`plaqueBombee(L, H, f, seg = 16)`** : calotte dans le plan z = 0, flèche vers +Z, bord en biseau
+  jusqu'à z = −0,06 ; 9 × seg triangles (144 pour 16). Plane : la courber sur la coque en E2 si un jour
+  apparaît.
+- **`hublot(r, cotes = 12)`** : cerclage tourné, axe +Z, de z = −0,04 à +0,11 ; 8 × cotes triangles ;
+  la vitre (disque `VITRE`) se pose à part.
+- **`rivets(b, o, points, { t = 0.12, couleur, id })`** : 12 triangles par rivet, aucun en allégé ; passer
+  l'`id` de la plaque (pas de trait d'encre autour de chaque rivet).
 
 ## 6. Pièces : fiches de construction
 
@@ -455,6 +485,15 @@ npx vitest run                                   # échecs connus seulement (§1
   `ruine-alternative`. Emplacement mesuré (`site.mjs`) et tranché par l'utilisateur : option (b), centre
   (644, 316), rot 5,25 ; tour-moulin à −π/2 dans le plan. Image pleine taille demandée, pas encore
   déposée (l'aperçu 199 × 112 reste en place).
+- 27/10/2026 : image pleine taille envoyée par l'utilisateur **dans le chat seulement** (aucun fichier
+  sur le disque, introuvable dans le worktree, Téléchargements, Bureau, Documents) : elle confirme la
+  lecture de §2 ; E0 reste ouvert pour le fichier. **E1 fait** : `navire-coque/forme.js` (copies
+  vérifiées identiques à BAT-013 et MON-014, toile par défaut identique à la bannière de la nef, normales
+  du loft, de la plaque et du hublot vers l'extérieur ; le hublot était retourné au premier jet, profil
+  inversé). Contrôles : `modeles:index` et `modeles:releve` sans changement (le dossier n'a pas de fiche),
+  empreintes : seuls les écarts connus (162, PER-001 à 023 et `ileDepart.obstacles`), `npx vitest run`
+  305 / 307 (échecs connus : empreintes, numérotation MON). Pas de planche ni de revue evis-critique :
+  E1 ne produit aucun modèle. Prochaine étape : E2, BAT-014 coque et berceau.
 
 ## 15. Scripts (à recopier dans le scratchpad de la session ; `R` = chemin du worktree + `/`)
 
