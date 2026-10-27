@@ -22,7 +22,7 @@ colonne Notes).
 | E0 | Préparation : branche, image pleine taille, emplacement tranché | en cours | `8003a33` | | §2, §7. Fait : branche `claude/forteresse-navire`, emplacement (b) tranché le 27/10 (§1, §7). Reste : **fichier** de l'image pleine taille (envoyée le 27/10 dans le chat seulement, rien sur le disque) à déposer dans `production/references/forteresse-navire.png` **avant la planche référence / modèle de E2**, puis la copier en `reference.png` dans chaque dossier de pièce. |
 | E1 | Formes communes `forme.js` (copie des aides de BAT-013 + nouvelles) | fait | (ce commit, voir journal) | sans objet (aucun modèle) ; aides : loft 256 tri. pour 5 stations × 32, plaque 9 × 5 : 144, hublot : 96, rivet : 12, voile 9 × 7 : 320 | §5 ; copies vérifiées identiques à leurs sources |
 | E2 | BAT-014 Coque et berceau | fait | `95ecdfd` | 11 966 / 4 336 ; aucune règle en échec ; 74 planchers (pire 2,9 cm), aucun obstacle (voulu) | §6.1 ; écarts et décisions en « Fait le 27/10 » de §6.1 ; Evis-critique : 3 tours, dernier point corrigé selon sa proposition |
-| E3 | BAT-015 Maison de pont (3 variantes) | à faire | | | §6.2 |
+| E3 | BAT-015 Maison de pont (3 variantes) | fait | (commit de E3, voir journal) | forme 0 : 3 144 / 1 248 ; forme 1 : 2 506 / 1 142 ; forme 2 : 1 504 / 568 ; aucune règle en échec (physique des 3 formes : 95 à 98 %, débord ≤ 0,36 m) | §6.2 ; Evis-critique : valide au 2e tour ; notes de pose en « Fait le 27/10 » de §6.2 |
 | E4 | BAT-016 Tourelle (2 variantes) | à faire | | | §6.3 |
 | E5 | BAT-017 Tour-moulin centrale | à faire | | | §6.4 |
 | E6 | BAT-018 Mât et voile (2 variantes) | à faire | | | §6.5 |
@@ -31,7 +31,7 @@ colonne Notes).
 | E9 | Vérification en jeu, captures, réglages | à faire | | | §10 |
 | E10 | Livraison : LIVRAISONS.md, rapport, graphe | à faire | | | §11 |
 
-Budget cumulé (à tenir à jour) : **11 966 / 60 000** triangles de près (BAT-014 ; rien n'est encore posé en jeu, E8).
+Budget cumulé (à tenir à jour) : **21 764 / 60 000** triangles de près selon le plan de §8 : BAT-014 (11 966) + maisons 4, 5, 7, 10 (formes 0, 1, 2, 0 : 3 144 + 2 506 + 1 504 + 3 144 = 10 298 ; 24 270 avec la maison 11, forme 1). Rien n'est encore posé en jeu (E8).
 
 ---
 
@@ -296,6 +296,19 @@ aucun plancher (intérieur non visitable).
 Fumée : boules de nuage `#f4f1ea` (sphères ≥ 10 segments) en grappe au-dessus de la cheminée ; si une
 animation lente est utile, pièce `anim` (`axis: 'y'`, vitesse faible). Sinon, la noter « plus tard ».
 
+#### Fait le 27/10/2026 (E3) : notes pour la pose
+
+- Dimensions et obstacles dans `navire-maison/physique.js` (`FORMES`, `forme(p)`) ; type `navire_maison`,
+  DIRZ, porte vers +Z. Niveaux comptés rez compris (forme 0 : rez + étage + combles ; forme 1 : rez + 2
+  étages). Forme 1 : faîtage à 13,5 m (et non ≈ 11) pour un vrai toit pointu.
+- Les cercles débordent de 0,28 à 0,36 m des murs : une rue de 2,5 m entre deux maisons n'en laisse que
+  ≈ 1,8 m de libre ; ils bloquent à toutes les hauteurs : aucun ne doit sortir de l'emprise du pont.
+- Fumée dérivant vers −Z local : la poser pour qu'elle aille sous le vent, ou ajouter un paramètre de vent
+  commun à toutes les maisons en E8.
+- Dos aveugles (forme 2 adossée, rez de la forme 1) : à tourner vers un voisin.
+- `mesure.mjs` ne mesure la physique que de la forme par défaut : pour une pièce à formes, refaire la
+  mesure de chaque forme (`mesure-formes.mjs`, recopié en §15).
+
 ### 6.3 BAT-016 — Tourelle (`navire-tourelle`, type `navire_tourelle`) — 2 000 / 800
 
 Tourelle ronde en bois et enduit sur encorbellement de consoles ; diamètre 3,5 à 4 m, 6 à 8 m de haut.
@@ -547,6 +560,17 @@ npx vitest run                                   # échecs connus seulement (§1
   retirée), écarts : seulement les connus (162) ; `npx vitest run` 305 / 307 (échecs connus). Planches :
   `captures/navire-coque-{6vues,allege-6vues,reference-vs-modele,gros-plans,beaupre}.png`. Prochaine
   étape : E3, BAT-015 maison de pont (3 formes).
+- 27/10/2026 : **E3 fait** (même session, à la demande de l'utilisateur) : BAT-015 `navire-maison`
+  (index.js, physique.js, FICHE.md, reference.png = aperçu), type `navire_maison` (lieux.js, DIRZ),
+  compte des types 62 → 63. Trois formes et leurs allégés (6 variantes). Evis-critique : 1er tour « à
+  reprendre » (fumée en bonhomme de neige détachée de la cheminée, toit pointu en chapeau), 2e tour
+  **valide**. Mesures : aucune règle en échec ; 3 144 / 2 506 / 1 504 triangles de près, 1 248 / 1 142 /
+  568 allégés ; physique des 3 formes 95 à 98 %, débord ≤ 0,36 m. Index et relevé : seules les lignes de
+  BAT-015 ; empreinte ajoutée (1 039 lignes ajoutées, aucune retirée) ; écarts : seulement les connus ;
+  `npx vitest run` 304 / 307 sous la charge de la revue, le test du coût de la carte d'herbe (échec connu
+  de §13) passe relancé seul : restent les deux échecs connus. Planches :
+  `captures/navire-maison-{0,1,2}-6vues.png`, `-allege-6vues.png`, `navire-maison-gros-plans.png`.
+  Prochaine étape : E4, BAT-016 tourelle (2 formes).
 
 ## 15. Scripts (à recopier dans le scratchpad de la session ; `R` = chemin du worktree + `/`)
 
@@ -685,6 +709,37 @@ for (const d of P.PLANCHERS.filter((d) => d.w === 0.7)) for (const t of [0, 0.5,
   pire = Math.max(pire, x - d.w / 2 + 0.3 - (P.station(z).W - P.BORDE));
 }
 console.log('pénétration max :', pire.toFixed(2), 'm');
+```
+
+`mesure-formes.mjs` (E3) — triangles (près, allégé) et règle d'emprise de `mesure.mjs` pour chaque forme
+d'une pièce (remplacer le constructeur et le nombre de formes) :
+
+```js
+const R = '/Users/hugo/developer/Island test/.claude/worktrees/ruine-alternative/';
+const { navireMaison } = await import(R + 'src/models/batiments/navire-maison/index.js');
+function emprise(g) {
+  const cells = new Map(), pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const [x, y, z] = [pos.getX(i), pos.getY(i), pos.getZ(i)];
+    if (y >= 0.05 && y <= 1.8) cells.set(`${Math.round(x * 10)}|${Math.round(z * 10)}`, [Math.round(x * 10) / 10, Math.round(z * 10) / 10]);
+  }
+  return [...cells.values()];
+}
+function couverture(obs, cells) {
+  const dedans = cells.filter(([x, z]) => obs.some(([ox, oz, r]) => (x - ox) ** 2 + (z - oz) ** 2 <= r * r)).length / cells.length;
+  let debord = 0;
+  for (const [ox, oz, r] of obs) for (let a = 0; a < 24; a++) {
+    const x = ox + Math.cos((a / 24) * Math.PI * 2) * r, z = oz + Math.sin((a / 24) * Math.PI * 2) * r;
+    debord = Math.max(debord, Math.min(...cells.map(([cx, cz]) => Math.hypot(cx - x, cz - z))));
+  }
+  return { dedans, debord };
+}
+for (const forme of [0, 1, 2]) {
+  const t = [0, 1].map((v) => navireMaison({ forme, v, x: 0, z: 0 }).solid.build().attributes.position.count / 3);
+  const md = navireMaison({ forme, v: 0, x: 0, z: 0 });
+  const c = couverture(md.obstacles, emprise(md.solid.build()));
+  console.log(forme, t, md.obstacles.length, (c.dedans * 100).toFixed(0) + ' %', c.debord.toFixed(2), c.dedans >= 0.85 && c.debord <= 0.4);
+}
 ```
 
 Captures du catalogue (dans la page, via `javascript_tool`) : `const v = window.__catalogue.ouvrir(id,
