@@ -14,6 +14,7 @@ import { moulinTour } from './batiments/moulin-tour/index.js';
 import { navireCoque } from './batiments/navire-coque/index.js';
 import { navireMaison } from './batiments/navire-maison/index.js';
 import { navireTourelle } from './batiments/navire-tourelle/index.js';
+import { navireMoulin } from './batiments/navire-moulin/index.js';
 import { etal } from './batiments/etal-marche/index.js';
 import { tourGuet } from './batiments/tour-guet/index.js';
 import { observatoire } from './batiments/observatoire/index.js';
@@ -52,7 +53,7 @@ import { arbreGeant } from './arbres/arbre-geant/index.js';
 // type de lieu (champ t du plan d'île) → constructeur (p, hasard)
 const LIEUX = {
   // bâtiments
-  maison, moulin, moulin_eau: moulinEau, moulin_tour: moulinTour, navire_coque: navireCoque, navire_maison: navireMaison, navire_tourelle: navireTourelle, etal, tour_guet: tourGuet, observatoire, phare, temple, cabane,
+  maison, moulin, moulin_eau: moulinEau, moulin_tour: moulinTour, navire_coque: navireCoque, navire_maison: navireMaison, navire_tourelle: navireTourelle, navire_moulin: navireMoulin, etal, tour_guet: tourGuet, observatoire, phare, temple, cabane,
   // ouvrages et aménagements
   jetee, pont, pont_corde: pontCorde, escalier, panneau, puits, cloture_champ: clotureChamp, potager, epouvantail,
   arche_fleurie: archeFleurie, bassin_chaud: bassinChaud, arche, linge, lanterne, lanterne_pierre: lanternePierre, banc,
@@ -70,7 +71,7 @@ const LIEUX = {
 export const TYPES_DE_LIEUX = Object.keys(LIEUX);
 
 // sens des rotations : 'face' (rotation.y = rot), 'dirz' (+Z vers l'angle rot), 'dirx' (+X vers l'angle rot)
-const DIRZ = new Set(['jetee', 'barque_amarree', 'epave', 'epave_geante', 'barque_echouee', 'phare', 'arche', 'grotte', 'tente', 'etal', 'banc', 'banc_vue', 'statue', 'moulin', 'coffre', 'casiers', 'potager', 'cascade', 'menhir', 'arche_basse', 'moulin_tour', 'ruines_alternative', 'navire_coque', 'navire_maison', 'navire_tourelle']);
+const DIRZ = new Set(['jetee', 'barque_amarree', 'epave', 'epave_geante', 'barque_echouee', 'phare', 'arche', 'grotte', 'tente', 'etal', 'banc', 'banc_vue', 'statue', 'moulin', 'coffre', 'casiers', 'potager', 'cascade', 'menhir', 'arche_basse', 'moulin_tour', 'ruines_alternative', 'navire_coque', 'navire_maison', 'navire_tourelle', 'navire_moulin']);
 const DIRX = new Set(['pont_corde', 'pont', 'escalier', 'linge', 'cloture_champ', 'moulin_eau', 'rondin', 'muret_effondre']);
 export function rotY(t, rot) {
   if (DIRZ.has(t)) return Math.PI / 2 - rot;

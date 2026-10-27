@@ -36,6 +36,7 @@ import batiments_moulin_eau from './batiments/moulin-eau/index.js';
 import batiments_moulin_tour from './batiments/moulin-tour/index.js';
 import batiments_navire_coque from './batiments/navire-coque/index.js';
 import batiments_navire_maison from './batiments/navire-maison/index.js';
+import batiments_navire_moulin from './batiments/navire-moulin/index.js';
 import batiments_navire_tourelle from './batiments/navire-tourelle/index.js';
 import batiments_observatoire from './batiments/observatoire/index.js';
 import batiments_phare from './batiments/phare/index.js';
@@ -151,6 +152,7 @@ export const FICHES = [
   ...avec(batiments_moulin_tour, 'src/models/batiments/moulin-tour/index.js', 'src/models/batiments/moulin-tour/physique.js'),
   ...avec(batiments_navire_coque, 'src/models/batiments/navire-coque/index.js', 'src/models/batiments/navire-coque/physique.js'),
   ...avec(batiments_navire_maison, 'src/models/batiments/navire-maison/index.js', 'src/models/batiments/navire-maison/physique.js'),
+  ...avec(batiments_navire_moulin, 'src/models/batiments/navire-moulin/index.js', 'src/models/batiments/navire-moulin/physique.js'),
   ...avec(batiments_navire_tourelle, 'src/models/batiments/navire-tourelle/index.js', 'src/models/batiments/navire-tourelle/physique.js'),
   ...avec(batiments_observatoire, 'src/models/batiments/observatoire/index.js', 'src/models/batiments/observatoire/physique.js'),
   ...avec(batiments_phare, 'src/models/batiments/phare/index.js', 'src/models/batiments/phare/physique.js'),
