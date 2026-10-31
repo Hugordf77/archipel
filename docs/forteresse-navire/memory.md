@@ -25,13 +25,13 @@ colonne Notes).
 | E3 | BAT-015 Maison de pont (3 variantes) | fait | `43e6198` | forme 0 : 3 144 / 1 248 ; forme 1 : 2 506 / 1 142 ; forme 2 : 1 504 / 568 ; aucune règle en échec (physique des 3 formes : 95 à 98 %, débord ≤ 0,36 m) | §6.2 ; Evis-critique : valide au 2e tour ; notes de pose en « Fait le 27/10 » de §6.2 |
 | E4 | BAT-016 Tourelle (2 variantes) | fait | `7aad718` | forme 0 (ardoise) : 1 590 / 578 ; forme 1 (coupole) : 1 934 / 614 ; aucune règle en échec (100 % de l'emprise, débord 0,24 m) | §6.3 ; Evis-critique : valide au 2e tour ; aide `flamme()` ajoutée à `forme.js` |
 | E5 | BAT-017 Tour-moulin centrale | fait | `4951dd6` | 6 056 / 2 328 (ailes comprises : 464 / 168) ; aucune règle en échec (9 cercles, 86 %, débord 0,38 m) | §6.4 ; Evis-critique : valide au 1er tour ; 9 cercles au lieu de 5 (voir FICHE) |
-| E6 | BAT-018 Mât et voile (2 variantes) | à faire | | | §6.5 |
+| E6 | BAT-018 Mât et voile (2 variantes) | fait | (commit de E6, voir journal) | forme 0 (grand) : 1 224 / 480 ; forme 1 (petit) : 872 / 348 ; aucune règle en échec (5 cercles, 100 %, débord 0,12 m) | §6.5 ; Evis-critique : valide au 2e tour ; emblème du dos corrigé dans `toile()` |
 | E7 | BAT-019 Escalier et passerelle | à faire | | | §6.6 |
 | E8 | Pose composée (code du monde) et plan d'implantation | à faire | | | §8 |
 | E9 | Vérification en jeu, captures, réglages | à faire | | | §10 |
 | E10 | Livraison : LIVRAISONS.md, rapport, graphe | à faire | | | §11 |
 
-Budget cumulé (à tenir à jour) : **32 710 / 60 000** triangles de près selon la **variante du montage** (§8, gardée par l'utilisateur le 27/10/2026) : BAT-014 (11 966) + maisons 4, 5, 7, 10, 11 (formes 0, 1, 2, 1, 2 : 11 164) + tourelles 2 et 8 (formes 1 et 0 : 3 524) + tour-moulin 6 (6 056). Rien n'est encore posé en jeu (E8).
+Budget cumulé (à tenir à jour) : **35 678 / 60 000** triangles de près selon la **variante du montage** (§8, gardée par l'utilisateur le 27/10/2026) : BAT-014 (11 966) + maisons 4, 5, 7, 10, 11 (11 164) + tourelles 2 et 8 (3 524) + tour-moulin 6 (6 056) + mâts 3, 9, 12 (formes 1, 0, 1 : 872 + 1 224 + 872 = 2 968). Rien n'est encore posé en jeu (E8).
 
 ---
 
@@ -349,6 +349,15 @@ bleu (quadrillage comme la bannière de MON-014, `aSway` croissant vers le bas),
 en tête. `forme` `0` grand (18 m), `1` petit (14 m, une vergue). Haubans : 4 cordages fins (`seg`).
 Physique : un cercle de 0,4 m au pied du mât.
 
+#### Fait le 31/10/2026 (E6) : notes pour la pose
+
+- `navire-mat/physique.js` : `FORMES` (grand mât 18 m, petit 14 m), `HAUBANS` (pieds en (± 2,3 ; −0,5) et
+  (± 1,9 ; −1,4), en arrière du mât), cercles de 0,42 m au pied et de 0,16 m sur chaque taquet ; type
+  `navire_mat`, DIRZ. Vergues le long de X, voiles bombées vers +Z, flamme vers +X local.
+- `toile()` de `forme.js` : l'emblème du dos est posé sur la toile dessinée, celui de la face sur `pli()`
+  (sinon, en creux, l'anneau du dos est caché par la toile).
+- À la pose : pieds des haubans hors des maisons et des ressauts ; vent commun (voir E4).
+
 ### 6.6 BAT-019 — Escalier et passerelle (`navire-escalier`, type `navire_escalier`) — 2 500 / 1 000
 
 Escalier de bois **du sol au pont (20 m)** le long du flanc +X : 60 marches de 0,33 m (giron 0,4 m),
@@ -641,6 +650,16 @@ npx vitest run                                   # échecs connus seulement (§1
   relevé : seules les lignes de BAT-017 ; empreinte ajoutée (272 lignes, aucune retirée) ; écarts : seulement
   les connus ; `npx vitest run` 305 / 307 (échecs connus). Planches : `captures/navire-moulin-6vues.png`,
   `-allege-6vues.png`, `navire-moulin-gros-plans.png`. Prochaine étape : E6, BAT-018 mât et voile.
+- 31/10/2026 : **E6 fait** : BAT-018 `navire-mat` (index.js, physique.js, FICHE.md, reference.png = aperçu),
+  type `navire_mat` (lieux.js, DIRZ), compte des types 65 → 66. Le scratchpad de la session avait été vidé :
+  scripts recréés depuis §15. Evis-critique : 1er tour « à reprendre » (anneau de l'emblème caché au dos des
+  voiles, cause trouvée : cellules planes de la toile en creux), corrigé dans `toile()` (règle asymétrique
+  face / dos, contrôlée par lancer de rayons : 0 / 126 sommets cachés), taquets au pied des haubans ; 2e tour
+  **valide**. Mesures : aucune règle en échec ; 1 224 / 872 triangles de près, 480 / 348 allégés. Index et
+  relevé : seules les lignes de BAT-018 ; empreinte ajoutée (280 lignes, aucune retirée), BAT-014 à 017
+  inchangés ; écarts : seulement les connus ; `npx vitest run` 305 / 307 (échecs connus). Planches :
+  `captures/navire-mat-{0,1}-6vues.png`, `-allege-6vues.png`, `navire-mat-gros-plans.png`. Prochaine étape :
+  E7, BAT-019 escalier et passerelle (sens de l'escalier à revoir, voir « Premier montage » de §8).
 
 ## 15. Scripts (à recopier dans le scratchpad de la session ; `R` = chemin du worktree + `/`)
 

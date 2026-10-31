@@ -9,7 +9,7 @@
 //   touffe, mousse (rochers du berceau) ; la mousse des rochers y s'appelle MOUSSE, ici MOUSSE_ROC ;
 // - toile de bannière de MON-014 (ruines-alternative/index.js), généralisée pour les voiles et les
 //   flammes : couleurs, taille du blason, queue d'aronde et creux de voile en options (les valeurs par
-//   défaut redonnent la bannière de la nef).
+//   défaut redonnent la bannière de la nef, le blason du dos suivant la toile dessinée, à 4 mm près).
 // Nouvelles aides : loft (coque par sections), plaqueBombee (calotte ovale de cuivre), hublot (anneau
 // tourné), rivets (petits hexaèdres alignés, de près seulement).
 // Contexte o : { rand (hasard reproductible), leger (version allégée), idBois, idMur, idToit
@@ -463,6 +463,22 @@ export function toile(o, L, H, { face = BLEU, dos = BLEU_F, blason = BLASON, ech
   };
   dessiner(1, face);
   dessiner(-1, dos);
+  // hauteur z de la toile dessinée en (x, y) : les cellules du quadrillage sont planes (diagonale 0-2), donc
+  // en creux (bombée vers +Z) la toile dessinée passe sous pli(). Le blason de la face suit pli() (au-dessus
+  // des cordes, un triangle n'y repasse pas derrière une arête), celui du dos suit la toile dessinée (sous
+  // pli(), il resterait caché derrière elle) : tous deux restent devant leur face
+  const zDessin = (x, y) => {
+    const u = Math.min(1, Math.max(0, (x + L / 2) / L));
+    const v = Math.min(1, Math.max(0, (-0.08 - y) / (bas(u) - 0.08)));
+    const [i, j] = [Math.min(nc - 1, Math.floor(u * nc)), Math.min(nr - 1, Math.floor(v * nr))];
+    const [fu, fv] = [u * nc - i, v * nr - j];
+    const z = (a, c) => {
+      const [px, py] = pt(a / nc, c / nr);
+      return pli(px, py);
+    };
+    const [z0, z1, z2, z3] = [z(i, j), z(i + 1, j), z(i + 1, j + 1), z(i, j + 1)];
+    return fu >= fv ? z0 + fu * (z1 - z0) + fv * (z2 - z1) : z0 + fv * (z3 - z0) + fu * (z2 - z3);
+  };
   if (blason) {
     // blason : triangles 2D posés sur les plis, de part et d'autre de la toile
     const cy = -H * 0.42;
@@ -504,7 +520,7 @@ export function toile(o, L, H, { face = BLEU, dos = BLEU_F, blason = BLASON, ech
       for (const tri of tr) {
         for (const k of sens > 0 ? [0, 1, 2] : [0, 2, 1]) {
           const [x, y] = tri[k];
-          pos.push(x, y, pli(x, y) + sens * 0.02);
+          pos.push(x, y, (sens > 0 ? pli(x, y) : zDessin(x, y)) + sens * 0.02);
         }
       }
       const g = new THREE.BufferGeometry();
