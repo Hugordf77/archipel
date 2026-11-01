@@ -1,7 +1,7 @@
 # Livraisons — Archipel
 
 Point d'entrée pour une IA ou un nouvel arrivant : ce qui est livré, où ça vit, comment le vérifier, ce
-qui est en cours. Mis à jour le 25/10/2026. À tenir à jour à chaque livraison (section « État courant »
+qui est en cours. Mis à jour le 01/11/2026. À tenir à jour à chaque livraison (section « État courant »
 et domaine concerné).
 
 ## Démarrer
@@ -120,6 +120,12 @@ et domaine concerné).
   colonnade, chevet à baie haute, bannière) ; `src/models/monuments/ruines-alternative/`, type de lieu
   `ruines_alternative`, budget propre 8 000 / 4 000 (7 860 / 3 760) ; Evis-critique valide au 2e tour.
   `forme.js` reprend le code de MON-013 (non commité) : à fusionner.
+- **Forteresse-navire du Plateau venté, pièces BAT-014 à BAT-019** (27/10 au 01/11/2026, fusionnées dans
+  `v3-archipel` le 01/11) : coque et berceau (`navire-coque`, formes communes `forme.js`), maison de pont
+  (3 formes), tourelle (2), tour-moulin centrale, mât et voile (2), escalier du flanc et passerelle (2) ;
+  chacune avec son budget propre et sa version allégée ; fiches et mesures dans chaque `FICHE.md`, suivi
+  dans `docs/forteresse-navire/memory.md` (tableau de bord §0, journal §14). Evis-critique : toutes
+  validées, sauf BAT-019 (1er tour corrigé, fini sans 2e tour à la demande de l'utilisateur).
 
 ### Îles et monde
 
@@ -130,6 +136,14 @@ et domaine concerné).
   trois moulins-tours BAT-013 sur les sites PV-M1 à M3 du plan, nef effondrée MON-014 sur la traversée
   (local 756, 312). Test `tests/zones/plateau-vente-poses.test.js`. Ni corniche, ni chemins (BRF-PV-01 à
   04 restent à faire) : les moulins de la crête ouest ne sont pas encore atteignables à pied par la montée.
+- **Le Navire-forteresse au centre du Plateau venté** (01/11/2026, commit `27fd499`) : lieu composé de 13
+  éléments (BAT-014 à 019) décrit par `src/world/plateau/forteresse-navire.js` (`NAVIRE`, repère du navire,
+  `versIle`) ; `poserLieux` pose un lieu à plusieurs éléments (`poserCompose` : une part par élément avec sa
+  `forme`, plates-formes le long de l'axe à une même hauteur, 62,3 m) ; `forme` dans la clé du cache de
+  `partGeometries`. Centre (644, 316) de la Grande Île, rot 5,25, escalier côté cercle de pierres ; 37 650
+  triangles. Pont praticable par l'escalier (seule sortie, contrôle de fuites) ; château et gaillard encore
+  fermés (passerelle non posée). Vérifier : `npx vitest run tests/zones/plateau-vente-poses.test.js`, en jeu
+  monde (640, −848).
 
 - **Open world, bases** (22/10/2026, génération 4) : « L'archipel des souvenirs », 6 × 4 km tracé
   d'après la carte de référence de l'utilisateur (4 m par pixel, départ en (0, 0) au sud de la Grande
@@ -272,13 +286,20 @@ et domaine concerné).
 - Tableau de bord de production : `dashboard.html`, `dashboard/` (`management.json` : relations entre
   agents).
 
-## État courant (26/10/2026)
+## État courant (01/11/2026)
 
-- **Forteresse-navire du Plateau venté (à construire)** : l'utilisateur a retenu le concept « Navire de
-  maisons » (village-forteresse en navire échoué, esprit château ambulant, DA des moulins), budget
-  ≈ 60 000 triangles en pièces, au centre du dôme. Rien n'est construit : plan détaillé, étapes, pièges
-  et scripts dans `docs/forteresse-navire/memory.md` (à lire en premier), référence
-  `production/references/forteresse-navire.png` (aperçu ; pleine taille dans Canva).
+- **Fusion du 01/11/2026** : `claude/forteresse-navire` (MON-014, moulins-tours et nef posés, pièces
+  BAT-014 à 019, navire posé) fusionnée dans `v3-archipel` par avance rapide (`7af3da8`). Le travail non
+  commité de la copie principale (mouton, chèvre, fleurs PLA-015, skill `modele-3d`, README, catalogue,
+  `.claude/launch.json`) est resté en place ; `releves.gen.js`, `tests/models.test.js` et
+  `tests/fixtures/empreintes.json` y portent à la fois la branche et ce travail (fusion clé par clé de
+  l'empreinte, sans conflit). Suite : 305 / 308, échecs connus seulement (numérotation MON sans MON-012/013 ;
+  empreintes : PER-001 à 023, `ileDepart.obstacles` et PLA-015 en cours ; champs de fleurs, PLA-015 en
+  cours).
+- **Forteresse-navire du Plateau venté** : E0 à E8 faits (E0 sauf le fichier de l'image pleine taille) ;
+  reste E9 (vérification en jeu, réglages) et E10 (livraison) ; à trancher : passerelle et ouverture des
+  rambardes du château et du gaillard (modifie BAT-014). Tout est dans `docs/forteresse-navire/memory.md`
+  (à lire en premier). Serveur du worktree : configuration `forteresse` (port 5175).
 
 - **Branche `claude/ruine-alternative`** (worktree `.claude/worktrees/ruine-alternative`, depuis `d33a27a`) :
   MON-014 et la pose des moulins-tours et de la nef sur le Plateau venté. `tests/models.test.js`
