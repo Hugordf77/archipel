@@ -26,12 +26,13 @@ colonne Notes).
 | E4 | BAT-016 Tourelle (2 variantes) | fait | `7aad718` | forme 0 (ardoise) : 1 590 / 578 ; forme 1 (coupole) : 1 934 / 614 ; aucune règle en échec (100 % de l'emprise, débord 0,24 m) | §6.3 ; Evis-critique : valide au 2e tour ; aide `flamme()` ajoutée à `forme.js` |
 | E5 | BAT-017 Tour-moulin centrale | fait | `4951dd6` | 6 056 / 2 328 (ailes comprises : 464 / 168) ; aucune règle en échec (9 cercles, 86 %, débord 0,38 m) | §6.4 ; Evis-critique : valide au 1er tour ; 9 cercles au lieu de 5 (voir FICHE) |
 | E6 | BAT-018 Mât et voile (2 variantes) | fait | `c6930c9` | forme 0 (grand) : 1 224 / 480 ; forme 1 (petit) : 872 / 348 ; aucune règle en échec (5 cercles, 100 %, débord 0,12 m) | §6.5 ; Evis-critique : valide au 2e tour ; emblème du dos corrigé dans `toile()` |
-| E7 | BAT-019 Escalier et passerelle | à faire | | | §6.6 |
+| E7 | BAT-019 Escalier et passerelle (2 variantes) | fait | (ce commit, voir journal) | forme 0 (escalier) : 2 436 / 708 ; forme 1 (passerelle) : 240 / 108 ; aucune règle en échec ; 181 planchers, aucun obstacle (voulu) ; une seule sortie du pont : le pied | §6.6 ; Evis-critique : 1er tour « à reprendre », corrigé ; 2e tour arrêté, fini sans revue à la demande de l'utilisateur ; écarts à §6.6 dans la FICHE |
 | E8 | Pose composée (code du monde) et plan d'implantation | à faire | | | §8 |
 | E9 | Vérification en jeu, captures, réglages | à faire | | | §10 |
 | E10 | Livraison : LIVRAISONS.md, rapport, graphe | à faire | | | §11 |
 
-Budget cumulé (à tenir à jour) : **35 678 / 60 000** triangles de près selon la **variante du montage** (§8, gardée par l'utilisateur le 27/10/2026) : BAT-014 (11 966) + maisons 4, 5, 7, 10, 11 (11 164) + tourelles 2 et 8 (3 524) + tour-moulin 6 (6 056) + mâts 3, 9, 12 (formes 1, 0, 1 : 872 + 1 224 + 872 = 2 968). Rien n'est encore posé en jeu (E8).
+Budget cumulé (à tenir à jour) : **38 114 / 60 000** triangles de près selon la **variante du montage** (§8, gardée par l'utilisateur le 27/10/2026) : BAT-014 (11 966) + maisons 4, 5, 7, 10, 11 (11 164) + tourelles 2 et 8 (3 524) + tour-moulin 6 (6 056) + mâts 3, 9, 12 (formes 1, 0, 1 : 872 + 1 224 + 872 = 2 968) + escalier du flanc (2 436) ; chaque
+passerelle posée en E8 comptera 240. Rien n'est encore posé en jeu (E8).
 
 ---
 
@@ -660,6 +661,20 @@ npx vitest run                                   # échecs connus seulement (§1
   inchangés ; écarts : seulement les connus ; `npx vitest run` 305 / 307 (échecs connus). Planches :
   `captures/navire-mat-{0,1}-6vues.png`, `-allege-6vues.png`, `navire-mat-gros-plans.png`. Prochaine étape :
   E7, BAT-019 escalier et passerelle (sens de l'escalier à revoir, voir « Premier montage » de §8).
+- 01/11/2026 : **E7 fait** : BAT-019 `navire-escalier` (index.js, physique.js, FICHE.md, reference.png =
+  aperçu), type `navire_escalier` (lieux.js, DIRZ), compte des types 66 → 67. Escalier du flanc dans le
+  repère du navire, descendant vers la proue (pied côté cercle de pierres, z ≈ 23,6) ; passerelle de 6 m
+  qui monte de 2 m. Session interrompue un temps faute de place sur le disque. Avant revue : fente de 5 cm
+  fermée au palier d'arrivée (contrôle `fuites2.mjs` : planchers de la coque + de l'escalier, seuils 0,4 et
+  1,23 m ; une seule sortie, le pied) ; marge coque / limon ≥ 0,48 m. Evis-critique : 1er tour « à
+  reprendre » (allégé illisible, chevalets frêles, poteaux doublés aux jonctions), corrigé (joues pleines au
+  loin, chevalets arrondis, croisés et contreventés, un poteau par jonction) ; 2e tour arrêté par
+  l'utilisateur, qui a demandé de finir sans revue. Mesures : aucune règle en échec ; 2 436 / 708 et
+  240 / 108 triangles. Index et relevé : seules les lignes de BAT-019 ; empreinte ajoutée (5 065 lignes,
+  aucune retirée), écarts : seulement les connus ; `npx vitest run` 305 / 307 (échecs connus). Planches :
+  `captures/navire-escalier-{0,1}-6vues.png`, `-allege-6vues.png`, `navire-escalier-gros-plans.png`. Le
+  serveur du worktree se lance par la configuration `forteresse` (port 5175) de `.claude/launch.json` de la
+  copie principale (non versionné). Prochaine étape : E8, pose composée et plan d'implantation.
 
 ## 15. Scripts (à recopier dans le scratchpad de la session ; `R` = chemin du worktree + `/`)
 
