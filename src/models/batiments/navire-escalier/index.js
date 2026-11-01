@@ -1,13 +1,13 @@
 // Escalier et passerelle du navire-forteresse (BAT-019), pièce de la forteresse-navire du Plateau venté
 // (docs/forteresse-navire/memory.md §6.6). Forme 0 : escalier de bois du flanc +X, dans le repère du navire,
-// de l'ouverture du pavois (pont à 20 m) au sol, en cinq volées de onze marches et quatre paliers, posé sur
+// de l'ouverture du pavois (pont à 13 m) au sol, en trois volées de douze marches et deux paliers, posé sur
 // des chevalets ; rambardes des deux côtés. Forme 1 : passerelle droite de 6 m qui monte de 2 m, sur deux
 // limons, rambardes. Variante v 1 : version allégée.
 import { Builder } from '../../../render/builder.js';
 import { nextId } from '../../../core/globals.js';
 import { lire } from '../../kit/lieux.js';
 import { fiche, part } from '../../kit/fiches.js';
-import physique, { HAUT, N, HM, GIRON, PALIER, LARGE, X, PALIER_HAUT, VOLEES, PASSERELLE, POTEAUX, RAMBARDE } from './physique.js';
+import physique, { HAUT, N, F as NV, HM, GIRON, PALIER, LARGE, X, PALIER_HAUT, VOLEES, PASSERELLE, POTEAUX, RAMBARDE } from './physique.js';
 import { prisme, rect, oc, barre, POUTRE, POUTRE_F, BOIS_TOIT, PONT, BORDAGE } from '../navire-coque/forme.js';
 
 const F = { tint: 0 };
@@ -72,7 +72,7 @@ function escalier(b, o) {
       poteauR(b, o, x, zb, Math.max(0, yp - 0.3), yb + RAMBARDE - 0.01);
       for (const i of POTEAUX) poteauR(b, o, x, za + (i + 1) * GIRON - 0.05, y0 - (i + 2) * HM, y0 - (i + 1) * HM + RAMBARDE - 0.01);
     }
-    if (f === 4) return;
+    if (f === NV - 1) return;
     // palier sur un chevalet en son milieu, contreventé dans l'axe par deux contrefiches à 45° par poteau
     // (vers le limon de la volée qui arrive et de celle qui part) ; rambardes sans poteaux (ceux des
     // jonctions)

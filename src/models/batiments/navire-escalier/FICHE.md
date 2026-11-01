@@ -6,7 +6,7 @@ Dossier `src/models/batiments/navire-escalier/` · Bâtiments · pièce de la fo
 
 | Identifiant | Nom | Statut | Référence du jeu | Taille (m, forme 0) | Budget |
 | --- | --- | --- | --- | --- | --- |
-| BAT-019 | Escalier et passerelle du navire-forteresse | Corrigé après le 1er tour d'Evis-critique ; 2e tour non fait (arrêté, fini sans revue à la demande de l'utilisateur, 01/11/2026) | `part:navire_escalier` | 3,67 × 21,8 × 31,12 | 2 500 de près, 1 000 allégé, par forme (fiche) |
+| BAT-019 | Escalier et passerelle du navire-forteresse | Corrigé après le 1er tour d'Evis-critique ; 2e tour non fait (arrêté, fini sans revue à la demande de l'utilisateur, 01/11/2026) | `part:navire_escalier` | 3,67 × 14,8 × 20,32 | 2 500 de près, 1 000 allégé, par forme (fiche) |
 
 Budget propre (`budget: { triangles: 2500, lod: 1000 }`) : part de l'escalier dans les ≈ 60 000 triangles
 accordés par l'utilisateur le 26/10/2026 pour la forteresse-navire.
@@ -17,7 +17,7 @@ accordés par l'utilisateur le 26/10/2026 pour la forteresse-navire.
   13), le long du flanc +X (axe en x = 10,8, largeur 2,4 m). Palier d'arrivée dans l'ouverture du pavois
   (`OUVERTURE` de BAT-014, z −7,4 → −4,6), du bord du pont (x = 8,5) à la rambarde extérieure, puis **cinq
   volées de onze marches** (hauteur 0,334 m, giron 0,4 m) et quatre paliers de 1,6 m ; le pied arrive en
-  z ≈ 23,6, vers la proue, côté cercle de pierres (emplacement (b) tranché par l'utilisateur, §7).
+  z ≈ 12,8 (23,6 avant l'abaissement de la coque), vers la proue, côté cercle de pierres (emplacement (b) tranché par l'utilisateur, §7).
 - Marches ajourées en planches de deux tons (`PONT`, `BORDAGE` de la coque), deux limons, paliers en
   `BOIS_TOIT`. **Chevalets** : deux poteaux de 32 cm à arêtes adoucies (`oc`, comme les piliers du berceau)
   et une croix de Saint-André ; deux sous le palier d'arrivée, un au milieu de chaque palier intermédiaire,
@@ -52,14 +52,14 @@ accordés par l'utilisateur le 26/10/2026 pour la forteresse-navire.
 
 | Forme | Triangles près / allégé | Planchers |
 | --- | --- | --- |
-| 0, escalier du flanc | 2 436 / 708 | 181 |
+| 0, escalier du flanc | 1 544 / 420 (2 436 / 708 avec cinq volées) | 118 |
 | 1, passerelle | 240 / 108 | 1 |
 
 Contrôles avec la coque (scripts du scratchpad de la session E7, d'après `fuites.mjs` de §15) :
 - marge entre la coque et le limon intérieur : **0,48 m** au moins (en z = −4,8, au palier d'arrivée) ;
 - palier d'arrivée : recouvre de 0,2 m le plancher du pont, 2 cm plus haut ;
 - remplissage depuis le milieu du pont, planchers de la coque et de l'escalier, seuil 0,4 m (à pied) puis
-  1,23 m (saut) : **une seule sortie vers le sol, au pied de l'escalier** (z = 23,65).
+  1,23 m (saut) : **une seule sortie vers le sol, au pied de l'escalier** (z = 12,8 depuis l'abaissement de la coque).
 
 ## Écarts au cahier des charges (§6.6), voulus
 
@@ -67,7 +67,7 @@ Contrôles avec la coque (scripts du scratchpad de la session E7, d'après `fuit
   et bloqueraient aussi les marches au-dessus (§6.1, « Fait le 27/10 »).
 - **5 volées de 11 marches + un palier** au lieu de « 5 volées de 12 marches » : on garde 60 hauteurs de
   0,334 m (la douzième de chaque volée est le palier).
-- **Tracé** : axe en x = 10,8 constant, pied en z ≈ 23,6, au lieu de (13 ; 26) : l'escalier longe la coque
+- **Tracé** : axe en x = 10,8 constant, pied en z ≈ 12,8, au lieu de (13 ; 26) : l'escalier longe la coque
   (marge 0,48 m) au lieu de s'en écarter.
 - **Un plancher plat par marche** au lieu d'un plancher incliné par volée (la règle des planchers n'est pas
   tenue sur la pente d'une volée).
@@ -96,3 +96,7 @@ Contrôles avec la coque (scripts du scratchpad de la session E7, d'après `fuit
   pleines au loin, chevalets arrondis, croisés et contreventés (un par palier), un poteau par jonction ;
   lisses arrondies non faites (+336 triangles, hors budget). 2e tour lancé puis arrêté par l'utilisateur, qui a demandé de finir
   sans revue : les corrections n'ont été vues que sur les planches refaites.
+- 01/11/2026 : suit l'abaissement de la coque BAT-014 (pont de 20 à 13 m) : **trois volées de douze
+  marches** et deux paliers (`HAUT` 13,025, `N` 13, `F` 3 de `physique.js` ; hauteur de marche inchangée,
+  0,334 m), pied en z ≈ 12,8. Mesures : aucune règle en échec, 1 544 / 420 triangles, 118 planchers ;
+  marge coque / limon 0,48 m ; une seule sortie du pont, le pied.

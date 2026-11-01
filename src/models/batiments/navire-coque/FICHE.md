@@ -7,7 +7,7 @@ pleine taille n'est pas encore déposée).
 
 | Identifiant | Nom | Statut | Référence du jeu | Taille (m) | Budget |
 | --- | --- | --- | --- | --- | --- |
-| BAT-014 | Coque et berceau du navire-forteresse | Relu par Evis-critique (3 tours) ; dernier défaut corrigé selon sa proposition | `part:navire_coque` | 19,35 × 30,18 × 75,55 | 12 000 de près, 5 000 allégé (fiche) |
+| BAT-014 | Coque et berceau du navire-forteresse | Relu par Evis-critique (3 tours) ; dernier défaut corrigé selon sa proposition | `part:navire_coque` | 19,35 × 23,16 × 75,55 (coque abaissée le 01/11/2026) | 12 000 de près, 5 000 allégé (fiche) |
 
 Budget propre (`budget: { triangles: 12000, lod: 5000 }`) : part de la coque dans les ≈ 60 000 triangles
 accordés par l'utilisateur le 26/10/2026 pour la forteresse-navire.
@@ -59,7 +59,7 @@ accordés par l'utilisateur le 26/10/2026 pour la forteresse-navire.
   `IslandManager.js:566`) : des cercles sous la quille arrêteraient aussi le joueur sur le pont. Le
   berceau est tout entier sous les planchers du pont ; un plancher est le sol dans tout son rectangle
   (`IslandManager.heightAt`) et le joueur ne monte pas plus de 0,4 m d'un coup (`Player.js:230`) : le
-  bord des planchers, à 20 m, fait mur et personne ne passe sous la coque.
+  bord des planchers, à 13 m (20 m avant le 01/11/2026), fait mur et personne ne passe sous la coque.
 - **Planchers (74)** :
   - pont principal, château et gaillard en tronçons qui suivent la tonture (corde à moins de 7 mm),
     jusqu'à la face intérieure du pavois ; chaque tronçon prend la largeur de son bout le plus large
@@ -142,3 +142,10 @@ Hors tout / longueur (0,63) : se juge avec la tour-moulin (E5) et la pose compos
   dans la roche. 3e tour « à reprendre » pour un seul point (pied du beaupré qui flotte au-dessus du
   gaillard), corrigé selon sa proposition (bitte de beaupré) et vérifié en gros plan ; Evis-critique
   n'avait pas d'autre objection. Mesures : aucune règle en échec, 11 966 / 4 336 triangles.
+- 01/11/2026 : **coque abaissée** à la demande de l'utilisateur (« réduire la coque », option « moins
+  haute ») : pont principal de 20 à 13 m (`HAUT_PONT` de `physique.js`), quilles des stations × 0,65 ;
+  ce qui suit le pont garde son écart au pont (galerie de poupe, beaupré), ce qui est peint sur la coque
+  est mis à l'échelle × 0,65 (plaques de cuivre, hublots à 11,4 m, fenêtres du tableau, cordages du
+  beaupré). Largeur et longueur inchangées : les pièces du pont restent en place (dy = `pont(z)`). Mesures :
+  aucune règle en échec, 11 814 triangles, gabarit 19,35 × 23,16 × 75,55. Détails de forteresse ajoutés
+  à part (BAT-020, `navire-fort`). Pas de nouvelle revue Evis-critique.

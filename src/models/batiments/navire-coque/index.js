@@ -14,7 +14,7 @@ import { nextId } from '../../../core/globals.js';
 import { mulberry32 } from '../../../core/random.js';
 import { lire, seg } from '../../kit/lieux.js';
 import { fiche, part } from '../../kit/fiches.js';
-import physique, { station, demiSection, demiLargeur, pont, pontPrincipal, lisse, CHATEAU, GAILLARD, POUPE, PROUE, BORDE, OUVERTURE, TRONCONS, PAVOIS, POINTE } from './physique.js';
+import physique, { station, demiSection, demiLargeur, pont, pontPrincipal, lisse, HAUT_PONT, CHATEAU, GAILLARD, POUPE, PROUE, BORDE, OUVERTURE, TRONCONS, PAVOIS, POINTE } from './physique.js';
 import {
   loft, plaqueBombee, hublot, rivets, tris, prisme, rect, oc, barre, panDeBois, poser, bloc, mousse, touffe, hexa, coinsBoite,
   BORDAGE, BORDAGE_F, PONT, CUIVRE, CUIVRE_F, POUTRE, POUTRE_F, ENDUIT, VITRE, MOUSSE, MOUSSE_C, MOUSSE_ROC, MOUSSE_ROC_F, CORDAGE, BOIS_TOIT,
@@ -203,7 +203,9 @@ function ponts(b, o) {
 }
 
 // --- poupe : fenêtres du tableau, galerie en encorbellement, pavois du château --------------------------
-const GALERIE = { y: 19.6, demi: 4.4, prof: 1.3 };
+// hauteurs de la coque abaissée (pont à HAUT_PONT = 13 m, 20 m jusqu'au 01/11/2026) : ce qui suit le pont
+// garde son écart au pont, ce qui est peint sur la coque est mis à l'échelle (× 0,65)
+const GALERIE = { y: HAUT_PONT - 0.4, demi: 4.4, prof: 1.3 };
 // fenêtre seule sur une face (cadre, vitre, croisillon, poteaux) centrée en x
 function panFenetre(f, x, yc, w, h, o) {
   const g = new Builder(o.idBois);
@@ -220,7 +222,7 @@ function poupe(b, o) {
   for (const s of [-1, 1]) rambarde(b, o, [s * (demi - 0.06), zb + 0.06], [s * (demi - 0.06), POUPE - 0.1], y);
   // tableau : rangée basse de quatre fenêtres, porte et deux fenêtres sur la galerie
   const f = new Builder(o.idBois);
-  for (const x of [-3, -1, 1, 3]) panFenetre(f, x, 15.6, 0.8, 1.1, o);
+  for (const x of [-3, -1, 1, 3]) panFenetre(f, x, 10.1, 0.8, 1.1, o);
   for (const x of [-2.4, 2.4]) panFenetre(f, x, y + 1.0, 0.9, 1.2, o);
   panDeBois(f, 2.2, y, y + 2.2, [{ x: 0, w: 1.0, h: 1.85, yb: y + 0.02, porte: true }], { ...o, leger: true });
   poser(b, f, Math.PI, 0, POUPE);
@@ -233,9 +235,9 @@ function poupe(b, o) {
 
 // --- cuivres : plaques bombées rivetées, hublots ----------------------------------------------------
 // plaques : flanc, centre (z, y), taille L × H, flèche
-const PLAQUES = [[1, 12.5, 10.4, 9, 5, 0.5], [1, 8.2, 14.9, 7, 4, 0.42], [-1, 9.5, 12.8, 8, 4.5, 0.45]];
+const PLAQUES = [[1, 12.5, 6.8, 9, 3.3, 0.4], [1, 8.2, 9.7, 7, 2.6, 0.34], [-1, 9.5, 8.3, 8, 2.9, 0.36]];
 const HUBLOTS = [-22, -16, -10, -4, 2, 8, 14, 19];
-const Y_HUBLOT = 17.6;
+const Y_HUBLOT = 11.4;
 function cuivres(b, o) {
   for (const [s, zc, yc, L, H, f] of PLAQUES) {
     const id = nextId();
@@ -268,7 +270,7 @@ function cuivres(b, o) {
 // --- beaupré, cordages, échelle de corde, nacelle ----------------------------------------------------
 // le beaupré naît dans sa bitte, poteau planté dans le gaillard au-delà de la rambarde de la pointe (hors
 // des planchers) qui monte au-dessus de la poutre et en cache le pied
-const BEAUPRE = { a: [0, 24.08, 29.0], b: [0, 28.8, 42.0] };
+const BEAUPRE = { a: [0, 17.08, 29.0], b: [0, 21.8, 42.0] };
 function beaupre(b, o) {
   const [ax, ay, az] = BEAUPRE.a;
   const [bx, by, bz] = BEAUPRE.b;
@@ -279,13 +281,13 @@ function beaupre(b, o) {
   const le = (t) => [ax + (bx - ax) * t, ay + (by - ay) * t, az + (bz - az) * t];
   const corde = (A, B, r = 0.045) => seg(b, CORDAGE, ...A, ...B, r, r, o.leger ? 4 : 5, { id: o.idCorde, ...F });
   // sous-barbe vers l'étrave, haubans vers les flancs du gaillard
-  corde(le(0.97), [0, 14.5, 32.4]);
+  corde(le(0.97), [0, 9.4, 32.4]);
   for (const s of [-1, 1]) corde(le(0.97), [s * 2.3, lisse(29) + 0.1, 29]);
   // cordage pendu qui porte la nacelle (petite corbeille tournée) ; un autre qui pend librement
   const pn = le(0.8);
   const yn = 3.0;
   corde(pn, [pn[0], yn + 1.6, pn[2]]);
-  if (!o.leger) corde(le(0.62), [0.1, 9.5, le(0.62)[2] + 0.2], 0.04);
+  if (!o.leger) corde(le(0.62), [0.1, 6.2, le(0.62)[2] + 0.2], 0.04);
   const prof = [[0.08, 0], [0.45, 0.04], [0.55, 0.5], [0.6, 0.66], [0.52, 0.7]];
   b.add(G.lathe(prof, o.leger ? 6 : 10), BOIS_TOIT, { p: [pn[0], yn, pn[2]], id: o.idCorde, ...F });
   for (const a of [0, Math.PI]) corde([pn[0] + Math.cos(a) * 0.52, yn + 0.68, pn[2] + Math.sin(a) * 0.52], [pn[0], yn + 1.6, pn[2]], 0.03);

@@ -6,15 +6,16 @@
 //
 // Aucun obstacle : le berceau est tout entier sous les planchers du pont. En jeu, un plancher est le sol
 // dans tout son rectangle (IslandManager.heightAt) et le joueur au sol ne monte pas plus de 0,4 m d'un coup
-// (Player.free) : le bord des planchers, à 20 m, fait mur et personne ne passe sous la coque. Des cercles
+// (Player.free) : le bord des planchers, à 13 m, fait mur et personne ne passe sous la coque. Des cercles
 // sous la quille gêneraient en revanche sur le pont (les obstacles n'ont pas de hauteur, navigation.js).
 
 // stations de la coque (memory.md §6.1) : z, demi-largeur au pont W, au fond B, dessous de quille K.
 // Quille relevée aux bouts sur la planche référence / modèle du 27/10/2026 (ventre qui remonte en rond
-// vers la proue, comme la référence) : K de −32, 22, 28 et 32 passés de 7 / 5,5 / 8 / 12 à 8,5 / 6 / 9,5 / 16
+// vers la proue, comme la référence) : K de −32, 22, 28 et 32 passés de 7 / 5,5 / 8 / 12 à 8,5 / 6 / 9,5 / 16.
+// Coque abaissée le 01/11/2026 à la demande de l'utilisateur (pont de 20 à 13 m, HAUT_PONT) : quilles × 0,65
 export const STATIONS = [
-  [-32, 6.0, 2.0, 8.5], [-24, 8.5, 4.0, 5.2], [-12, 9.0, 5.0, 4.2], [0, 9.0, 5.0, 4.0],
-  [12, 8.6, 4.4, 4.3], [22, 6.5, 2.5, 6.0], [28, 3.6, 0.9, 9.5], [32, 0.4, 0.2, 16.0],
+  [-32, 6.0, 2.0, 5.5], [-24, 8.5, 4.0, 3.4], [-12, 9.0, 5.0, 2.7], [0, 9.0, 5.0, 2.6],
+  [12, 8.6, 4.4, 2.8], [22, 6.5, 2.5, 3.9], [28, 3.6, 0.9, 6.2], [32, 0.4, 0.2, 10.4],
 ];
 export const POUPE = -32;
 export const PROUE = 32;
@@ -66,7 +67,9 @@ export const GAILLARD = 22;
 // pavois de 1,1 m : avec la mousse, sa crête est à 1,32 m du pont, plus haut que le saut du joueur
 // (≈ 1,23 m : tuning.js, Player.js:227)
 export const PAVOIS = 1.1;
-export const pontPrincipal = (z) => 20 + 0.0007 * z * z;
+// hauteur du pont principal au milieu du navire (20 m jusqu'au 01/11/2026)
+export const HAUT_PONT = 13;
+export const pontPrincipal = (z) => HAUT_PONT + 0.0007 * z * z;
 export const hausse = (z) => (z < CHATEAU ? 3 : z > GAILLARD ? 2 : 0);
 export const pont = (z) => pontPrincipal(z) + hausse(z);
 export const lisse = (z) => pont(z) + PAVOIS;
@@ -94,7 +97,7 @@ export function demiLargeur(st, y) {
   return st.f + (st.W - st.f) * Math.pow(Math.sqrt(1 - c * c), 2 / N_SECTION);
 }
 // épaisseur du pavois ; le plancher du pont va jusqu'à sa face intérieure (aucune bande de vide entre les
-// deux : hors des planchers, c'est le sol de l'île, 20 m plus bas)
+// deux : hors des planchers, c'est le sol de l'île, 13 m plus bas)
 export const BORDE = 0.3;
 const demiPont = (z) => demiLargeur(station(z), Math.min(pont(z), station(z).H)) - BORDE;
 // arrivée de l'escalier : le pavois du flanc +X s'ouvre entre ces deux z

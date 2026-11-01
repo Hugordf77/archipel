@@ -29,6 +29,7 @@ export const ELEMENTS = [
   sur('navire_maison', 2, 4.4, -24.4, PI / 2), // 11 maison de poupe basse, sur le château
   sur('navire_mat', 1, 0.8, -30), // 12 mât d'artimon (petit)
   sol('navire_escalier', 0), // 13 escalier du flanc +X, du sol au pont
+  sol('navire_fort', 0), // 15 habillage de forteresse (échauguettes, créneaux, maisonnettes, tuyaux)
 ];
 
 // aplanissement : une file de plates-formes le long de l'axe (rayon 13 m : demi-largeur de 9 m, escalier

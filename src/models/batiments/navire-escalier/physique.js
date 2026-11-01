@@ -9,18 +9,20 @@
 // marche voisine, plus haute de 0,33 m : on ne tombe pas de l'escalier. La passerelle passe au-dessus du
 // pont : ses rambardes n'ont pas de plancher (on n'en tomberait que sur le pont).
 
-// escalier du flanc +X : arrivée dans l'ouverture du pavois (z −7,4 → −4,6, pont à 20,025 m en z = −6),
-// descente vers la proue (pied vers le cercle de pierres, emplacement de l'utilisateur, §7) : cinq volées
-// de douze hauteurs (onze marches et un palier), marches de 0,334 m (< 0,4 m) et 0,4 m de giron
-export const HAUT = 20.025;
-export const N = 12;
-export const HM = HAUT / (5 * N);
+// escalier du flanc +X : arrivée dans l'ouverture du pavois (z −7,4 → −4,6, pont à 13,025 m en z = −6,
+// pontPrincipal de navire-coque/physique.js ; 20,025 m avant l'abaissement de la coque du 01/11/2026),
+// descente vers la proue (pied vers le cercle de pierres, emplacement de l'utilisateur, §7) : trois volées
+// de treize hauteurs (douze marches et un palier), marches de 0,334 m (< 0,4 m) et 0,4 m de giron
+export const HAUT = 13.025;
+export const N = 13;
+export const F = 3;
+export const HM = HAUT / (F * N);
 export const GIRON = 0.4;
 export const PALIER = 1.6;
 export const LARGE = 2.4;
 export const X = 10.8;
 export const PALIER_HAUT = { x0: 8.5, z0: -7.2, z1: -4.8 };
-export const VOLEES = [0, 1, 2, 3, 4].map((f) => {
+export const VOLEES = Array.from({ length: F }, (_, f) => {
   const z0 = PALIER_HAUT.z1 + f * ((N - 1) * GIRON + PALIER);
   return { z0, z1: z0 + (N - 1) * GIRON, y0: HAUT - f * N * HM };
 });
@@ -55,7 +57,7 @@ function escalier() {
       out.push(plat(X, z0m, z1m, LARGE - 0.1, ym));
       for (const x of RX) out.push(plat(x, z0m, z1m, 0.3, ym + RAMBARDE));
     }
-    if (f === 4) return;
+    if (f === F - 1) return;
     // palier entre deux volées et ses rambardes
     const yp = y0 - N * HM;
     out.push(plat(X, zb, zb + PALIER, LARGE, yp));

@@ -28,10 +28,11 @@ colonne Notes).
 | E6 | BAT-018 Mât et voile (2 variantes) | fait | `c6930c9` | forme 0 (grand) : 1 224 / 480 ; forme 1 (petit) : 872 / 348 ; aucune règle en échec (5 cercles, 100 %, débord 0,12 m) | §6.5 ; Evis-critique : valide au 2e tour ; emblème du dos corrigé dans `toile()` |
 | E7 | BAT-019 Escalier et passerelle (2 variantes) | fait | `57b1008` | forme 0 (escalier) : 2 436 / 708 ; forme 1 (passerelle) : 240 / 108 ; aucune règle en échec ; 181 planchers, aucun obstacle (voulu) ; une seule sortie du pont : le pied | §6.6 ; Evis-critique : 1er tour « à reprendre », corrigé ; 2e tour arrêté, fini sans revue à la demande de l'utilisateur ; écarts à §6.6 dans la FICHE |
 | E8 | Pose composée (code du monde) et plan d'implantation | fait | `27fd499` | 37 650 triangles posés (13 éléments, variante du montage, sans passerelle) ; pont praticable 509 m², une seule sortie (le pied de l'escalier) | §8 ; `src/world/plateau/forteresse-navire.js`, lieu composé dans `poserLieux` ; plate-forme à 62,3 m (7 sites de 13 m le long de l'axe) ; château et gaillard encore fermés (passerelle non posée) |
+| E8b | Coque abaissée (pont à 13 m) et habillage de forteresse BAT-020 | fait | (ce commit, voir journal) | BAT-014 : 11 814 ; BAT-019 : 1 544 / 420 ; BAT-020 : 5 984 / 2 444 ; aucune règle en échec ; 42 590 posés | demande de l'utilisateur du 01/11 ; pas de revue Evis-critique (captures en jeu) |
 | E9 | Vérification en jeu, captures, réglages | à faire | | | §10 |
 | E10 | Livraison : LIVRAISONS.md, rapport, graphe | à faire | | | §11 |
 
-Budget cumulé (à tenir à jour) : **38 114 / 60 000** (posé en jeu le 01/11/2026 : 37 650 comptés sur les géométries construites, ailes de la tour-moulin à part) triangles de près selon la **variante du montage** (§8, gardée par l'utilisateur le 27/10/2026) : BAT-014 (11 966) + maisons 4, 5, 7, 10, 11 (11 164) + tourelles 2 et 8 (3 524) + tour-moulin 6 (6 056) + mâts 3, 9, 12 (formes 1, 0, 1 : 872 + 1 224 + 872 = 2 968) + escalier du flanc (2 436) ; chaque
+Budget cumulé (à tenir à jour) : **42 590 / 60 000** posés depuis le 01/11/2026 (coque abaissée, escalier de trois volées, habillage BAT-020) ; avant : **38 114 / 60 000** (posé en jeu le 01/11/2026 : 37 650 comptés sur les géométries construites, ailes de la tour-moulin à part) triangles de près selon la **variante du montage** (§8, gardée par l'utilisateur le 27/10/2026) : BAT-014 (11 966) + maisons 4, 5, 7, 10, 11 (11 164) + tourelles 2 et 8 (3 524) + tour-moulin 6 (6 056) + mâts 3, 9, 12 (formes 1, 0, 1 : 872 + 1 224 + 872 = 2 968) + escalier du flanc (2 436) ; chaque
 passerelle comptera 240. Posé en jeu en E8 (01/11/2026), sans passerelle.
 
 ---
@@ -45,6 +46,7 @@ passerelle comptera 240. Posé en jeu en E8 (01/11/2026), sans passerelle.
 | 26/10/2026 | Emplacement : **plein centre du dôme** du plateau ; le cercle de pierres prévu par le plan devient le parvis. |
 | 26/10/2026 | Après des concepts en pierre puis dans la DA des moulins : « plus dans la DA du château ambulant » ; retenu : **concept « Navire de maisons »** (« le bateau est excellent »). |
 | 26/10/2026 | « Ne fais pas de chantier ce soir » ; ce document doit permettre de construire **étape par étape, en plusieurs parties**. |
+| 01/11/2026 | « Réduire la coque » : option **moins haute** (pont de 20 à 13 m, longueur gardée) ; « y mettre des détails pour que ça fasse vraiment forteresse style château ambulant » (détails laissés à l'IA : échauguettes, créneaux, maisonnettes accrochées, tuyaux de cuivre, BAT-020). |
 | 27/10/2026 | Emplacement (§7) : **option (b)**, centre du dôme **(644, 316)**, navire tourné de 90° (**rot = 5,25 rad**, flanc au vent), escalier côté cercle de pierres (parvis). Les ailes de la tour-moulin restent face au vent (élément tourné de −π/2 dans le plan, §8 : 5,25 − π/2 = 3,68, comme les moulins-tours). |
 
 Contrainte de `docs/DA.md` §1 : **design original**. On garde l'esprit (accumulation fantaisiste de
@@ -692,6 +694,19 @@ npx vitest run                                   # échecs connus seulement (§1
   jeu (port 5175) : pont à 82,3 m, marches tenues ; captures `captures/navire-jeu-{flanc,proue,loin}.png`
   (vue de taille fixée : le panneau masqué donne une fenêtre de 0 × 0 et des captures vides). Prochaine
   étape : E9 (vérification en jeu, réglages) ; fusion dans `v3-archipel` à demander.
+- 01/11/2026 : fusion de la branche dans `v3-archipel` (avance rapide, voir LIVRAISONS.md). Puis **E8b**, à la
+  demande de l'utilisateur (« réduire la coque » : option « moins haute » ; détails de forteresse laissés à
+  l'IA) : BAT-014 abaissée (`HAUT_PONT` 13, quilles × 0,65, détails peints sur la coque × 0,65, galerie et
+  beaupré gardés par rapport au pont) ; BAT-019 en trois volées de douze marches (`F` exporté) ; **BAT-020
+  `navire-fort`** (échauguettes, créneaux, maisonnettes accrochées, tuyaux de cuivre ; 7 756 au premier
+  jet, ramené à 5 984 / 2 444), type `navire_fort` (lieux.js, DIRZ), compte des types 67 → 68, élément 15
+  du plan. Contrôles : aucune règle en échec ; marge coque / escalier 0,48 m ; fuites avec toutes les
+  pièces : 485 m² de pont, seule sortie le pied ; plan : 14 éléments, plate-forme à 62,3 m, 42 590
+  triangles. Empreintes de BAT-014, 019 et 020 seules réécrites ; écarts : seulement les connus ;
+  `npx vitest run` 306 / 308. Captures en jeu `captures/navire-fort-jeu-{flanc,babord,poupe,loin}.png`
+  (les gros plans par `I.frame` visent le sol : inutiles pour des détails à 13 m). Pas de revue
+  Evis-critique ni de planche six vues de BAT-020 (l'utilisateur a fermé le panneau du navigateur).
+  Suite : fusion dans `v3-archipel` à demander ; E9.
 
 ## 15. Scripts (à recopier dans le scratchpad de la session ; `R` = chemin du worktree + `/`)
 
