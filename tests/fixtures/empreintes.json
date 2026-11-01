@@ -1734,7 +1734,9 @@
     "plateau",
     "forteresse"
    ],
-   "usedIn": [],
+   "usedIn": [
+    "Le Plateau venté"
+   ],
    "variants": [
     {
      "label": "De près",
@@ -1769,7 +1771,9 @@
     "plateau",
     "forteresse"
    ],
-   "usedIn": [],
+   "usedIn": [
+    "Le Plateau venté"
+   ],
    "variants": [
     {
      "label": "Grande à pignon",
@@ -1834,7 +1838,9 @@
     "plateau",
     "forteresse"
    ],
-   "usedIn": [],
+   "usedIn": [
+    "Le Plateau venté"
+   ],
    "variants": [
     {
      "label": "Toit d'ardoise",
@@ -1884,7 +1890,9 @@
     "forteresse",
     "animé"
    ],
-   "usedIn": [],
+   "usedIn": [
+    "Le Plateau venté"
+   ],
    "variants": [
     {
      "label": "De près",
@@ -1919,7 +1927,9 @@
     "plateau",
     "forteresse"
    ],
-   "usedIn": [],
+   "usedIn": [
+    "Le Plateau venté"
+   ],
    "variants": [
     {
      "label": "Grand mât (18 m)",
@@ -1970,7 +1980,9 @@
     "plateau",
     "forteresse"
    ],
-   "usedIn": [],
+   "usedIn": [
+    "Le Plateau venté"
+   ],
    "variants": [
     {
      "label": "Escalier du flanc",

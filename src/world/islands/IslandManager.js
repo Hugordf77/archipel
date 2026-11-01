@@ -64,7 +64,7 @@ const bloomColor = (i) => (BLOOMS[i] ||= new THREE.Color(bloomColorOf(i)));
 const partCache = new Map();
 const flat = (g) => (g.index ? g.toNonIndexed() : g);
 function partGeometries(p) {
-  const key = JSON.stringify([p.t, p.v, p.len && Math.round(p.len), p.w && Math.round(p.w), p.d && Math.round(p.d), p.size && Math.round(p.size * 10), p.kind, p.stone, p.sand, p.rise && Math.round(p.rise * 2), p.count, p.merchant, p.x1 !== undefined ? Math.round(Math.hypot(p.x1 - p.x, p.z1 - p.z)) : 0, p.y1 !== undefined ? Math.round((p.y1 - p.y) * 2) : 0]);
+  const key = JSON.stringify([p.t, p.v, p.forme, p.len && Math.round(p.len), p.w && Math.round(p.w), p.d && Math.round(p.d), p.size && Math.round(p.size * 10), p.kind, p.stone, p.sand, p.rise && Math.round(p.rise * 2), p.count, p.merchant, p.x1 !== undefined ? Math.round(Math.hypot(p.x1 - p.x, p.z1 - p.z)) : 0, p.y1 !== undefined ? Math.round((p.y1 - p.y) * 2) : 0]);
   let c = partCache.get(key);
   if (c) return c;
   const m = partModel(p);

@@ -27,12 +27,12 @@ colonne Notes).
 | E5 | BAT-017 Tour-moulin centrale | fait | `4951dd6` | 6 056 / 2 328 (ailes comprises : 464 / 168) ; aucune règle en échec (9 cercles, 86 %, débord 0,38 m) | §6.4 ; Evis-critique : valide au 1er tour ; 9 cercles au lieu de 5 (voir FICHE) |
 | E6 | BAT-018 Mât et voile (2 variantes) | fait | `c6930c9` | forme 0 (grand) : 1 224 / 480 ; forme 1 (petit) : 872 / 348 ; aucune règle en échec (5 cercles, 100 %, débord 0,12 m) | §6.5 ; Evis-critique : valide au 2e tour ; emblème du dos corrigé dans `toile()` |
 | E7 | BAT-019 Escalier et passerelle (2 variantes) | fait | `57b1008` | forme 0 (escalier) : 2 436 / 708 ; forme 1 (passerelle) : 240 / 108 ; aucune règle en échec ; 181 planchers, aucun obstacle (voulu) ; une seule sortie du pont : le pied | §6.6 ; Evis-critique : 1er tour « à reprendre », corrigé ; 2e tour arrêté, fini sans revue à la demande de l'utilisateur ; écarts à §6.6 dans la FICHE |
-| E8 | Pose composée (code du monde) et plan d'implantation | à faire | | | §8 |
+| E8 | Pose composée (code du monde) et plan d'implantation | fait | (ce commit, voir journal) | 37 650 triangles posés (13 éléments, variante du montage, sans passerelle) ; pont praticable 509 m², une seule sortie (le pied de l'escalier) | §8 ; `src/world/plateau/forteresse-navire.js`, lieu composé dans `poserLieux` ; plate-forme à 62,3 m (7 sites de 13 m le long de l'axe) ; château et gaillard encore fermés (passerelle non posée) |
 | E9 | Vérification en jeu, captures, réglages | à faire | | | §10 |
 | E10 | Livraison : LIVRAISONS.md, rapport, graphe | à faire | | | §11 |
 
-Budget cumulé (à tenir à jour) : **38 114 / 60 000** triangles de près selon la **variante du montage** (§8, gardée par l'utilisateur le 27/10/2026) : BAT-014 (11 966) + maisons 4, 5, 7, 10, 11 (11 164) + tourelles 2 et 8 (3 524) + tour-moulin 6 (6 056) + mâts 3, 9, 12 (formes 1, 0, 1 : 872 + 1 224 + 872 = 2 968) + escalier du flanc (2 436) ; chaque
-passerelle posée en E8 comptera 240. Rien n'est encore posé en jeu (E8).
+Budget cumulé (à tenir à jour) : **38 114 / 60 000** (posé en jeu le 01/11/2026 : 37 650 comptés sur les géométries construites, ailes de la tour-moulin à part) triangles de près selon la **variante du montage** (§8, gardée par l'utilisateur le 27/10/2026) : BAT-014 (11 966) + maisons 4, 5, 7, 10, 11 (11 164) + tourelles 2 et 8 (3 524) + tour-moulin 6 (6 056) + mâts 3, 9, 12 (formes 1, 0, 1 : 872 + 1 224 + 872 = 2 968) + escalier du flanc (2 436) ; chaque
+passerelle comptera 240. Posé en jeu en E8 (01/11/2026), sans passerelle.
 
 ---
 
@@ -675,6 +675,23 @@ npx vitest run                                   # échecs connus seulement (§1
   `captures/navire-escalier-{0,1}-6vues.png`, `-allege-6vues.png`, `navire-escalier-gros-plans.png`. Le
   serveur du worktree se lance par la configuration `forteresse` (port 5175) de `.claude/launch.json` de la
   copie principale (non versionné). Prochaine étape : E8, pose composée et plan d'implantation.
+- 01/11/2026 : **E8 fait** à la demande de l'utilisateur (« implemente les moulins sur le plateau venté et le
+  navire en plein milieu » ; les trois moulins-tours étaient déjà posés sur cette branche depuis `e97d344`,
+  mais pas sur `v3-archipel`). Plan `src/world/plateau/forteresse-navire.js` (données pures : `NAVIRE`,
+  `ELEMENTS`, `SITES`, `versIle`), ajouté aux `poses` de la Grande Île (`archipel.js`) ; `poserLieux`
+  (`gen/pois.js`) pose un lieu composé (`poserCompose` : une part par élément, `forme` transmise, une
+  plate-forme par site à la hauteur moyenne) ; `forme` ajoutée à la clé de `partGeometries`
+  (`IslandManager.js`). Éléments : variante du montage (§8), **sans la passerelle** (château et gaillard
+  restent fermés par les rambardes de BAT-014 : les ouvrir modifie la coque, question à poser).
+  Contrôles : plate-forme à 62,3 m (écart 0 sous les sites), 13 éléments dans la zone, aucun arbre,
+  section `grande-ile~4-4` (ancre à 60 m du bord) ; pied de l'escalier à 26 m du cercle de pierres ;
+  fuites avec les planchers et obstacles de toutes les pièces (`fuites-navire.mjs` du scratchpad) : 509 m²
+  de pont depuis l'arrivée de l'escalier, seule sortie le pied, à pied et en sautant. Test
+  `tests/zones/plateau-vente-poses.test.js` étendu (5 tests). Relevé : `part:navire_*` → Plateau venté ;
+  empreinte : seul `usedIn` de BAT-014 à 019 mis à jour. `npx vitest run` 306 / 308 (échecs connus). En
+  jeu (port 5175) : pont à 82,3 m, marches tenues ; captures `captures/navire-jeu-{flanc,proue,loin}.png`
+  (vue de taille fixée : le panneau masqué donne une fenêtre de 0 × 0 et des captures vides). Prochaine
+  étape : E9 (vérification en jeu, réglages) ; fusion dans `v3-archipel` à demander.
 
 ## 15. Scripts (à recopier dans le scratchpad de la session ; `R` = chemin du worktree + `/`)
 

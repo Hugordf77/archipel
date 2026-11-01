@@ -691,7 +691,8 @@ export function poserLieux(P) {
   const hAt = (x, z) => bilinear(H, n, (x + ext) / s, (z + ext) / s);
   P.stamps ||= [];
   P.placed ||= [];
-  return desc.poses.map(({ t, at: [x, z], rot = 0, r = 4, nom }) => {
+  return desc.poses.map(({ t, at: [x, z], rot = 0, r = 4, nom, elements, sites }) => {
+    if (elements) return poserCompose(P, hAt, { t, x, z, rot, r, nom, elements, sites });
     let y = hAt(x, z);
     for (let a = 0; a < 8; a++) y += hAt(x + Math.cos(a * 0.785) * r * 0.7, z + Math.sin(a * 0.785) * r * 0.7);
     y /= 9;
@@ -699,6 +700,37 @@ export function poserLieux(P) {
     P.placed.push({ x, z, r });
     return { id: stableId(desc.seed, TYPE_ID[t] ?? 99, x, z), type: t, label: nom || POI_LABELS[t] || t, x, z, y, r, parts: [{ t, x, z, y, rot }] };
   });
+}
+
+// lieu composé (forteresse-navire, src/world/plateau/forteresse-navire.js) : un seul lieu, une part par
+// élément. Éléments et sites dans le repère du lieu (proue vers +Z), tourné comme ses modèles (DIRZ :
+// π/2 − rot) : (dx, dz) → (x + dz·cos rot + dx·sin rot, z + dz·sin rot − dx·cos rot). Une plate-forme
+// aplanie par site, toutes à la même hauteur (moyenne du relief sous les sites) ; y de chaque élément =
+// plate-forme + dy, rot = rot du lieu + rot de l'élément
+function poserCompose(P, hAt, { t, x, z, rot, r, nom, elements, sites }) {
+  const [c, s] = [Math.cos(rot), Math.sin(rot)];
+  const ile = (dx, dz) => [x + dz * c + dx * s, z + dz * s - dx * c];
+  const plates = sites.map(({ dx, dz, r: rs }) => {
+    const [sx, sz] = ile(dx, dz);
+    return { x: sx, z: sz, r: rs };
+  });
+  let y = 0;
+  let k = 0;
+  for (const q of plates) {
+    for (let a = 0; a < 8; a++, k++) y += hAt(q.x + Math.cos(a * 0.785) * q.r * 0.7, q.z + Math.sin(a * 0.785) * q.r * 0.7);
+    y += hAt(q.x, q.z);
+    k++;
+  }
+  y /= k;
+  for (const q of plates) {
+    P.stamps.push({ ...q, y, fall: 6 });
+    P.placed.push(q);
+  }
+  const parts = elements.map((e) => {
+    const [ex, ez] = ile(e.dx, e.dz);
+    return { t: e.t, x: ex, z: ez, y: y + e.dy, rot: rot + e.rot, forme: e.forme };
+  });
+  return { id: stableId(P.desc.seed, TYPE_ID[t] ?? 99, x, z), type: t, label: nom || POI_LABELS[t] || t, x, z, y, r, parts, sites: plates };
 }
 
 // aplanissement des plates-formes (après érosion et rivières, avant les grilles finales)
