@@ -369,12 +369,17 @@ export function navireCoque(p) {
   poupe(b, h(3));
   cuivres(b, h(4));
   beaupre(b, h(5));
-  berceau(b, h(6));
+  // en vol (navire volant du Plateau venté, src/world/plateau/NavireVolant.js) : sans berceau de rochers
+  if (!p.vol) berceau(b, h(6));
   return { solid: b, obstacles: lire(physique.obstacles, p), decks: lire(physique.planchers, p) };
 }
 
 export default fiche('BAT-014', 'navire-coque', 'Coque et berceau du navire-forteresse', part('navire_coque'), {
-  variants: [{ label: 'De près', params: { v: 0 } }, { label: 'Allégé (au loin)', params: { v: 1 } }],
+  variants: [
+    { label: 'De près', params: { v: 0 } },
+    { label: 'Allégé (au loin)', params: { v: 1 } },
+    { label: 'En vol (sans berceau)', params: { v: 0, vol: true } },
+  ],
   // budget accordé par l'utilisateur le 26/10/2026 (forteresse-navire, ≈ 60 000 en pièces) : 12 000 de
   // près, 5 000 allégé
   budget: { triangles: 12000, lod: 5000 },

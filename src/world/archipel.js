@@ -9,7 +9,6 @@
 // douce et les arbres sont produits par la chaîne de génération (islands/gen/forme.js, plan.js).
 // Étape « bases » : ni lieux, ni villages, ni faune, ni ressources.
 // Les identifiants sont stables : ils servent aux sauvegardes, aux récoltes et au journal.
-import { NAVIRE } from './plateau/forteresse-navire.js';
 
 export const PX = 4; // mètres par pixel de la carte de référence
 export const ORIGINE = [770, 690]; // pixel de l'île de départ
@@ -84,10 +83,8 @@ const ILES_PX = [
     // lieux posés à la main (repère de l'île, m ; gen/pois.js, poserLieux) : moulins-tours (BAT-013) sur
     // les sites PV-M1 à M3 du plan du Plateau venté (production/fiches/ZONE-ILE-VERTE.json), ailes face au
     // vent (rot = windAngle + π) ; nef effondrée (MON-014) sur la traversée du cercle au Moulin du Large,
-    // entrée tournée vers le cercle ; le Navire-forteresse au centre du dôme, lieu composé de plusieurs
-    // éléments (plateau/forteresse-navire.js). r : rayon aplani (enveloppe pour un lieu composé)
+    // entrée tournée vers le cercle. r : rayon aplani
     poses: [
-      NAVIRE,
       { t: 'moulin_tour', at: [422, 378], rot: 3.68, r: 7.5, nom: 'Moulin de la Corniche' },
       { t: 'moulin_tour', at: [380, 296], rot: 3.68, r: 7.5, nom: 'Moulin du Bord' },
       { t: 'moulin_tour', at: [868, 292], rot: 3.68, r: 7.5, nom: 'Moulin du Large' },

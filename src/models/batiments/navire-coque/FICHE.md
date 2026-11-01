@@ -149,3 +149,6 @@ Hors tout / longueur (0,63) : se juge avec la tour-moulin (E5) et la pose compos
   beaupré). Largeur et longueur inchangées : les pièces du pont restent en place (dy = `pont(z)`). Mesures :
   aucune règle en échec, 11 814 triangles, gabarit 19,35 × 23,16 × 75,55. Détails de forteresse ajoutés
   à part (BAT-020, `navire-fort`). Pas de nouvelle revue Evis-critique.
+- 01/11/2026 : variante **en vol** (`vol: true`, sans berceau de rochers) pour le navire volant du Plateau
+  venté (`src/world/plateau/NavireVolant.js`), à la demande de l'utilisateur (« qu'il vole style château
+  ambulant autour du terrain venté », décor seulement). La géométrie des variantes existantes ne change pas.

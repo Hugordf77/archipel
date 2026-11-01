@@ -37,6 +37,7 @@ import batiments_moulin_tour from './batiments/moulin-tour/index.js';
 import batiments_navire_coque from './batiments/navire-coque/index.js';
 import batiments_navire_escalier from './batiments/navire-escalier/index.js';
 import batiments_navire_fort from './batiments/navire-fort/index.js';
+import batiments_navire_machinerie from './batiments/navire-machinerie/index.js';
 import batiments_navire_maison from './batiments/navire-maison/index.js';
 import batiments_navire_mat from './batiments/navire-mat/index.js';
 import batiments_navire_moulin from './batiments/navire-moulin/index.js';
@@ -156,6 +157,7 @@ export const FICHES = [
   ...avec(batiments_navire_coque, 'src/models/batiments/navire-coque/index.js', 'src/models/batiments/navire-coque/physique.js'),
   ...avec(batiments_navire_escalier, 'src/models/batiments/navire-escalier/index.js', 'src/models/batiments/navire-escalier/physique.js'),
   ...avec(batiments_navire_fort, 'src/models/batiments/navire-fort/index.js', 'src/models/batiments/navire-fort/physique.js'),
+  ...avec(batiments_navire_machinerie, 'src/models/batiments/navire-machinerie/index.js', 'src/models/batiments/navire-machinerie/physique.js'),
   ...avec(batiments_navire_maison, 'src/models/batiments/navire-maison/index.js', 'src/models/batiments/navire-maison/physique.js'),
   ...avec(batiments_navire_mat, 'src/models/batiments/navire-mat/index.js', 'src/models/batiments/navire-mat/physique.js'),
   ...avec(batiments_navire_moulin, 'src/models/batiments/navire-moulin/index.js', 'src/models/batiments/navire-moulin/physique.js'),

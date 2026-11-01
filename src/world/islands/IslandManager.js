@@ -15,6 +15,7 @@ import { kindModel, CAP_COLORS, ROCKY } from '../../models/vegetation.js';
 import { GRIMPE } from '../../models/physique.gen.js';
 import { HerbeSystem } from '../../render/herbe/HerbeSystem.js';
 import { partModel, rotY, recolorPart } from '../../models/lieux.js';
+import { NavireVolant } from '../plateau/NavireVolant.js';
 import { MAT } from '../../models/kit/materials.js';
 import { buildRivers, buildLake, buildFallFoam } from '../env/rivers.js';
 import { setGroundProvider, addObstacles, removeObstacles } from '../navigation.js';
@@ -207,6 +208,8 @@ export class IslandManager {
     this._focus = new THREE.Vector3();
     this.proxyGeo = new THREE.IcosahedronGeometry(1, 1);
     this.anims = []; // ailes de moulin, roues à aubes
+    // le Navire-forteresse qui vole autour du Plateau venté (décor)
+    this.navire = new NavireVolant({ root, material: this.mats.struct });
 
     this.worker = new Worker(new URL('./worldWorker.js', import.meta.url), { type: 'module' });
     this.worker.onmessage = (e) => this.onMessage(e.data);
@@ -262,6 +265,7 @@ export class IslandManager {
       if (!a.obj.parent?.visible) continue;
       a.obj.rotation[a.axis] += dt * a.speed * (a.wind ? 0.4 + wind * 0.7 : 1);
     }
+    this.navire.update(dt, px, pz, wind);
     const fm = performance.now() - t0;
     this.stats.maxFrameMs = Math.max(this.stats.maxFrameMs, fm);
     // répartition des images : combien dépassent le budget de 4 ms (et 8 ms)

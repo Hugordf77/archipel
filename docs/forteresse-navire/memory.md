@@ -29,6 +29,7 @@ colonne Notes).
 | E7 | BAT-019 Escalier et passerelle (2 variantes) | fait | `57b1008` | forme 0 (escalier) : 2 436 / 708 ; forme 1 (passerelle) : 240 / 108 ; aucune règle en échec ; 181 planchers, aucun obstacle (voulu) ; une seule sortie du pont : le pied | §6.6 ; Evis-critique : 1er tour « à reprendre », corrigé ; 2e tour arrêté, fini sans revue à la demande de l'utilisateur ; écarts à §6.6 dans la FICHE |
 | E8 | Pose composée (code du monde) et plan d'implantation | fait | `27fd499` | 37 650 triangles posés (13 éléments, variante du montage, sans passerelle) ; pont praticable 509 m², une seule sortie (le pied de l'escalier) | §8 ; `src/world/plateau/forteresse-navire.js`, lieu composé dans `poserLieux` ; plate-forme à 62,3 m (7 sites de 13 m le long de l'axe) ; château et gaillard encore fermés (passerelle non posée) |
 | E8b | Coque abaissée (pont à 13 m) et habillage de forteresse BAT-020 | fait | `ce4e877` | BAT-014 : 11 814 ; BAT-019 : 1 544 / 420 ; BAT-020 : 5 984 / 2 444 ; aucune règle en échec ; 42 590 posés | demande de l'utilisateur du 01/11 ; pas de revue Evis-critique (captures en jeu) |
+| E8c | Navire volant (décor) et hélices et encombrement BAT-021 | fait | (ce commit, voir journal) | BAT-021 : 4 860 / 1 524 ; aucune règle en échec ; navire en vol < 60 000 (test) | demande de l'utilisateur du 01/11 ; plus de pose au sol ni d'escalier ; pas de revue Evis-critique |
 | E9 | Vérification en jeu, captures, réglages | à faire | | | §10 |
 | E10 | Livraison : LIVRAISONS.md, rapport, graphe | à faire | | | §11 |
 
@@ -46,6 +47,7 @@ passerelle comptera 240. Posé en jeu en E8 (01/11/2026), sans passerelle.
 | 26/10/2026 | Emplacement : **plein centre du dôme** du plateau ; le cercle de pierres prévu par le plan devient le parvis. |
 | 26/10/2026 | Après des concepts en pierre puis dans la DA des moulins : « plus dans la DA du château ambulant » ; retenu : **concept « Navire de maisons »** (« le bateau est excellent »). |
 | 26/10/2026 | « Ne fais pas de chantier ce soir » ; ce document doit permettre de construire **étape par étape, en plusieurs parties**. |
+| 01/11/2026 | **Le navire vole** « style château ambulant autour du terrain venté » (revient sur « immobile » du 26/10), en **décor seulement** : on ne monte pas à bord ; « des hélices sur le dos » et « un design plus encombré et vivant » (BAT-021). |
 | 01/11/2026 | « Réduire la coque » : option **moins haute** (pont de 20 à 13 m, longueur gardée) ; « y mettre des détails pour que ça fasse vraiment forteresse style château ambulant » (détails laissés à l'IA : échauguettes, créneaux, maisonnettes accrochées, tuyaux de cuivre, BAT-020). |
 | 27/10/2026 | Emplacement (§7) : **option (b)**, centre du dôme **(644, 316)**, navire tourné de 90° (**rot = 5,25 rad**, flanc au vent), escalier côté cercle de pierres (parvis). Les ailes de la tour-moulin restent face au vent (élément tourné de −π/2 dans le plan, §8 : 5,25 − π/2 = 3,68, comme les moulins-tours). |
 
@@ -707,6 +709,22 @@ npx vitest run                                   # échecs connus seulement (§1
   (les gros plans par `I.frame` visent le sol : inutiles pour des détails à 13 m). Pas de revue
   Evis-critique ni de planche six vues de BAT-020 (l'utilisateur a fermé le panneau du navigateur).
   Suite : fusion dans `v3-archipel` à demander ; E9.
+- 01/11/2026 : fusion de E8b dans `v3-archipel` (avance rapide sur `e48af84`, travail non commité de la copie
+  principale gardé ; tests de contrôle arrêtés par l'utilisateur). Puis **E8c** : « qu'il vole style château
+  ambulant autour du terrain venté », décor seulement. Pose au sol retirée (`archipel.js`, `gen/pois.js`,
+  test des poses revenus à `9c42348` ; la clé `forme` du cache de `partGeometries` reste) ; plan
+  `src/world/plateau/forteresse-navire.js` réécrit (`ELEMENTS` sans escalier, coque `vol: true` sans
+  berceau ; `VOL`, `vol(t)` : cercle de 190 m autour du dôme, y 108, un tour en 6 min, houle, roulis,
+  tangage) ; `NavireVolant.js` (créé et mis à jour par `IslandManager`) : deux versions assemblées un
+  élément par image, de près sous 450 m, cachée au-delà de 3 200 m, ailes et hélices animées. **BAT-021
+  `navire-machinerie`** : hélices de poupe, rotors du château, linge, étagères de tonneaux, ancres,
+  lanternes (4 860 / 1 524, budget 5 000 / 1 600), type `navire_machinerie`, compte des types 68 → 69.
+  Test `tests/zones/navire-volant.test.js` (trajectoire, marge > 25 m au relief réel, éléments, budget).
+  Relevé : les pièces du navire n'ont plus d'usage d'île (`usedIn` vidé dans l'empreinte) ; empreintes de
+  BAT-014 (variante en vol) et BAT-021 seules ajoutées ; `npx vitest run` : échecs connus seulement, plus
+  le coût de la carte d'herbe, à 1,21 ms pour 1,2 relancé seul (instable, §13). Captures en jeu
+  `captures/navire-vol-{1,2,3,4}.png` (cible de la caméra relevée à la hauteur du navire après
+  `I.frame`). Suite : fusion dans `v3-archipel` à demander.
 
 ## 15. Scripts (à recopier dans le scratchpad de la session ; `R` = chemin du worktree + `/`)
 
