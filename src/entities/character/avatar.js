@@ -12,14 +12,9 @@ export const CLOTH_NAMES = ['corail', 'denim', 'prune', 'sarcelle', 'brique', 'm
 
 export const SHOE_COLORS = ['#f6ead2', '#e8705f', '#5b7fc4', '#f2c14e', '#d4574a', '#3f8f8a', '#8a5a8f'];
 
-export const HAIRS = {
-  bol: 'Bol court',
-  carre: 'Carré frangé',
-  queue: 'Queue haute',
-  macarons: 'Deux macarons',
-  boucles: 'Boucles',
-  longs: 'Longs lisses',
-};
+// Une seule coupe : les sauvegardes qui en portent une autre (bol, carré, queue, macarons, boucles,
+// longs) retombent sur elle (sanitizeAvatar).
+export const HAIRS = { pics: 'En pics' };
 
 export const EYES = { ovale: 'Ovales', rond: 'Ronds', amande: 'En amande' };
 
@@ -55,7 +50,7 @@ export function defaultAvatar() {
   return {
     v: 1,
     skin: 1,
-    hair: 'carre',
+    hair: 'pics',
     hairColor: 1,
     eyes: 'ovale',
     top: 'pull',

@@ -1,7 +1,7 @@
 import { h, replay } from './dom.js';
 import { ICON, pieceIcon } from './icons.js';
 import {
-  SKINS, HAIR_COLORS, CLOTH_COLORS, CLOTH_NAMES, SHOE_COLORS, HAIRS, EYES, PIECES, piecesOf, sanitizeAvatar,
+  SKINS, HAIR_COLORS, CLOTH_COLORS, CLOTH_NAMES, SHOE_COLORS, EYES, PIECES, piecesOf, sanitizeAvatar,
 } from '../entities/character/avatar.js';
 
 // Le miroir : on change d'apparence en voyant son personnage en direct dans le monde.
@@ -13,12 +13,11 @@ export const ACC_COLORS = { echarpe: '#8fd6c3', bob: '#e0a93b', barrette: '#ef9b
 const pickOne = (list) => list[Math.floor(Math.random() * list.length)];
 const randIndex = (n) => Math.floor(Math.random() * n);
 
-// Look tiré au hasard parmi ce que l'on possède (la peau et les yeux ne changent pas)
+// Look tiré au hasard parmi ce que l'on possède (la peau, les yeux et la coupe ne changent pas)
 function randomLook(av, owned) {
   const mine = (slot) => piecesOf(slot).filter((k) => owned.has(k));
   return {
     ...av,
-    hair: pickOne(Object.keys(HAIRS)),
     hairColor: randIndex(HAIR_COLORS.length),
     top: pickOne(mine('top')),
     topColor: randIndex(CLOTH_COLORS.length),
@@ -98,8 +97,8 @@ export function openMirrorPanel(game, { first = false, tab = 'visage' } = {}) {
         section('Yeux', chips(Object.entries(EYES), draft.eyes, (v) => { draft.eyes = v; })),
       ];
     } else if (tab === 'cheveux') {
+      // une seule coupe (en pics) : on n'en choisit que la couleur
       parts = [
-        section('Coupe', chips(Object.entries(HAIRS), draft.hair, (v) => { draft.hair = v; })),
         section('Couleur', dots(HAIR_COLORS, draft.hairColor, (i) => { draft.hairColor = i; })),
       ];
     } else if (tab === 'tenue') {

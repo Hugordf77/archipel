@@ -10,7 +10,7 @@ describe('empreintes des modèles', () => {
   it('sont identiques à la référence (géométrie, physique, tables du jeu)', async () => {
     const ref = JSON.parse(fs.readFileSync(REFERENCE, 'utf8'));
     const e = JSON.parse(JSON.stringify(await calculer()));
-    expect(Object.keys(e.modeles)).toHaveLength(196);
+    expect(Object.keys(e.modeles)).toHaveLength(197);
     expect(ecarts(ref, e)).toEqual([]);
   }, 120000);
 });

@@ -59,6 +59,13 @@ export function faceGeometry() {
 
 const INK = '#3d3049';
 const MOUTH_INK = '#7b4f5e';
+// blanc de l'œil (crème, pas de blanc pur) ; iris marron : rayon (part de la largeur de l'œil),
+// hauteur du centre (part de la hauteur, vers le haut), anneau sombre puis teinte claire.
+// Le blanc se lit comme une partie de l'œil : l'emprise est réduite (SIZE) pour que l'œil garde la
+// taille apparente de l'ancien œil d'encre.
+const SCLERA = '#fdf8f0';
+const IRIS = { r: 0.44, dy: 0.05, ring: '#5c3a2b', color: '#8a5a3c' };
+const SIZE = 0.92;
 const EYE_X = 0.098;
 const EYE_Y = -0.012;
 const SHAPES = {
@@ -148,41 +155,84 @@ export class FaceAtlas {
     }
   }
 
-  openEye(cx, shape, { scale = 1, cutTop = 0 } = {}) {
+  // Œil ouvert à la manière des films d'animation peints : blanc visible, iris marron qui touche la
+  // paupière, pupille d'encre, un reflet ; trait de cils épais en haut, contour fin ailleurs. Même
+  // emprise que l'ancien œil d'encre (forme miniature). iris < 1 : iris plus petit (surprise).
+  openEye(cx, shape, { scale = 1, cutTop = 0, iris = 1 } = {}) {
     const ctx = this.ctx;
-    const w = shape.w * scale;
-    const h = shape.h * scale;
+    const w = shape.w * scale * SIZE;
+    const h = shape.h * scale * SIZE;
     const cut = Math.max(cutTop, shape.lid);
-    ctx.save();
-    if (cut > 0) {
-      // on garde la partie de l'œil sous la paupière
+    // hauteur de la paupière supérieure (le haut de l'ellipse quand l'œil est grand ouvert)
+    const lidY = EYE_Y + h / 2 - h * cut;
+    const outline = () => {
       ctx.beginPath();
-      ctx.rect(cx - w, EYE_Y - h, w * 2, h * 1.5 - h * cut);
+      ctx.ellipse(cx, EYE_Y, w / 2, h / 2, 0, 0, Math.PI * 2);
+    };
+    const underLid = () => {
+      ctx.beginPath();
+      ctx.rect(cx - w, EYE_Y - h, w * 2, lidY - (EYE_Y - h));
       ctx.clip();
-    }
+    };
+    ctx.save();
+    outline();
+    ctx.clip();
+    if (cut > 0) underLid();
+    ctx.fillStyle = SCLERA;
+    ctx.fillRect(cx - w, EYE_Y - h, w * 2, h * 2);
+    // iris haut placé, qui suit l'allongement de l'œil : un liseré de blanc sur les côtés, un peu plus
+    // dessous ; paupière baissée, l'iris descend pour qu'on en voie la moitié basse
+    const ir = w * IRIS.r * iris;
+    const iry = ir * Math.min(1.35, Math.max(1, (0.85 * h) / w));
+    const iy = Math.min(EYE_Y + h * IRIS.dy, lidY - iry * 0.15);
+    ctx.fillStyle = IRIS.ring;
+    ctx.beginPath();
+    ctx.ellipse(cx, iy, ir, iry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = IRIS.color;
+    ctx.beginPath();
+    ctx.ellipse(cx, iy, ir * 0.8, iry * 0.82, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = INK;
     ctx.beginPath();
-    ctx.ellipse(cx, EYE_Y, w / 2, h / 2, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, iy, ir * 0.42, iry * 0.44, 0, 0, Math.PI * 2);
     ctx.fill();
-    // reflets
+    // ombre douce de la paupière sur le haut de l'œil
+    ctx.fillStyle = 'rgba(123, 79, 94, 0.2)';
+    ctx.fillRect(cx - w, lidY - h * 0.12, w * 2, h * 0.12);
+    // reflet
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.ellipse(cx + w * 0.17, EYE_Y + h * 0.2, w * 0.17, w * 0.17, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(cx - w * 0.2, EYE_Y - h * 0.22, w * 0.085, w * 0.085, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + ir * 0.36, iy + iry * 0.36, ir * 0.3, ir * 0.3, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+    // contour fin sous la paupière
+    ctx.save();
+    underLid();
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 0.0045;
+    outline();
+    ctx.stroke();
+    ctx.restore();
+    // trait de cils : l'arc du haut de l'œil, ou la paupière baissée (à peine bombée)
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 0.013;
+    ctx.beginPath();
     if (cut > 0) {
-      // trait de paupière à la coupure
-      const ly = EYE_Y + h / 2 - h * cut;
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = 0.011;
-      ctx.beginPath();
-      ctx.moveTo(cx - w * 0.62, ly - 0.004);
-      ctx.quadraticCurveTo(cx, ly + 0.01, cx + w * 0.62, ly - 0.004);
-      ctx.stroke();
+      const t = Math.min(1, Math.abs(lidY - EYE_Y) / (h / 2));
+      const hw = (w / 2) * Math.sqrt(1 - t * t) * 1.12;
+      ctx.moveTo(cx - hw, lidY - 0.003);
+      ctx.quadraticCurveTo(cx, lidY + 0.008, cx + hw, lidY - 0.003);
+    } else {
+      for (let k = 0; k <= 12; k++) {
+        const a = Math.PI * (0.06 + (0.88 * k) / 12);
+        const x = cx + Math.cos(a) * (w / 2);
+        const y = EYE_Y + Math.sin(a) * (h / 2);
+        if (k === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
     }
+    ctx.stroke();
   }
 
   drawEyes(name, shape, brow) {
@@ -192,7 +242,7 @@ export class FaceAtlas {
       const cx = sx * EYE_X;
       const w = shape.w;
       if (name === 'ouverts') this.openEye(cx, shape);
-      else if (name === 'grands') this.openEye(cx, shape, { scale: 1.12 });
+      else if (name === 'grands') this.openEye(cx, shape, { scale: 1.12, iris: 0.82 });
       else if (name === 'micl') this.openEye(cx, shape, { cutTop: 0.5 });
       else if (name === 'concentre') this.openEye(cx, shape, { cutTop: 0.24 });
       else if (name === 'effort') this.openEye(cx, shape, { cutTop: 0.42, scale: 0.94 });

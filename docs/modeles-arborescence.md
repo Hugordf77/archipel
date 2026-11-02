@@ -224,7 +224,7 @@ Espèces ANI-005 à ANI-023, une par dossier : `renard`, `lapin`, `herisson`, `e
 | Dossier | Genre | Modèles | Ancien emplacement |
 | --- | --- | --- | --- |
 | `personnage/corps/` | vedette | PER-001 | `character/personnage.js` `buildAvatarGeometry`, torse ; tenues et accessoires y sont dessinés |
-| `personnage/coupes/` | famille | PER-002 à PER-007 | `character/personnage.js` `HAIR_STYLES`, calotte, mèches |
+| `personnage/coupes/` | famille | PER-026 (PER-002 à PER-007 retirées) | `character/personnage.js` `HAIR_STYLES`, calotte, pics (coupe unique) |
 | `personnage/tenues/` | famille | PER-008 à PER-019 | fiches seules (géométrie dans `personnage/corps/`) |
 | `personnage/accessoires/` | famille | PER-020 à PER-023 | fiches seules (géométrie dans `personnage/corps/`) |
 | `personnage/crayon/` | vedette | PER-024 | `props/outils.js` `crayonGeometry` |
