@@ -3,6 +3,8 @@ import { U, nextId } from '../../core/globals.js';
 import { NOISE, MRT_OUT } from '../../render/shaders/chunks.js';
 import { buildClumpGeometry } from '../../render/foliage.js';
 import { cloudAtlas } from '../../render/textures.js';
+import { FS_VERT } from '../../render/shaders/post.js';
+import { genererVoute, ETOILES_COULEURS } from './voute.js';
 
 // Le monde courbé fait plonger l'horizon sous l'horizontale. Le ciel est donc
 // exprimé dans un « espace ciel » relevé de uHorizonDip : l'horizon peint
@@ -47,9 +49,63 @@ uniform float uStars;
 uniform float uNight;
 uniform float uTime;
 uniform float uRain;
+// voûte nocturne (lot « ciel » : voute, vie, nettete)
+uniform float uVoute;
+uniform float uVie;
+uniform float uNettete;
+uniform sampler2D uVouteTex;
+uniform mat3 uVouteRot;
+uniform float uVouteGraine;
+uniform float uPxAngle;
+uniform vec3 uEtCol[3];
+uniform vec4 uBerger;
+uniform vec3 uFilA;
+uniform vec3 uFilB;
+uniform vec2 uFilT;
 varying vec3 vDir;
 
+// Une couche d'étoiles : au plus une étoile par cellule d'une grille posée sur la sphère de rayon n,
+// gardée seulement si elle tombe loin des bords de sa cellule (jamais coupée). Rayon en pixels (taille
+// d'un pixel : uPxAngle), apparition par éclat quand uStars monte (heure bleue), touche à 4 branches pour
+// les plus brillantes. Renvoie la couleur prémultipliée et son opacité ; masque : détail à garder net.
+vec4 etoiles(vec3 v, float n, float proba, float densite, float rMax, float bMin, float h, inout float masque) {
+  vec3 cell = floor(v * n);
+  float g = uVouteGraine;
+  if (hash13(cell + g) > proba * densite) return vec4(0.0);
+  vec3 sp = vec3(hash13(cell + 1.7 + g), hash13(cell + 3.1 + g), hash13(cell + 5.3 + g)) * 0.5 + 0.25;
+  vec3 sd = normalize(cell + sp);
+  vec3 q = sd * n - cell;
+  if (any(lessThan(q, vec3(0.2))) || any(greaterThan(q, vec3(0.8)))) return vec4(0.0);
+  // beaucoup d'étoiles faibles, quelques brillantes
+  float b = mix(bMin, 1.0, pow(hash13(cell + 7.9 + g), 2.5));
+  float seuil = (1.0 - b) * 0.85;
+  float vis = smoothstep(seuil, seuil + 0.2, uStars);
+  if (vis <= 0.0) return vec4(0.0);
+  float marge = 0.2 / (n * uPxAngle);
+  float r = min(mix(0.5, rMax, b), marge - 0.9);
+  vec3 o = v - sd;
+  float dpx = length(o) / uPxAngle;
+  float s = smoothstep(r + 0.9, max(r - 0.7, 0.0), dpx);
+  if (b > 0.75 && marge > 3.0) {
+    vec3 t1 = normalize(cross(sd, abs(sd.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
+    vec2 p = vec2(dot(o, t1), dot(o, cross(sd, t1))) / uPxAngle;
+    float L = min(r * 3.2, marge - 0.5);
+    float br = max(exp(-p.y * p.y * 1.6) * smoothstep(L, 0.0, abs(p.x)), exp(-p.x * p.x * 1.6) * smoothstep(L, 0.0, abs(p.y)));
+    s = max(s, br * smoothstep(0.75, 1.0, b) * 0.8);
+  }
+  // scintillement doux, plus fort près de l'horizon
+  float ph = hash13(cell + 11.3 + g) * 6.2831;
+  float amp = uVie * mix(0.5, 0.15, smoothstep(0.0, 0.35, h));
+  float tw = 1.0 + amp * (0.6 * sin(uTime * (1.7 + b * 2.6) + ph) + 0.4 * sin(uTime * 4.7 + ph * 3.0));
+  float c = hash13(cell + 13.7 + g);
+  vec3 tint = c < 0.4 ? uEtCol[0] : c < 0.82 ? uEtCol[1] : uEtCol[2];
+  float a = clamp(s * vis * (0.4 + 0.75 * b) * tw, 0.0, 1.0);
+  masque = max(masque, a);
+  return vec4(tint * a, a);
+}
+
 void main() {
+  float masque = 0.0;
   vec3 d = toSkySpace(normalize(vDir));
   float h = d.y;
   float az = atan(d.z, d.x);
@@ -74,8 +130,47 @@ void main() {
   float bite = smoothstep(0.99955, 0.9997, dot(d, offs));
   col = mix(col, vec3(1.0, 0.97, 0.86), moon * (1.0 - bite * 0.9) * uNight);
   col += vec3(0.6, 0.7, 1.0) * pow(max(moonAmt, 0.0), 80.0) * 0.3 * uNight;
-  // étoiles
-  if (uStars > 0.01 && h > 0.0) {
+  // voûte : voie lactée et nébuleuses (carte précalculée, peinte avec le reste), étoiles nettes
+  if (uVoute > 0.5 && uStars > 0.01 && h > -0.02) {
+    vec3 v = uVouteRot * d;
+    vec4 carte = texture(uVouteTex, vec2(atan(v.z, v.x) / 6.2831853 + 0.5, asin(clamp(v.y, -1.0, 1.0)) / 3.1415927 + 0.5));
+    // la lune et le bas du ciel pâlissent la voie lactée
+    float lune = 1.0 - 0.6 * pow(max(moonAmt, 0.0), 6.0);
+    col += carte.rgb * 1.1 * uStars * smoothstep(0.0, 0.3, h) * lune;
+    float densite = mix(0.35, 4.0, carte.a);
+    float bas = smoothstep(0.0, 0.06, h);
+    vec4 e = etoiles(v, 120.0, 0.1, densite, 0.9, 0.0, h, masque);
+    col = col * (1.0 - e.a * bas) + e.rgb * bas;
+    e = etoiles(v, 50.0, 0.12, densite, 1.6, 0.25, h, masque);
+    col = col * (1.0 - e.a * bas) + e.rgb * bas;
+    e = etoiles(v, 22.0, 0.14, min(densite, 1.5), 2.4, 0.55, h, masque);
+    col = col * (1.0 - e.a * bas) + e.rgb * bas;
+    masque *= bas;
+  }
+  // étoile du berger : planète brillante au-dessus du soleil couché (ou levant)
+  float berger = uBerger.w * uVie;
+  if (berger > 0.0) {
+    float dpx = length(d - uBerger.xyz) / uPxAngle;
+    float a = (smoothstep(3.2, 1.6, dpx) + exp(-dpx * 0.18) * 0.22) * berger;
+    col = mix(col, vec3(1.0, 0.97, 0.9), clamp(a, 0.0, 1.0));
+    masque = max(masque, smoothstep(3.2, 1.6, dpx) * berger);
+  }
+  // étoile filante : tête claire, traînée peinte qui s'affine (uFilT : avancée, intensité)
+  if (uFilT.y > 0.0 && h > 0.0) {
+    vec3 nf = normalize(cross(uFilA, uFilB));
+    float tot = acos(clamp(dot(uFilA, uFilB), -1.0, 1.0));
+    vec3 pr = normalize(d - nf * dot(d, nf));
+    float sf = atan(dot(cross(uFilA, pr), nf), dot(uFilA, pr)) / tot;
+    float tete = min(uFilT.x, 1.0);
+    float queue = uFilT.x - 0.45;
+    float le = clamp((sf - queue) / max(tete - queue, 1e-3), 0.0, 1.0) * step(queue, sf) * step(sf, tete);
+    float w = mix(0.3, 1.3, le);
+    float a = le * le * smoothstep(w + 0.9, 0.0, abs(dot(d, nf)) / uPxAngle) * uFilT.y;
+    col = mix(col, vec3(1.0, 0.96, 0.88), a);
+    masque = max(masque, a);
+  }
+  // étoiles d'avant la voûte (voute = 0)
+  if (uVoute < 0.5 && uStars > 0.01 && h > 0.0) {
     vec3 p = d * 160.0;
     vec3 cell = floor(p);
     vec3 f = fract(p);
@@ -84,12 +179,16 @@ void main() {
       vec3 sp = vec3(hash13(cell + 1.7), hash13(cell + 3.1), hash13(cell + 5.3)) * 0.6 + 0.2;
       float s = smoothstep(0.18, 0.0, length(f - sp));
       float tw = 0.6 + 0.4 * sin(uTime * (1.5 + hs * 3.0) + hs * 50.0);
-      col += vec3(1.0, 0.95, 0.85) * s * tw * uStars * smoothstep(0.0, 0.05, h);
+      float st = s * tw * uStars * smoothstep(0.0, 0.05, h);
+      col += vec3(1.0, 0.95, 0.85) * st;
+      masque = max(masque, min(st, 1.0));
     }
   }
   // sous l'horizon : brume marine
   col = mix(col, uSkyHorizon * vec3(0.94, 0.97, 1.0), smoothstep(0.0, -0.05, h));
-  writeGBuffer(col, -normalize(vDir), 0.0, 0.0);
+  // détails fins marqués dans l'alpha des normales (≤ 0,2 : sous le seuil des contours) ; la composition
+  // les reprend nets, après la peinture
+  writeGBuffer(col, -normalize(vDir), 0.0, clamp(masque, 0.0, 1.0) * 0.2 * uNettete);
 }
 `;
 
@@ -161,6 +260,107 @@ void main() {
 }
 `;
 
+// ---------------------------------------------------------------------------
+// Carte de la voûte, calculée une fois au chargement (équirectangulaire, espace voûte) : RGB = lueur
+// de la voie lactée, des nébuleuses et des amas (à ajouter au ciel), A = densité d'étoiles
+// ---------------------------------------------------------------------------
+const VOUTE_FRAG = /* glsl */ `
+${NOISE}
+uniform vec3 uGal;
+uniform vec3 uGalC;
+uniform vec3 uBruit;
+uniform vec4 uNeb[5];
+uniform vec3 uNebCol[5];
+uniform vec4 uAmas[6];
+varying vec2 vUv;
+float vnoise3(vec3 p) {
+  vec3 i = floor(p);
+  vec3 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(mix(hash13(i), hash13(i + vec3(1, 0, 0)), f.x), mix(hash13(i + vec3(0, 1, 0)), hash13(i + vec3(1, 1, 0)), f.x), f.y),
+    mix(mix(hash13(i + vec3(0, 0, 1)), hash13(i + vec3(1, 0, 1)), f.x), mix(hash13(i + vec3(0, 1, 1)), hash13(i + vec3(1, 1, 1)), f.x), f.y),
+    f.z);
+}
+float fbm3(vec3 p) {
+  float a = 0.5;
+  float s = 0.0;
+  for (int i = 0; i < 5; i++) {
+    s += a * vnoise3(p);
+    p = p * 2.03 + 17.1;
+    a *= 0.5;
+  }
+  return s;
+}
+void main() {
+  float lon = (vUv.x - 0.5) * 6.2831853;
+  float lat = (vUv.y - 0.5) * 3.1415927;
+  vec3 v = vec3(cos(lat) * cos(lon), sin(lat), cos(lat) * sin(lon));
+  // bande galactique ondulée, plus large et plus claire vers le centre
+  float g = dot(v, uGal) + (fbm3(v * 3.0 + uBruit) - 0.5) * 0.12;
+  float coeur = pow(max(dot(v, uGalC), 0.0), 3.0);
+  float largeur = 0.12 + 0.1 * coeur;
+  float bande = exp(-g * g / (largeur * largeur));
+  float nuees = fbm3(v * 9.0 + uBruit.yzx);
+  float lueur = bande * (0.35 + 0.85 * nuees) * (0.55 + 0.9 * coeur);
+  // bandes de poussière : filaments sombres le long du milieu de l'arche
+  float poussiere = exp(-pow((g - 0.025 * coeur) / 0.05, 2.0)) * smoothstep(0.38, 0.62, fbm3(v * 6.0 + uBruit.zxy));
+  lueur *= 1.0 - 0.75 * poussiere;
+  vec3 col = lueur * mix(vec3(0.74, 0.72, 0.96), vec3(1.0, 0.9, 0.8), coeur) * 0.42;
+  // nébuleuses pastel : nuées bosselées
+  for (int i = 0; i < 5; i++) {
+    float dd = 1.0 - dot(v, uNeb[i].xyz);
+    float r = uNeb[i].w;
+    float f = exp(-dd * 2.0 / (r * r));
+    float forme = smoothstep(0.25, 0.75, fbm3(v * 16.0 + float(i) * 7.3 + uBruit));
+    col += uNebCol[i] * f * (0.25 + forme) * 0.22;
+  }
+  float densite = 0.3 + 1.6 * bande * (0.4 + nuees) * (1.0 - 0.7 * poussiere);
+  // amas : beaucoup d'étoiles serrées, lueur douce
+  for (int i = 0; i < 6; i++) {
+    float dd = 1.0 - dot(v, uAmas[i].xyz);
+    float f = exp(-dd * 2.0 / (uAmas[i].w * uAmas[i].w));
+    densite += f * 3.5;
+    col += vec3(0.86, 0.88, 1.0) * f * 0.12;
+  }
+  gl_FragColor = vec4(col, clamp(densite / 4.0, 0.0, 1.0));
+}
+`;
+
+// Prépare la carte de la voûte (une passe de shader dans une cible de 1024 × 512)
+function preparerVoute(renderer, voute) {
+  const rt = new THREE.WebGLRenderTarget(1024, 512, { depthBuffer: false, generateMipmaps: false });
+  rt.texture.wrapS = THREE.RepeatWrapping;
+  rt.texture.minFilter = THREE.LinearFilter;
+  rt.texture.magFilter = THREE.LinearFilter;
+  const v3 = (a) => new THREE.Vector3(...a);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uGal: { value: v3(voute.galaxie) },
+      uGalC: { value: v3(voute.centre) },
+      uBruit: { value: v3(voute.bruit) },
+      uNeb: { value: voute.nebuleuses.map((n) => new THREE.Vector4(...n.dir, n.rayon)) },
+      uNebCol: { value: voute.nebuleuses.map((n) => new THREE.Color(n.couleur).multiplyScalar(n.force)) },
+      uAmas: { value: voute.amas.map((a) => new THREE.Vector4(...a.dir, a.rayon)) },
+    },
+    vertexShader: FS_VERT,
+    fragmentShader: VOUTE_FRAG,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
+  quad.frustumCulled = false;
+  const scene = new THREE.Scene();
+  scene.add(quad);
+  const prev = renderer.getRenderTarget();
+  renderer.setRenderTarget(rt);
+  renderer.render(scene, new THREE.Camera());
+  renderer.setRenderTarget(prev);
+  mat.dispose();
+  quad.geometry.dispose();
+  return rt;
+}
+
 function rng(seed) {
   let s = (seed * 9301 + 49297) >>> 0;
   return () => {
@@ -218,10 +418,21 @@ export class Sky {
   constructor() {
     this.group = new THREE.Group();
     const geo = new THREE.SphereGeometry(900, 48, 24);
+    this.voute = genererVoute();
     const mat = new THREE.ShaderMaterial({
       name: 'sky',
       glslVersion: THREE.GLSL3,
-      uniforms: { ...U },
+      uniforms: {
+        ...U,
+        uVouteTex: { value: null },
+        uVouteRot: { value: new THREE.Matrix3() },
+        uVouteGraine: { value: this.voute.etoiles },
+        uPxAngle: { value: 0.001 },
+        uEtCol: { value: ETOILES_COULEURS.map((c) => new THREE.Color(c)) },
+        uFilA: { value: new THREE.Vector3(1, 0, 0) },
+        uFilB: { value: new THREE.Vector3(0, 1, 0) },
+        uFilT: { value: new THREE.Vector2(0, 0) },
+      },
       vertexShader: skyVert,
       fragmentShader: skyFrag,
       side: THREE.BackSide,
@@ -232,10 +443,67 @@ export class Sky {
     this.dome.frustumCulled = false;
     this.clouds = buildClouds();
     this.group.add(this.dome, this.clouds);
+    // repère du pôle céleste : est (a) et point haut de l'équateur céleste au sud (c)
+    const p = new THREE.Vector3(...this.voute.pole);
+    this.pole = p;
+    this.poleA = new THREE.Vector3().crossVectors(p, new THREE.Vector3(0, 1, 0)).normalize();
+    this.poleC = new THREE.Vector3().crossVectors(this.poleA, p);
+    this.filante = { t: -1, dur: 1, attente: 8 + Math.random() * 20 };
   }
 
-  update(camera, dt) {
+  // carte de la voûte : une passe au chargement (renderer prêt)
+  prepare(renderer) {
+    if (this.vouteRT) return;
+    this.vouteRT = preparerVoute(renderer, this.voute);
+    this.dome.material.uniforms.uVouteTex.value = this.vouteRT.texture;
+  }
+
+  // la voûte tourne autour du pôle céleste au fil des heures (un tour par jour canonique)
+  tourneVoute(heure) {
+    const th = (heure / 24) * Math.PI * 2;
+    const c = Math.cos(th);
+    const s = Math.sin(th);
+    const a = this.poleA;
+    const b = this.poleC;
+    const p = this.pole;
+    const e1 = [a.x * c + b.x * s, a.y * c + b.y * s, a.z * c + b.z * s];
+    const e3 = [-a.x * s + b.x * c, -a.y * s + b.y * c, -a.z * s + b.z * c];
+    this.dome.material.uniforms.uVouteRot.value.set(...e1, p.x, p.y, p.z, ...e3);
+  }
+
+  // étoile filante rare (une toutes les 20 à 60 s), seulement la nuit et avec le réglage « vie »
+  filantes(dt) {
+    const f = this.filante;
+    const u = this.dome.material.uniforms;
+    if (f.t < 0) {
+      f.attente -= dt;
+      if (f.attente > 0 || U.uStars.value < 0.5 || U.uVie.value < 0.5) return;
+      const az = Math.random() * Math.PI * 2;
+      const el = 0.45 + Math.random() * 0.6;
+      const a = new THREE.Vector3(Math.cos(az) * Math.cos(el), Math.sin(el), Math.sin(az) * Math.cos(el));
+      // vers le bas, un peu de biais
+      const az2 = az + (Math.random() - 0.5) * 0.5;
+      const el2 = el - 0.12 - Math.random() * 0.14;
+      u.uFilA.value.copy(a);
+      u.uFilB.value.set(Math.cos(az2) * Math.cos(el2), Math.sin(el2), Math.sin(az2) * Math.cos(el2));
+      f.t = 0;
+      f.dur = 0.7 + Math.random() * 0.5;
+      f.attente = 20 + Math.random() * 40;
+    }
+    f.t += dt / f.dur;
+    if (f.t >= 1.45) {
+      f.t = -1;
+      u.uFilT.value.set(0, 0);
+      return;
+    }
+    u.uFilT.value.set(f.t, Math.sin(Math.min(f.t / 1.45, 1) * Math.PI));
+  }
+
+  update(camera, dt, heure = 0) {
     this.dome.position.copy(camera.position);
+    this.dome.material.uniforms.uPxAngle.value = THREE.MathUtils.degToRad(camera.fov) / window.innerHeight;
+    this.tourneVoute(heure);
+    this.filantes(dt);
     U.uCloudRot.value += dt * 0.004 * (1 + U.uRain.value * 2);
   }
 }

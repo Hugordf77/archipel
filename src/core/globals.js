@@ -69,6 +69,13 @@ export const U = {
   uSunSkyDir: { value: new THREE.Vector3(0, 1, 0) },
   uHorizonDip: { value: 0.3 },
   uCloudRot: { value: 0 },
+  // lot « ciel » (0 à 1, posés à chaque image par Pipeline) : voûte (voie lactée, étoiles), vie
+  // (scintillement, étoiles filantes, étoile du berger), netteté (étoiles gardées nettes après la peinture)
+  uVoute: { value: 0 },
+  uVie: { value: 0 },
+  uNettete: { value: 0 },
+  // étoile du berger : direction en espace ciel, intensité (daycycle.js)
+  uBerger: { value: new THREE.Vector4(0, 1, 0, 0) },
   uCloudLit: { value: new THREE.Color(1, 1, 1) },
   uCloudShade: { value: new THREE.Color(0.75, 0.75, 0.9) },
   // eau

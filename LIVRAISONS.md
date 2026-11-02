@@ -1,7 +1,7 @@
 # Livraisons — Archipel
 
 Point d'entrée pour une IA ou un nouvel arrivant : ce qui est livré, où ça vit, comment le vérifier, ce
-qui est en cours. Mis à jour le 01/11/2026. À tenir à jour à chaque livraison (section « État courant »
+qui est en cours. Mis à jour le 02/11/2026. À tenir à jour à chaque livraison (section « État courant »
 et domaine concerné).
 
 ## Démarrer
@@ -289,7 +289,31 @@ et domaine concerné).
 - Tableau de bord de production : `dashboard.html`, `dashboard/` (`management.json` : relations entre
   agents).
 
-## État courant (01/11/2026)
+### Ciel nocturne (branche `claude/ciel`)
+
+- **Voûte** : catalogue pur et déterministe `src/world/env/voute.js` (`genererVoute(graine)` : plan galactique
+  dont l'arche passe au zénith vers 1 h, 5 nébuleuses pastel, 6 amas, pôle céleste au nord à 38°).
+  `src/world/env/sky.js` : carte équirectangulaire 1024 × 512 calculée une fois au chargement
+  (`preparerVoute`, appelée par `Game` via `sky.prepare`), peinte avec le reste ; trois couches d'étoiles
+  procédurales (`etoiles`) à éclats, couleurs et tailles variés ; rotation d'un tour par jour canonique.
+- **Netteté** : le dôme marque les étoiles dans l'alpha des normales du G-buffer (id 0, ≤ 0,2) ;
+  `COMPOSITE_FRAG` (`post.js`) les reprend nettes après la peinture Kuwahara.
+- **Vie** : scintillement, apparition par éclat à l'heure bleue, étoiles filantes (une toutes les 20 à 60 s),
+  étoile du berger (`etoileDuBerger`, `daycycle.js`).
+- **Réglages** : `CIEL` dans `src/render/Pipeline.js` (`pipeline.settings.voute`, `vie`, `nettete` ; `null`
+  = valeur de la qualité ; low sans `vie`).
+- **Vérifier** : `tests/voute.test.js` ; en console, `S = await import('/scripts/rendu/serie.js');
+  await S.ciel(__ile, 'apres')` puis `python3 scripts/rendu/planche.py --ciel avant apres`. Plan et mesures :
+  `docs/ciel/plan.md` (étoiles au zénith à 23 h : 0 → 2 843 px en medium ; +0,2 ms en medium).
+
+## État courant (02/11/2026)
+
+- **Branche `claude/ciel`** (worktree `.claude/worktrees/ciel`, configuration `ciel`, port 5178) : lot B
+  (nuit) livré et validé en jeu. Elle porte d'abord un commit de base, copie conforme du lot 1 lumière non
+  commité du worktree `ombres-lumiere` (`hourGrade`, `scripts/rendu/`) : commiter `ombres-lumiere` à
+  l'identique puis rebaser `claude/ciel`, ou fusionner `claude/ciel`, qui apporte alors les deux. Reste :
+  lot A (couchers, dégradé à 5 bandes, soleil et lune) et lot C (nuages du crépuscule, reflets), ce dernier
+  après la fusion de `volcan`, qui réécrit les nuages de `sky.js`. Non fusionnée dans `v3-archipel`.
 
 - **Fusions du 01/11/2026** : `claude/forteresse-navire` fusionnée trois fois dans `v3-archipel` par avance
   rapide (`7af3da8` navire posé, `e48af84` coque abaissée et BAT-020, `43f6a73` navire volant et BAT-021).

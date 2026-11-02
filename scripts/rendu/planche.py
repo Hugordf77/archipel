@@ -1,12 +1,20 @@
 # Planche de comparaison des captures de rendu et relevé des sombres (pipette).
-# python3 scripts/rendu/planche.py <préfixe> [<préfixe2>] : grille lieux × heures (deux préfixes : côte à côte).
+# python3 scripts/rendu/planche.py [--ciel] <préfixe> [<préfixe2>] : grille lieux × heures (deux préfixes :
+# côte à côte). --ciel : cadrages tournés vers le ciel (LIEUX_CIEL et HEURES_CIEL de serie.js).
 import sys, json
 from PIL import Image, ImageDraw
 import numpy as np
 
-LIEUX = ['depart', 'grande-ile', 'volcan']
-HEURES = ['8', '12', '18h5', '23']
-prefixes = sys.argv[1:] or ['avant']
+args = sys.argv[1:]
+CIEL = '--ciel' in args
+args = [a for a in args if a != '--ciel']
+if CIEL:
+    LIEUX = ['ouest-coucher', 'est-lever', 'zenith-nuit', 'horizon-marin']
+    HEURES = ['5h5', '6h75', '18h25', '19h5', '20h5', '23', '2']
+else:
+    LIEUX = ['depart', 'grande-ile', 'volcan']
+    HEURES = ['8', '12', '18h5', '23']
+prefixes = args or ['avant']
 W = 480
 cell = None
 stats = {}
@@ -51,7 +59,7 @@ sheet = Image.new('RGB', (cw * len(HEURES), ch * len(rows)), (250, 246, 238))
 for j, row in enumerate(rows):
     for i, t in enumerate(row):
         sheet.paste(t, (i * cw, j * ch))
-name = '-'.join(prefixes)
+name = ('ciel-' if CIEL else '') + '-'.join(prefixes)
 sheet.save(f'captures/planche-{name}.jpg', quality=88)
 json.dump(stats, open(f'captures/stats-{name}.json', 'w'), indent=1)
 for k, v in stats.items():

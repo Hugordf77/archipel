@@ -184,7 +184,7 @@ export class World {
   update(dt, camera) {
     U.uTime.value += dt;
     const state = this.dayCycle.update(this.rain);
-    this.sky.update(camera, dt);
+    this.sky.update(camera, dt, state.canon);
     this.halo.material.uniforms.uIntensity.value = U.uNight.value * 0.85;
     const t = U.uTime.value;
     const sb = this.smokeBase;

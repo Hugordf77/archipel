@@ -111,6 +111,21 @@ const grey = new THREE.Color('#9aa6b8');
 const MOON_SKY = new THREE.Vector3(-0.42, 0.13, -0.9).normalize();
 const MOON_LIGHT = new THREE.Vector3(-0.35, 0.75, -0.55).normalize();
 
+// trajectoire du soleil (espace ciel) pour une heure canonique : est → (haut, un peu vers le sud) → ouest
+export function soleilDir(ch, out = new THREE.Vector3()) {
+  const th = ((ch - 6.5) / 13) * Math.PI;
+  return out.set(Math.cos(th), Math.sin(th) * 1.45, Math.sin(th) * 0.95).normalize();
+}
+
+// étoile du berger : sur la trajectoire du soleil, 1,8 h derrière lui le soir (devant lui le matin),
+// visible quand le soleil est couché et qu'elle est au-dessus de l'horizon
+const BERGER = new THREE.Vector3();
+export function etoileDuBerger(ch, sunY) {
+  soleilDir(ch >= 12 ? ch - 1.8 : ch + 1.8, BERGER);
+  const w = THREE.MathUtils.smoothstep(-sunY, 0.02, 0.12) * THREE.MathUtils.smoothstep(BERGER.y, 0.0, 0.06);
+  return { dir: BERGER, w };
+}
+
 export class DayCycle {
   constructor() {
     this.hour = 12;
@@ -170,11 +185,10 @@ export class DayCycle {
     const night = THREE.MathUtils.lerp(a.night, b.night, t);
     U.uNight.value = night;
 
-    // trajectoire du soleil : est → (haut, un peu vers le sud) → ouest
-    const p = (ch - 6.5) / 13;
-    const th = p * Math.PI;
-    const sun = new THREE.Vector3(Math.cos(th), Math.sin(th) * 1.45, Math.sin(th) * 0.95).normalize();
+    const sun = soleilDir(ch);
     U.uSunSkyDir.value.copy(sun);
+    const berger = etoileDuBerger(ch, sun.y);
+    U.uBerger.value.set(berger.dir.x, berger.dir.y, berger.dir.z, berger.w * (1 - rain));
     const dayAmt = THREE.MathUtils.smoothstep(sun.y, -0.06, 0.14);
     const light = new THREE.Vector3(sun.x, Math.max(sun.y, 0.34), sun.z).normalize();
     light.lerp(MOON_LIGHT, 1 - dayAmt).normalize();

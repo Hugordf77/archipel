@@ -71,6 +71,8 @@ export class Game {
     // contenu du monde en coordonnées absolues (le groupe racine porte l'origine flottante)
     this.scene = this.world.root;
     this.pipeline = new Pipeline(this.renderer);
+    // carte de la voûte nocturne : une passe de shader, une fois
+    this.world.sky.prepare(this.renderer);
     this.rig = new CameraRig(this.camera);
     // cadrage de jeu par défaut
     this.defaultCam = { dist: 14, pitch: 0.56 };

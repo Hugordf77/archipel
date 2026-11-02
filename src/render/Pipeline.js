@@ -12,10 +12,16 @@ import {
 export const LUMIERE = ['relief', 'rebond', 'rim', 'brume', 'etalonnage'];
 const LUMIERE_ON = { relief: 1, rebond: 1, rim: 1, brume: 1, etalonnage: 1 };
 
+// Lot « ciel » (0 ou 1, même principe) : voute (voie lactée, nébuleuses, amas, étoiles à éclats et couleurs
+// variés, rotation lente), vie (scintillement, étoiles filantes, étoile du berger), nettete (étoiles
+// reprises nettes après la peinture). En bas, la voûte reste sans « vie ».
+export const CIEL = ['voute', 'vie', 'nettete'];
+const CIEL_ON = { voute: 1, vie: 1, nettete: 1 };
+
 export const QUALITY = {
-  low: { pixelRatio: 1, paintScale: 0.5, aniso: false, radius: 3, shadow: 1024, shadowEvery: 3, lumiere: LUMIERE_ON, label: 'Bas' },
-  medium: { pixelRatio: 1.25, paintScale: 0.5, aniso: true, radius: 3, shadow: 2048, shadowEvery: 2, lumiere: LUMIERE_ON, label: 'Moyen' },
-  high: { pixelRatio: 1.6, paintScale: 0.55, aniso: true, radius: 3.5, kernelMul: 1.5, shadow: 2048, shadowEvery: 1, lumiere: LUMIERE_ON, label: 'Haut' },
+  low: { pixelRatio: 1, paintScale: 0.5, aniso: false, radius: 3, shadow: 1024, shadowEvery: 3, lumiere: LUMIERE_ON, ciel: { voute: 1, vie: 0, nettete: 1 }, label: 'Bas' },
+  medium: { pixelRatio: 1.25, paintScale: 0.5, aniso: true, radius: 3, shadow: 2048, shadowEvery: 2, lumiere: LUMIERE_ON, ciel: CIEL_ON, label: 'Moyen' },
+  high: { pixelRatio: 1.6, paintScale: 0.55, aniso: true, radius: 3.5, kernelMul: 1.5, shadow: 2048, shadowEvery: 1, lumiere: LUMIERE_ON, ciel: CIEL_ON, label: 'Haut' },
 };
 
 // ---------------------------------------------------------------------------
@@ -124,6 +130,10 @@ export class Pipeline {
       rim: null,
       brume: null,
       etalonnage: null,
+      // lot « ciel » : null = valeur de la qualité, sinon 0 ou 1
+      voute: null,
+      vie: null,
+      nettete: null,
     };
     // teinte du rebond visée (biome sous le joueur, Game.updateZone) ; U.uBounceColor la rejoint
     this.rebondCible = U.uBounceColor.value.clone();
@@ -272,7 +282,16 @@ export class Pipeline {
     return v === null || v === undefined ? this.q.lumiere?.[k] ?? 0 : Math.max(0, Math.min(1, +v || 0));
   }
 
+  // valeur d'un réglage du lot « ciel » (0 ou 1)
+  ciel(k) {
+    const v = this.settings[k];
+    return v === null || v === undefined ? this.q.ciel?.[k] ?? 0 : +v > 0.5 ? 1 : 0;
+  }
+
   appliqueLumiere() {
+    U.uVoute.value = this.ciel('voute');
+    U.uVie.value = this.ciel('vie');
+    U.uNettete.value = this.ciel('nettete');
     U.uRelief.value = this.lumiere('relief');
     U.uBounce.value = this.lumiere('rebond');
     U.uRimBoost.value = this.lumiere('rim');

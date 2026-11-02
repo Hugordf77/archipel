@@ -262,9 +262,12 @@ void main() {
   vec2 pd = vec2(vnoise(vUv * vec2(70.0, 40.0)), vnoise(vUv * vec2(70.0, 40.0) + 7.3)) - 0.5;
   vec2 puv0 = vUv + pd * px * 2.2 * uWobble;
   vec3 col = texture2D(tPaint, puv0).rgb;
-  // le joueur échappe en partie à la peinture : visage net sur un décor peint
-  float isChar = step(uCharId - 0.002, texture2D(tNormal, vUv).b);
-  col = mix(col, texture2D(tScene, vUv).rgb, isChar * 0.65);
+  // le joueur échappe en partie à la peinture : visage net sur un décor peint ; les détails fins du ciel
+  // (étoiles, étoile filante) aussi : le dôme (id 0) les marque dans l'alpha des normales, sous 0,2
+  vec4 nC = texture2D(tNormal, vUv);
+  float isChar = step(uCharId - 0.002, nC.b);
+  float cielNet = nC.b < 0.001 ? clamp(nC.a * 5.0, 0.0, 1.0) : 0.0;
+  col = mix(col, texture2D(tScene, vUv).rgb, max(isChar * 0.65, cielNet));
   // accumulation de pigment aux frontières des aplats (effet aquarelle/gouache)
   if (uPool > 0.0) {
     vec2 o = px * 2.5;
