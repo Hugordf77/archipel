@@ -40,7 +40,8 @@ import { openLogbookPanel, openMapPanel, openCartographerPanel } from '../ui/exp
 import { AudioEngine } from '../audio/AudioEngine.js';
 import { Weather } from '../world/env/weather.js';
 import { openSettingsPanel } from '../ui/settingsPanel.js';
-import { Hotbar, openInventoryPanel } from '../ui/inventoryUI.js';
+import { Hotbar } from '../ui/inventoryUI.js';
+import { openInventoryScreen } from '../ui/inventoryScreen.js';
 import { openMirrorPanel } from '../ui/mirrorPanel.js';
 import { seasonOf, applySeason, seasonSnow } from '../world/env/season.js';
 
@@ -359,6 +360,13 @@ export class Game {
     const dt = Math.min(0.05, rawDt);
     const st = this.state;
     this.fps = this.fps ? this.fps * 0.95 + (1 / Math.max(rawDt, 1e-3)) * 0.05 : 60;
+    // jeu en pause (inventaire plein écran) : le monde n'est plus mis à jour ni redessiné,
+    // l'image reste figée sous le voile ; seuls la manette et l'aperçu de l'écran tournent
+    if (this.paused) {
+      this.pad.poll(dt);
+      this.pauseFrame?.(dt);
+      return;
+    }
     this.pipeline.adapt(rawDt * 1000);
 
     // joueur (mi-clos après 23 h)
@@ -800,8 +808,8 @@ export class Game {
     item.action();
   }
 
-  openInventory() {
-    openInventoryPanel(this);
+  openInventory(tab = 'inventaire') {
+    openInventoryScreen(this, tab);
   }
 
   stationsNear() {

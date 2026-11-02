@@ -571,6 +571,13 @@ export class GamepadInput {
     if (!sheet) return;
     this.sprint = false;
     this.flags.jump = this.flags.roll = false;
+    // écran qui lit lui-même la manette (inventaire plein écran)
+    if (sheet.padScreen) {
+      this.sheet = sheet;
+      this.blur();
+      sheet.padScreen(this, dt);
+      return;
+    }
     if (sheet !== this.sheet) {
       this.sheet = sheet;
       this.blur();
