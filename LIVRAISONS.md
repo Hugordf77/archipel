@@ -320,12 +320,21 @@ et domaine concerné).
 
 ## État courant (02/11/2026)
 
-- **Branche `claude/ciel`** (worktree `.claude/worktrees/ciel`, configuration `ciel`, port 5178) : lot B
-  (nuit) livré et validé en jeu. Elle porte d'abord un commit de base, copie conforme du lot 1 lumière non
-  commité du worktree `ombres-lumiere` (`hourGrade`, `scripts/rendu/`) : commiter `ombres-lumiere` à
-  l'identique puis rebaser `claude/ciel`, ou fusionner `claude/ciel`, qui apporte alors les deux. Reste :
-  lot A (couchers, dégradé à 5 bandes, soleil et lune) et lot C (nuages du crépuscule, reflets), ce dernier
-  après la fusion de `volcan`, qui réécrit les nuages de `sky.js`. Non fusionnée dans `v3-archipel`.
+- **Fusion du 02/11/2026 : assemblage** (`claude/assemblage`, worktree `.claude/worktrees/assemblage`,
+  configuration `assemblage`, port 5180), fusionné dans `v3-archipel` par avance rapide. Contenu :
+  - lot 1 lumière (`hourGrade`, `scripts/rendu/`), copie conforme du travail non commité du worktree
+    `ombres-lumiere` (le commiter à l'identique, ou abandonner cette copie là-bas) ;
+  - ciel, lot B (nuit) de `claude/ciel` ; restent le lot A (couchers) et le lot C (nuages du crépuscule,
+    reflets), ce dernier après `volcan`, qui réécrit les nuages de `sky.js` ;
+  - inventaire V2 de `claude/inventaire-v2-c40733` (écran plein écran, touche I) ;
+  - personnage de `claude/keen-hopper-d637c8` : coupe en pics (PER-026), physique des pics
+    (`src/entities/character/cheveux.js`, `tests/cheveux.test.js`), yeux peints ;
+  - dirigeables NAV-012 (`src/world/ciel/Dirigeables.js`, `src/models/bateaux/dirigeable/`, branchés dans
+    `IslandManager`), copie conforme de la part « dirigeables » du travail non commité de `volcan` ; la
+    forteresse suspendue à un ballon et le volcan restent dans `volcan`.
+  Pas dans l'assemblage : 2 commits de `claude/forteresse-navire` (E9), 1 commit de `claude/arbres-v2-11841d`.
+  Le travail non commité de la copie principale est resté en place (`releves.gen.js`, `tests/models.test.js`
+  et `.claude/launch.json` portent les deux). Échecs connus seulement : empreintes, numérotation MON.
 
 - **Fusions du 01/11/2026** : `claude/forteresse-navire` fusionnée trois fois dans `v3-archipel` par avance
   rapide (`7af3da8` navire posé, `e48af84` coque abaissée et BAT-020, `43f6a73` navire volant et BAT-021).
@@ -409,7 +418,7 @@ et domaine concerné).
 - **Budget mesuré en jeu** (Forêt des souvenirs, onglet caché) : 4,3 M triangles, ombres comprises.
   L'essentiel vient de la végétation complète des sections proches et de l'herbe.
 
-- **Inventaire V2** (branche `claude/inventaire-v2-c40733`, worktree, ni fusionnée ni poussée) : écran
+- **Inventaire V2** (branche `claude/inventaire-v2-c40733`, fusionnée le 02/11/2026 par l'assemblage) : écran
   plein écran à la place du panneau Sac. Choix de DA validés par l'utilisateur le 21/10/2026 :
   regroupement en 8 onglets, voile violet et cases claires, fond bleu pastel pour la barre rapide, aperçu
   3D (gardé plutôt qu'un portrait fixe). Carnet et Réglages, depuis l'écran, ouvrent les panneaux
