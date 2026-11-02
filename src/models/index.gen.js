@@ -67,6 +67,7 @@ import monuments_ruines_alternative from './monuments/ruines-alternative/index.j
 import monuments_statue_geante from './monuments/statue-geante/index.js';
 import bateaux_barque from './bateaux/barque/index.js';
 import bateaux_canots from './bateaux/canots/index.js';
+import bateaux_dirigeable from './bateaux/dirigeable/index.js';
 import bateaux_epaves from './bateaux/epaves/index.js';
 import bateaux_goelette from './bateaux/goelette/index.js';
 import bateaux_mouillage from './bateaux/mouillage/index.js';
@@ -187,6 +188,7 @@ export const FICHES = [
   ...avec(monuments_statue_geante, 'src/models/monuments/statue-geante/index.js', 'src/models/monuments/statue-geante/physique.js'),
   ...avec(bateaux_barque, 'src/models/bateaux/barque/index.js'),
   ...avec(bateaux_canots, 'src/models/bateaux/canots/index.js', 'src/models/bateaux/canots/physique.js'),
+  ...avec(bateaux_dirigeable, 'src/models/bateaux/dirigeable/index.js', 'src/models/bateaux/dirigeable/physique.js'),
   ...avec(bateaux_epaves, 'src/models/bateaux/epaves/index.js', 'src/models/bateaux/epaves/physique.js'),
   ...avec(bateaux_goelette, 'src/models/bateaux/goelette/index.js'),
   ...avec(bateaux_mouillage, 'src/models/bateaux/mouillage/index.js', 'src/models/bateaux/mouillage/physique.js'),

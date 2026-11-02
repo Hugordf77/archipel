@@ -28,6 +28,7 @@ import { cabane } from './batiments/cabane-ermite/index.js';
 import { jetee } from './ouvrages/jetee/index.js';
 import { pont, pontCorde, escalier, panneau } from './ouvrages/chemins/index.js';
 import { puits } from './ouvrages/puits/index.js';
+import { dirigeable } from './bateaux/dirigeable/index.js';
 import { clotureChamp, potager, epouvantail, archeFleurie } from './ouvrages/champs/index.js';
 import { bassinChaud } from './ouvrages/bassin-chaud/index.js';
 import { arche } from './ouvrages/arche/index.js';
@@ -71,11 +72,13 @@ const LIEUX = {
   // objets, bois, plantes et arbres
   coffre, coffre_cache: coffre, tonneaux, charrette, nid, cercle_champi: cercleChampi, nichoir, feu_camp: feuCamp, tente,
   ruche, recif, bois_pile: boisPile, rondin, fleur_geante: fleurGeante, arbre_geant: arbreGeant,
+  // ciel
+  dirigeable,
 };
 export const TYPES_DE_LIEUX = Object.keys(LIEUX);
 
 // sens des rotations : 'face' (rotation.y = rot), 'dirz' (+Z vers l'angle rot), 'dirx' (+X vers l'angle rot)
-const DIRZ = new Set(['jetee', 'barque_amarree', 'epave', 'epave_geante', 'barque_echouee', 'phare', 'arche', 'grotte', 'tente', 'etal', 'banc', 'banc_vue', 'statue', 'moulin', 'coffre', 'casiers', 'potager', 'cascade', 'menhir', 'arche_basse', 'moulin_tour', 'ruines_alternative', 'navire_coque', 'navire_maison', 'navire_tourelle', 'navire_moulin', 'navire_mat', 'navire_escalier', 'navire_fort', 'navire_machinerie']);
+const DIRZ = new Set(['jetee', 'barque_amarree', 'epave', 'epave_geante', 'barque_echouee', 'phare', 'arche', 'grotte', 'tente', 'etal', 'banc', 'banc_vue', 'statue', 'moulin', 'coffre', 'casiers', 'potager', 'cascade', 'menhir', 'arche_basse', 'moulin_tour', 'ruines_alternative', 'navire_coque', 'navire_maison', 'navire_tourelle', 'navire_moulin', 'navire_mat', 'navire_escalier', 'navire_fort', 'navire_machinerie', 'dirigeable']);
 const DIRX = new Set(['pont_corde', 'pont', 'escalier', 'linge', 'cloture_champ', 'moulin_eau', 'rondin', 'muret_effondre']);
 export function rotY(t, rot) {
   if (DIRZ.has(t)) return Math.PI / 2 - rot;
