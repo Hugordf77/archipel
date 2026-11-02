@@ -186,7 +186,7 @@ void main() {
   // lueur propre à chaque sommet (maillages fusionnés de plusieurs couleurs)
   col += vColor * uEmissiveVC * mix(1.0, uNight, uEmissiveNight);
   #endif
-  col = applyFog(col, vViewDist);
+  col = applyFog(col, vViewDist, vWorldPos);
   float id = uId;
   #ifdef USE_AID
   id = vId;
@@ -344,7 +344,7 @@ void main() {
   float sh = sampleShadow(vWorldPos, N);
   vec3 col = toonShade(albedo, N, V, sh, 1.0);
   col += lanternLight(albedo, vWorldPos, N);
-  col = applyFog(col, vViewDist);
+  col = applyFog(col, vViewDist, vWorldPos);
   writeGBuffer(col, N, uId, 0.5);
   }
 }
@@ -465,7 +465,7 @@ void main() {
   float sh = sampleShadow(vWorldPos, N);
   vec3 col = toonShade(albedo, N, V, sh, 0.4);
   col += lanternLight(albedo, vWorldPos, N);
-  col = applyFog(col, vViewDist);
+  col = applyFog(col, vViewDist, vWorldPos);
   writeGBuffer(col, N, uId, 0.0);
 }
 `;

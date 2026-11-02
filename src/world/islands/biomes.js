@@ -90,6 +90,12 @@ export function paletteHerbe(biome) {
   return { pied: rgb(p.pied), milieu, pointe, sec: rgb(p.sec), sol: milieu.map((v, i) => (v + (pointe[i] - v) * 0.25) * 0.9) };
 }
 
+// Lumière rebondie du sol (rendu : uBounceColor, côté ombre) : couleur moyenne du sol du biome, la
+// mer turquoise pâle hors des îles (biome null) ; RVB de 0 à 1
+export function couleurRebond(biome) {
+  return biome ? paletteHerbe(biome).sol : [0.62, 0.86, 0.84];
+}
+
 // Densité relative de l'herbe d'un biome (0 à 1), d'après la densité des touffes (veg « herbe »)
 export function densiteHerbeBiome(biome) {
   const b = BIOMES[biome] || BIOMES.prairie;

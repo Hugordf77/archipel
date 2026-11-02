@@ -49,7 +49,7 @@ void main() {
   foam = max(foam, fall * (0.55 + 0.45 * smoothstep(0.35, 0.7, n2)));
   col = mix(col, foamCol, clamp(foam, 0.0, 1.0) * 0.85);
   col *= mix(uShadowTint * 1.25, uSunColor, 0.75);
-  col = applyFog(col, vViewDist);
+  col = applyFog(col, vViewDist, vWorldPos);
   writeGBuffer(col, vec3(0.0, 1.0, 0.0), 0.0, 0.0);
 }
 `;

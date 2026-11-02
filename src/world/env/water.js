@@ -209,7 +209,7 @@ void main() {
     col = mix(col, foamCol, ripples(p, t) * uRain * 0.5);
   }
 
-  col = applyFog(col, vViewDist);
+  col = applyFog(col, vViewDist, vWorldPos);
   writeGBuffer(col, vec3(0.0, 1.0, 0.0), 0.0, 0.0);
 }
 `;
@@ -352,7 +352,7 @@ void main() {
   col = mix(col, vec3(1.0), smoothstep(0.75, 1.0, vUv.y) * 0.7);
   col = mix(col, vec3(0.97, 1.0, 1.0), (1.0 - edge) * 0.6);
   col *= mix(uShadowTint * 1.3, uSunColor, 0.75);
-  col = applyFog(col, vViewDist);
+  col = applyFog(col, vViewDist, vWorldPos);
   writeGBuffer(col, normalize(vNormalW), uId, 0.5);
 }
 `;

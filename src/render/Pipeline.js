@@ -5,10 +5,17 @@ import {
   FS_VERT, TENSOR_FRAG, BLUR_FRAG, KUWAHARA_ANISO_FRAG, KUWAHARA_SIMPLE_FRAG, COMPOSITE_FRAG,
 } from './shaders/post.js';
 
+// Lot « lumière » (0 à 1, presque gratuit : calcul dans les shaders existants) : relief (paliers,
+// ombre profonde, terminateur), rebond (lumière du sol), rim (contre-jour), brume (de hauteur et
+// perspective aérienne), etalonnage (par heure, composition). Pipeline.settings[clé] (nombre) remplace
+// la valeur de la qualité ; null la rend.
+export const LUMIERE = ['relief', 'rebond', 'rim', 'brume', 'etalonnage'];
+const LUMIERE_ON = { relief: 1, rebond: 1, rim: 1, brume: 1, etalonnage: 1 };
+
 export const QUALITY = {
-  low: { pixelRatio: 1, paintScale: 0.5, aniso: false, radius: 3, shadow: 1024, shadowEvery: 3, label: 'Bas' },
-  medium: { pixelRatio: 1.25, paintScale: 0.5, aniso: true, radius: 3, shadow: 2048, shadowEvery: 2, label: 'Moyen' },
-  high: { pixelRatio: 1.6, paintScale: 0.55, aniso: true, radius: 3.5, kernelMul: 1.5, shadow: 2048, shadowEvery: 1, label: 'Haut' },
+  low: { pixelRatio: 1, paintScale: 0.5, aniso: false, radius: 3, shadow: 1024, shadowEvery: 3, lumiere: LUMIERE_ON, label: 'Bas' },
+  medium: { pixelRatio: 1.25, paintScale: 0.5, aniso: true, radius: 3, shadow: 2048, shadowEvery: 2, lumiere: LUMIERE_ON, label: 'Moyen' },
+  high: { pixelRatio: 1.6, paintScale: 0.55, aniso: true, radius: 3.5, kernelMul: 1.5, shadow: 2048, shadowEvery: 1, lumiere: LUMIERE_ON, label: 'Haut' },
 };
 
 // ---------------------------------------------------------------------------
@@ -111,7 +118,15 @@ export class Pipeline {
       outline: 1,
       paper: 0.85,
       wobble: 1,
+      // lot « lumière » : null = valeur de la qualité, sinon 0 à 1
+      relief: null,
+      rebond: null,
+      rim: null,
+      brume: null,
+      etalonnage: null,
     };
+    // teinte du rebond visée (biome sous le joueur, Game.updateZone) ; U.uBounceColor la rejoint
+    this.rebondCible = U.uBounceColor.value.clone();
     this.focusDim = 0;
     this.dynScale = 1; // résolution adaptative (0.7 à 1)
     this.adaptT = 0;
@@ -155,6 +170,11 @@ export class Pipeline {
       uGrade: { value: 1 },
       uFocusDim: { value: 0 },
       uPool: { value: 1 },
+      uGradeLow: U.uGradeLow,
+      uGradeHigh: U.uGradeHigh,
+      uGradeLift: U.uGradeLift,
+      uGradeCS: U.uGradeCS,
+      uHourGrade: { value: 0 },
     });
     this.setSize(window.innerWidth, window.innerHeight);
   }
@@ -246,10 +266,26 @@ export class Pipeline {
     }
   }
 
+  // valeur d'un réglage du lot « lumière » (0 à 1)
+  lumiere(k) {
+    const v = this.settings[k];
+    return v === null || v === undefined ? this.q.lumiere?.[k] ?? 0 : Math.max(0, Math.min(1, +v || 0));
+  }
+
+  appliqueLumiere() {
+    U.uRelief.value = this.lumiere('relief');
+    U.uBounce.value = this.lumiere('rebond');
+    U.uRimBoost.value = this.lumiere('rim');
+    U.uAerial.value = this.lumiere('brume');
+    this.compPass.u.uHourGrade.value = this.lumiere('etalonnage');
+    U.uBounceColor.value.lerp(this.rebondCible, 0.03);
+  }
+
   render(scene, camera, overlayScene = null) {
     const r = this.renderer;
     const s = this.settings;
     r.autoClear = false;
+    this.appliqueLumiere();
 
     // 1. ombres (pas forcément à chaque image : la scène bouge peu)
     this.frameNo = (this.frameNo || 0) + 1;

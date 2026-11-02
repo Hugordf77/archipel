@@ -24,6 +24,18 @@ export const U = {
   uWet: { value: 0 },
   uLanternPos: { value: Array.from({ length: 10 }, () => new THREE.Vector3(0, -999, 0)) },
   uLanternColor: { value: new THREE.Color(1.0, 0.72, 0.38) },
+  // lot « lumière » (0 à 1, posés à chaque image par Pipeline selon settings et QUALITY)
+  uRelief: { value: 0 },
+  uBounce: { value: 0 },
+  uBounceColor: { value: new THREE.Color(0.66, 0.87, 0.68) },
+  uRimBoost: { value: 0 },
+  uAerial: { value: 0 },
+  // étalonnage par heure (cycle jour-nuit) : ombres, hautes lumières, plancher teinté,
+  // contraste (x) et saturation (y)
+  uGradeLow: { value: new THREE.Color(1, 1, 1) },
+  uGradeHigh: { value: new THREE.Color(1, 1, 1) },
+  uGradeLift: { value: new THREE.Color(0.06, 0.05, 0.1) },
+  uGradeCS: { value: new THREE.Vector2(1, 1) },
   // monde courbé
   uCurveOrigin: { value: new THREE.Vector3() },
   uCurveDir: { value: new THREE.Vector2(0, -1) },

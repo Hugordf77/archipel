@@ -5,6 +5,7 @@ import { U, ORIGIN } from '../core/globals.js';
 import { IslandManager } from '../world/islands/IslandManager.js';
 import { IslandFauna } from '../entities/fauna/islandFauna.js';
 import { ILES, ILE_BY_ID, zoneAt } from '../world/islands/regions.js';
+import { couleurRebond } from '../world/islands/biomes.js';
 import { IlesCelestes } from '../world/ciel/IlesCelestes.js';
 import { POI_LABELS } from '../world/islands/gen/pois.js';
 import { mulberry32 } from '../core/random.js';
@@ -1008,6 +1009,8 @@ export class Game {
     this.zoneT = 0.5;
     const P = this.player.pos;
     const zn = zoneAt(P.x, P.z);
+    // lumière rebondie : couleur du sol du biome sous le joueur (île de départ : prairie)
+    this.pipeline.rebondCible.setRGB(...couleurRebond(zn ? zn.biome || 'prairie' : null));
     const id = zn?.id || null;
     if (id !== this.zoneCandidate) {
       this.zoneCandidate = id;

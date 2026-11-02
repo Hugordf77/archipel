@@ -176,12 +176,22 @@ uniform float uNight;
 uniform float uSnow;
 uniform vec3 uLanternPos[10];
 uniform vec3 uLanternColor;
+// lot « lumière » (0 à 1, 0 = rendu d'origine ; Pipeline.settings et QUALITY) : relief (paliers
+// plus nets, ombre plus profonde, terminateur chaud), rebond (lumière renvoyée par le sol, teinte du
+// biome uBounceColor), rim (contre-jour plus franc), brume (de hauteur et perspective aérienne)
+uniform float uRelief;
+uniform float uBounce;
+uniform vec3 uBounceColor;
+uniform float uRimBoost;
+uniform float uAerial;
 
 float toonRamp(float x) {
+  // relief : transitions resserrées, paliers plus nets
+  float k = mix(1.0, 0.55, uRelief);
   float b = 0.0;
-  b += smoothstep(uBands.x - 0.035, uBands.x + 0.035, x) * 0.36;
-  b += smoothstep(uBands.y - 0.04, uBands.y + 0.04, x) * 0.34;
-  b += smoothstep(uBands.z - 0.05, uBands.z + 0.05, x) * 0.30;
+  b += smoothstep(uBands.x - 0.035 * k, uBands.x + 0.035 * k, x) * 0.36;
+  b += smoothstep(uBands.y - 0.04 * k, uBands.y + 0.04 * k, x) * 0.34;
+  b += smoothstep(uBands.z - 0.05 * k, uBands.z + 0.05 * k, x) * 0.30;
   return b;
 }
 
@@ -191,20 +201,38 @@ vec3 toonShade(vec3 albedo, vec3 N, vec3 V, float shadow, float rimAmount) {
   float ndl = dot(N, uSunDir);
   float x = ndl * 0.5 + 0.5;
   x *= mix(0.42, 1.0, shadow);
+  // relief : l'ombre portée tombe franchement dans le premier palier
+  x *= mix(1.0, mix(0.75, 1.0, shadow), uRelief);
   float r = toonRamp(x);
+  float day = 1.0 - uNight;
   // ombre : teinte froide (violet/bleu), lumière : teinte chaude du soleil
   vec3 warm = vec3(dot(uShadowTint, vec3(0.333))) * vec3(1.06, 0.98, 0.92);
   vec3 shadowCol = albedo * mix(uShadowTint, warm, uWarmShadow);
-  vec3 litCol = albedo * uSunColor * 0.94;
+  // relief : ombre plus profonde et plus saturée vers sa teinte, jamais grise (pelages exceptés)
+  vec3 deep = albedo * uShadowTint * uShadowTint * 1.3;
+  shadowCol = mix(shadowCol, deep, 0.6 * uRelief * (1.0 - uWarmShadow));
+  vec3 litCol = albedo * uSunColor * mix(0.94, 1.0, uRelief);
   vec3 col = mix(shadowCol, litCol, r);
+  // terminateur : bande chaude et saturée côté lumière, à la limite ombre / lumière
+  float term = smoothstep(uBands.x - 0.01, uBands.x + 0.025, x) * smoothstep(uBands.x + 0.17, uBands.x + 0.05, x);
+  vec3 hot = albedo * uSunColor * mix(vec3(1.0), uRimColor, 0.7);
+  float lh = dot(hot, vec3(0.299, 0.587, 0.114));
+  hot = mix(vec3(lh), hot, 1.7) * vec3(1.06, 0.97, 0.9);
+  col = mix(col, max(hot, vec3(0.0)), term * 0.42 * uRelief * day);
   // ambiance hémisphérique légère
   vec3 amb = mix(uGroundAmbient, uSkyAmbient, N.y * 0.5 + 0.5);
-  col += albedo * amb * 0.1;
-  // rim light chaude, plus forte en contre-jour
+  col += albedo * amb * 0.1 * (1.0 - 0.6 * uBounce);
+  // rebond : le sol renvoie sa couleur (biome) côté ombre, surtout sur les faces tournées vers lui ;
+  // le ciel débouche un peu les faces du dessus restées à l'ombre
+  float toGround = 0.35 + 0.65 * clamp(0.5 - 0.5 * N.y, 0.0, 1.0);
+  vec3 bounce = uBounceColor * toGround * 0.14 + uSkyAmbient * clamp(N.y, 0.0, 1.0) * 0.03;
+  col += albedo * bounce * (1.0 - r) * uBounce * mix(1.0, 0.3, uNight);
+  // rim light chaude, plus forte en contre-jour ; rim : plus nette et franche dos au soleil
   float fres = 1.0 - max(dot(N, V), 0.0);
   float back = smoothstep(-0.4, 0.7, dot(-V, uSunDir));
-  float rim = smoothstep(0.55, 0.88, fres) * (0.3 + 0.7 * back);
-  col += uRimColor * rim * 0.4 * rimAmount * mix(1.0, 0.45, uNight);
+  float rim = mix(smoothstep(0.55, 0.88, fres) * (0.3 + 0.7 * back),
+                  smoothstep(0.62, 0.8, fres) * (0.2 + 1.1 * back * back), uRimBoost);
+  col += uRimColor * rim * mix(0.4, 0.5, uRimBoost) * rimAmount * mix(1.0, 0.45, uNight);
   return col;
 }
 
@@ -221,8 +249,23 @@ vec3 lanternLight(vec3 albedo, vec3 wp, vec3 N) {
   return albedo * uLanternColor * acc * uNight * 0.9;
 }
 
-vec3 applyFog(vec3 col, float dist) {
+// wp : position du fragment (repère de la scène ; ORIGIN.y = 0, donc y est l'altitude)
+vec3 applyFog(vec3 col, float dist, vec3 wp) {
   float f = smoothstep(uFogRange.x, uFogRange.y, dist);
-  return mix(col, uFogColor, f * 0.92);
+  vec3 fogCol = uFogColor;
+  if (uAerial > 0.0) {
+    // perspective aérienne colorée : chaude face au soleil, froide (teinte des ombres) à l'opposé
+    vec3 vd = normalize(wp - cameraPosition);
+    float sunF = pow(max(dot(vd, uSunDir), 0.0), 3.0) * (1.0 - uNight);
+    vec3 warmF = uFogColor * mix(vec3(1.0), uSunColor * vec3(1.1, 0.95, 0.8), 0.55);
+    vec3 coolF = uFogColor * mix(vec3(1.0), uShadowTint * 1.35, 0.2);
+    fogCol = mix(uFogColor, mix(coolF, warmF, sunF), uAerial);
+    // voile dès 40 m, et brume de hauteur : plus dense au ras de l'eau et dans les creux
+    float aer = 1.0 - exp(-max(dist - 60.0, 0.0) / 1400.0);
+    float hf = exp(-max(wp.y, 0.0) / 30.0);
+    float haze = (1.0 - exp(-dist / 1100.0)) * hf * 0.3;
+    f = max(f, max(aer * 0.16, haze) * uAerial);
+  }
+  return mix(col, fogCol, f * 0.92);
 }
 `;

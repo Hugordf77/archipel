@@ -205,7 +205,29 @@ uniform float uWobble;
 uniform float uGrade;
 uniform float uFocusDim;
 uniform float uPool;
+// étalonnage par heure (daycycle.js) et sa force (0 = étalonnage fixe seul)
+uniform vec3 uGradeLow;
+uniform vec3 uGradeHigh;
+uniform vec3 uGradeLift;
+uniform vec2 uGradeCS;
+uniform float uHourGrade;
 varying vec2 vUv;
+
+// courbe douce : contraste autour de 0,5 sur la luminance (teinte conservée), épaule qui ne brûle
+// pas les pastels, tons partagés ombres / hautes lumières, saturation, plancher teinté (jamais noir)
+vec3 hourGrade(vec3 col) {
+  float l = max(dot(col, vec3(0.299, 0.587, 0.114)), 1e-4);
+  float lc = clamp(0.55 + (l - 0.55) * uGradeCS.x, 0.0, 1.2);
+  // pied de courbe : les sombres (cheveux, encre) ne s'écrasent pas vers le noir
+  lc = max(lc, l * 0.72);
+  lc = lc > 0.86 ? 0.86 + 0.14 * (1.0 - exp(-(lc - 0.86) / 0.14)) : lc;
+  vec3 c = col * (lc / l);
+  c *= mix(uGradeLow, uGradeHigh, smoothstep(0.12, 0.8, lc));
+  float l2 = dot(c, vec3(0.299, 0.587, 0.114));
+  c = mix(vec3(l2), c, uGradeCS.y);
+  c = clamp(c, 0.0, 1.0);
+  return uGradeLift + c * (1.0 - uGradeLift);
+}
 
 float linDepth(vec2 uv) {
   float z = texture2D(tDepth, uv).r;
@@ -293,6 +315,8 @@ void main() {
   col += vec3(0.025, 0.008, 0.045) * smoothstep(0.55, 0.0, lum2) * uGrade;
   float vig = smoothstep(0.45, 1.05, length((vUv - 0.5) * vec2(1.25, 1.0)));
   col = mix(col, col * vec3(0.86, 0.8, 0.86), vig * 0.55 * uGrade);
+  // étalonnage par heure
+  col = mix(col, hourGrade(col), uHourGrade);
   // mode concentration : léger voile
   col = mix(col, col * 0.75 + vec3(0.04, 0.03, 0.06), uFocusDim);
   gl_FragColor = vec4(col, 1.0);

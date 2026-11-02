@@ -9,66 +9,81 @@ const KEYS = [
     skyTop: '#1c2654', skyHorizon: '#3e5592', sunGlow: '#6f7fc0', sun: '#93a8e2', skyAmb: '#4f62a2', groundAmb: '#2c2f5c',
     shadowTint: '#5254a0', fog: '#3a4d88', waterShallow: '#3d82a2', waterDeep: '#1b3668', sand: '#8e93b6',
     cloudLit: '#8290c8', cloudShade: '#3e4884', rim: '#a3b8ff', stars: 1, night: 1,
+    gradeLow: '#d6dcff', gradeHigh: '#e6ecff', gradeLift: '#0a0e28', contrast: 1.12, sat: 1.0,
   },
   {
     h: 5.4, name: 'avant-aube',
     skyTop: '#2f3a78', skyHorizon: '#9c88ba', sunGlow: '#e8a0b4', sun: '#b9a8d8', skyAmb: '#7d7fbe', groundAmb: '#5a4f80',
     shadowTint: '#6a62aa', fog: '#8a82b4', waterShallow: '#6fa8c0', waterDeep: '#2f4f88', sand: '#c5b0b8',
     cloudLit: '#d8a8c4', cloudShade: '#6f6aa8', rim: '#f0b0c4', stars: 0.5, night: 0.75,
+    gradeLow: '#dcd6ff', gradeHigh: '#ffe8f2', gradeLift: '#100e2c', contrast: 1.1, sat: 1.02,
   },
   {
     h: 6.6, name: 'aube',
     skyTop: '#93a6de', skyHorizon: '#ffc9cf', sunGlow: '#ffb39e', sun: '#ffe2d0', skyAmb: '#d4c8f0', groundAmb: '#f2c4c8',
     shadowTint: '#9a8ad0', fog: '#f6cad2', waterShallow: '#a2dad8', waterDeep: '#5c88c2', sand: '#f3d8c8',
     cloudLit: '#ffdade', cloudShade: '#b5a2d8', rim: '#ffd2b2', stars: 0, night: 0.12,
+    gradeLow: '#e6dcff', gradeHigh: '#fff0f0', gradeLift: '#0d0a19', contrast: 1.14, sat: 1.06,
   },
   {
     h: 8.4, name: 'matin',
     skyTop: '#78bcec', skyHorizon: '#e0f2f2', sunGlow: '#fff0cc', sun: '#fff7ea', skyAmb: '#c0e0f2', groundAmb: '#e6dcc4',
     shadowTint: '#8286cc', fog: '#d9eff2', waterShallow: '#90e4d6', waterDeep: '#3f9cc6', sand: '#f4e2b6',
     cloudLit: '#ffffff', cloudShade: '#c5cbec', rim: '#fff2d2', stars: 0, night: 0,
+    gradeLow: '#e6deff', gradeHigh: '#ffeee6', gradeLift: '#0a0816', contrast: 1.18, sat: 1.06,
   },
   {
     h: 12.5, name: 'midi doré',
     skyTop: '#62b4ec', skyHorizon: '#e6f4ec', sunGlow: '#fff1c2', sun: '#fff6e2', skyAmb: '#c6e4f0', groundAmb: '#efe0bc',
     shadowTint: '#8287d0', fog: '#ddf0ee', waterShallow: '#8ee9d6', waterDeep: '#38a0cc', sand: '#f5e2b4',
     cloudLit: '#fffdf4', cloudShade: '#c8cdee', rim: '#fff0c4', stars: 0, night: 0,
+    gradeLow: '#e6eaff', gradeHigh: '#fffcf2', gradeLift: '#080914', contrast: 1.24, sat: 1.08,
   },
   {
     h: 16.0, name: 'après-midi',
     skyTop: '#7ab7e6', skyHorizon: '#f3ecd2', sunGlow: '#ffe0a4', sun: '#ffe8ba', skyAmb: '#cddbe8', groundAmb: '#f0d9b0',
     shadowTint: '#837ac4', fog: '#ece8d4', waterShallow: '#92e0cc', waterDeep: '#3f94c4', sand: '#f4dfb0',
     cloudLit: '#fff4dc', cloudShade: '#c9c0e2', rim: '#ffdba2', stars: 0, night: 0,
+    gradeLow: '#e8e2ff', gradeHigh: '#fff6e6', gradeLift: '#0a0815', contrast: 1.22, sat: 1.08,
   },
   {
     h: 18.2, name: 'heure dorée',
     skyTop: '#8a9fd8', skyHorizon: '#ffcf94', sunGlow: '#ffac6a', sun: '#ffd49e', skyAmb: '#e6bcc8', groundAmb: '#f6c496',
     shadowTint: '#9e82c8', fog: '#ffd0a2', waterShallow: '#a8d8c2', waterDeep: '#4a7fb8', sand: '#f6cfa0',
     cloudLit: '#ffcf9c', cloudShade: '#c290b6', rim: '#ffc27a', stars: 0, night: 0.05,
+    gradeLow: '#d8d0ff', gradeHigh: '#ffe8c8', gradeLift: '#0e091a', contrast: 1.34, sat: 1.14,
   },
   {
     h: 19.4, name: 'crépuscule',
     skyTop: '#5a5ea8', skyHorizon: '#f5a490', sunGlow: '#ff907c', sun: '#f0a290', skyAmb: '#a88cba', groundAmb: '#b87a9c',
     shadowTint: '#6e5aa8', fog: '#d898a2', waterShallow: '#8fb4c6', waterDeep: '#3a5a98', sand: '#d9aaa6',
     cloudLit: '#ffaa96', cloudShade: '#8a6aaa', rim: '#ffa284', stars: 0.2, night: 0.4,
+    gradeLow: '#d6caff', gradeHigh: '#ffe2da', gradeLift: '#0f0a1e', contrast: 1.24, sat: 1.08,
   },
   {
     h: 20.4, name: 'heure bleue',
     skyTop: '#2b3676', skyHorizon: '#6b76b2', sunGlow: '#8f86c8', sun: '#a0a8e0', skyAmb: '#5a64a8', groundAmb: '#3a3a72',
     shadowTint: '#5a5aa6', fog: '#5866a2', waterShallow: '#5090b2', waterDeep: '#23427c', sand: '#9ca0c2',
     cloudLit: '#9096ce', cloudShade: '#4a5092', rim: '#a8b6ff', stars: 0.7, night: 0.88,
+    gradeLow: '#d2d8ff', gradeHigh: '#e8ecff', gradeLift: '#0e1433', contrast: 1.12, sat: 1.0,
   },
   { h: 21.6, ref: 0 },
   { h: 24, ref: 0 },
 ];
 
 const COLOR_FIELDS = ['skyTop', 'skyHorizon', 'sunGlow', 'sun', 'skyAmb', 'groundAmb', 'shadowTint', 'fog', 'waterShallow', 'waterDeep', 'sand', 'cloudLit', 'cloudShade', 'rim'];
+// Étalonnage par heure (composition, après la peinture) : gradeLow et gradeHigh multiplient les
+// ombres et les hautes lumières, gradeLift est le plancher teinté (jamais de noir), contrast et sat
+// agissent sur la luminance et la saturation. Matin rosé, midi franc, heure dorée contrastée, nuit
+// bleue lisible.
+const GRADE_FIELDS = ['gradeLow', 'gradeHigh', 'gradeLift'];
+export const GRADE_KEYS = KEYS;
 
 // Prépare les couleurs
 const PREPARED = KEYS.map((k) => {
   const src = k.ref !== undefined ? KEYS[k.ref] : k;
-  const out = { h: k.h, name: src.name, stars: src.stars, night: src.night };
-  for (const f of COLOR_FIELDS) out[f] = new THREE.Color(src[f]);
+  const out = { h: k.h, name: src.name, stars: src.stars, night: src.night, contrast: src.contrast, sat: src.sat };
+  for (const f of [...COLOR_FIELDS, ...GRADE_FIELDS]) out[f] = new THREE.Color(src[f]);
   return out;
 });
 
@@ -143,6 +158,14 @@ export class DayCycle {
     mix('cloudShade', U.uCloudShade);
     mix('rim', U.uRimColor);
     if (rain > 0) U.uSunColor.value.multiplyScalar(1 - rain * 0.18);
+    for (const [f, u] of [['gradeLow', U.uGradeLow], ['gradeHigh', U.uGradeHigh], ['gradeLift', U.uGradeLift]]) {
+      u.value.copy(a[f]).lerp(b[f], t);
+    }
+    // pluie : lumière plus plate
+    U.uGradeCS.value.set(
+      THREE.MathUtils.lerp(a.contrast, b.contrast, t) * (1 - rain * 0.08),
+      THREE.MathUtils.lerp(a.sat, b.sat, t) * (1 - rain * 0.1),
+    );
     U.uStars.value = THREE.MathUtils.lerp(a.stars, b.stars, t) * (1 - rain);
     const night = THREE.MathUtils.lerp(a.night, b.night, t);
     U.uNight.value = night;
