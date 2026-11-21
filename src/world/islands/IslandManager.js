@@ -178,6 +178,8 @@ export class IslandManager {
     this.terraDiffs = terraDiffs;
     this.onNear = onNear;
     this.onPoi = onPoi;
+    // découvertes (îles, lieux) : coupées pendant l'écran-titre, où le héros pose sur le Plateau venté
+    this.decouvrir = true;
     this.fauna = null;
     this.entries = new Map();
     this.jobs = [];
@@ -308,12 +310,12 @@ export class IslandManager {
       if (want !== 0 && e.near && e.d > 300) this.dropNear(e);
       if (e.lod1 && want === 2 && e.d > 900) this.dropLod1(e);
       this.applyVisibility(e);
-      if (d < 70 && !this.discovered.has(desc.id)) {
+      if (this.decouvrir && d < 70 && !this.discovered.has(desc.id)) {
         this.discovered.add(desc.id);
         this.onDiscover?.(desc);
       }
       // lieux découverts à pied
-      if (e.plan && d < 60) {
+      if (this.decouvrir && e.plan && d < 60) {
         const lx = px - desc.x;
         const lz = pz - desc.z;
         for (const p of e.plan.pois) {

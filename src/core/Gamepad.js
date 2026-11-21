@@ -394,6 +394,12 @@ export class GamepadInput {
       this.panel(dt);
       return;
     }
+    // écran-titre : le menu lit lui-même la manette (Titre.manette)
+    if (g.titre?.actif) {
+      this.blur();
+      g.titre.manette(this, dt);
+      return;
+    }
     this.blur();
     this.sheet = null;
     const key = (code) => g.handleKey(code, { repeat: false });

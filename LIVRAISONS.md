@@ -318,6 +318,32 @@ et domaine concerné).
 - Tableau de bord de production : `dashboard.html`, `dashboard/` (`management.json` : relations entre
   agents).
 
+### Écran-titre (menu de démarrage)
+
+- **Livré le 22/11/2026** : au lancement, le héros se tient sur le rebord est du Plateau venté
+  (866, −881), à l'aube (heure forcée 6,65), et regarde le large ; caméra lente en quatre plans (le large, le
+  vent, l'archipel, le profil ; 65 s en boucle, fondu au papier entre deux plans) ; vent du large forcé
+  (cheveux et écharpe par la physique existante, `VENT.brise` 6,5) ; nom « Archipel » et sous-titre
+  « L'archipel des souvenirs », « Appuyez sur une touche », puis Continuer (si une partie existe), Nouvelle
+  partie (confirmation si une partie existe : monde vierge, réglages gardés, la page recharge sans titre),
+  Options (panneau des réglages). Clavier (flèches, ZQSD, Entrée, Échap), souris (survol, clic) et manette
+  (croix, stick, ✕, ◯). Le Moulin du Large, à 10 m au sud, reste hors du cadre (test).
+- **Où** : scène et orchestration `src/app/Titre.js` ; logique pure (lieu, plans, menu) `src/ui/titreLogic.js` ;
+  habillage `src/ui/titreScreen.js` et styles « Écran-titre » de `src/ui/style.css` ; démarrage `Game.js`
+  (`titre`, `demarrerPartie`, boucle du titre dans `frame`, touches, clics) ; manette `Gamepad.dispatch` ;
+  `IslandManager.decouvrir` (pas de découverte d'île pendant le titre).
+- **Musique** : thème original au piano « L'aube sur le plateau » (`src/audio/pianoTitre.js`), mi bémol
+  majeur, 3/4, noire à 72, 32 mesures (1 min 21 s en boucle), synthèse additive en Web Audio (environ 14 % d'un
+  cœur du fil audio), canal Musique. `AudioEngine` : `retenirMusique`, `jouerTheme`, `arreterTheme`,
+  `libererMusique` (Illumoria attend la fin du titre puis entre en fondu de 4 s). Écoute hors jeu :
+  `captures/titre-piano-ecoute.wav` (non versionné).
+- **Pendant le titre** : aucune sauvegarde de position, ni découverte, ni lancement compté ; au départ, heure,
+  météo, vent, caméra et interface reviennent, le héros retrouve sa place sous le papier (îles préchargées).
+- **Outils** : `?titre=0` passe le titre ; `__ile.tp`, `look`, `frame`, `settle`, `shot` le passent d'eux-mêmes
+  (`__ile.passerTitre()`), `__ile.capture` cadre le plan en cours.
+- **Vérifier** : `npx vitest run tests/titre.test.js` (20 tests) ; captures `captures/titre-final-*.jpg`, planche
+  `captures/titre-final-planche.png`, plans `captures/titre-plans4-planche.png`.
+
 ### Ciel nocturne (branche `claude/ciel`)
 
 - **Voûte** : catalogue pur et déterministe `src/world/env/voute.js` (`genererVoute(graine)` : plan galactique
@@ -337,6 +363,9 @@ et domaine concerné).
 
 ## État courant (21/11/2026)
 
+- **Écran-titre** (22/11) : menu de démarrage sur le Plateau venté avec thème au piano (voir
+  « Écran-titre »). Non essayé avec une vraie manette (DualSense simulée) ; le chemin « Tout effacer et
+  recommencer » est couvert par les tests, pas joué en vrai (la sauvegarde du navigateur n'a pas été effacée).
 - **Serveur unique** (décision de l'utilisateur, 21/11) : on joue et on travaille sur la copie principale
   seulement, `v3-archipel`, configuration `ile`, port 5174. Les worktrees ne servent plus de version de jeu.
   Fusions du 21/11 : `claude/personnage-2` (avance rapide sur `77c70ac`, travail du worktree `personnage-2`

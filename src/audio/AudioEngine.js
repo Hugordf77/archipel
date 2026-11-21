@@ -3,8 +3,10 @@
 //   nature    : oiseaux le jour, mouettes, grillons la nuit
 //   météo     : pluie
 //   effets    : « pop », coquillages, carillons, pas, arrosoir
-//   musique   : piste Illumoria en boucle (boîte à musique de secours si le fichier est absent)
+//   musique   : piste Illumoria en boucle (boîte à musique de secours si le fichier est absent) ;
+//               sur l'écran-titre, le thème au piano (pianoTitre.js), la piste du jeu attend
 // Chaque canal a son propre volume, plus un volume général.
+import { PianoTitre } from './pianoTitre.js';
 
 export const CHANNELS = ['master', 'ambience', 'nature', 'weather', 'sfx', 'music'];
 export const CHANNEL_LABELS = {
@@ -36,6 +38,10 @@ export class AudioEngine {
     this.backgroundMusicLoading = false;
     this.jumpBuffer = null;
     this.jumpSoundLoading = false;
+    // écran-titre : la musique du jeu attend la fin du titre (libererMusique), le thème joue
+    this.musiqueRetenue = false;
+    this.fonduMusique = 0;
+    this.theme = null;
   }
 
   get ready() {
@@ -124,16 +130,47 @@ export class AudioEngine {
   }
 
   startBackgroundMusic() {
-    if (!this.ctx || !this.backgroundMusicBuffer || this.backgroundMusicSource) return;
+    if (!this.ctx || !this.backgroundMusicBuffer || this.backgroundMusicSource || this.musiqueRetenue) return;
     const source = this.ctx.createBufferSource();
     source.buffer = this.backgroundMusicBuffer;
     source.loop = true;
-    source.connect(this.bus.music);
+    // entrée en fondu après l'écran-titre
+    const fondu = this.ctx.createGain();
+    const t = this.ctx.currentTime;
+    fondu.gain.setValueAtTime(this.fonduMusique ? 0 : 1, t);
+    if (this.fonduMusique) fondu.gain.linearRampToValueAtTime(1, t + this.fonduMusique);
+    source.connect(fondu);
+    fondu.connect(this.bus.music);
     source.onended = () => {
       if (this.backgroundMusicSource === source) this.backgroundMusicSource = null;
     };
     source.start();
     this.backgroundMusicSource = source;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Écran-titre : la musique du jeu attend, le thème au piano joue en boucle
+  retenirMusique() {
+    this.musiqueRetenue = true;
+  }
+
+  jouerTheme() {
+    if (!this.ctx) this.init();
+    if (!this.ctx || this.theme) return;
+    this.theme = new PianoTitre(this);
+    this.theme.demarrer();
+  }
+
+  arreterTheme(fondu = 2.5) {
+    this.theme?.arreter(fondu);
+    this.theme = null;
+  }
+
+  // fin du titre : la musique du jeu entre en fondu (s)
+  libererMusique(fondu = 4) {
+    this.musiqueRetenue = false;
+    this.fonduMusique = fondu;
+    this.startBackgroundMusic();
   }
 
   async loadGrassFootstep() {
@@ -331,12 +368,12 @@ export class AudioEngine {
     T.note -= dt;
     if (T.note <= 0) {
       T.note = rand(0.7, 1.6) * (I.night > 0.5 ? 1.5 : 1);
-      if (!this.backgroundMusicBuffer && this.vol('music') > 0.001) this.musicNote();
+      if (!this.backgroundMusicBuffer && !this.musiqueRetenue && this.vol('music') > 0.001) this.musicNote();
     }
     T.pad -= dt;
     if (T.pad <= 0) {
       T.pad = 9;
-      if (!this.backgroundMusicBuffer && this.vol('music') > 0.001) this.musicPad();
+      if (!this.backgroundMusicBuffer && !this.musiqueRetenue && this.vol('music') > 0.001) this.musicPad();
     }
   }
 

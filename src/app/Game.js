@@ -44,6 +44,7 @@ import { Hotbar } from '../ui/inventoryUI.js';
 import { openInventoryScreen } from '../ui/inventoryScreen.js';
 import { openMirrorPanel } from '../ui/mirrorPanel.js';
 import { seasonOf, applySeason, seasonSnow } from '../world/env/season.js';
+import { Titre, titreAPasser } from './Titre.js';
 
 const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
 const MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
@@ -82,7 +83,10 @@ export class Game {
     this.rig.groundFn = (x, z) => groundAt(x, z).y;
 
     // --- sauvegarde ---
-    this.state = migrate(await loadSave());
+    const brut = await loadSave();
+    // une partie existe-t-elle ? (« Continuer » sur l'écran-titre)
+    this.saveExiste = !!brut;
+    this.state = migrate(brut);
     this.audio = new AudioEngine(this.state.settings.volumes);
 
     // --- archipel : les îles du monde ouvert (archipel.js), sections comprises ---
@@ -190,6 +194,7 @@ export class Game {
     this.locoFx = new LocoFeedback(this);
     this.onLocoEvent = (e) => this.locoFx.handle(e);
     this.input.onDrag = (dx, dy) => {
+      if (this.titre?.actif) return;
       // devant le miroir, on fait pivoter le personnage plutôt que la caméra
       if (this.mirror) this.player.facing += dx * 0.012;
       else {
@@ -197,7 +202,9 @@ export class Game {
         this.sailing.lastDrag = performance.now();
       }
     };
-    this.input.onWheel = (d) => this.rig.zoom(d > 0 ? 1.08 : 0.93);
+    this.input.onWheel = (d) => {
+      if (!this.titre?.actif) this.rig.zoom(d > 0 ? 1.08 : 0.93);
+    };
     this.input.onClick = (x, y) => this.handleClick(x, y);
     this.input.onKey = (code, e) => this.handleKey(code, e);
 
@@ -213,6 +220,27 @@ export class Game {
     window.addEventListener('pagehide', () => this.saveNow());
     this.resize();
 
+    // écran-titre (Titre.js) : le héros sur le rebord du Plateau venté, à l'aube ; la partie commence
+    // depuis son menu. ?titre=0, ou le rechargement d'une nouvelle partie, le passe.
+    if (!titreAPasser()) this.titre = new Titre(this, { sauvegarde: this.saveExiste });
+    const depart = this.titre ? this.titre.preparer() : this.player.pos;
+
+    // les îles visibles depuis le départ (ou depuis le plateau du titre) sont prêtes avant le lever de rideau
+    await this.islands.preload(depart.x, depart.z);
+    this.clock.start();
+    this.renderer.setAnimationLoop(() => this.frame());
+    const loading = document.getElementById('loading');
+    if (loading) {
+      loading.classList.add('done');
+      setTimeout(() => loading.remove(), 900);
+    }
+    if (this.titre) this.titre.ouvrir();
+    else this.demarrerPartie();
+    if (import.meta.env.DEV) window.__ile = this.devTools();
+  }
+
+  // La partie commence : tout de suite, ou depuis le menu de l'écran-titre
+  demarrerPartie() {
     this.state.launches = (this.state.launches || 0) + 1;
     this.markDirty();
     if (!this.state.intro) {
@@ -228,17 +256,6 @@ export class Game {
         if (!this.ui.panelOpen && !this.state.avatarIntro) this.openMirror({ first: true });
       }, this.state.launches <= 1 ? 6200 : 1200);
     }
-
-    // les îles visibles depuis le départ sont prêtes avant le lever de rideau
-    await this.islands.preload(this.player.pos.x, this.player.pos.z);
-    this.clock.start();
-    this.renderer.setAnimationLoop(() => this.frame());
-    const loading = document.getElementById('loading');
-    if (loading) {
-      loading.classList.add('done');
-      setTimeout(() => loading.remove(), 900);
-    }
-    if (import.meta.env.DEV) window.__ile = this.devTools();
   }
 
   // ---------------------------------------------------------------------------
@@ -365,6 +382,11 @@ export class Game {
     if (this.paused) {
       this.pad.poll(dt);
       this.pauseFrame?.(dt);
+      return;
+    }
+    // écran-titre : sa propre image (scène, caméra, menu), la partie n'avance pas
+    if (this.titre?.actif) {
+      this.titre.frame(dt, rawDt);
       return;
     }
     this.pipeline.adapt(rawDt * 1000);
@@ -579,6 +601,8 @@ export class Game {
   // Entrées
   // ---------------------------------------------------------------------------
   handleKey(code, e) {
+    // écran-titre : le menu reçoit les touches (sauf sous le panneau des réglages)
+    if (this.titre?.actif && !this.ui.panelOpen) return this.titre.touche(code, e);
     if (code === 'Escape') {
       if (this.ui.panelOpen) {
         if (this.ui.panel.dismissable !== false) this.ui.closePanel();
@@ -776,7 +800,7 @@ export class Game {
   }
 
   handleClick(x, y) {
-    if (this.ui.panelOpen || this.airRide?.riding) return;
+    if (this.ui.panelOpen || this.airRide?.riding || this.titre?.actif) return;
     this.audio?.resume();
     if (this.decor.placing) {
       this.decor.place();
@@ -1415,15 +1439,19 @@ export class Game {
   // ---------------------------------------------------------------------------
   devTools() {
     const game = this;
+    // les outils qui déplacent le joueur ou la caméra passent l'écran-titre (la partie commence aussitôt)
+    const passer = () => game.titre?.passer();
     return {
       game,
       U,
+      passerTitre: passer,
       // navigation du jeu (même instance que le joueur : relief des îles, obstacles)
       nav: { groundAt, obstacleAt, waterDepth },
       setHour(h) {
         game.world.dayCycle.override = h;
       },
       frame({ dist, pitch, yaw, tx, tz } = {}) {
+        passer();
         const r = game.rig;
         r.limits.maxDist = 90;
         if (dist !== undefined) r.distance = r.cur.distance = dist;
@@ -1441,6 +1469,7 @@ export class Game {
       },
       // regarde un point lointain (îles) depuis (fx, fz)
       look(tx, tz, { fx = game.player.pos.x, fz = game.player.pos.z, pitch = 0.14, dist = 18, h = null } = {}) {
+        passer();
         const r = game.rig;
         r.mode = 'shot';
         r.limits.maxDist = 400;
@@ -1459,6 +1488,7 @@ export class Game {
       },
       // fait tourner la boucle à la main (onglet en arrière-plan : rAF ralenti)
       async settle(ms = 1500) {
+        passer();
         const t0 = performance.now();
         while (performance.now() - t0 < ms) {
           game.frame();
@@ -1473,6 +1503,7 @@ export class Game {
       // téléporte le joueur (coordonnées absolues) ; y : hauteur d'où l'on arrive (par défaut d'en haut :
       // on se pose sur le dessus d'une île céleste)
       tp(x, z, y = 1e6) {
+        passer();
         setGroundRef(y);
         game.player.place(x, z);
         game.rig.target.copy(game.player.pos);
@@ -1492,7 +1523,9 @@ export class Game {
         }));
       },
       async capture(name = 'capture') {
-        game.rig.update(0);
+        // sur l'écran-titre, la caméra suit le plan en cours (pas la caméra de jeu)
+        if (game.titre?.actif) game.titre.cadrer();
+        else game.rig.update(0);
         game.world.update(0, game.camera);
         game.pipeline.forceShadow = true;
         const url = game.pipeline.capture(game.world.scene, game.camera, game.overlayScene);
@@ -1551,6 +1584,7 @@ export class Game {
         return file;
       },
       async shot(name, file) {
+        passer();
         const c = this.cadrages[name];
         game.ui.closePanel(true);
         game.world.dayCycle.override = c.h;

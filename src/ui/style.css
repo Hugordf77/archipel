@@ -2970,3 +2970,329 @@ input[type='range'] {
     animation: none;
   }
 }
+
+/* ===================================================================== */
+/*  Écran-titre (src/ui/titreScreen.js, src/app/Titre.js)                 */
+/* ===================================================================== */
+/* l'interface du jeu attend la partie ; seuls le titre, les réglages et les bulles restent */
+#ui[data-titre] > :not(.titre-ecran):not(.panel-host):not(.toasts) {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none !important;
+}
+.titre-ecran {
+  --titre-encre: #4b3b56;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: var(--paper);
+  font-family: var(--font-title);
+  user-select: none;
+  -webkit-user-select: none;
+  transition: opacity 0.6s ease;
+}
+.titre-ecran.fin {
+  opacity: 0;
+  pointer-events: none !important;
+}
+/* fondu au papier entre deux plans */
+.titre-voile {
+  position: absolute;
+  inset: 0;
+  background: #fbf1de;
+  opacity: 0;
+  pointer-events: none;
+}
+/* voile d'encre très léger en haut et en bas, pour lire le texte sur le ciel clair de l'aube */
+.titre-ombre {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 42% at 50% 16%, rgba(70, 48, 92, 0.26), transparent 70%),
+    linear-gradient(to top, rgba(62, 42, 84, 0.34), transparent 34%);
+  opacity: 0;
+  transition: opacity 2.4s ease;
+}
+.titre-ecran.logo-on .titre-ombre {
+  opacity: 1;
+}
+
+/* nom du jeu */
+.titre-logo {
+  position: absolute;
+  top: clamp(36px, 10vh, 120px);
+  left: 0;
+  right: 0;
+  text-align: center;
+  pointer-events: none;
+}
+.titre-nom {
+  margin: 0;
+  font-size: clamp(58px, 11vw, 136px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.015em;
+  color: #fff8ec;
+  -webkit-text-stroke: 0.07em var(--titre-encre);
+  paint-order: stroke fill;
+  text-shadow:
+    0 0.05em 0 rgba(75, 59, 86, 0.45),
+    0 0 0.45em rgba(255, 214, 186, 0.55),
+    0 0.12em 0.4em rgba(60, 40, 84, 0.3);
+}
+.titre-nom span {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.18em) rotate(-2deg);
+  filter: blur(6px);
+  transition: opacity 1.4s ease, transform 1.8s cubic-bezier(0.2, 0.7, 0.2, 1), filter 1.4s ease;
+  transition-delay: calc(var(--i) * 95ms);
+}
+.titre-ecran.logo-on .titre-nom span {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+.titre-trait svg {
+  width: clamp(170px, 24vw, 320px);
+  height: auto;
+  margin-top: 4px;
+  overflow: visible;
+}
+.titre-trait path {
+  fill: none;
+  stroke: #fff8ec;
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 420;
+  stroke-dashoffset: 420;
+  filter: drop-shadow(0 1.5px 0 rgba(75, 59, 86, 0.7));
+  transition: stroke-dashoffset 2.4s ease 1s;
+}
+.titre-ecran.logo-on .titre-trait path {
+  stroke-dashoffset: 0;
+}
+.titre-sous {
+  margin: 6px 0 0;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(15px, 1.8vw, 21px);
+  letter-spacing: 0.2em;
+  color: #fff8ec;
+  text-shadow: 0 1px 0 var(--titre-encre), 0 0 5px rgba(60, 40, 84, 0.85), 0 0 14px rgba(60, 40, 84, 0.45);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 1.6s ease 1.6s, transform 1.6s ease 1.6s;
+}
+.titre-ecran.logo-on .titre-sous {
+  opacity: 1;
+  transform: none;
+}
+
+/* « Appuyez sur une touche » */
+.titre-invite {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(56px, 15vh, 150px);
+  margin: 0;
+  text-align: center;
+  font-weight: 500;
+  font-size: clamp(15px, 1.7vw, 20px);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #fff8ec;
+  text-shadow: 0 1px 0 var(--titre-encre), 0 0 10px rgba(60, 40, 84, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+.titre-ecran[data-etape='attente'] .titre-invite {
+  opacity: 1;
+  animation: titre-souffle 2.8s ease-in-out infinite;
+}
+@keyframes titre-souffle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.38;
+  }
+}
+
+/* menu */
+.titre-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(48px, 11vh, 120px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none !important;
+  transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.titre-ecran[data-etape='menu'] .titre-menu,
+.titre-ecran[data-etape='confirmer'] .titre-menu {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto !important;
+}
+.titre-question {
+  display: none;
+  margin: 0 16px 4px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--fs-l);
+  text-align: center;
+  color: #fff8ec;
+  text-shadow: 0 1px 0 var(--titre-encre), 0 0 10px rgba(60, 40, 84, 0.65);
+}
+.titre-ecran[data-etape='confirmer'] .titre-question {
+  display: block;
+}
+.titre-liste {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.titre-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 240px;
+  justify-content: center;
+  padding: 7px 28px 8px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  font-family: var(--font-title);
+  font-weight: 500;
+  font-size: clamp(19px, 2.2vw, 26px);
+  color: #fff8ec;
+  text-shadow: 0 1px 0 var(--titre-encre), 0 0 9px rgba(60, 40, 84, 0.7);
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.3s cubic-bezier(0.2, 0.8, 0.3, 1.3), box-shadow 0.25s ease;
+}
+.titre-item:focus-visible {
+  outline: 2px dashed #fff8ec;
+  outline-offset: 3px;
+}
+.titre-puce {
+  font-size: 0.7em;
+  opacity: 0;
+  transform: scale(0.4) rotate(-30deg);
+  transition: opacity 0.25s ease, transform 0.35s ease;
+}
+.titre-item.actif {
+  background: rgba(255, 248, 236, 0.94);
+  color: var(--ink);
+  text-shadow: none;
+  box-shadow: var(--sh-btn);
+  transform: scale(1.05);
+}
+.titre-item.actif .titre-puce {
+  opacity: 1;
+  color: var(--coral);
+  transform: none;
+  animation: titre-scintille 2.2s ease-in-out infinite;
+}
+.titre-item[data-id='recommencer'].actif {
+  color: #b5533f;
+}
+@keyframes titre-scintille {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.25) rotate(18deg);
+  }
+}
+
+/* confirmation : une carte de papier, lisible sur n'importe quel plan */
+.titre-ecran[data-etape='confirmer'] .titre-menu {
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  margin: 0 auto;
+  padding: 18px 22px 16px;
+  border-radius: var(--r-l);
+  background: rgba(255, 248, 236, 0.96);
+  box-shadow: var(--sh-panel);
+}
+.titre-ecran[data-etape='confirmer'] .titre-question,
+.titre-ecran[data-etape='confirmer'] .titre-item {
+  color: var(--ink);
+  text-shadow: none;
+}
+.titre-ecran[data-etape='confirmer'] .titre-item.actif {
+  background: var(--paper-2);
+  box-shadow: inset 0 0 0 2px rgba(91, 74, 99, 0.18), var(--sh-flat);
+}
+
+/* aide des commandes */
+.titre-aide {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: clamp(12px, 3vh, 30px);
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 20px;
+  padding: 0 16px;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  color: rgba(255, 248, 236, 0.9);
+  text-shadow: 0 1px 2px rgba(60, 40, 84, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease 0.3s;
+}
+.titre-aide b {
+  padding: 1px 6px;
+  border-radius: var(--r-xs);
+  background: rgba(255, 248, 236, 0.18);
+  font-weight: 700;
+}
+.titre-ecran[data-etape='menu'] .titre-aide,
+.titre-ecran[data-etape='confirmer'] .titre-aide {
+  opacity: 1;
+}
+/* réglages ouverts par-dessus : le titre s'efface à demi */
+.titre-ecran[data-etape='options'] .titre-logo {
+  opacity: 0.35;
+  transition: opacity 0.4s ease;
+}
+
+/* fondu au papier du départ : un mot pendant le préchargement */
+.paper-fade[data-texte]::after {
+  content: attr(data-texte);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-title);
+  font-size: var(--fs-l);
+  color: var(--ink-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .titre-nom span,
+  .titre-sous,
+  .titre-trait path {
+    transition-duration: 0.01s;
+    transition-delay: 0s;
+  }
+  .titre-ecran[data-etape='attente'] .titre-invite,
+  .titre-item.actif .titre-puce {
+    animation: none;
+  }
+}
