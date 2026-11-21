@@ -4,6 +4,7 @@
 
 import { BASE_TUNING } from './tuning.js';
 import { trunkFrame } from './trunk.js';
+import { GABARIT, GABARITS, BODY_Y_K } from '../../models/personnage/gabarit.js';
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
@@ -174,9 +175,14 @@ export function bankDrop(bank) {
   return BANK_DROP * smooth(0.2, BANK_MAX, Math.abs(bank));
 }
 // main au sol : pli latéral du buste et penchée en avant (rad), abaissement supplémentaire (m)
-const HAND_SIDE_BEND = 0.34;
-const HAND_LEAN = 0.12;
+const HAND_SIDE_BEND = GABARIT.pliMain;
+const HAND_LEAN = GABARIT.penchMain;
 const HAND_EXTRA_DROP = 0.06;
+// écart de base des bras (rad, autour de z) au sol, bras le long du corps : 0,2 réglé sur le chibi, plus
+// l'écart propre au gabarit (gabarit.ecartBras ; 0 pour le chibi)
+const ARM_BASE = 0.2 + GABARIT.ecartBras;
+// hanche → cheville (m) : 0,30 chez le chibi
+const JAMBE = GABARIT.REST[9][1] - GABARIT.REST[17][1]; // os THIGH_R → FOOT_R
 
 // Fatigue du sprint (0 à 1) : celle du moteur si elle existe, sinon déduite du temps de sprint.
 function fatigueOf(p) {
@@ -255,10 +261,10 @@ function groundPose(p, T, X) {
   // La cible est l'orientation globale du pied ; on la convertit en rotation de cheville.
   T.footL = (footPitch(leftStance, leftProgress, g.foot) - thighL - shinL) * walk;
   T.footR = (footPitch(rightStance, rightProgress, g.foot) - thighR - shinR) * walk;
-  // genoux pliés pour l'abaissement (hanche → cheville : 0,30 m) : cuisse en avant, tibia
-  // replié deux fois plus, pied gardé dans son orientation
+  // genoux pliés pour l'abaissement (hanche → cheville : 0,30 m chez le chibi ; l'abaissement rendu est
+  // drop · BODY_Y_K) : cuisse en avant, tibia replié deux fois plus, pied gardé dans son orientation
   if (drop > 1e-5) {
-    const knee = Math.acos(clamp(1 - drop / 0.3, -1, 1)) * 0.85;
+    const knee = Math.acos(clamp(1 - (drop * BODY_Y_K) / JAMBE, -1, 1)) * 0.85;
     T.thighL -= knee;
     T.thighR -= knee;
     T.shinL += 2 * knee;
@@ -283,8 +289,8 @@ function groundPose(p, T, X) {
   const openR = clamp(0.52 + 0.3 * Math.sin(ph * 0.5 + 2.2) + 0.18 * Math.sin(ph * 2.7 + 3.0), 0, 1);
   const spreadL = armSpread * (1 - armExpress * (0.65 * (1 - openL)));
   const spreadR = armSpread * (1 - armExpress * (0.65 * (1 - openR)));
-  T.armLZ = -0.2 - spreadL;
-  T.armRZ = 0.2 + spreadR;
+  T.armLZ = -ARM_BASE - spreadL;
+  T.armRZ = ARM_BASE + spreadR;
   const elbowL = armExpress * (0.12 * Math.sin(ph * 1.7 + 0.3) + 0.08 * Math.sin(ph * 3.1 + 0.8));
   const elbowR = armExpress * (0.12 * Math.sin(ph * 1.9 + 2.1) + 0.08 * Math.sin(ph * 2.7 + 0.2));
   T.foreL = -(0.15 + g.fore * walk * foreGain + Math.max(0, -sn) * 0.14 * r) + elbowL;
@@ -376,8 +382,8 @@ function crouchPose(p, T, X) {
   T.footL = T.footR = 0.25 * k;
   T.lean = 0.3 * k;
   T.armLX = T.armRX = -0.7 * k;
-  T.armLZ = -0.2 - 0.3 * k;
-  T.armRZ = 0.2 + 0.3 * k;
+  T.armLZ = -ARM_BASE - 0.3 * k;
+  T.armRZ = ARM_BASE + 0.3 * k;
   T.headX = -0.2 * k;
   X.expr = 'concentre';
 }
@@ -415,8 +421,8 @@ function pivotPose(p, T, X) {
   T.shinL = T.shinR = 0.9 * hop;
   T.armLX = T.armRX = -0.4 + 0.3 * k;
   T.foreL = T.foreR = -1.6 * (1 - k) - 0.3;
-  T.armLZ = -0.2 - 0.6 * k;
-  T.armRZ = 0.2 + 0.6 * k;
+  T.armLZ = -ARM_BASE - 0.6 * k;
+  T.armRZ = ARM_BASE + 0.6 * k;
   T.lean = 0.15 * k;
   X.expr = 'concentre';
 }
@@ -632,18 +638,31 @@ function slidePose(p, T, X) {
 // montée, climbArc autour), comme les foulées avec la distance : immobile, la pose ne bouge pas.
 // ---------------------------------------------------------------------------
 export const CLIMB_GAP = 0.22; // m : racine ↔ écorce (moteur)
+// Hauteurs des prises réglées sur le chibi (épaule à 0,775 m, bras de 0,38 m main comprise), portées au
+// gabarit : écart à l'épaule (gabarit.prise, chibi 0,155 au-dessus et 0,025 au-dessous) à l'échelle du
+// bras, levée du poirier à l'échelle de l'épaule
+const epaule = (g) => g.REST[5][1]; // os ARM_R
+const bras = (g) => g.REST[5][1] - g.REST[15][1] + g.main; // épaule → bout de la main (os HAND_R)
+const EPAULE = epaule(GABARIT);
+const KB = bras(GABARIT) / bras(GABARITS.chibi);
+const KE = EPAULE / epaule(GABARITS.chibi);
+// Jambes en grenouille réglées sur le chibi (cuisse de 0,15 m : genou à 15 cm devant la racine, l'écorce
+// est à 0,22 m). Une cuisse plus longue fléchit moins, pour garder le genou à la même distance ; le tibia
+// garde son orientation (FLEX = 1 pour le chibi).
+const CUISSE = GABARIT.REST[9][1] - GABARIT.REST[10][1]; // os THIGH_R → SHIN_R
+const FLEX = Math.min(1, Math.asin(Math.min(1, 0.15 / CUISSE)) / 1.55);
 export const CLIMB = {
-  low: 0.75, // m le long du tronc au-dessus de la racine : prise la plus basse (à hauteur d'épaule)…
-  high: 0.93, // … et la plus haute, bras presque tendu (au-delà, la main n'atteint plus l'écorce)
+  low: EPAULE - GABARIT.prise.bas * KB, // m le long du tronc au-dessus de la racine : prise la plus basse (à hauteur d'épaule)…
+  high: EPAULE + GABARIT.prise.haut * KB, // … et la plus haute, bras presque tendu (au-delà, la main n'atteint plus l'écorce)
   grip: 0.6, // part du cycle d'une main où elle tient l'écorce (les deux mains se relaient)
   angle: 0.42, // rad : prise tournée autour de l'axe vers l'épaule de son côté
   arcCycle: 0.3, // m de tour (climbArc) pour le cycle latéral d'une main
   shuffle: 0.15, // rad : amplitude de ce cycle latéral (pas chassés)
-  hugH: 0.64, // glissade : mains serrées autour du tronc, à hauteur d'épaule…
+  hugH: EPAULE - GABARIT.prise.serre * KB, // glissade : mains serrées autour du tronc, à hauteur d'épaule…
   hugAngle: 0.75, // … et presque sur les côtés
   handGap: 0.004, // m de jour entre la main et l'écorce
-  perchLift: 0.54, // m : pivot du poirier : retourné, l'épaule passe à 0,31 m au-dessus du sommet et
-  // la main s'y pose coude fléchi (bras tendu, le coude plierait d'un coup au retour de la bascule)
+  perchLift: 0.54 * KE, // m : pivot du poirier : retourné, l'épaule passe à 0,31 m (chibi) au-dessus du
+  // sommet et la main s'y pose coude fléchi (bras tendu, le coude plierait d'un coup au retour de la bascule)
 };
 // distance de montée pour le cycle complet d'une main : pendant la prise, le corps monte d'autant
 // que la main descend dans son repère (la main ne glisse pas sur l'écorce)
@@ -843,6 +862,13 @@ function climbPose(p, T, X) {
     T.shinL += (1.75 - T.shinL) * slide;
     T.shinR += (1.7 - T.shinR) * slide;
     T.bodyY += (-0.02 - T.bodyY) * slide;
+  }
+  if (FLEX < 1) {
+    for (const [th, sh] of [['thighL', 'shinL'], ['thighR', 'shinR']]) {
+      const a = T[th] * FLEX;
+      T[sh] += T[th] - a;
+      T[th] = a;
+    }
   }
   // accroche : petit écrasement à l'impact
   const k = 1 - clamp((p.grabT ?? 1) / 0.16, 0, 1);

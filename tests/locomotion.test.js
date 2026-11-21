@@ -1,6 +1,6 @@
 // Personnage 2.0 : moteur de locomotion pur (allures, inertie de rotation, dérapage,
 // roulade, saut, rebords, pentes, clic pour aller) mesuré face aux cibles de réglage.
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createMotor, stepMotor, interpolate, turnParams, climbable, arriveIntent, wrapAngle } from '../src/entities/locomotion/motor.js';
 import { tuningFor, SURFACES } from '../src/entities/locomotion/tuning.js';
 import { locomotionPose, strideLength, advanceGaitPhase, LOCO_FAMILY, CADENCE } from '../src/entities/locomotion/pose.js';
@@ -959,5 +959,37 @@ describe('tête en course', () => {
     }
     expect(hi - lo).toBeGreaterThan(0.15);
     expect(zhi - zlo).toBeGreaterThan(0.1);
+  });
+});
+
+describe('gabarit : mesures du corps dans les réglages (main au sol, prise au sommet)', () => {
+  const MAIN = ['handShoulderX', 'handShoulderY', 'handReach', 'handTouchAngle', 'handLiftAngle', 'handRiseMax', 'trunkHands'];
+  const lateral = (t) => t.handShoulderX * Math.cos(t.handTouchAngle) + t.handShoulderY * Math.sin(t.handTouchAngle);
+
+  it('épaule, bras, relief et prise au sommet lus dans le gabarit, valeurs d’origine pour le chibi', async () => {
+    const { GABARIT } = await import('../src/models/personnage/gabarit.js');
+    const R = GABARIT.REST; // os ARM_R = 5, FORE_R = 6, HAND_R = 15
+    const os = (a, b) => Math.hypot(R[a][0] - R[b][0], R[a][1] - R[b][1], R[a][2] - R[b][2]);
+    expect(T.handShoulderX).toBe(Math.abs(R[5][0]));
+    expect(T.handShoulderY).toBe(R[5][1]);
+    expect(Math.abs(T.handReach - (os(5, 6) + os(6, 15) + GABARIT.main))).toBeLessThanOrEqual(0.005);
+    // buste plié : la prise au sommet est sous l'épaule + le bras tendu, de moins de 10 cm
+    expect(T.handShoulderY + T.handReach - T.trunkHands).toBeGreaterThan(0);
+    expect(T.handShoulderY + T.handReach - T.trunkHands).toBeLessThan(0.1);
+    vi.resetModules();
+    globalThis.location = { search: '?gabarit=chibi' };
+    let C;
+    try {
+      const { GABARIT: G } = await import('../src/models/personnage/gabarit.js');
+      expect(G.nom).toBe('chibi');
+      C = (await import('../src/entities/locomotion/tuning.js')).tuningFor('realiste');
+    } finally {
+      delete globalThis.location;
+      vi.resetModules();
+    }
+    expect(MAIN.map((k) => C[k])).toEqual([0.17, 0.775, 0.38, 0.55, 0.52, 0.15, 1.1]);
+    // seuils d'inclinaison communs à tous les gabarits ; relief compté jusqu'à la même pente côté intérieur
+    expect([T.handTouchAngle, T.handLiftAngle]).toEqual([C.handTouchAngle, C.handLiftAngle]);
+    expect(T.handRiseMax / lateral(T)).toBeCloseTo(C.handRiseMax / lateral(C), 2);
   });
 });

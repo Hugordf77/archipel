@@ -96,8 +96,10 @@ export function nextId() {
 // Identifiants réservés au joueur (jamais produits par nextId, qui s'arrête à 250) :
 // la composition s'en sert pour garder le personnage net et l'encrer un peu plus
 // fort. Les grandes masses ont chacune leur id pour que l'encre ne trace que
-// leurs frontières (corps, cheveux, tête, membres).
-export const CHAR_IDS = { body: 251 / 255, hair: 252 / 255, head: 253 / 255, limb: 254 / 255 };
+// leurs frontières (corps, cheveux, tête, membres). Le cinquième, trim (255/255, la valeur la plus haute
+// du canal 8 bits, qu'aucun autre objet n'écrit), sert aux garnitures qui en recouvrent d'autres (bavette,
+// revers, semelles) : la composition le traite comme les quatre autres (seuil uCharId − 0,002).
+export const CHAR_IDS = { body: 251 / 255, hair: 252 / 255, head: 253 / 255, limb: 254 / 255, trim: 255 / 255 };
 export const CHAR_ID = CHAR_IDS.body;
 
 export const LAYER_SHADOW = 1;

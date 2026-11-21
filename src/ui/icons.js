@@ -53,6 +53,7 @@ const PIECE_PATHS = {
   baskets: '<path d="M5 20c0-3 2-6 5-6l4 3 6 1c3 .5 7 2 7 5v2H5z"/><path d="M5 23.5h22" stroke="#fffaf0" stroke-width="2"/>',
   bottes: '<path d="M10 4h8v14l7 3v5H10z"/>',
   sandales: '<ellipse cx="16" cy="23" rx="11" ry="3.5"/><path d="M9 21c2-5 12-5 14 0" fill="none"/>',
+  marche: '<path d="M9 6h10v11l6 2.5c1.8.8 3 2.3 3 4V25H6V9c0-1.7 1.3-3 3-3z"/><path d="M6 25.5h22" stroke="#fffaf0" stroke-width="2.4"/><path d="M14 13h5M15 17h5" fill="none" stroke="#fffaf0" stroke-width="1.6"/>',
   echarpe: '<path d="M7 8c3 3 15 3 18 0v5c-3 3-15 3-18 0z"/><path d="M18 14v12h5V13"/>',
   bob: '<path d="M9 17c0-6 3.2-10 7-10s7 4 7 10z"/><path d="M4 18h24c0 2-4 3.5-12 3.5S4 20 4 18z"/>',
   barrette: '<path d="M16 16L6 10v12zM16 16l10-6v12z"/><circle cx="16" cy="16" r="2.6" fill="#fffaf0"/>',

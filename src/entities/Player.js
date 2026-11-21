@@ -4,6 +4,7 @@ import { U, ORIGIN } from '../core/globals.js';
 import { waterSurfaceAt } from '../world/env/water.js';
 import { createMotor, stepMotor, resetMotor, interpolate, climbable, arriveIntent, setProfile, H } from './locomotion/motor.js';
 import { strideLength, advanceGaitPhase } from './locomotion/pose.js';
+import { NAGE } from '../models/personnage/gabarit.js';
 
 const damp = (k, dt) => 1 - Math.exp(-k * dt);
 // glissement le long d'un obstacle : directions déviées essayées tour à tour
@@ -19,6 +20,14 @@ const TRUNK_SEARCH = 4;
 // Seuils de l'animation en fractions de la course réglée (T.run) : 3,6 et 3,3 m/s à 5,4 m/s
 const RUN_POSE_FRACTION = 3.6 / 5.4; // pose « run » au-delà
 const WALK_REF_FRACTION = 3.3 / 5.4; // référence des poses existantes et de l'intensité des pas
+// Seuils de la nage comptés depuis la ligne d'eau NAGE (racine sous la surface à la nage, gabarit.js) :
+// réglés sur le chibi (0,6 / 0,45 / 0,4 m quand NAGE valait 0,66), ils gardent pour tout gabarit le même
+// écart entre la racine et le fond (chibi : 5 mm de plus qu'avant, comme sa ligne d'eau, 0,665 m). Héros :
+// 0,86 / 0,71 / 0,66 m (restés à 0,6 et 0,45, la racine descendrait de 0,32 m sous le fond à l'entrée et
+// de 0,47 m à la sortie, contre 0,06 et 0,21 m).
+const SWIM_IN = NAGE - 0.06; // profondeur où l'on se met à nager (eau à la poitrine)
+const SWIM_OUT = NAGE - 0.21; // … où l'on cesse de nager ; jusque-là, on patauge (surface 'shallow')
+const SWIM_AIR = NAGE - 0.26; // en l'air, on nage une fois les pieds à tant sous la surface
 
 // Contrôleur du personnage : la physique vit dans le moteur de locomotion
 // (locomotion/motor.js) ; ici on lui fournit le sol, l'eau et les collisions,
@@ -344,15 +353,15 @@ export class Player {
     // eau : on nage dès qu'elle monte à la poitrine ; en l'air, seulement en l'atteignant
     const g = groundAt(m.x, m.z);
     const depth = waterDepth(m.x, m.z);
-    let swim = !g.deck && depth > (this.swimming ? 0.45 : 0.6);
-    if (swim && !m.grounded && m.y > g.y + depth - 0.4) swim = false;
+    let swim = !g.deck && depth > (this.swimming ? SWIM_OUT : SWIM_IN);
+    if (swim && !m.grounded && m.y > g.y + depth - SWIM_AIR) swim = false;
     if (swim && !this.swimming && !m.grounded) m.events.push({ type: 'splash', x: m.x, y: g.y + depth, z: m.z, v: Math.hypot(m.v, m.vy) });
     this.swimming = swim;
     I.swim = swim;
 
     // environnement de l'image : surface et pente sous les pieds
     const E = this.env;
-    E.surface = g.deck ? 'wood' : depth > 0.05 && depth <= 0.45 ? 'shallow' : g.surface === 'sand' ? 'sand' : 'grass';
+    E.surface = g.deck ? 'wood' : depth > 0.05 && depth <= SWIM_OUT ? 'shallow' : g.surface === 'sand' ? 'sand' : 'grass';
     if (g.deck || swim) {
       E.slopeX = E.slopeZ = 0;
     } else {
@@ -380,7 +389,7 @@ export class Player {
     this.facing = view.heading;
     if (swim) {
       const d2 = waterDepth(this.pos.x, this.pos.z);
-      const gy = waterSurfaceAt(this.pos.x, this.pos.z, Math.max(0, d2)) - 0.66 + Math.sin(U.uTime.value * 1.65) * 0.015;
+      const gy = waterSurfaceAt(this.pos.x, this.pos.z, Math.max(0, d2)) - NAGE + Math.sin(U.uTime.value * 1.65) * 0.015;
       this.pos.y += (gy - this.pos.y) * damp(6, dt);
       m.y = this.pos.y;
     } else if (!m.grounded) this.pos.y = view.y;

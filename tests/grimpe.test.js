@@ -8,6 +8,7 @@ import { trunkFrame, trunkClosest, trunkLength, trunkSAtY } from '../src/entitie
 import { troncMonde, troncsProches, setObstacles, addObstacle, removeObstacle, setGroundProvider, obstacleAt, pushOut } from '../src/world/navigation.js';
 import { GRIMPE } from '../src/models/physique.gen.js';
 import { Player } from '../src/entities/Player.js';
+import { CLIMB } from '../src/entities/locomotion/pose.js';
 
 const T = tuningFor('realiste');
 const DEG = Math.PI / 180;
@@ -220,6 +221,22 @@ describe('s’accrocher', () => {
 });
 
 describe('sur le tronc', () => {
+  it('au plus haut, la prise la plus haute de la pose reste sous le sommet ; tous les palmiers du monde se grimpent', () => {
+    // échelles des palmiers générés : 0,78 à 1,33 (world/islands/gen/flora.js)
+    for (const sc of [0.78, 1, 1.33]) {
+      for (const rot of [0, 1.9]) {
+        const tr = palmier({ sc, rot });
+        const L = trunkLimits(tr, T);
+        expect(L.max - L.low, `sc ${sc}`).toBeGreaterThan(0.5);
+        // racine au plus haut (mains à trunkHands) : la prise la plus haute (CLIMB.high, pose.js) sous sommetY,
+        // à moins de 0,4 m (chibi : 0,17 m ; héros : 0,25 m ; avec trunkHands = 1,1, héros 0,30 m au-dessus)
+        const ecart = trunkSAtY(tr.pts, tr.sommetY) - (L.max + CLIMB.high);
+        expect(ecart, `sc ${sc}`).toBeGreaterThan(0);
+        expect(ecart, `sc ${sc}`).toBeLessThan(0.4);
+      }
+    }
+  });
+
   it('monte à 1,5 m/s jusqu’au sommet (CLIMB_TOP), corps à r(s) + 0,22 m de l’axe à 1 cm près, face au tronc', () => {
     const { m, tr, env } = grabbed();
     const lim = { ...trunkLimits(tr, T) };
@@ -241,7 +258,10 @@ describe('sur le tronc', () => {
       const az = c.z - mm.z;
       expect((Math.sin(mm.heading) * ax + Math.cos(mm.heading) * az) / Math.hypot(ax, az)).toBeGreaterThan(0.9999);
     });
-    expect(checked).toBeGreaterThan(100);
+    // échantillons de montée une fois le raccord amorti fini (moins de 1 mm en moins de 1 s) : la longueur
+    // grimpée dépend du gabarit (trunkHands) ; chibi ≈ 121, héros ≈ 77
+    expect(checked).toBeGreaterThan(Math.round(((lim.max - lim.low) / T.trunkUp - 1) * 120));
+    expect(checked).toBeGreaterThan(40);
     expect(worst).toBeLessThan(0.01);
     expect(vMax).toBe(T.trunkUp);
     // de la racine la plus basse aux mains au sommet : (max − low) / 1,5 + rampe de mise en route

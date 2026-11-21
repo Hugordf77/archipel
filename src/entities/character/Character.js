@@ -7,12 +7,13 @@ import { FaceAtlas, faceGeometry, EXPRESSIONS, BLINKABLE, EYE, cellUV } from './
 import { locomotionPose, LOCO_FAMILY, FAMILY_HALFLIFE, createArmDynamics, stepArmDynamics, handWeightTarget, climbRootFrame, axisInRoot, climbHandTarget, perchHandTarget, trunkChord, CLIMB, CLIMB_GAP, climbRenderFrame } from '../locomotion/pose.js';
 import { H as MOTOR_STEP } from '../locomotion/motor.js';
 import { applyJoints, reachHand, shoulderInRoot, handInRoot, boneToRoot, HAND_RADIUS, HAND_BRUSH_GAP } from '../locomotion/rig.js';
-import { RESSORT, hairSpring, stepHair, hairAngles } from './cheveux.js';
-import { HC, B, PARENT, REST, ID, tint, HAIR_STYLES, buildAvatarGeometry } from '../../models/personnage/index.js';
+import { RESSORT, PAN, SAC, hairSpring, stepHair, hairAngles, stepRebond } from './cheveux.js';
+import { B, PARENT, REST, ID, tint, HAIR_STYLES, buildAvatarGeometry, GABARIT, TETE_K, versReel, DYN_PANS, DYN_SAC } from '../../models/personnage/index.js';
 import { crayonGeometry } from '../../models/personnage/index.js';
 export { HAIR_STYLES };
 
-// Joueur humain, chibi et rond (≈ 1,45 m, tête = 40 % de la hauteur).
+// Joueur humain, rond et peint, aux proportions du gabarit (models/personnage/gabarit.js) : héros 2.0
+// (5 têtes, 1,58 m sans les cheveux) ou chibi 1.0 (≈ 1,45 m, tête = 40 % de la hauteur).
 // Tout le corps, vêtements et cheveux compris, est UN SkinnedMesh à liaison
 // rigide (chaque pièce suit un seul os) ; le visage est une calotte texturée
 // accrochée à l'os de la tête. Animation 100 % procédurale.
@@ -120,6 +121,10 @@ const BASE = {
   thighL: 0, thighR: 0, shinL: 0, shinR: 0, footL: 0, footR: 0,
 };
 const FIDGETS = ['etire', 'ciel', 'tape', 'gratte'];
+const _crown = new THREE.Vector3();
+// point du torse où l'écharpe et le sac mesurent l'accélération (repère de l'os du torse : entre le nœud
+// de l'écharpe et le haut du sac)
+const CLOTH_POINT = new THREE.Vector3(0.06, versReel(B.TORSO, [0, 1.0, 0])[1] - REST[B.TORSO][1], -0.08);
 // grimpe : durée (s) du glissement des cibles des mains à l'accroche et entre tronc et poirier
 const CLIMB_BLEND = 0.25;
 // grimpe : durée (s) du retour des mains à l'animation, une fois revenues à leur pose en quittant le tronc
@@ -144,8 +149,8 @@ export class Character {
     // Elle suit le corps pendant la marche et les roulades sans modifier le modèle catalogue.
     this.backSword = new THREE.Group();
     this.backSword.name = 'épée de dos';
-    this.backSword.position.set(0.015, 0.12, -0.255);
-    this.backSword.rotation.z = 0.16;
+    this.backSword.position.set(...GABARIT.epee.p);
+    this.backSword.rotation.z = GABARIT.epee.rz;
     const bladeShape = new THREE.Shape();
     bladeShape.moveTo(0, -0.35);
     bladeShape.lineTo(0.032, -0.27);
@@ -193,7 +198,7 @@ export class Character {
     this.atlas = new FaceAtlas();
     this.faceMat = toonMaterial({ color: '#ffffff', id: ID.head, rim: 1.25, pigment: 0.2, outline: 0, face: this.atlas.texture, character: true });
     this.face = new THREE.Mesh(faceGeometry(), this.faceMat);
-    this.face.position.set(0, HC - REST[B.HEAD][1], 0);
+    this.face.position.set(0, GABARIT.HC - REST[B.HEAD][1], 0);
     this.bones[B.HEAD].add(this.face);
     this.eyeCell = -1;
     this.mouthCell = -1;
@@ -227,19 +232,27 @@ export class Character {
     this.clothSprings = {
       hairA: hairSpring(),
       hairB: hairSpring(),
+      hairC: hairSpring(),
       skirt: { x: 0, vx: 0, y: 0, vy: 0, z: 0, vz: 0 },
       scarf: { x: 0, vx: 0, y: 0, vy: 0, z: 0, vz: 0 },
+      // pans de l'écharpe (os SCARF, SCARF_B) et sac à dos (os BAG ; ty : rebond vertical)
+      panA: hairSpring(),
+      panB: hairSpring(),
+      sac: hairSpring(),
     };
-    this.springs = [this.clothSprings.hairA, this.clothSprings.hairB];
+    this.springs = [this.clothSprings.hairA, this.clothSprings.hairB, this.clothSprings.hairC];
     this.prevHeadY = 0;
     // cheveux (hairPush) : racine et sommet du crâne autour d'elle à l'image précédente, leurs vitesses,
     // accélération lissée (state : 0 = à placer, 1 = vitesses à prendre, 2 = en route), orientation de
     // la tête, poussée
     const v3 = () => new THREE.Vector3();
-    this._hairDyn = {
+    const inertie = () => ({
       state: 0, p: v3(), prev: v3(), rootPrev: v3(), vr: v3(), vr1: v3(), vo: v3(), vo1: v3(), acc: v3(), a: v3(), w: v3(),
-      q: new THREE.Quaternion(), s: v3(), m: new THREE.Matrix4(), push: [0, 0, 0],
-    };
+      q: new THREE.Quaternion(), s: v3(), m: new THREE.Matrix4(), push: [0, 0, 0], al: v3(), wl: v3(),
+    });
+    this._hairDyn = inertie();
+    // écharpe et sac : même mesure, au torse (point entre le nœud et le haut du sac)
+    this._clothDyn = inertie();
     this._prevPos = null;
     this._estVel = new THREE.Vector3();
     this.j = { ...BASE };
@@ -305,8 +318,10 @@ export class Character {
     const t0 = performance.now();
     const av = sanitizeAvatar(raw);
     const style = HAIR_STYLES[av.hair];
-    REST[B.HAIR_A] = style.a;
-    REST[B.HAIR_B] = style.b;
+    // os des cheveux posés par la coupe (positions de dessin), portés au squelette
+    REST[B.HAIR_A] = versReel(B.HAIR_A, style.a);
+    REST[B.HAIR_B] = versReel(B.HAIR_B, style.b);
+    REST[B.HAIR_C] = versReel(B.HAIR_C, style.c ?? style.a);
     REST.forEach((p, i) => {
       const parent = PARENT[i] < 0 ? [0, 0, 0] : REST[PARENT[i]];
       this.restLocal[i].set(p[0] - parent[0], p[1] - parent[1], p[2] - parent[2]);
@@ -318,6 +333,7 @@ export class Character {
     this.faceMat.uniforms.uColor.value.set(SKINS[av.skin]);
     this.atlas.draw({ eyes: av.eyes, brow: tint(HAIR_COLORS[av.hairColor], 0.78) });
     this.avatar = av;
+    this.placeSword(av);
     this.lastBuildMs = performance.now() - t0;
     return av;
   }
@@ -342,6 +358,22 @@ export class Character {
     this.pose = name;
     this.poseTime = 0;
     if (name === 'study' && !this.held) this.holdItem(this.pencil());
+  }
+
+  // Épée de dos : sur le sac quand il est porté (GABARIT.epeeSac, os BAG : elle rebondit avec lui), sinon
+  // sur le torse (GABARIT.epee). Épée en main : on change seulement l'endroit où elle sera rangée.
+  placeSword(av = this.avatar) {
+    const surSac = av?.back === 'sac' && GABARIT.epeeSac;
+    const e = surSac ? GABARIT.epeeSac : GABARIT.epee;
+    const home = { parent: this.bones[surSac ? B.BAG : B.TORSO], position: new THREE.Vector3(...e.p), rotation: new THREE.Euler(e.rx || 0, e.ry || 0, e.rz), scale: new THREE.Vector3(1, 1, 1) };
+    if (this._swordHome) {
+      Object.assign(this._swordHome, home);
+      return;
+    }
+    this.backSword.parent?.remove(this.backSword);
+    home.parent.add(this.backSword);
+    this.backSword.position.copy(home.position);
+    this.backSword.rotation.copy(home.rotation);
   }
 
   drawSword() {
@@ -395,7 +427,7 @@ export class Character {
 
   spawnDust(side) {
     this.root.updateMatrixWorld();
-    const p = this.root.localToWorld(this._v.set(side * 0.085, 0.04, -0.08));
+    const p = this.root.localToWorld(this._v.set(side * Math.abs(REST[B.FOOT_R][0]), 0.04, -0.08));
     this.dustPool.spawn(p.x, p.y, p.z, { size: 0.16 * (0.7 + Math.random() * 0.4), life: 0.55 + Math.random() * 0.15, vy: 0.4 });
   }
 
@@ -415,7 +447,7 @@ export class Character {
     const turnRate = THREE.MathUtils.clamp(motion?.turnRate || 0, -5, 5);
     const T = { ...BASE };
     const breathe = Math.sin(now * ((Math.PI * 2) / 3));
-    let expr = this.sleepy ? 'endormi' : 'neutre';
+    let expr = this.sleepy ? 'somnolent' : 'neutre';
     const walk = Math.min(1, sp * 1.4);
 
     const L = motion?.loco;
@@ -815,7 +847,7 @@ export class Character {
         break;
       }
       case 'swordAttack': {
-        expr = 'concentre';
+        expr = 'determine';
         const rise = THREE.MathUtils.clamp(t / 0.2, 0, 1);
         const cut = THREE.MathUtils.clamp((t - 0.2) / 0.16, 0, 1);
         const ease = cut * cut * (3 - 2 * cut);
@@ -995,7 +1027,9 @@ export class Character {
       for (const bi of ARM_BONES) {
         const q = this.bones[bi].quaternion;
         const prev = this._armQ[bi];
-        if (changing && this._armQOk) q.copy(prev.rotateTowards(q, step));
+        // un bras encore en retard à la fin du changement (bras long, bascule rapide) finit de rattraper
+        // sa cible à la même vitesse au lieu de claquer
+        if (this._armQOk && (changing || prev.angleTo(q) > step)) q.copy(prev.rotateTowards(q, step));
         prev.copy(q);
       }
       this._armQOk = true;
@@ -1064,14 +1098,16 @@ export class Character {
     const accF = THREE.MathUtils.clamp(motion?.loco?.aLong ?? motion?.loco?.accF ?? 0, -30, 30);
     const accL = THREE.MathUtils.clamp(motion?.loco?.aLat ?? (motion?.loco?.omega || 0) * (motion?.loco?.v || 0), -15, 15);
 
-    // 1. CHEVEUX : la couronne (HAIR_A) et l'arrière (HAIR_B) sont des pendules raides fixés à la tête
-    // (cheveux.js), poussés par l'accélération réelle du crâne et par le vent ressenti, dans le repère
-    // de la tête : ils suivent la course, l'appel et la réception d'un saut, la roulade, l'arrêt brusque
+    // 1. CHEVEUX : le dessus (HAIR_A), la nuque (HAIR_B) et les côtés (HAIR_C, si la coupe en a) sont des
+    // pendules raides fixés à la tête (cheveux.js), poussés par l'accélération réelle du crâne et par le
+    // vent ressenti, dans le repère de la tête : ils suivent la course, l'appel et la réception d'un saut,
+    // la roulade, l'arrêt brusque
     const hairDyn = HAIR_STYLES[this.avatar?.hair]?.dyn;
     if (hairDyn) {
       const push = this.hairPush(dt, totalWindX, totalWindY, totalWindZ, motion?.vel);
       const yawRate = turnRate + vYaw;
-      for (const [key, bone, d] of [['hairA', B.HAIR_A, hairDyn.a], ['hairB', B.HAIR_B, hairDyn.b]]) {
+      for (const [key, bone, d] of [['hairA', B.HAIR_A, hairDyn.a], ['hairB', B.HAIR_B, hairDyn.b], ['hairC', B.HAIR_C, hairDyn.c]]) {
+        if (!d) continue;
         const a = hairAngles(stepHair(this.clothSprings[key], d, push, dt, yawRate), d);
         bn[bone].rotation.set(a.x, a.y, a.z);
       }
@@ -1105,8 +1141,9 @@ export class Character {
       bn[B.SKIRT].rotation.set(s.x, 0, s.z);
     }
 
-    // 3. VÊTEMENTS : ÉCHARPE (B.SCARF)
-    if (bn[B.SCARF]) {
+    // 3. VÊTEMENTS : ÉCHARPE ET SAC
+    if (GABARIT.nom === 'chibi') {
+      // chibi (gardé pour comparer) : un seul pan, sur l'os SCARF, ressort d'origine
       const s = this.clothSprings.scarf;
       // Ondulation fluide en ruban
       const scarfFlutter = Math.sin(now * 15.5 + 1.1) * Math.min(0.22, 0.04 + airSpeed * 0.035);
@@ -1130,6 +1167,40 @@ export class Character {
       s.z += s.vz * dt;
 
       bn[B.SCARF].rotation.set(s.x, 0, s.z);
+    } else {
+      // aventurier : les deux pans de l'écharpe (SCARF, SCARF_B) et le sac (BAG) sont des pendules fixés
+      // au torse (cheveux.js, réglages PAN et SAC), poussés par l'accélération du torse et par le vent
+      // ressenti, dans le repère du torse : les pans traînent derrière à la course et flottent au saut, le
+      // sac rebondit un peu à la foulée et à la réception ; tous bornés par leurs butées (DYN_PANS, DYN_SAC)
+      const pans = this.avatar?.accessory === 'echarpe';
+      const sac = this.avatar?.back === 'sac';
+      if (pans || sac) {
+        const C = this._clothDyn;
+        this.inertia(C, B.TORSO, CLOTH_POINT, dt, totalWindX, totalWindY, totalWindZ, motion?.vel);
+        const f = C.push;
+        if (pans) {
+          // le tissu bat au vent ressenti (le long de la face plate des pans, surtout en roulis)
+          const bat = Math.min(5, airSpeed * 0.8);
+          DYN_PANS.forEach((d, i) => {
+            const ph = i * 1.7;
+            f[0] = C.wl.x * PAN.vent - C.al.x + Math.sin(now * (11.3 + i * 1.9) + ph) * bat;
+            f[1] = C.wl.y * PAN.vent - C.al.y + Math.cos(now * (9.1 + i * 1.3) + ph) * bat * 0.5;
+            f[2] = C.wl.z * PAN.vent - C.al.z;
+            const a = hairAngles(stepHair(this.clothSprings[i ? 'panB' : 'panA'], d, f, dt, turnRate, PAN), d, PAN);
+            bn[d.os].rotation.set(a.x, a.y, a.z);
+          });
+        }
+        if (sac) {
+          f[0] = C.wl.x * SAC.vent - C.al.x;
+          f[1] = C.wl.y * SAC.vent - C.al.y;
+          f[2] = C.wl.z * SAC.vent - C.al.z;
+          const s = this.clothSprings.sac;
+          const a = hairAngles(stepHair(s, DYN_SAC, f, dt, 0, SAC), DYN_SAC, SAC);
+          bn[B.BAG].rotation.set(a.x, 0, a.z);
+          bn[B.BAG].position.copy(this.restLocal[B.BAG]);
+          bn[B.BAG].position.y += stepRebond(s, f[1], dt, SAC);
+        }
+      }
     }
 
     // visage : expression + clignement toutes les 2 à 5 s
@@ -1156,12 +1227,25 @@ export class Character {
   // roulade), lissées (RESSORT, cheveux.js). Une téléportation ou une image très longue repart de zéro.
   hairPush(dt, wx, wy, wz, vel = null) {
     const H = this._hairDyn;
+    // sommet du crâne, dans le repère de l'os de la tête
+    _crown.set(0, GABARIT.HC + 0.25 * TETE_K - REST[B.HEAD][1], -0.05 * TETE_K);
+    this.inertia(H, B.HEAD, _crown, dt, wx, wy, wz, vel);
+    H.push[0] = H.wl.x * RESSORT.vent - H.al.x;
+    H.push[1] = H.wl.y * RESSORT.vent - H.al.y;
+    H.push[2] = H.wl.z * RESSORT.vent - H.al.z;
+    return H.push;
+  }
+
+  // Mesure, pour un os et un point porté par lui (repère de l'os), l'accélération lissée du point (celle de
+  // la racine plus RESSORT.pose de celle du point autour de la racine, H.a, axes du monde) et la rend dans
+  // le repère de l'os (H.al), avec le vent ressenti (H.wl ; wx, wy, wz : axes du monde)
+  inertia(H, bone, point, dt, wx, wy, wz, vel = null) {
     const rp = this.root.position;
-    boneToRoot(this._rig, B.HEAD, H.m);
+    boneToRoot(this._rig, bone, H.m);
     H.m.decompose(H.p, H.q, H.s);
     H.q.premultiply(this.root.quaternion);
-    // sommet du crâne autour de la racine, en axes du monde
-    H.p.set(0, HC + 0.25 - REST[B.HEAD][1], -0.05).applyMatrix4(H.m).applyQuaternion(this.root.quaternion);
+    // point autour de la racine, en axes du monde
+    H.p.copy(point).applyMatrix4(H.m).applyQuaternion(this.root.quaternion);
     if (H.state === 0 || dt > 0.1 || rp.distanceToSquared(H.rootPrev) > 4) {
       H.state = 1;
       H.a.set(0, 0, 0);
@@ -1179,11 +1263,10 @@ export class Character {
     }
     H.prev.copy(H.p);
     H.rootPrev.copy(rp);
-    H.w.set(wx, wy, wz).multiplyScalar(RESSORT.vent).sub(H.a).applyQuaternion(H.q.invert());
-    H.push[0] = H.w.x;
-    H.push[1] = H.w.y;
-    H.push[2] = H.w.z;
-    return H.push;
+    H.q.invert();
+    H.al.copy(H.a).applyQuaternion(H.q);
+    H.wl.set(wx, wy, wz).applyQuaternion(H.q);
+    return H;
   }
 
   // Locomotion pilotée par le moteur : pose pure (locomotion/pose.js) + regard qui flâne,

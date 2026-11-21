@@ -27,6 +27,8 @@ function randomLook(av, owned) {
     shoesColor: randIndex(SHOE_COLORS.length),
     accessory: Math.random() < 0.2 ? null : pickOne(mine('accessory')),
     accessoryColor: randIndex(CLOTH_COLORS.length),
+    back: Math.random() < 0.3 ? null : pickOne(mine('back')),
+    backColor: randIndex(CLOTH_COLORS.length),
   };
 }
 
@@ -118,6 +120,11 @@ export function openMirrorPanel(game, { first = false, tab = 'visage' } = {}) {
           draft.accessory,
           (v) => { draft.accessory = v; },
         ), draft.accessory ? dots(CLOTH_COLORS, draft.accessoryColor, (i) => { draft.accessoryColor = i; }, CLOTH_NAMES) : null),
+        section('Dos', chips(
+          [[null, 'Aucun'], ...piecesOf('back').map((k) => [k, PIECES[k].name, { icon: pieceIcon(k, CLOTH_COLORS[draft.backColor]), locked: !own.has(k), price: PIECES[k].price }])],
+          draft.back,
+          (v) => { draft.back = v; },
+        ), draft.back ? dots(CLOTH_COLORS, draft.backColor, (i) => { draft.backColor = i; }, CLOTH_NAMES) : null),
         h('p', { class: 'muted' }, 'D\'autres pièces t\'attendent à l\'échoppe, contre quelques coquillages.'),
       ];
     }

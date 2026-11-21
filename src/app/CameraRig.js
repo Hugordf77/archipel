@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GABARIT } from '../models/personnage/gabarit.js';
 import { U, ORIGIN } from '../core/globals.js';
 import { computeHorizonDip } from '../world/env/sky.js';
 
@@ -38,7 +39,8 @@ export class CameraRig {
     this.cur = { yaw: 0, pitch: 0.58, distance: 17 };
     this.mode = 'follow';
     this.orbit = { center: new THREE.Vector3(), t: 0, baseYaw: 0 };
-    this.lookOffset = new THREE.Vector3(0, 0.7, 0);
+    // visée au-dessus des pieds : le haut du buste du personnage (gabarit)
+    this.lookOffset = new THREE.Vector3(0, GABARIT.visee, 0);
     // minPitch négatif : la caméra descend au ras du sol et lève les yeux (regarder les îles du ciel)
     this.limits = { minDist: 8, maxDist: 30, minPitch: -0.6, maxPitch: 1.15 };
     this.forward = new THREE.Vector2(0, -1);

@@ -1,6 +1,21 @@
 // Réglages de la locomotion du personnage : une seule table, unités SI (m, s, rad).
 // « realiste » est le profil par défaut (élan, inertie de rotation, dérapages) ;
 // « reactif » garde les mêmes gestes avec beaucoup moins d'inertie.
+import { GABARIT, GABARITS } from '../../models/personnage/gabarit.js';
+
+// Mesures du corps lues dans le gabarit (models/personnage/gabarit.js, REST : os ARM_R = 5, FORE_R = 6,
+// HAND_R = 15), jamais recopiées : épaule (écart au plan médian, hauteur au-dessus des pieds) et bras tendu
+// de l'épaule au bout des doigts (épaule → coude → centre de la main, plus le rayon de la main), au cm.
+// Chibi : 0,17 / 0,775 / 0,38 m ; héros : 0,19 / 1,17 / 0,56 m.
+const epauleX = (g) => Math.abs(g.REST[5][0]);
+const epauleY = (g) => g.REST[5][1];
+const os = (g, a, b) => Math.hypot(g.REST[a][0] - g.REST[b][0], g.REST[a][1] - g.REST[b][1], g.REST[a][2] - g.REST[b][2]);
+const bras = (g) => Math.round((os(g, 5, 6) + os(g, 6, 15) + g.main) * 100) / 100;
+// part du bras du gabarit sur celui du chibi (réglages d'origine) : 1 pour le chibi, ≈ 1,47 pour le héros
+const KB = bras(GABARIT) / bras(GABARITS.chibi);
+// écart latéral de l'épaule intérieure, penchée de beta, corps pivotant aux pieds (comme motor.shoulderAt)
+const lateralAt = (g, beta) => epauleX(g) * Math.cos(beta) + epauleY(g) * Math.sin(beta);
+const HAND_TOUCH = 0.55; // rad (31,5°), même seuil pour tous les gabarits
 
 export const BASE_TUNING = {
   // --- allures (m/s) -------------------------------------------------------
@@ -67,22 +82,26 @@ export const BASE_TUNING = {
   gripSlide: 1,
 
   // --- main au sol : un effleurement rare dans un virage franc au sprint --------
-  // Corps pivotant aux pieds, gabarit PER-001 au repos (models/personnage/commun.js, REST) :
-  // épaule intérieure à handShoulderX du plan médian et handShoulderY au-dessus des pieds.
+  // Corps pivotant aux pieds, gabarit au repos (models/personnage/gabarit.js, REST) : épaule intérieure à
+  // handShoulderX du plan médian et handShoulderY au-dessus des pieds.
   // Penché de β, l'épaule est à (X·cos β + Y·sin β) de côté et (Y·cos β − X·sin β) de haut ;
   // la sonde lit le sol juste sous elle. L'inclinaison « relief compris » compare la hauteur de
   // l'épaule au-dessus de ce sol à celle qu'elle aurait sur le plat à l'angle de seuil : un sol plus
-  // haut côté intérieur fait toucher plus tôt, plus bas plus tard (au-delà de handRiseMax, rocher ou
-  // rebord : ignoré). Bras tendu (handReach), la main n'atteint le plat qu'avec le corps abaissé
-  // d'environ 19 cm à 31,5° (hauteur d'épaule 0,57 m − 0,38 m) : la pose plie buste et bassin.
+  // haut côté intérieur fait toucher plus tôt, plus bas plus tard (relief compté jusqu'à handRiseMax :
+  // au-delà, rocher ou rebord, l'excédent est ignoré).
+  // Les angles de seuil ne dépendent pas de la taille : l'inclinaison vient de l'accélération latérale
+  // (bankGain · atan(aLat / g)), identique pour tous les gabarits, et le rapport bras / hauteur d'épaule
+  // est presque le même (chibi 0,49, héros 0,48) : l'effleurement reste aussi rare. Bras tendu
+  // (handReach), la main n'atteint le plat qu'avec le corps abaissé à 31,5° : chibi ≈ 19 cm (épaule à
+  // 0,57 m − 0,38 m), héros ≈ 34 cm (0,90 m − 0,56 m) ; la pose plie buste et bassin.
   // Contact : en SPRINT, au-delà de handTouchAngle tenu handHold, avec un élan (vitesse maximale
   // des handSpeedWindow dernières secondes) d'au moins course + handSpeed · (sprint − course), et
   // près de la pointe d'inclinaison ; relevé sous handLiftAngle ou après handMaxTime ;
   // puis handCooldown sans nouveau contact (un slalom ne touche pas à chaque virage).
-  handShoulderX: 0.17, // m
-  handShoulderY: 0.775, // m
-  handReach: 0.38, // m : épaule → bout des doigts, bras tendu
-  handTouchAngle: 0.55, // rad (31,5°) : sonde à 0,55 m de côté sur le plat
+  handShoulderX: epauleX(GABARIT), // m (chibi 0,17 ; héros 0,19)
+  handShoulderY: epauleY(GABARIT), // m (chibi 0,775 ; héros 1,17)
+  handReach: bras(GABARIT), // m : épaule → bout des doigts, bras tendu (chibi 0,38 ; héros 0,56)
+  handTouchAngle: HAND_TOUCH, // rad (31,5°) : sonde à 0,55 m de côté sur le plat (héros : 0,77 m)
   handLiftAngle: 0.52, // rad (30°) : en dessous, la paume quitte un sol plat (cinématique de la pose)
   handHold: 0.08, // s au-delà du seuil avant le contact : un coup de stick bref ne suffit pas
   handMaxTime: 0.3, // s de contact au plus, même si le virage continue
@@ -92,7 +111,10 @@ export const BASE_TUNING = {
   handPeakSlack: (1.5 * Math.PI) / 180, // rad : contact seulement pendant que |bank| monte ou reste
   // à moins de cet écart de sa pointe en cours, jamais quand le corps se redresse…
   handPeakLate: 0.05, // s : … et au plus tant après que |bank| a cessé de monter (ou d'être à sa borne)
-  handRiseMax: 0.15, // m
+  // m : 0,15 m pour le chibi, porté au gabarit avec l'écart latéral de la sonde au seuil (0,55 m → 0,77 m)
+  // pour que le relief compte jusqu'à la même pente côté intérieur (atan(0,15 / 0,55) ≈ 15°) : 0,21 m
+  // pour le héros (resté à 0,15 m, le relief ne compterait plus au-delà de 11°)
+  handRiseMax: Math.round(0.15 * (lateralAt(GABARIT, HAND_TOUCH) / lateralAt(GABARITS.chibi, HAND_TOUCH)) * 1000) / 1000,
 
   // --- dérapage et demi-tour --------------------------------------------------
   skidMinSpeed: 3.8, // m/s
@@ -178,7 +200,11 @@ export const BASE_TUNING = {
   // tronc), s le long de l'axe depuis le pied. Mains à trunkHands au-dessus de la racine le long de
   // l'axe : quand elles atteignent sommetY, CLIMB_TOP (racine au haut de l'axe).
   trunkGap: 0.22, // m : de l'écorce à la racine
-  trunkHands: 1.1, // m : épaule 0,775 + bras 0,38 (handShoulderY, handReach), moins le buste plié
+  // m : épaule + bras (handShoulderY + handReach), moins le buste plié (5,5 cm pour le chibi, à l'échelle
+  // du bras) : chibi 0,775 + 0,38 − 0,055 = 1,1 ; héros 1,17 + 0,56 − 0,081 ≈ 1,65. Resté à 1,1 m, le
+  // héros arriverait au sommet avec sa prise la plus haute (pose.js, CLIMB.high ≈ 1,40 m) 0,30 m au-dessus
+  // de sommetY ; ainsi elle est 0,25 m en dessous (chibi : 0,17 m)
+  trunkHands: Math.round((epauleY(GABARIT) + bras(GABARIT) - 0.055 * KB) * 1000) / 1000,
   trunkUp: 1.5, // m/s le long de l'axe, stick haut
   trunkDown: 1.8, // m/s, stick bas
   trunkAccel: 8, // m/s² : mise en route (0 → 1,5 m/s en 0,19 s, 0 → 1,8 m/s en 0,23 s)

@@ -8,13 +8,16 @@
 // FORE_L, HAND_L sont du côté x < 0, ARM_R… du côté x > 0. Une inclinaison positive (virage
 // à gauche, même signe que omega) penche le corps vers +x : la main intérieure est HAND_R.
 import * as THREE from 'three';
-import { B, PARENT, REST } from '../../models/personnage/commun.js';
+import { B, PARENT, REST, GABARIT } from '../../models/personnage/commun.js';
+import { BODY_Y_K } from '../../models/personnage/gabarit.js';
+
+export { BODY_Y_K };
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const wrap = (a) => a - Math.PI * 2 * Math.round(a / (Math.PI * 2));
 
-// rayon de la main (sphère de 5,8 cm étirée de 5 % en hauteur, centrée sur l'os de la main)
-export const HAND_RADIUS = 0.058 * 1.05;
+// rayon de la main (sphère étirée de 5 % en hauteur, centrée sur l'os de la main ; gabarit)
+export const HAND_RADIUS = GABARIT.main;
 // la main effleure le sol sans s'y poser : 1,2 cm de jour sous la paume visé
 export const HAND_BRUSH_GAP = 0.012;
 // demi-écart des pieds : pivot de l'inclinaison sous le pied intérieur
@@ -41,7 +44,7 @@ export function applyJoints(body, bones, j, liftCur = 0, footPivot = false) {
   const px = !footPivot ? 0 : j.bodyRoll < 0 ? FOOT_HALF_GAP : j.bodyRoll > 0 ? -FOOT_HALF_GAP : 0;
   const share = clamp(Math.abs(j.bodyRoll) / 0.12, 0, 1); // transition douce autour de zéro
   _p.set(px * share, 0, 0).applyQuaternion(_q);
-  body.position.set(px * share - _p.x, j.bodyY - liftCur - _p.y, -_p.z);
+  body.position.set(px * share - _p.x, j.bodyY * BODY_Y_K - liftCur - _p.y, -_p.z);
   body.rotation.copy(_e);
   body.scale.set(j.sx, j.sy, j.sx);
   bones[B.HIPS].rotation.set(0, (j.hipsY || 0) - j.torsoY * 0.4, j.hipsZ);

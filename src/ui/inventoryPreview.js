@@ -2,6 +2,7 @@
 // canevas à part pendant que le jeu est en pause. Le moteur de rendu est créé une
 // seule fois puis réutilisé (pas un contexte WebGL par ouverture).
 import * as THREE from 'three';
+import { GABARIT } from '../models/personnage/gabarit.js';
 import { U } from '../core/globals.js';
 import { Character } from '../entities/character/Character.js';
 
@@ -16,8 +17,8 @@ function build(avatar) {
   renderer.setClearColor(0x000000, 0);
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(24, 0.8, 0.1, 30);
-  camera.position.set(0, 1.05, 4.6);
-  camera.lookAt(0, 0.66, 0);
+  camera.position.set(0, GABARIT.apercu.cam, 4.6);
+  camera.lookAt(0, GABARIT.apercu.vise, 0);
   const character = new Character(avatar);
   scene.add(character.root);
   return { canvas, renderer, scene, camera, character, yaw: 0.35, animOk: true, avatarKey: '' };

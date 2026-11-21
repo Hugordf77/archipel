@@ -6,22 +6,21 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { Builder } from '../../render/builder.js';
 import { CHAR_IDS } from '../../core/globals.js';
+import { GABARIT, versReel, versDessin } from './gabarit.js';
 
-export const HC = 1.12; // centre du crâne
+export { GABARIT, TETE_K, NAGE, versReel, versDessin } from './gabarit.js';
+// centre du crâne, dans les positions de dessin des pièces (corps/, coupes/, tete.js) ; celui du squelette
+// (corps réduit) est GABARIT.HC
+export const HC = GABARIT.dessin.HC;
 export const CREAM = '#f6ead2';
 const JOINT_BLEND_RADIUS = 0.055;
 
-export const B = { HIPS: 0, TORSO: 1, HEAD: 2, ARM_L: 3, FORE_L: 4, ARM_R: 5, FORE_R: 6, THIGH_L: 7, SHIN_L: 8, THIGH_R: 9, SHIN_R: 10, HAIR_A: 11, HAIR_B: 12, NECK: 13, HAND_L: 14, HAND_R: 15, FOOT_L: 16, FOOT_R: 17, SKIRT: 18, SCARF: 19 };
-export const PARENT = [-1, 0, B.NECK, 1, 3, 1, 5, 0, 7, 0, 9, 2, 2, 1, B.FORE_L, B.FORE_R, B.SHIN_L, B.SHIN_R, B.HIPS, B.TORSO];
-// positions de repos absolues (repère du personnage, pieds en 0)
-export const REST = [
-  [0, 0.46, 0], [0, 0.52, 0], [0, 0.85, 0],
-  [-0.17, 0.775, 0], [-0.17, 0.62, 0], [0.17, 0.775, 0], [0.17, 0.62, 0],
-  [-0.085, 0.42, 0], [-0.085, 0.27, 0], [0.085, 0.42, 0], [0.085, 0.27, 0],
-  [0, HC + 0.2, -0.2], [0, HC + 0.2, -0.2],
-  [0, 0.82, 0], [-0.17, 0.455, 0], [0.17, 0.455, 0], [-0.085, 0.12, 0.03], [0.085, 0.12, 0.03],
-  [0, 0.44, 0], [0.075, 0.74, 0.14],
-];
+export const B = { HIPS: 0, TORSO: 1, HEAD: 2, ARM_L: 3, FORE_L: 4, ARM_R: 5, FORE_R: 6, THIGH_L: 7, SHIN_L: 8, THIGH_R: 9, SHIN_R: 10, HAIR_A: 11, HAIR_B: 12, NECK: 13, HAND_L: 14, HAND_R: 15, FOOT_L: 16, FOOT_R: 17, SKIRT: 18, SCARF: 19, HAIR_C: 20, SCARF_B: 21, BAG: 22 };
+// (SCARF et SCARF_B : les deux pans de l'écharpe ; BAG : le sac à dos, sur le torse)
+export const PARENT = [-1, 0, B.NECK, 1, 3, 1, 5, 0, 7, 0, 9, 2, 2, 1, B.FORE_L, B.FORE_R, B.SHIN_L, B.SHIN_R, B.HIPS, B.TORSO, B.HEAD, B.TORSO, B.TORSO];
+// positions de repos absolues du squelette (repère du personnage, pieds en 0 ; corps réduit du gabarit,
+// gabarit.js) ; copie modifiable : la coupe pose les os des cheveux (Character.setAvatar, versReel)
+export const REST = GABARIT.REST.map((p) => [...p]);
 
 export const ID = CHAR_IDS;
 // boîte arrondie économe (1 segment d'arrondi : ~100 triangles au lieu de ~600)
@@ -57,10 +56,11 @@ export class Parts {
       const n = g.attributes.position.count;
       const si = new Uint16Array(n * 4);
       const sw = new Float32Array(n * 4);
+      // les pièces sont dessinées dans les positions de dessin : pivots des jointures dans ce repère
       const neighbors = [];
-      if (PARENT[bone] >= 0) neighbors.push({ bone: PARENT[bone], pivot: REST[bone] });
+      if (PARENT[bone] >= 0) neighbors.push({ bone: PARENT[bone], pivot: versDessin(bone, REST[bone]) });
       for (let child = 0; child < PARENT.length; child++) {
-        if (PARENT[child] === bone) neighbors.push({ bone: child, pivot: REST[child] });
+        if (PARENT[child] === bone) neighbors.push({ bone: child, pivot: versDessin(child, REST[child]) });
       }
       const pos = g.attributes.position;
       for (let i = 0; i < n; i++) {
@@ -85,6 +85,11 @@ export class Parts {
         }
         sw[i * 4] = 1 - neighborWeight;
         sw[i * 4 + 1] = neighborWeight;
+      }
+      // puis portées aux positions du squelette (corps réduit, tête descendue avec le cou)
+      if (GABARIT.corps !== 1) {
+        for (let i = 0; i < n; i++) pos.setXYZ(i, ...versReel(bone, [pos.getX(i), pos.getY(i), pos.getZ(i)]));
+        g.computeBoundingSphere();
       }
       g.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4));
       g.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
