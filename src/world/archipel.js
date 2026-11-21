@@ -90,6 +90,17 @@ const ILES_PX = [
       { t: 'moulin_tour', at: [868, 292], rot: 3.68, r: 7.5, nom: 'Moulin du Large' },
       { t: 'ruines_alternative', at: [756, 312], rot: 3.39, r: 9.5, nom: 'Nef effondrée' },
     ],
+    // retouches de relief (repère de l'île, m ; gen/forme.js, terrasser) : montée de la corniche du Vent
+    // (PV-T1 et palier PV-T2 du plan du Plateau venté, BRF-PV-02) le long de la face ouest de l'escarpement,
+    // du pied P0 (monde 350, −936) à l'arrivée A (432, −728) sur le rebord ; points de
+    // production/fiches/ZONE-ILE-VERTE.json#plan_plateau_vente.montee.points, arrondis par terrasser
+    terrassements: [
+      {
+        t: 'corniche', nom: 'Montée de la corniche du Vent', zone: 'plateau-vente', demi: 6, talus: 8, palier: 6,
+        h: [20.9, 66.3],
+        pts: [[354, 228], [370, 230], [378, 242], [371, 256], [361, 272], [350, 284], [346, 300], [351, 316], [365, 332], [377, 344], [389, 360], [393, 376], [398, 392], [411, 408], [420, 424], [436, 436]],
+      },
+    ],
   },
   {
     id: 'ruines-gelees', name: 'Les Ruines gelées', zone: 'ruines-gelees', biome: 'glace', base: { h: 14, larg: 160 }, plage: 12, falaise: 0.45,
@@ -295,6 +306,7 @@ function ileM(isl) {
     ilot: !!isl.ilot,
     zone,
     ...(isl.poses ? { poses: isl.poses } : {}),
+    ...(isl.terrassements ? { terrassements: isl.terrassements } : {}),
     forme: {
       cote: local,
       rEq,

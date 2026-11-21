@@ -148,8 +148,19 @@ et domaine concerné).
   rayon r, sans tirage. Les sections (`gen/sections.js`) gardent les lieux dont l'ancrage est dans leur
   carré ; `IslandManager.collectDecks` prend les planchers de tout élément qui en déclare. Plateau venté :
   trois moulins-tours BAT-013 sur les sites PV-M1 à M3 du plan, nef effondrée MON-014 sur la traversée
-  (local 756, 312). Test `tests/zones/plateau-vente-poses.test.js`. Ni corniche, ni chemins (BRF-PV-01 à
-  04 restent à faire) : les moulins de la crête ouest ne sont pas encore atteignables à pied par la montée.
+  (local 756, 312). Test `tests/zones/plateau-vente-poses.test.js`. La corniche est faite (voir
+  ci-dessous) ; pas encore de chemins (BRF-PV-01, 03 et 04 restent à faire).
+- **Montée de la corniche du Vent** (21/11/2026, branche `claude/plateau-corniche`, BRF-PV-02, éléments
+  PV-T1 et PV-T2) : le Plateau venté se gravit à pied par une rampe taillée le long de la face ouest de
+  l'escarpement, du pied P0 (350, −936, 20,9 m) au palier A (432, −728, 66,3 m), 258 m. Données :
+  `terrassements` de la Grande Île (`archipel.js`, repère de l'île : 16 points, demi-largeur 6 m, talus 8 m,
+  palier de 6 m). Code : `terrasser`, `traceCorniche` et `arrondir` de `gen/forme.js` (polyligne arrondie par
+  Chaikin, hauteur visée linéaire, bande à la hauteur visée, talus fondu, palier plat prioritaire), appelés
+  par `buildPlan` après l'érosion et les rivières, avant les zones (la route redevient prairie) ; relief fin
+  coupé sur la bande. Seules les cases de la zone `plateau-vente` sont touchées (H identique ailleurs).
+  Mesures : pente max 0,192, dévers 0,061, virages de 11,6 m de rayon au moins, aucune roche sur la route ;
+  l'escarpement frontal REP-03 reste infranchissable. Test `tests/zones/plateau-corniche.test.js` (7). En jeu
+  (serveur `corniche`, port 5183) : marche réelle de P0 à A, touche avant seule, sans chute.
 - **Le Navire-forteresse vole autour du Plateau venté** (01/11/2026, commit `4867f67`) : décor, on ne
   monte pas à bord (choix de l'utilisateur ; la pose au sol de `27fd499` est retirée). Éléments et
   trajectoire dans `src/world/plateau/forteresse-navire.js` (`ELEMENTS`, `VOL`, `vol(t)` : cercle de 190 m
@@ -318,7 +329,19 @@ et domaine concerné).
   await S.ciel(__ile, 'apres')` puis `python3 scripts/rendu/planche.py --ciel avant apres`. Plan et mesures :
   `docs/ciel/plan.md` (étoiles au zénith à 23 h : 0 → 2 843 px en medium ; +0,2 ms en medium).
 
-## État courant (02/11/2026)
+## État courant (21/11/2026)
+
+- **Corniche du Plateau venté** (branche `claude/plateau-corniche`, worktree `.claude/worktrees/plateau-corniche`,
+  configuration `corniche`, port 5183), partie de `v3-archipel` : BRF-PV-02 fait (voir « Îles et monde »), non
+  fusionné. Suite du plan du plateau : BRF-PV-03 (replats), puis BRF-PV-01 (bornage des lieux) et BRF-PV-04
+  (chemins). Échecs connus seulement : empreintes, numérotation MON ; `tests/cheveux.test.js` (« restent calmes
+  et bornées… ») est instable, un échec sur trois passages, sans lien avec le terrain. Journal de production
+  non mis à jour pour cette tâche.
+- **Version jouée par l'utilisateur** : worktree `personnage-2` (configuration `personnage`, port 5182) :
+  personnage retravaillé et plus grand, caméra et shaders, 30 fichiers non commités.
+
+## État au 02/11/2026
+
 
 - **Fusion du 02/11/2026 : assemblage** (`claude/assemblage`, worktree `.claude/worktrees/assemblage`,
   configuration `assemblage`, port 5180), fusionné dans `v3-archipel` par avance rapide. Contenu :

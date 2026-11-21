@@ -330,3 +330,117 @@ export function snowLine(worldZ, biome) {
   if (biome === 'volcan') return Infinity;
   return biome === 'glace' ? 34 + t * 30 : 82 + t * 150;
 }
+
+// ---------------------------------------------------------------------------
+// Terrassements posés à la main (desc.terrassements, repère de l'île, m) : retouches du relief appliquées
+// à la grille après l'érosion et les rivières, avant les zones (plan.js). Seules les cases de la zone
+// nommée `zone` sont touchées ; partout ailleurs H reste identique octet pour octet.
+//   corniche : { t: 'corniche', zone, pts: [[x, z]…] du pied vers l'arrivée, h: [pied, arrivée],
+//                demi (bande de roulement, m), talus (m), palier: r (disque à la hauteur d'arrivée) }
+// La polyligne est arrondie (Chaikin, 3 passes : virages de plus de 10 m de rayon) puis la hauteur visée
+// monte linéairement sur la longueur ; bande à la hauteur visée, talus fondu (smoothstep) vers le relief
+// naturel sur une largeur fixe (pas proportionnelle à l'écart, qui remblaierait le pied de l'escarpement).
+// Renvoie le poids de la retouche par case (0 hors emprise ; 1 sur la bande), ou null sans terrassement :
+// plan.js coupe le relief fin (A) en proportion.
+
+// polyligne arrondie : coins coupés au quart (Chaikin), extrémités gardées
+export function arrondir(pts, passes = 3) {
+  let p = pts.map((q) => [q[0], q[1]]);
+  for (let k = 0; k < passes; k++) {
+    const o = [p[0]];
+    for (let i = 0; i < p.length - 1; i++) {
+      const [ax, az] = p[i];
+      const [bx, bz] = p[i + 1];
+      if (i > 0) o.push([ax * 0.75 + bx * 0.25, az * 0.75 + bz * 0.25]);
+      if (i < p.length - 2) o.push([ax * 0.25 + bx * 0.75, az * 0.25 + bz * 0.75]);
+    }
+    o.push(p[p.length - 1]);
+    p = o;
+  }
+  return p;
+}
+
+// tracé d'une corniche : points arrondis avec leur hauteur visée [x, z, h] et longueur totale ; la hauteur
+// d'arrivée est atteinte au bord du palier (plat : rayon du palier plus une case de la grille de 4 m, pour que
+// le relief interpolé reste plat sur tout le rayon du palier)
+export function traceCorniche(tr) {
+  const p = arrondir(tr.pts);
+  let L = 0;
+  const cum = [0];
+  for (let i = 1; i < p.length; i++) cum.push((L += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1])));
+  const [h0, h1] = tr.h;
+  const Lm = L - (tr.palier ? tr.palier + CELL : 0);
+  return { pts: p.map((q, i) => [q[0], q[1], h0 + (h1 - h0) * Math.min(1, cum[i] / Lm)]), L };
+}
+
+const lisse = (t) => t * t * (3 - 2 * t);
+
+export function terrasser(T, desc) {
+  const liste = desc.terrassements;
+  if (!liste || !liste.length) return null;
+  const { H, n, s, ext } = T;
+  const c = T.ctx;
+  const W = new Float32Array(n * n);
+  // relief naturel des cases déjà retouchées
+  const nat = new Map();
+  for (const tr of liste) {
+    if (tr.t !== 'corniche') continue;
+    const zi = c.zones.findIndex((z) => z.id === tr.zone);
+    const { pts } = traceCorniche(tr);
+    const demi = tr.demi ?? 6;
+    const talus = tr.talus ?? 8;
+    const reach = demi + talus;
+    const [ax, az, ah] = pts[pts.length - 1];
+    const rp = tr.palier || 0;
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const [x, z] of pts) {
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x);
+      z0 = Math.min(z0, z); z1 = Math.max(z1, z);
+    }
+    const marge = reach + rp;
+    const i0 = Math.max(0, Math.floor((x0 - marge + ext) / s));
+    const i1 = Math.min(n - 1, Math.ceil((x1 + marge + ext) / s));
+    const j0 = Math.max(0, Math.floor((z0 - marge + ext) / s));
+    const j1 = Math.min(n - 1, Math.ceil((z1 + marge + ext) / s));
+    for (let j = j0; j <= j1; j++) {
+      for (let i = i0; i <= i1; i++) {
+        const x = -ext + i * s;
+        const z = -ext + j * s;
+        // projection sur la polyligne : distance et hauteur visée
+        let d = Infinity;
+        let hv = 0;
+        for (let k = 1; k < pts.length; k++) {
+          const [px, pz, ph] = pts[k - 1];
+          const [qx, qz, qh] = pts[k];
+          const dx = qx - px, dz = qz - pz;
+          const l2 = dx * dx + dz * dz || 1e-9;
+          const t = Math.max(0, Math.min(1, ((x - px) * dx + (z - pz) * dz) / l2));
+          const dd = Math.hypot(x - px - dx * t, z - pz - dz * t);
+          if (dd < d) {
+            d = dd;
+            hv = ph + (qh - ph) * t;
+          }
+        }
+        // palier d'arrivée : disque plat à la hauteur d'arrivée (rayon + une case), prioritaire sur la route
+        if (rp) {
+          const dp = Math.max(0, Math.hypot(x - ax, z - az) - rp - s + demi);
+          if (dp <= demi || dp < d) {
+            d = dp;
+            hv = ah;
+          }
+        }
+        if (d >= reach) continue;
+        // même découpage des zones que computeZonesForme (pas de 8 m)
+        if (c.zones.length > 1 && formeZone(c, -ext + ((i >> 1) * 2 + 0.5) * s, -ext + ((j >> 1) * 2 + 0.5) * s) !== zi) continue;
+        const k = j * n + i;
+        const w = d <= demi ? 1 : lisse((reach - d) / talus);
+        if (w <= W[k]) continue;
+        // retouche depuis le relief naturel (pas d'empilement si deux emprises se recouvrent)
+        if (!nat.has(k)) nat.set(k, H[k]);
+        H[k] = nat.get(k) * (1 - w) + hv * w;
+        W[k] = w;
+      }
+    }
+  }
+  return W;
+}

@@ -59,7 +59,7 @@
       "id": "BRF-PV-02",
       "titre": "Terrain : montée de la corniche du Vent (P0 → A)",
       "role": "world-designer",
-      "statut": "specification",
+      "statut": "realise",
       "fichiers": [
         "src/world/archipel.js (liste « terrassements » de la Grande Île : polyligne, hauteurs visées, demi-largeur, talus)",
         "src/world/islands/gen/forme.js (fonction pure qui applique les terrassements à la grille)",
@@ -78,7 +78,8 @@
       ],
       "dependances": [],
       "elements": ["PV-T1"],
-      "prototype": "node tests/zones/plateau-vente-mesures.mjs (prototype sur une copie en mémoire du plan, aucun fichier du jeu modifié)"
+      "prototype": "node tests/zones/plateau-vente-mesures.mjs (prototype sur une copie en mémoire du plan, aucun fichier du jeu modifié)",
+      "realisation": "21/11/2026, branche claude/plateau-corniche : terrasser (gen/forme.js), terrassements de la Grande Île (archipel.js), test tests/zones/plateau-corniche.test.js (pente max 0,192, dévers 0,061, rayon min 11,6 m, A atteinte au plafond 0,25, H inchangé hors zone, REP-03 bloqué) ; marche réelle de P0 à A en jeu"
     },
     {
       "id": "BRF-PV-03",

@@ -11,6 +11,7 @@ import { sealLakes } from './hydro.js';
 import { placeFloraForme } from './flora.js';
 import { placeSpawners } from './spawns.js';
 import { slopeAt } from './grid.js';
+import { terrasser } from './forme.js';
 
 export function buildPlan(desc) {
   const tm = {};
@@ -22,6 +23,10 @@ export function buildPlan(desc) {
   };
   const T = buildTerrain(desc, tm);
   t = performance.now();
+  // terrassements posés à la main (desc.terrassements : corniche du Plateau venté), après l'érosion et
+  // les rivières, avant les zones (la roche des parois retouchées redevient prairie)
+  const terre = terrasser(T, desc);
+  if (terre) lap('terrassements');
   const lieux = desc.lieux || null;
   const traits = { windAngle: ((desc.seed % 6283) / 1000), bloom: 'rose', ...(lieux ? traitsLieux(lieux) : {}) };
   const P = {
@@ -64,6 +69,8 @@ export function buildPlan(desc) {
     }
   }
   if (net) for (let k = 0; k < A.length; k++) if (net.pathMask[k]) A[k] = Math.min(A[k], 4);
+  // pas de relief fin sur la bande des terrassements, fondu sur leur talus
+  if (terre) for (let k = 0; k < A.length; k++) if (terre[k] > 0) A[k] = Math.round(A[k] * (1 - terre[k]));
   for (const k of rim) A[k] = 0;
   P.A = A;
   lap('couleurs');
