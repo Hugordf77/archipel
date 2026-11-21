@@ -331,14 +331,30 @@ et domaine concerné).
 
 ## État courant (21/11/2026)
 
-- **Corniche du Plateau venté** (branche `claude/plateau-corniche`, worktree `.claude/worktrees/plateau-corniche`,
-  configuration `corniche`, port 5183), partie de `v3-archipel` : BRF-PV-02 fait (voir « Îles et monde »), non
-  fusionné. Suite du plan du plateau : BRF-PV-03 (replats), puis BRF-PV-01 (bornage des lieux) et BRF-PV-04
-  (chemins). Échecs connus seulement : empreintes, numérotation MON ; `tests/cheveux.test.js` (« restent calmes
-  et bornées… ») est instable, un échec sur trois passages, sans lien avec le terrain. Journal de production
-  non mis à jour pour cette tâche.
-- **Version jouée par l'utilisateur** : worktree `personnage-2` (configuration `personnage`, port 5182) :
-  personnage retravaillé et plus grand, caméra et shaders, 30 fichiers non commités.
+- **Serveur unique** (décision de l'utilisateur, 21/11) : on joue et on travaille sur la copie principale
+  seulement, `v3-archipel`, configuration `ile`, port 5174. Les worktrees ne servent plus de version de jeu.
+  Fusions du 21/11 : `claude/personnage-2` (avance rapide sur `77c70ac`, travail du worktree `personnage-2`
+  commité : gabarit chibi plus grand, visage, tenues, caméra, id d'encre « trim ») et `claude/plateau-corniche`
+  (`f7b7d4a`, fusion `bfca952`). Le travail non commité de la copie principale (chèvre, mouton, fleurs PLA-015,
+  skill, README, catalogue) est resté en place ; `releves.gen.js` et `empreintes.json` refusionnés à trois voies
+  sans conflit.
+- **Corniche du Plateau venté** : BRF-PV-02 fait (voir « Îles et monde »). Suite du plan du plateau : BRF-PV-03
+  (replats), puis BRF-PV-01 (bornage des lieux) et BRF-PV-04 (chemins). Journal de production non mis à jour.
+- **Trait et grain encrés, passe « netteté »** (21/11, `src/render/shaders/post.js`, `Pipeline.js`) :
+  - trait stable (`uBoil` 0 : la variation à la main est figée, le trait ne bout plus) ;
+  - trait anticrénelé : huit voisins (croix et diagonales), maximum pour le trait, moyenne pour sa
+    couverture ; largeur jamais sous un pixel (silhouettes lointaines continues) ; `uOutlineWidth` 1,8 ;
+  - aplats nets : accent adaptatif type CAS sur la peinture en basse résolution, borné aux couleurs voisines
+    (`uSharp` 0,6, réglage `settings.sharp`) ;
+  - papier serré (`uGrainScale` 2,5 : plus de taches de 100 à 200 px), plus léger (± 5,5 %), grain imprimé
+    d'un pixel fixe, granulation 0,13.
+  Coût mesuré (`scripts/rendu/gpu.js`, même vue) : la composition ne change pas de façon mesurable avec ou
+  sans le trait et l'accent. Captures `captures/encre-avant-*`, `encre-apres-*`, `encre-apres2-*`
+  (`scripts/rendu/serie.js`, lieux plus le Plateau venté). Reste, pour une image vraiment nette sur un écran
+  Retina : la qualité « Moyen » plafonne à 1,25 × et la résolution adaptative descend à 0,7 (image étirée
+  d'environ 2,3 fois) ; à traiter avec le coût du G-buffer et de la peinture.
+- Échecs connus seulement : empreintes, numérotation MON, champs de fleurs (PLA-015 en cours) ;
+  `tests/cheveux.test.js` (« restent calmes et bornées… ») est instable (un échec sur trois passages).
 
 ## État au 02/11/2026
 

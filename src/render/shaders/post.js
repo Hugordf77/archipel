@@ -202,6 +202,11 @@ uniform float uOutlineWidth;
 uniform vec3 uInk;
 uniform float uPaper;
 uniform float uWobble;
+// netteté : bouillonnement du trait (0 = trait stable), accent des aplats, finesse du papier
+uniform float uBoil;
+uniform float uSharp;
+uniform vec2 uPaintTexel;
+uniform float uGrainScale;
 uniform float uGrade;
 uniform float uFocusDim;
 uniform float uPool;
@@ -262,6 +267,20 @@ void main() {
   vec2 pd = vec2(vnoise(vUv * vec2(70.0, 40.0)), vnoise(vUv * vec2(70.0, 40.0) + 7.3)) - 0.5;
   vec2 puv0 = vUv + pd * px * 2.2 * uWobble;
   vec3 col = texture2D(tPaint, puv0).rgb;
+  // aplats nets : la peinture, calculée en basse résolution puis étirée, est renforcée par un accent
+  // adaptatif (CAS) à l'échelle d'un texel de peinture, borné aux couleurs voisines (jamais de halo)
+  if (uSharp > 0.0) {
+    vec2 o = uPaintTexel;
+    vec3 a = texture2D(tPaint, puv0 + vec2(o.x, 0.0)).rgb;
+    vec3 b = texture2D(tPaint, puv0 - vec2(o.x, 0.0)).rgb;
+    vec3 c = texture2D(tPaint, puv0 + vec2(0.0, o.y)).rgb;
+    vec3 d = texture2D(tPaint, puv0 - vec2(0.0, o.y)).rgb;
+    vec3 mn = min(min(min(a, b), min(c, d)), col);
+    vec3 mx = max(max(max(a, b), max(c, d)), col);
+    // moins d'accent là où le contraste local est déjà fort (pas de crénelage)
+    float amp = clamp(1.0 - (mx.g - mn.g) * 2.5, 0.2, 1.0);
+    col = clamp(col + (col - (a + b + c + d) * 0.25) * uSharp * amp, mn, mx);
+  }
   // le joueur échappe en partie à la peinture : visage net sur un décor peint ; les détails fins du ciel
   // (étoiles, étoile filante) aussi : le dôme (id 0) les marque dans l'alpha des normales, sous 0,2
   vec4 nC = texture2D(tNormal, vUv);
@@ -280,21 +299,34 @@ void main() {
   }
 
   // ---- contours encrés ----
+  // trait stable (uBoil = 0 : la variation « à la main » est figée sur l'écran, le trait ne bout plus)
   if (uOutline > 0.0) {
-    vec2 lw = vec2(vnoise(vUv * vec2(26.0, 15.0) + boil * 3.1), vnoise(vUv * vec2(26.0, 15.0) + boil * 1.7 + 5.0)) - 0.5;
-    vec2 luv = vUv + lw * px * 2.6 * uWobble;
+    float bo = boil * uBoil;
+    vec2 lw = vec2(vnoise(vUv * vec2(26.0, 15.0) + bo * 3.1), vnoise(vUv * vec2(26.0, 15.0) + bo * 1.7 + 5.0)) - 0.5;
+    vec2 luv = vUv + lw * px * 2.6 * uWobble * mix(0.45, 1.0, uBoil);
     vec4 n0 = texture2D(tNormal, luv);
     if (n0.a > 0.25) {
       float d0 = linDepth(luv);
-      float width = uOutlineWidth * (0.7 + 0.6 * vnoise(vUv * vec2(12.0, 7.0) + boil * 0.37)) * clamp(14.0 / d0, 0.55, 1.5);
+      float width = uOutlineWidth * (0.82 + 0.36 * vnoise(vUv * vec2(12.0, 7.0) + bo * 0.37)) * clamp(14.0 / d0, 0.55, 1.5);
       if (n0.a < 0.75) width *= 0.8;
       // contour du joueur un peu plus appuyé
       if (n0.b > uCharId - 0.002) width *= 1.25;
-      float e = 0.0;
-      e = max(e, edgeAt(d0, n0, luv + vec2( 1.0,  0.0) * px * width));
-      e = max(e, edgeAt(d0, n0, luv + vec2(-1.0,  0.0) * px * width));
-      e = max(e, edgeAt(d0, n0, luv + vec2( 0.0,  1.0) * px * width));
-      e = max(e, edgeAt(d0, n0, luv + vec2( 0.0, -1.0) * px * width));
+      // jamais sous un pixel : les silhouettes lointaines restent continues
+      width = max(width, 1.0);
+      // huit voisins (croix et diagonales) : le maximum donne le trait, la moyenne sa couverture ;
+      // bord du trait adouci (anticrénelage), cœur plein
+      float c1 = edgeAt(d0, n0, luv + vec2( 1.0,  0.0) * px * width);
+      float c2 = edgeAt(d0, n0, luv + vec2(-1.0,  0.0) * px * width);
+      float c3 = edgeAt(d0, n0, luv + vec2( 0.0,  1.0) * px * width);
+      float c4 = edgeAt(d0, n0, luv + vec2( 0.0, -1.0) * px * width);
+      float w7 = width * 0.7071;
+      float g1 = edgeAt(d0, n0, luv + vec2( 1.0,  1.0) * px * w7);
+      float g2 = edgeAt(d0, n0, luv + vec2(-1.0,  1.0) * px * w7);
+      float g3 = edgeAt(d0, n0, luv + vec2( 1.0, -1.0) * px * w7);
+      float g4 = edgeAt(d0, n0, luv + vec2(-1.0, -1.0) * px * w7);
+      float eMax = max(max(max(c1, c2), max(c3, c4)), max(max(g1, g2), max(g3, g4)));
+      float eMoy = (c1 + c2 + c3 + c4 + g1 + g2 + g3 + g4) * 0.125;
+      float e = eMax * smoothstep(0.0, 0.2, eMoy);
       // encre teintée par la couleur de l'objet, plus sombre et saturée
       float l = dot(col, vec3(0.299, 0.587, 0.114));
       vec3 sat = mix(vec3(l), col, 1.35);
@@ -305,12 +337,15 @@ void main() {
   }
 
   // ---- grain de papier & granulation ----
-  vec2 puv = gl_FragCoord.xy / 512.0;
+  // papier serré (texture lue 2,5 fois plus fine : plus de taches de 100 à 200 px), plus léger, et grain
+  // imprimé d'un pixel, fixe ; la granulation des pigments ne touche que les tons moyens et sombres
+  vec2 puv = gl_FragCoord.xy / 512.0 * uGrainScale;
   float paper = texture2D(tPaper, puv).r;
   float paper2 = texture2D(tPaper, puv * 0.37 + 0.31).r;
-  col *= mix(1.0, 0.9 + 0.2 * paper, uPaper);
+  col *= mix(1.0, 1.0 + (paper - 0.5) * 0.11, uPaper);
   float lum = dot(col, vec3(0.299, 0.587, 0.114));
-  col = mix(col, col * col * 1.12, (1.0 - paper2) * 0.16 * uPaper * (1.0 - lum));
+  col = mix(col, col * col * 1.12, (1.0 - paper2) * 0.13 * uPaper * (1.0 - lum));
+  col += (hash12(gl_FragCoord.xy) - 0.5) * 0.022 * uPaper;
 
   // ---- étalonnage : saturation douce, ombres lavande, vignette chaude ----
   float lum2 = dot(col, vec3(0.299, 0.587, 0.114));

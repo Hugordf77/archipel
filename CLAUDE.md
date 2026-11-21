@@ -24,6 +24,7 @@ documents sont en français.
 - Modèles 3D : skill `modele-3d` et `docs/DA.md` ; `npm run modeles:empreinte` ne doit changer que pour le
   modèle travaillé.
 - Tests en jeu : `__ile.game.skipSave = true` avant toute téléportation et après chaque rechargement ;
-  serveur des agents sur le port 5174 (configuration `ile`), jamais sur celui où joue l'utilisateur.
+  serveur unique (décision du 21/11/2026) : copie principale, configuration `ile`, port 5174, où l'utilisateur
+  joue aussi ; plus de version de jeu dans les worktrees.
 - Aucune nouvelle dépendance npm sans accord de l'utilisateur.
 - À chaque livraison : mettre à jour `LIVRAISONS.md` (domaine et « État courant »), puis le graphe.

@@ -173,10 +173,15 @@ export class Pipeline {
       uNear: { value: 0.1 },
       uFar: { value: 2000 },
       uOutline: { value: 1 },
-      uOutlineWidth: { value: 1.6 },
+      uOutlineWidth: { value: 1.8 },
       uInk: { value: new THREE.Vector3(0.5, 0.42, 0.6) },
       uPaper: { value: 1 },
       uWobble: { value: 1 },
+      // netteté : trait stable (0 = ne bout plus), accent des aplats (CAS), papier serré
+      uBoil: { value: 0 },
+      uSharp: { value: 0.6 },
+      uPaintTexel: { value: new THREE.Vector2() },
+      uGrainScale: { value: 2.5 },
       uGrade: { value: 1 },
       uFocusDim: { value: 0 },
       uPool: { value: 1 },
@@ -362,6 +367,8 @@ export class Pipeline {
     cu.uWobble.value = s.wobble;
     cu.uFocusDim.value = this.focusDim;
     cu.uPool.value = s.paint ? 1 : 0;
+    cu.uSharp.value = s.paint ? (s.sharp ?? 0.6) : 0;
+    cu.uPaintTexel.value.set(1 / this.PW, 1 / this.PH);
     r.setRenderTarget(null);
     r.clear(true, true, true);
     this.compPass.render(r, null);
