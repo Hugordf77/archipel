@@ -63,7 +63,7 @@ vec3 grassTouches(vec3 albedo, vec3 wA, float grassMask) {
 
 // Herbe en tapis, variation de la grande échelle à la petite (à inclure après NOISE ; uTime,
 // uWindDir et uWindStrength déclarés par WIND ou à part) : plaques de 15 à 40 m (teinte ± 6°,
-// valeur ± 8 %), ondes de vent, bandes de 6 à 12 m qui défilent dans le sens du vent, touches de
+// valeur ± 8 %), ondes de vent en rafales qui filent dans le sens du vent, touches de
 // pinceau en aplats et voile pastel. Les brins et le sol (terrain) lisent les mêmes : le lointain
 // raccorde au tapis. p : position absolue (xz).
 export const HERBE = /* glsl */ `
@@ -81,14 +81,17 @@ vec3 herbePlaque(vec2 p) {
 vec3 herbeVarie(vec3 c, vec3 pl) {
   return hueRot(c, pl.x * 0.105) * (1.0 + 0.08 * pl.y);
 }
-// onde de vent (0 à 1) : bandes de 9 m en moyenne, ondulées, qui défilent à 4 m/s
+// onde de vent (0 à 1) : rafales en plaques (environ 26 × 13 m, allongées en travers du vent) qui
+// filent à 5 m/s ; dans chaque rafale, des vagues serrées de 4 m qui la traversent à 7 m/s. Entre
+// les rafales, un souffle faible (0,15). Plus de bandes régulières sur tout le pré.
 float herbeOnde(vec2 p) {
   vec2 d = normalize(uWindDir + vec2(0.0001));
   vec2 q = vec2(dot(p, d), dot(p, vec2(-d.y, d.x)));
-  float ph = q.x / 9.0 + vnoise(vec2(q.y / 23.0, q.x / 41.0)) * 1.4 - uTime * 0.45;
-  float band = smoothstep(0.35, 0.95, 0.5 + 0.5 * sin(ph * 6.2831853));
-  float gate = smoothstep(0.25, 0.65, vnoise(vec2(q.x / 30.0 - uTime * 0.1, q.y / 18.0)));
-  return band * (0.35 + 0.65 * gate) * uWindStrength;
+  vec2 g = vec2((q.x - uTime * 5.0) / 13.0, q.y / 26.0);
+  float gust = smoothstep(0.42, 0.82, vnoise(g) * 0.7 + vnoise(g * 2.3 + 7.1) * 0.3);
+  float ph = (q.x - uTime * 7.0) / 4.0 + vnoise(vec2(q.y / 9.0, q.x / 17.0)) * 1.2;
+  float ripple = 0.55 + 0.45 * sin(ph * 6.2831853);
+  return (0.15 + 0.85 * gust) * ripple * uWindStrength;
 }
 // touches de pinceau : traits allongés dans le sens du vent (environ 3,5 × 0,7 m), en aplats de
 // gouache (valeur par paliers de 4,5 %, de −9 à +9 %) ; facteur à multiplier à la couleur

@@ -12,7 +12,7 @@ import { KINDS, KIND_INDEX, STRIDE } from './kinds.js';
 import { reliefContext, baseHeight } from './relief.js';
 import { BIOME_IDS, formeZone, snowLine } from './forme.js';
 import { BIOMES } from '../biomes.js';
-import { herbeTile } from './herbe.js';
+import { herbeTile, biomesTuile } from './herbe.js';
 
 export const TILE = 64;
 const BUCKET = 16;
@@ -452,7 +452,7 @@ export function buildTile(plan, surf, tx, tz) {
   // carte d'herbe (densité, hauteur, sécheresse par sommet) : bruits propres, après le tirage
   // de la petite végétation, qu'elle ne modifie pas
   const herbe = herbeTile(plan, surf, x0, z0, T, g);
-  return { tx, tz, x0, z0, positions, normals, colors, index, items: small.items, ids: small.ids, groups, herbe, minTop, maxTop, biome: tileBiome(plan, x0 + T / 2, z0 + T / 2) };
+  return { tx, tz, x0, z0, positions, normals, colors, index, items: small.items, ids: small.ids, groups, herbe, minTop, maxTop, biome: tileBiome(plan, x0 + T / 2, z0 + T / 2), biome2: tileBiome2(plan, x0, z0, T) };
 }
 
 // biome d'une tuile (palette de l'herbe) : celui du centre de la tuile sur les îles à plusieurs biomes
@@ -461,6 +461,12 @@ export function tileBiome(plan, x, z) {
   const i = Math.max(0, Math.min(plan.n - 1, Math.round((x + plan.ext) / plan.s)));
   const j = Math.max(0, Math.min(plan.n - 1, Math.round((z + plan.ext) / plan.s)));
   return BIOME_IDS[plan.B[j * plan.n + i]];
+}
+
+// biome secondaire d'une tuile, mêlé à l'herbe par le canal A de sa carte (herbe.js, biomesTuile)
+export function tileBiome2(plan, x0, z0, T) {
+  if (!plan.B) return plan.biome;
+  return BIOME_IDS[biomesTuile(plan, x0, z0, T).s];
 }
 
 function sampleColor(C, n, fi, fj, out) {

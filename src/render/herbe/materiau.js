@@ -9,8 +9,13 @@
 import * as THREE from 'three';
 import { U } from '../../core/globals.js';
 import { NOISE, HERBE, CURVE, WIND, SHADOW, TOON, MRT_OUT } from '../shaders/chunks.js';
+import { TOUFFE, PULL, JIT } from './placement.js';
 
+const f = (x) => x.toFixed(4);
 const herbeVert = /* glsl */ `
+const float TOUFFE = ${f(TOUFFE)};
+const float PULL = ${f(PULL)};
+const float JIT = ${f(JIT)};
 ${CURVE}
 ${WIND}
 ${NOISE}
@@ -31,6 +36,11 @@ uniform vec3 uPied;
 uniform vec3 uMilieu;
 uniform vec3 uPointe;
 uniform vec3 uSec;
+// palette du biome voisin, mêlée par le canal A de la carte d'herbe (biomes mêlés au nœud)
+uniform vec3 uPied2;
+uniform vec3 uMilieu2;
+uniform vec3 uPointe2;
+uniform vec3 uSec2;
 // pousseurs (x, z de la scène, rayon, force) : joueur, animaux, souffle de l'aigle
 uniform vec4 uPushers[8];
 // herbe fauchée (0 à 1) au demi-mètre, 129 × 129 sur la tuile
@@ -42,6 +52,13 @@ varying float vShadow;
 varying vec3 vLantern;
 varying float vViewDist;
 varying float vT;
+
+// distance au joueur, allongée de 0 à 18 % par un bruit de 7 m : les bords d'anneaux ne sont plus
+// des cercles. Allongée seulement : la densité voulue ne dépasse jamais celle de l'anneau dessiné
+// (placement.js, ringOf, compte sans ce bruit)
+float ringDist(vec2 wxz) {
+  return length(wxz - uFocus.xz) * (1.0 + 0.18 * vnoise(wxz / 7.0 + 17.3));
+}
 
 // même calcul que bladesAt (render/herbe/placement.js)
 float bladesAt(float d) {
@@ -82,11 +99,58 @@ void main() {
   float side = position.x;
   float t = position.y;
   float i = position.z;
-  // place du brin : suite R2 décalée par cellule (tout préfixe reste bien réparti)
+  // place du brin (même calcul que placeBrin de placement.js) : suite R2 décalée par cellule (tout
+  // préfixe reste bien réparti), tournée ou retournée par cellule (8 symétries), brin bougé de ±JIT
   vec2 cellId = floor(aCell * 0.5 + 0.5);
   vec2 jit = vec2(hash12(cellId * 1.37 + 11.0), hash12(cellId * 1.91 - 7.0));
-  vec2 p = fract(vec2(0.5) + i * vec2(0.7548776662, 0.5698402910) + jit);
-  vec2 local = aCell + p * 2.0;
+  vec2 p = fract(vec2(0.5) + i * vec2(0.7548776662, 0.5698402910) + jit) - 0.5;
+  float sym = floor(hash12(cellId * 0.53 + 2.0) * 8.0);
+  if (mod(sym, 2.0) >= 1.0) p = p.yx;
+  if (mod(floor(sym * 0.5), 2.0) >= 1.0) p.x = -p.x;
+  if (sym >= 4.0) p.y = -p.y;
+  p += (vec2(hash12(cellId * 3.1 + i * 0.37), hash12(cellId * 2.3 - i * 0.53)) - 0.5) * (2.0 * JIT);
+  vec2 pos0 = aCell + 1.0 + p * 2.0;
+  // brin effacé d'avance (densité des anneaux × carte d'herbe, au point avant la touffe, avec un brin
+  // de marge) : ni recherche de touffe ni reste du calcul
+  // nombre de brins voulu ici (anneaux), calculé une fois au point avant la touffe (à moins de 35 cm
+  // du brin)
+  float n = bladesAt(ringDist((modelMatrix * vec4(pos0.x, 0.0, pos0.y, 1.0)).xz));
+  {
+    vec2 lp = clamp(pos0 - uTile, 0.0, 64.0);
+    vec2 ch = texture(uChamp, (lp + 0.5) / 65.0).rg;
+    if (n * ch.r - i < -1.0 || ch.g < 0.004) {
+      gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+      return;
+    }
+  }
+  // touffes : centre le plus proche sur la grille de TOUFFE m, cherché dans les 2 × 2 mailles du
+  // côté du brin (placement.js cherche dans les 3 × 3 : écart rare et sans effet visible) ; le brin
+  // glisse de PULL vers lui
+  vec2 gq = pos0 / TOUFFE - 0.5;
+  vec2 g0 = floor(gq);
+  vec2 tc = pos0;
+  vec2 tid = g0;
+  float td = 1e9;
+  for (int b = 0; b <= 1; b++) {
+    for (int a = 0; a <= 1; a++) {
+      vec2 id = g0 + vec2(float(a), float(b));
+      float hc = hash12(id * 1.11 + 3.3);
+      vec2 c = (id + vec2(hc, fract(hc * 11.7 + 0.37))) * TOUFFE;
+      float dd = dot(c - pos0, c - pos0);
+      if (dd < td) {
+        td = dd;
+        tc = c;
+        tid = id;
+      }
+    }
+  }
+  vec2 local = clamp(mix(pos0, tc, PULL), uTile, uTile + 64.0);
+  // la touffe : hauteur (une sur dix environ reste rase), en dôme ; penchant commun ; valeur
+  float th = hash12(tid * 2.17 + 0.5);
+  float tl = fract(th * 7.13 + 0.31);
+  float tv = fract(th * 13.7 + 0.71);
+  // tapis uniforme : ni dôme ni touffe rase (plus de groupes ronds), hauteur à ± 10 % par touffe
+  float tuftH = mix(0.9, 1.1, th);
   vec2 lt = local - uTile;
   vec2 uv = (lt + 0.5) / 65.0;
   vec4 champ = texture(uChamp, uv);
@@ -94,14 +158,13 @@ void main() {
   float gy = groundH(lt, n0);
   vec4 base = modelMatrix * vec4(local.x, gy, local.y, 1.0);
   // densité : anneaux autour du joueur × carte d'herbe ; le brin de rang i rétrécit en douceur
-  float n = bladesAt(length(base.xz - uFocus.xz));
   float keep = clamp(n * champ.r - i, 0.0, 1.0);
   float r1 = hash12(cellId * 0.71 + i * 0.6180339);
   float r2 = hash12(cellId * 1.13 - i * 0.4142135 + 5.0);
   float camD = distance(cameraPosition.xz, base.xz);
   float lod = mix(0.45, 1.0, smoothstep(2.0, 7.0, camD));
   float cut = texture(uCoupe, lt / 64.0 * (128.0 / 129.0) + 0.5 / 129.0).r;
-  float hgt = champ.g * 1.2 * (0.75 + 0.5 * r1) * keep * lod * mix(1.0, 0.15, cut);
+  float hgt = champ.g * 1.45 * (0.85 + 0.3 * r1) * tuftH * keep * lod * mix(1.0, 0.15, cut);
   if (hgt < 0.01) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
@@ -110,12 +173,15 @@ void main() {
   // de placement.js : part^−0,72, au plus × 10) ; brin effilé
   float part = max(n / uCounts.w, 1.0 / 24.4);
   float w = uWidth * pow(part, -0.72) * (1.0 - 0.7 * t);
-  // pré peigné : brins de face au vent, couchés de 15 à 35° sous le vent (± 25° de hasard), la
-  // courbure croissant vers la pointe ; la tige garde sa longueur (hgt)
+  // pré peigné : brins couchés de 15 à 35° sous le vent, chaque touffe avec son penchant (± 26°)
+  // et chaque brin le sien (± 10°), la courbure croissant vers la pointe ; la tige garde sa longueur
+  // (hgt). Face du brin tournée au hasard (± 70° autour de la normale au penchant) : vus d'en haut,
+  // les brins ne forment plus des tirets alignés
   vec2 wd = normalize(uWindDir + vec2(0.0001));
-  float a = atan(wd.y, wd.x) + (r2 - 0.5) * 0.873;
+  float a = atan(wd.y, wd.x) + (tl - 0.5) * 0.9 + (r2 - 0.5) * 0.35;
   vec2 bendDir = vec2(cos(a), sin(a));
-  vec2 across = vec2(-bendDir.y, bendDir.x);
+  float fa = a + 1.5708 + (hash12(cellId * 0.29 + i * 0.913) - 0.5) * 2.4;
+  vec2 across = vec2(cos(fa), sin(fa));
   float lean = mix(0.26, 0.61, hash12(cellId * 0.37 + i * 0.2718 + 3.0));
   vec3 off = vec3(across.x, 0.0, across.y) * side * w * 0.5;
   off += vec3(bendDir.x, 0.0, bendDir.y) * hgt * sin(lean) * t * t;
@@ -149,7 +215,12 @@ void main() {
   // (fleurs, marais, lisière) sans reprendre la pâleur du sol peint
   vec3 sol = texture(uSol, uv).rgb;
   const vec3 LUM = vec3(0.299, 0.587, 0.114);
-  vec3 zone = clamp(sol * (dot(uMilieu, LUM) / max(dot(sol, LUM), 0.04)) / max(uMilieu, vec3(0.02)), 0.6, 1.5);
+  // palettes du biome de la tuile et du biome voisin, mêlées au nœud (canal A)
+  vec3 cPied = mix(uPied, uPied2, champ.a);
+  vec3 cMil = mix(uMilieu, uMilieu2, champ.a);
+  vec3 cPointe = mix(uPointe, uPointe2, champ.a);
+  vec3 cSec = mix(uSec, uSec2, champ.a);
+  vec3 zone = clamp(sol * (dot(cMil, LUM) / max(dot(sol, LUM), 0.04)) / max(cMil, vec3(0.02)), 0.6, 1.5);
   vec3 tint = mix(vec3(1.0), zone, 0.25);
   // sécheresse : teinte d'ensemble, et des brins tout secs là seulement où elle dépasse 0,4
   float dry = champ.b * 0.6;
@@ -157,20 +228,22 @@ void main() {
   dry = max(dry, step(hue, (champ.b - 0.4) / 0.6) * 0.9);
   // plaques de 15 à 40 m (teinte, valeur, pointes jaunies), comme le sol sous l'herbe
   vec3 plq = herbePlaque(wA.xz);
-  vec3 pied = herbeVarie(mix(uPied, uSec * 0.72, dry) * tint, plq);
-  vec3 mil = herbeVarie(mix(uMilieu, uSec * 0.86, dry) * tint, plq);
-  vec3 pointe = herbeVarie(mix(uPointe, uSec, dry) * tint, plq);
+  vec3 pied = herbeVarie(mix(cPied, cSec * 0.72, dry) * tint, plq);
+  vec3 mil = herbeVarie(mix(cMil, cSec * 0.86, dry) * tint, plq);
+  vec3 pointe = herbeVarie(mix(cPointe, cSec, dry) * tint, plq);
   pointe = mix(pointe, pointe * vec3(1.1, 1.05, 0.8), 0.4 * plq.z);
-  // par brin : valeur à ± 4 % seulement (ni poivre ni sel) ; l'onde éclaircit les pointes de 15 %
-  float nv = 0.96 + 0.08 * r2;
+  // par touffe : valeur à ± 7 %, pointes plus claires pour les hautes ; par brin : ± 3 % seulement
+  // (ni poivre ni sel) ; l'onde éclaircit les pointes de 15 %
+  float nv = (0.97 + 0.06 * r2) * (0.98 + 0.04 * tv);
   vec3 blade = (t < 0.5 ? mix(pied, mil, t * 2.0) : mix(mil, pointe, t * 2.0 - 1.0)) * nv;
   blade *= 1.0 + 0.15 * wave * t;
   // chaume fauché : coupe nette, plus jaune
   vAlbedo = mix(blade, mil * vec3(1.1, 1.02, 0.75), cut * step(0.5, t));
   // au loin, le détail (pied sombre, pointe claire) s'estompe vers la couleur moyenne du tapis,
-  // celle du sol sous l'herbe (paletteHerbe, sol) : ni trous visibles ni bord d'anneau qui suit
-  // le joueur
-  float detail = 1.0 - smoothstep(uRings.x * 0.4, uRings.y * 0.6, length(base.xz - uFocus.xz));
+  // celle du sol sous l'herbe (paletteHerbe, sol) : ni trous visibles ni bord d'anneau
+  // fondu selon la distance à la caméra (14 à 45 m), pas au joueur : aucun disque plus sombre ne le
+  // suit, le détail s'estompe comme une perspective
+  float detail = 1.0 - smoothstep(14.0, 45.0, distance(cameraPosition, base.xyz));
   vAlbedo = mix(mix(mil, pointe, 0.25) * 0.9, vAlbedo, mix(0.4, 1.0, detail));
   // occlusion au pied : le cœur du tapis reste plus sombre (× 0,65 de près)
   vAlbedo *= mix(1.0 - 0.35 * detail, 1.0, smoothstep(0.0, 0.7, t));
@@ -220,7 +293,7 @@ void main() {
 // shared : uniformes communs à toutes les tuiles (joueur, anneaux, nombres de brins, largeur), par
 // référence ; les textures et l'origine de la tuile sont propres à chaque matériau.
 // palette : { pied, milieu, pointe, sec } en RVB (biomes.js, paletteHerbe)
-export function herbeMaterial({ id, shared, champ, sol, haut, coupe, x0, z0, palette }) {
+export function herbeMaterial({ id, shared, champ, sol, haut, coupe, x0, z0, palette, palette2 = palette }) {
   return new THREE.ShaderMaterial({
     name: 'herbe',
     glslVersion: THREE.GLSL3,
@@ -232,6 +305,10 @@ export function herbeMaterial({ id, shared, champ, sol, haut, coupe, x0, z0, pal
       uMilieu: { value: new THREE.Color().fromArray(palette.milieu) },
       uPointe: { value: new THREE.Color().fromArray(palette.pointe) },
       uSec: { value: new THREE.Color().fromArray(palette.sec) },
+      uPied2: { value: new THREE.Color().fromArray(palette2.pied) },
+      uMilieu2: { value: new THREE.Color().fromArray(palette2.milieu) },
+      uPointe2: { value: new THREE.Color().fromArray(palette2.pointe) },
+      uSec2: { value: new THREE.Color().fromArray(palette2.sec) },
       uChamp: { value: champ },
       uSol: { value: sol },
       uHaut: { value: haut },

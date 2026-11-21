@@ -40,8 +40,9 @@ export function couverture(d, P, R, L) {
 // 384 / 128 / 32 brins par cellule = 96 / 32 / 8 brins par m² ; fondus longs : le bord d'un anneau
 // ne suit pas le joueur.
 export const HERBE_PRESETS = {
-  high: { rings: [10, 32, 60], blades: [384, 128, 32], fade: 0.4 },
-  medium: { rings: [9, 28, 50], blades: [256, 96, 24], fade: 0.4 },
+  // pré fourni façon BotW (21/11/2026) : Moyen reprend l'ancien Haut, Haut va plus loin et plus dense
+  high: { rings: [12, 38, 72], blades: [384, 160, 40], fade: 0.4 },
+  medium: { rings: [10, 32, 60], blades: [384, 128, 32], fade: 0.4 },
   low: { rings: [7, 22, 22], blades: [128, 48, 0], fade: 0.4 },
 };
 
@@ -69,6 +70,69 @@ export function r2(i, out = [0, 0]) {
   out[0] = (0.5 + i * R2X) % 1;
   out[1] = (0.5 + i * R2Y) % 1;
   return out;
+}
+
+// Touffes et clairières : des centres tirés au hasard sur une grille de TOUFFE m (coordonnées de
+// l'île) ; chaque brin glisse de PULL vers le centre le plus proche. La touffe donne sa hauteur (en
+// dôme, plus basse au bord), son penchant et sa valeur à ses brins ; une touffe sur dix environ reste
+// rase (petite clairière). Avant cela, le motif R2 de chaque cellule est tourné ou retourné (8
+// symétries) et chaque brin bougé de ±JIT de la cellule : plus de motif qui se répète de cellule en
+// cellule. Le shader (materiau.js) fait le même calcul ; ce miroir sert aux tests.
+export const TOUFFE = 1.1;
+// tapis uniforme (21/11/2026, demande de l'utilisateur : plus de groupes ronds) : les brins ne
+// glissent plus vers leur touffe ; la touffe ne garde qu'un léger penchant commun
+export const PULL = 0;
+export const JIT = 0.08;
+const fract = (x) => x - Math.floor(x);
+// même hachage que hash12 de shaders/chunks.js (sans sinus)
+export function hash12(x, y) {
+  let a = fract(x * 0.1031);
+  let b = fract(y * 0.1031);
+  let c = fract(x * 0.1031);
+  const d = a * (b + 33.33) + b * (c + 33.33) + c * (a + 33.33);
+  a += d;
+  b += d;
+  c += d;
+  return fract((a + b) * c);
+}
+
+// centre (x, z) et identifiant (i, j) de la touffe la plus proche du point (x, z), distance en m
+export function touffe(x, z) {
+  const gi = Math.floor(x / TOUFFE);
+  const gj = Math.floor(z / TOUFFE);
+  let best = null;
+  for (let b = -1; b <= 1; b++) {
+    for (let a = -1; a <= 1; a++) {
+      const i = gi + a;
+      const j = gj + b;
+      const hc = hash12(i * 1.11 + 3.3, j * 1.11 + 3.3);
+      const cx = (i + hc) * TOUFFE;
+      const cz = (j + fract(hc * 11.7 + 0.37)) * TOUFFE;
+      const d = Math.hypot(cx - x, cz - z);
+      if (!best || d < best.d) best = { x: cx, z: cz, i, j, d };
+    }
+  }
+  return best;
+}
+
+// place du brin i d'une cellule d'origine (ax, az) : avant les touffes (x0, z0) et après (x, z)
+export function placeBrin(ax, az, i) {
+  const ci = Math.floor(ax * 0.5 + 0.5);
+  const cj = Math.floor(az * 0.5 + 0.5);
+  const jx = hash12(ci * 1.37 + 11, cj * 1.37 + 11);
+  const jz = hash12(ci * 1.91 - 7, cj * 1.91 - 7);
+  let px = fract(0.5 + i * R2X + jx) - 0.5;
+  let pz = fract(0.5 + i * R2Y + jz) - 0.5;
+  const sym = Math.floor(hash12(ci * 0.53 + 2, cj * 0.53 + 2) * 8);
+  if (sym % 2 >= 1) [px, pz] = [pz, px];
+  if (Math.floor(sym / 2) % 2 >= 1) px = -px;
+  if (sym >= 4) pz = -pz;
+  px += (hash12(ci * 3.1 + i * 0.37, cj * 3.1 + i * 0.37) - 0.5) * 2 * JIT;
+  pz += (hash12(ci * 2.3 - i * 0.53, cj * 2.3 - i * 0.53) - 0.5) * 2 * JIT;
+  const x0 = ax + CELL / 2 + px * CELL;
+  const z0 = az + CELL / 2 + pz * CELL;
+  const t = touffe(x0, z0);
+  return { x0, z0, x: x0 + (t.x - x0) * PULL, z: z0 + (t.z - z0) * PULL, touffe: t };
 }
 
 // Anneau d'une cellule dont le centre est à la distance dc du joueur : celui de son point le plus

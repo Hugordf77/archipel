@@ -2,7 +2,7 @@
 // préréglage sur un balayage de caméra, coût et seuil des mises à jour.
 import * as THREE from 'three';
 import { describe, it, expect } from 'vitest';
-import { CELL, BLADES, HERBE_PRESETS, bladesAt, r2, ringOf, cellsForTile, bladesDrawn, bladeWidth, couverture } from '../src/render/herbe/placement.js';
+import { CELL, BLADES, HERBE_PRESETS, bladesAt, r2, ringOf, cellsForTile, bladesDrawn, bladeWidth, couverture, placeBrin, touffe, TOUFFE, PULL, JIT } from '../src/render/herbe/placement.js';
 import { HerbeSystem, champDeSecours } from '../src/render/herbe/HerbeSystem.js';
 import { ORIGIN } from '../src/core/globals.js';
 
@@ -75,6 +75,64 @@ describe('herbe en tapis : placement', () => {
       for (const [x, z] of pts) q[(x < 0.5 ? 0 : 1) + (z < 0.5 ? 0 : 2)]++;
       for (const c of q) expect(Math.abs(c - n / 4)).toBeLessThanOrEqual(Math.max(2, n * 0.25 * 0.25));
     }
+  });
+
+  it('les brins restent près de leur cellule, et la touffe d’un brin est bien la plus proche', () => {
+    for (let c = 0; c < 40; c++) {
+      const ax = 2 * ((c * 7) % 23) - 20;
+      const az = 2 * ((c * 11) % 19) - 18;
+      for (let i = 0; i < BLADES; i += 7) {
+        const b = placeBrin(ax, az, i);
+        expect(Math.abs(b.x0 - ax - 1)).toBeLessThanOrEqual(1 + 2 * JIT + 1e-9);
+        expect(Math.abs(b.z0 - az - 1)).toBeLessThanOrEqual(1 + 2 * JIT + 1e-9);
+        expect(Math.hypot(b.x - b.x0, b.z - b.z0)).toBeLessThanOrEqual(PULL * TOUFFE * 1.5);
+        for (const [dx, dz] of [[TOUFFE, 0], [-TOUFFE, 0], [0, TOUFFE], [0, -TOUFFE]]) {
+          expect(touffe(b.x0 + dx * 0.01, b.z0 + dz * 0.01).d).toBeGreaterThanOrEqual(0);
+        }
+      }
+    }
+  });
+
+  it('les brins restent répartis uniformément : pas de groupes (comptes par carré de 45 cm)', () => {
+    // indice de dispersion (variance / moyenne des comptes) sur 12 × 12 m, 96 brins par m²
+    const disp = (key) => {
+      const bins = new Map();
+      for (let az = 0; az < 12; az += CELL) {
+        for (let ax = 0; ax < 12; ax += CELL) {
+          for (let i = 0; i < BLADES; i++) {
+            const b = placeBrin(ax, az, i);
+            const k = `${Math.floor(b[key[0]] / 0.45)},${Math.floor(b[key[1]] / 0.45)}`;
+            bins.set(k, (bins.get(k) || 0) + 1);
+          }
+        }
+      }
+      const v = [...bins.values()];
+      const m = v.reduce((a, b) => a + b, 0) / v.length;
+      return v.reduce((a, b) => a + (b - m) ** 2, 0) / v.length / m;
+    };
+    const avant = disp(['x0', 'z0']);
+    const apres = disp(['x', 'z']);
+    console.info(`dispersion des brins : ${avant.toFixed(2)} sans touffes, ${apres.toFixed(2)} avec`);
+    // tapis uniforme (PULL 0, 21/11/2026) : aucun regroupement des brins
+    expect(apres).toBeLessThan(avant * 1.2);
+  });
+
+  it('aucune cellule ne répète le motif d’une autre (symétries et décalage par brin)', () => {
+    // signature : écarts des 8 premiers brins au brin 0 (repliés sur la cellule, au centimètre) ; avec
+    // la seule suite R2 décalée, toutes les cellules auraient la même
+    const sig = new Set();
+    for (let c = 0; c < 64; c++) {
+      const ax = 2 * (c % 8);
+      const az = 2 * Math.floor(c / 8);
+      const b0 = placeBrin(ax, az, 0);
+      const s = [];
+      for (let i = 1; i <= 8; i++) {
+        const b = placeBrin(ax, az, i);
+        s.push(Math.round((((b.x0 - b0.x0) % 2) + 2) % 2 * 100), Math.round((((b.z0 - b0.z0) % 2) + 2) % 2 * 100));
+      }
+      sig.add(s.join(','));
+    }
+    expect(sig.size).toBe(64);
   });
 
   it('la densité décroît continûment avec la distance, sans saut d’anneau', () => {
@@ -166,7 +224,8 @@ describe('herbe en tapis : forme et couverture', () => {
 
 describe('herbe en tapis : budgets et mises à jour', () => {
   it('reste sous le plafond de brins de chaque préréglage sur un balayage de caméra', () => {
-    const caps = { high: 120000, medium: 75000, low: 30000 };
+    // pré fourni façon BotW (21/11/2026) : l'herbe coûte peu au GPU (≈ 0,4 ms pour 36 000 brins)
+    const caps = { high: 200000, medium: 130000, low: 30000 };
     const worst = {};
     for (const [name, cap] of Object.entries(caps)) {
       const { H, cam } = system(name);
@@ -248,19 +307,23 @@ describe('herbe en tapis : budgets et mises à jour', () => {
     expect(H.cut(10, 12, 1.3)).toBeGreaterThan(0.5);
   });
 
-  it('quand le jeu ralentit, l’herbe baisse d’un cran à la fois, puis remonte sans dépasser la qualité choisie', () => {
+  it('quand le jeu ralentit, l’herbe baisse d’un cran à la fois sans passer sous « Moyen », puis remonte sans dépasser la qualité choisie', () => {
     const { H } = system('high');
     expect(H.presetName).toBe('high');
     expect(H.stepDown()).toBe(true);
     expect(H.presetName).toBe('medium');
     expect(H.shared.uCounts.value.x).toBe(HERBE_PRESETS.medium.blades[0]);
-    expect(H.stepDown()).toBe(true);
-    expect(H.stepDown()).toBe(false); // déjà au plus léger : la résolution prend le relais
-    expect(H.stepUp()).toBe(true);
+    expect(H.stepDown()).toBe(false); // plancher « Moyen » : la résolution prend le relais
+    expect(H.presetName).toBe('medium');
     expect(H.stepUp()).toBe(true);
     expect(H.stepUp()).toBe(false);
     expect(H.presetName).toBe('high');
     H.setPreset('medium');
+    expect(H.stepDown()).toBe(false);
+    expect(H.stepUp()).toBe(false);
+    H.setPreset('low'); // qualité « Bas » choisie : l'herbe la suit
+    expect(H.presetName).toBe('low');
+    expect(H.stepDown()).toBe(false);
     expect(H.stepUp()).toBe(false);
     H.setEnabled(false);
     expect(H.stepDown()).toBe(false); // herbe en touffes : rien à alléger ici

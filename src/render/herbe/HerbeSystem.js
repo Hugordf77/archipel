@@ -22,6 +22,8 @@ const REGROW = 120;
 const PUSHERS = 8;
 // préréglages du plus léger au plus dense
 const PRESET_ORDER = ['low', 'medium', 'high'];
+// la résolution adaptative ne descend pas l'herbe sous « Moyen » (sauf qualité choisie plus basse)
+const PRESET_FLOOR = 1;
 // masque vide partagé par les tuiles jamais fauchées
 const NO_CUT = (() => {
   const tex = new THREE.DataTexture(new Uint8Array([0]), 1, 1, THREE.RedFormat, THREE.UnsignedByteType);
@@ -125,11 +127,13 @@ export class HerbeSystem {
     this.applyPreset();
   }
 
-  // Le jeu ralentit : un cran d'herbe en moins (rend false s'il n'y en a plus à enlever)
+  // Le jeu ralentit : un cran d'herbe en moins (rend false s'il n'y en a plus à enlever). Plancher
+  // « Moyen » : l'herbe coûte peu au GPU (≈ 0,1 ms pour 36 000 brins, 21/11/2026) et l'anneau
+  // lointain de « Bas » manque ; c'est la résolution qui prend le relais (Pipeline.adapt).
   stepDown() {
     if (!this.enabled) return false;
     const i = PRESET_ORDER.indexOf(this.presetName);
-    if (i <= 0) return false;
+    if (i <= Math.min(PRESET_FLOOR, PRESET_ORDER.indexOf(this.wanted || 'medium'))) return false;
     this.use(PRESET_ORDER[i - 1]);
     return true;
   }
@@ -159,7 +163,9 @@ export class HerbeSystem {
     const hautTex = dataTexture(haut, THREE.RedFormat, THREE.FloatType, THREE.NearestFilter);
     const solTex = dataTexture(sol, THREE.RGBAFormat, THREE.UnsignedByteType, THREE.LinearFilter);
     const palette = paletteHerbe(tile.biome || e.desc.biome || 'maison');
-    const material = herbeMaterial({ id, shared: this.shared, champ, sol: solTex, haut: hautTex, coupe: NO_CUT, x0: t.x0, z0: t.z0, palette });
+    // biome voisin mêlé au nœud (canal A de la carte d'herbe) ; le même sinon
+    const palette2 = paletteHerbe(tile.biome2 || tile.biome || e.desc.biome || 'maison');
+    const material = herbeMaterial({ id, shared: this.shared, champ, sol: solTex, haut: hautTex, coupe: NO_CUT, x0: t.x0, z0: t.z0, palette, palette2 });
     const rings = [0, 1, 2].map((r) => {
       const geo = new THREE.InstancedBufferGeometry();
       geo.setAttribute('position', this.patch.position);

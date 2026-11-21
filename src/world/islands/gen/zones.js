@@ -95,7 +95,6 @@ export function zoneColors(P, desc) {
   const C = new Float32Array(n * n * 3);
   const A = new Uint8Array(n * n);
   const nn = makeNoise(desc.seed ^ 0x6a1e77);
-  const nb = makeNoise(desc.seed ^ 0x0b100);
   const sets = BIOME_IDS.map((b) => palSet(BIOMES[b].pal, b));
   const lava = hex('#8a7a96');
   const marsh = hex('#a8c8a0');
@@ -129,17 +128,10 @@ export function zoneColors(P, desc) {
       mix(g0, g1, smooth(0.35, 0.7, patch), c);
       mix(c, acc, smooth(0.62, 0.82, 0.5 + 0.5 * nn(x / 18 + 4, z / 18 - 2)) * 0.5, c);
       const dH = Math.min(1, (ZONE_HERBE[zone[k]]?.[0] ?? 0) * q.fH);
-      // champs de fleurs : le sol herbeux d'abord, puis les bandes colorées par-dessus
-      if (zone[k] === Z.FLEURS) mix(c, solH, dH, c);
       switch (zone[k]) {
         case Z.MER: mix(q.floor, wet, Math.max(0, Math.min(1, (h + 3) / 3)) * 0.5, c); break;
         case Z.PLAGE: mix(wet, sand, smooth(0.05, 0.6, h), c); break;
         case Z.DUNE: mix(sand, c, 0.12 * patch, c); c[0] *= 1.02; break;
-        case Z.FLEURS: {
-          const band = hex(bloomColorOf(bloomBand(P.traits, x, z, nb)));
-          mix(c, band, 0.7 + 0.1 * patch, c);
-          break;
-        }
         case Z.VERGER: mix(c, orchard, 0.5, c); break;
         case Z.FORET: mix(c, forestFloor, 0.7, c); break;
         case Z.LISIERE: mix(c, forestFloor, 0.35, c); break;
@@ -169,7 +161,9 @@ export function zoneColors(P, desc) {
         case Z.RIVIERE: mix(bed, sand, 0.3, c); break;
         default: break;
       }
-      if (zone[k] !== Z.FLEURS) mix(c, solH, dH, c);
+      // sol sous l'herbe ; les prés fleuris aussi : plus de bandes aux couleurs des fleurs peintes sur le
+      // sol (taches roses et bleues là où aucune fleur ne pousse, 21/11/2026), les fleurs donnent la couleur
+      mix(c, solH, dH, c);
       // pentes raides de toute zone : roche qui affleure
       // (la neige tient jusqu'à des pentes plus fortes)
       const cl = zone[k] === Z.NEIGE ? smooth(1.3, 1.9, slope[k]) * 0.6 : smooth(0.62, 0.9, slope[k]);

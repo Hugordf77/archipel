@@ -266,7 +266,13 @@ et domaine concerné).
   - Touffes récoltables dans la palette du tapis (`grassMaterial` avec palette, un par biome).
   - Carte d'herbe du Worker (`gen/herbe.js`, `tile.herbe`) : zone × biome × pente × eau × ombre des
     couronnes × chemins × lieux × altitude × massifs et trouées ; `champDeSecours` (0,88, 0,37 m) si
-    une tuile n'en a pas.
+    une tuile n'en a pas. Canal A : part du biome voisin (`biomesTuile`, `tile.biome2`), mêlée par le
+    shader à la palette de la tuile. Bruits sur réseaux alignés sur le monde (massifs, bruit fin et fissures au pas
+    de 2 m, première octave des massifs et trouées au pas de 4 m) ; eau, côte et fissures sautées quand
+    la tuile n'en a pas (21/11/2026 : 0,62 ms par tuile seule, 0,68 ms sous la suite complète, Forêt des
+    souvenirs ; plafond du test 0,9 ms).
+  - Résolution adaptative : l'herbe ne descend plus sous « Moyen » (sauf qualité « Bas » choisie),
+    la résolution prend le relais (`HerbeSystem.stepDown`, plancher `PRESET_FLOOR`).
   - Raccord : `IslandManager.js` (tuiles, terrassement, `grassMat`), `Game.js`
     (`state.settings.herbe` : « touffes » pour l'ancienne herbe seule). Tests : `tests/herbe.test.js`,
     `tests/herbe-champ.test.js`. Captures et mesures : `captures/herbe-v2-*.png`,
@@ -353,6 +359,66 @@ et domaine concerné).
   (`scripts/rendu/serie.js`, lieux plus le Plateau venté). Reste, pour une image vraiment nette sur un écran
   Retina : la qualité « Moyen » plafonne à 1,25 × et la résolution adaptative descend à 0,7 (image étirée
   d'environ 2,3 fois) ; à traiter avec le coût du G-buffer et de la peinture.
+- **Herbe, chantier 1** (21/11, non commité) : audit en jeu (captures `captures/herbe-avant-*`, planche
+  `herbe-avant-planche.png` ; lieu `plateau` ajouté à `scripts/rendu/serie.js`). Constats : herbe tombée
+  en « Bas » par la résolution adaptative alors qu'elle coûte ≈ 0,1 ms au GPU ; motif régulier (même
+  suite R2 dans chaque cellule) ; disque sombre autour du joueur (fondu de détail et occlusion centrés
+  sur lui) ; palette par tuile en damier dans `grande-ile~3-3` ; Plateau venté clairsemé (fleurs × 0,75,
+  altitude × 0,5) sur sol rose et bleu ; ondes de vent en bandes régulières. Lot 1 fait : carte d'herbe
+  0,79 → 0,62 ms par tuile (budget de 0,5 ms pas encore tenu), plancher « Moyen » de l'herbe (captures
+  `herbe-lot1-*`, planche `herbe-lot1-planche.png`). Lot 2 fait : touffes et clairières (centres au
+  hasard sur une grille de 1,1 m, brins tirés de 30 % vers le leur ; hauteur en dôme, penchant et
+  valeur par touffe, une sur dix rase), motif R2 tourné ou retourné par cellule et brins bougés de
+  ±16 cm, face des brins tournée au hasard (± 70°) : plus de briques ni de tirets alignés
+  (`placement.js` : `placeBrin`, `touffe`, miroir du shader de `materiau.js` ; tests de dispersion,
+  1,4 → 7,5, et de motif non répété). Coût GPU de l'herbe 0,11 → 0,38 ms (G-buffer, 36 000 brins,
+  Grande Île ; brins effacés avant la recherche de touffe). Captures `herbe-lot2-*`, planche
+  `herbe-lot2-planche.png`. Lot 3 fait : plus de disque sombre autour du joueur (le fondu du détail
+  et l'occlusion au pied suivent la distance à la caméra, de 14 à 45 m, et non plus au joueur) ; bords
+  d'anneaux irréguliers (`ringDist` : distance allongée de 0 à 18 % par un bruit de 7 m, calculée une
+  fois par brin). Coût inchangé (0,39 ms). Captures `herbe-lot3-*`, planche `herbe-lot3-planche.png`.
+  Lot 4 fait : biomes mêlés au nœud (`gen/herbe.js` : `poidsBiomes`, part lissée de chaque biome par
+  case, tente de ± 2 cases soit ± 8 m, dans la marge des sections ; `biomesTuile`, biome principal du
+  centre et biome voisin le plus présent, `tile.biome2` ; canal A = part du voisin ; densité, hauteur
+  et sécheresse mêlées de même ; seconde palette `uPied2`… dans `materiau.js`). Plus de bloc à bord
+  droit dans `grande-ile~3-3` ; test de continuité (couleur à 2,5/255 près, densité à ±1). Coût :
+  +0,03 ms par tuile sur la section mêlée, rien ailleurs. Captures `herbe-lot4-*`, planche
+  `herbe-lot4-planche.png`. Lot 5 fait : altitude à seuils absolus (`ALT_A` 90 m, `ALT_B` 180 m ; avant,
+  moitié du point le plus haut de chaque section, qui jaunissait et clairsemait le Plateau venté à 60 m
+  et changeait d'une section à l'autre) ; frange d'herbe haute sur 6 m hors des forêts (canal 7 de la
+  base) ; relief : creux plus hauts, crêtes plus rases et plus sèches (courbure au pas du plan, canal 8) ;
+  pied des arbres et des rochers plus haut (anneau plus dense × hauteur) ; bord des chemins un peu plus
+  ras (test : 0,24 m) ; vent en rafales (`herbeOnde` de `chunks.js` : plaques de 26 × 13 m à 5 m/s,
+  vagues de 4 m dedans ; aussi sur le sol herbeux). Coût : carte d'herbe 0,62 → 0,68 ms seule (0,79 ms
+  sous la suite complète, plafond 0,9 ms : marge mince) ; GPU inchangé (0,38 ms). Captures
+  `herbe-lot5-*`, planche `herbe-lot5-planche.png`. Reste : dans les prés fleuris de la Grande Île, le
+  sol est peint aux couleurs des fleurs mais aucune fleur n'y pousse (petite végétation réservée aux îles
+  qui décrivent leurs lieux) : rose et bleu entre les touffes. Réglé à la demande de l'utilisateur
+  (21/11) : plus de bandes aux couleurs des fleurs peintes sur le sol des prés fleuris (`zoneColors` de
+  `zones.js` : le sol y prend le vert sous l'herbe comme ailleurs ; les fleurs posées gardent leurs
+  couleurs) ; tapis bien réparti partout (touffes plus légères : `PULL` 0,15, dôme 0,85, touffes rases à
+  55 % au lieu de 30 %). Captures `herbe-sol-*`, planche `herbe-sol-planche.png`.
+  Pré fourni façon BotW (21/11, demande de l'utilisateur) : Moyen reprend l'ancien Haut (10/32/60 m,
+  384/128/32 brins par cellule), Haut va à 12/38/72 m (384/160/40) ; sous-bois herbu (0,5 à 0,8 au lieu de
+  0,15 à 0,35) ; aucune zone herbeuse sous 0,85 (hors dunes, cultures, roselière) ; trouées moitié moins
+  creusées ; brins 20 % plus hauts. Coût GPU de l'herbe 0,39 → 0,72 ms (56 600 brins, Grande Île) ;
+  plafonds du test de brins relevés (Haut 200 000, Moyen 130 000). Planche `herbe-botw-planche.png`.
+  Tapis uniforme (21/11, demande de l'utilisateur : plus de groupes ronds) : `PULL` 0, ni dôme ni touffe
+  rase, hauteur ± 10 % et valeur ± 2 % par touffe ; test de répartition inversé (aucun regroupement).
+  Planche `herbe-uni-planche.png`.
+- **Arbres en détail, chantier 2** (21/11, non commité) : audit (captures `captures/arbres-avant-*`, planche
+  `arbres-avant-planche.png`) : couronnes en billboards (`render/foliage.js`), tronc sans racines ni
+  branches ; Forêt des souvenirs à 4,17 M triangles (troncs 1,3 M, feuillages 0,44 M, ombres 0,96 M).
+  Branche `claude/arbres-v2-11841d` : son seul commit (LOD1 en double) est déjà dans `v3-archipel`.
+  Lot A : aides `troncRameux` (tronc lisse évasé, racines, branches maîtresses) et `couronneMasses`
+  (masses avec trouées, satellites facultatifs) dans `kit/vegetal.js`, autorisées par l'utilisateur ;
+  `treeTrunk` inchangé (les autres arbres aussi). Lot B : arbre-pompon repris (374 triangles, voir sa
+  `FICHE.md`), revu par Evis-critique ; forêt à 4,94 M triangles (+0,77 M), plateau 2,03 M (+0,16 M).
+  Empreinte : seul ARB-001 change (non écrite : `empreintes.json` porte le travail non commité de
+  l'utilisateur) ; `modeles:releve` non lancé pour la même raison. Lot C : érable repris (410 triangles,
+  quatre racines, houppier plus ovale, voir sa `FICHE.md`) ; branches effilées en pointe dans
+  `troncRameux` (pompon inchangé en triangles) ; forêt à 4,89 M triangles. Pas de revue Evis-critique de
+  l'érable. Suite : D (variantes et version allégée au loin, budget de la forêt), E (bouleau).
 - Échecs connus seulement : empreintes, numérotation MON, champs de fleurs (PLA-015 en cours) ;
   `tests/cheveux.test.js` (« restent calmes et bornées… ») est instable (un échec sur trois passages).
 
@@ -430,9 +496,11 @@ et domaine concerné).
   aux Mille Fleurs, moins dense, passait à 0,71 M).
 - **Constats sur le monde ouvert, à trancher** (relevés en migrant les tests, non corrigés) :
   - carte d'herbe discontinue entre deux tuiles de biomes différents (palette par tuile) : raccord visible
-    possible aux frontières de biomes (section `grande-ile~3-3`, île d'essai) ; continue dans un même biome ;
+    possible aux frontières de biomes (section `grande-ile~3-3`, île d'essai) ; continue dans un même biome
+    (21/11/2026 : réglé, biomes mêlés au nœud, voir « État courant ») ;
   - carte d'herbe à 0,70–0,83 ms par tuile dans les sections de la Grande Île (0,92–0,94 ms sous la suite
-    complète) contre un budget de 0,5 ms mesuré sur l'ancien archipel : plafond provisoire du test à 1,2 ms ;
+    complète) contre un budget de 0,5 ms mesuré sur l'ancien archipel : plafond provisoire du test à 1,2 ms
+    (21/11/2026 : ramenée à 0,62 ms, plafond à 0,9 ms, voir « État courant ») ;
   - l'échec connu des empreintes couvre plus que PER-001 à PER-004 : tout le personnage (PER-005 à PER-023)
     et la grimpe des palmiers de la maison (`ileDepart.obstacles.44` à `49`), déjà avant le nettoyage.
 - **Open world, bases** (branche `claude/charming-khorana-a24b36`, fusionnée dans `v3-archipel` le 25/10/2026). Ce qui est livré :

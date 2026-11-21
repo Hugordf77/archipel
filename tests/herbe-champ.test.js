@@ -9,6 +9,7 @@ import { cropPlan } from '../src/world/islands/gen/sections.js';
 import { buildPlan } from '../src/world/islands/gen/plan.js';
 import { Surface, buildTile, tileGround, TILE } from '../src/world/islands/gen/surface.js';
 import { herbeTile, HERBE_HMAX } from '../src/world/islands/gen/herbe.js';
+import { paletteHerbe } from '../src/world/islands/biomes.js';
 import { Z } from '../src/world/islands/gen/zones.js';
 import { KINDS, STRIDE } from '../src/world/islands/gen/kinds.js';
 
@@ -62,7 +63,7 @@ const median = (a) => quantile(a, 0.5);
 const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
 
 describe('carte d’herbe des tuiles', () => {
-  it('a le format du contrat : 65 × 65 × 4 octets, mêmes nœuds que le maillage, A = 0', () => {
+  it('a le format du contrat : 65 × 65 × 4 octets, mêmes nœuds que le maillage, A = 0 sur une île d’un seul biome', () => {
     const t = tileOf(ESSAI, 0, 0);
     expect(t.herbe).toBeInstanceOf(Uint8Array);
     expect(t.herbe.length).toBe(V * V * 4);
@@ -72,8 +73,7 @@ describe('carte d’herbe des tuiles', () => {
   });
 
   it('donne exactement les mêmes valeurs sur le bord commun de deux tuiles voisines du même biome', () => {
-    // (entre deux tuiles de biomes différents, la palette de chaque tuile diffère : raccord à reprendre,
-    // voir LIVRAISONS.md, « État courant »)
+    // (entre deux tuiles de biomes différents : test suivant)
     let pairs = 0;
     for (const id of [ESSAI, FORET]) {
       const tiles = new Set(allTiles(id).map(([tx, tz]) => `${tx},${tz}`));
@@ -96,6 +96,41 @@ describe('carte d’herbe des tuiles', () => {
       }
     }
     expect(pairs).toBeGreaterThan(150);
+  });
+
+  it('mêle les biomes au nœud : même couleur et même densité de part et d’autre d’un bord de biomes différents', () => {
+    // section en damier prairie / pins (palette par tuile jusqu'au 21/11/2026 : bloc à bord droit)
+    const id = 'grande-ile~3-3';
+    const tiles = new Set(allTiles(id).map(([tx, tz]) => `${tx},${tz}`));
+    // milieu de la palette mêlée (biome de la tuile vers son voisin, part A)
+    const milieu = (t, k) => {
+      const a = t.herbe[k * 4 + 3] / 255;
+      const p = paletteHerbe(t.biome).milieu;
+      const q = paletteHerbe(t.biome2).milieu;
+      return p.map((v, c) => v + (q[c] - v) * a);
+    };
+    let pairs = 0;
+    let mixed = 0;
+    for (const [tx, tz] of allTiles(id)) {
+      const a = tileOf(id, tx, tz);
+      for (const [dx, dz] of [[1, 0], [0, 1]]) {
+        if (!tiles.has(`${tx + dx},${tz + dz}`)) continue;
+        const b = tileOf(id, tx + dx, tz + dz);
+        if (a.biome === b.biome) continue;
+        pairs++;
+        for (let q = 0; q < V; q++) {
+          const ka = dx ? q * V + TILE : TILE * V + q;
+          const kb = dx ? q * V : q;
+          if (a.herbe[ka * 4 + 3] > 0 && a.herbe[ka * 4 + 3] < 255) mixed++;
+          for (let ch = 0; ch < 3; ch++) expect(Math.abs(a.herbe[ka * 4 + ch] - b.herbe[kb * 4 + ch]), `${tx},${tz} → ${dx},${dz} canal ${ch}`).toBeLessThanOrEqual(1);
+          const ma = milieu(a, ka);
+          const mb = milieu(b, kb);
+          for (let c = 0; c < 3; c++) expect(Math.abs(ma[c] - mb[c]), `${tx},${tz} → ${dx},${dz} couleur`).toBeLessThan(2.5 / 255);
+        }
+      }
+    }
+    expect(pairs).toBeGreaterThan(4);
+    expect(mixed).toBeGreaterThan(50);
   });
 
   it('est déterministe : la même tuile reconstruite (plan neuf) donne la même carte', () => {
@@ -175,7 +210,7 @@ describe('carte d’herbe des tuiles', () => {
     expect(median(edge)).toBeLessThanOrEqual(0.25);
   });
 
-  it('rien dans la mer ni sous l’eau douce ; ombre sous les arbres ; peu d’herbe en forêt', () => {
+  it('rien dans la mer ni sous l’eau douce ; ombre sous les arbres ; sous-bois moins dense que le pré', () => {
     for (const id of [ESSAI, FORET]) {
       const { surf } = island(id);
       let wet = 0;
@@ -232,8 +267,9 @@ describe('carte d’herbe des tuiles', () => {
       }
     }
     expect(futaie.length).toBeGreaterThan(500);
-    expect(median(futaie)).toBeLessThan(0.3);
-    expect(median(forest)).toBeLessThan(0.3);
+    // sous-bois herbu façon BotW (21/11/2026) : moins dense que le pré, mais fourni
+    expect(median(futaie)).toBeLessThan(0.7);
+    expect(median(forest)).toBeLessThan(0.7);
   });
 
   it('ne change ni les éléments, ni les identifiants, ni le relief des tuiles (flux aléatoire propre)', () => {
@@ -258,10 +294,11 @@ describe('carte d’herbe des tuiles', () => {
     }
   });
 
-  // Budget de l'herbe V2 : 0,5 ms, mesuré sur l'ancien archipel. Dans les sections de la Grande Île, la
-  // médiane est de 0,70 à 0,83 ms seule et de 0,92 à 0,94 ms sous la suite complète (25/10/2026, plus
-  // d'arbres par tuile) : plafond provisoire de 1,2 ms, à trancher (LIVRAISONS.md, « État courant »).
-  it('coûte au plus 1,2 ms de plus par tuile au Worker (Forêt des souvenirs)', () => {
+  // Budget de l'herbe V2 : 0,5 ms, mesuré sur l'ancien archipel. Forêt des souvenirs, 21/11/2026 : médiane
+  // de 0,79 ms seule, 0,92 à 0,94 ms sous la suite complète ; bruits sur réseaux de 2 et 4 m, eau, côte
+  // et fissures sautées quand la tuile n'en a pas : 0,62 ms seule, 0,68 ms sous la suite complète.
+  // Plafond de 0,9 ms (marge pour la charge).
+  it('coûte au plus 0,9 ms de plus par tuile au Worker (Forêt des souvenirs)', () => {
     const { p, surf } = island(FORET);
     const tiles = allTiles(FORET);
     const grounds = tiles.map(([tx, tz]) => [tx, tz, tileGround(p, surf, tx, tz)]);
@@ -276,6 +313,6 @@ describe('carte d’herbe des tuiles', () => {
       });
     }
     console.info(`carte d'herbe : ${tiles.length} tuiles, médiane ${median(ms).toFixed(2)} ms, 95e centile ${quantile(ms, 0.95).toFixed(2)} ms`);
-    expect(median(ms)).toBeLessThanOrEqual(1.2);
+    expect(median(ms)).toBeLessThanOrEqual(0.9);
   });
 });

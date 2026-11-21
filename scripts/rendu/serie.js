@@ -8,6 +8,7 @@ export const LIEUX = {
   depart: { joueur: [1, 4], cam: [1, 24.52, 34.53], vise: [1, -9.69, -14.76] },
   'grande-ile': { joueur: [-100, -400], cam: [-100, 31.07, -361.79], vise: [-100, 14.31, -419.4] },
   volcan: { joueur: [1000, -1250], cam: [987.66, 15.61, -1235.38], vise: [1026.36, 14.8, -1281.22] },
+  plateau: { joueur: [466, -772], cam: [476, 66.5, -758], vise: [418, 64, -786] },
 };
 export const HEURES = [8, 12, 18.5, 23];
 
