@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- plein écran, fond du ciel de l'écran de chargement (pas d'éclair blanc au lancement) -->
+    <style name="Theme.Archipel" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
+        <item name="android:windowBackground">@color/ciel</item>
+        <item name="android:statusBarColor">@color/ciel</item>
+        <item name="android:navigationBarColor">@color/ciel</item>
+    </style>
+    <color name="ciel">#FFCFE9EA</color>
+    <color name="icone_fond">#FF9FD6C8</color>
+</resources>

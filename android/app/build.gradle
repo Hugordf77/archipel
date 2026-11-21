@@ -1,0 +1,31 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Version : passée par le workflow (-PversionName=0.1.0-prototype -PversionCode=12), sinon celle-ci
+def nomVersion = project.findProperty('versionName') ?: '0.1.0-prototype'
+def codeVersion = (project.findProperty('versionCode') ?: '1').toString().toInteger()
+
+android {
+    namespace 'fr.archipel.jeu'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'fr.archipel.jeu'
+        minSdk 26
+        targetSdk 35
+        versionCode codeVersion
+        versionName nomVersion
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

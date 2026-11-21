@@ -7,3 +7,10 @@ captures
 # (/graphify src --update)
 graphify-out/*
 !graphify-out/GRAPH_REPORT.md
+
+# Coque Android (android/LISEZMOI.md) : sorties de Gradle et jeu copié par le workflow
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/www/

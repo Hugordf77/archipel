@@ -1,0 +1,74 @@
+# APK de l'Archipel (prototype) : construit le jeu web (vite build), l'emballe dans la coque Android
+# (android/, une WebView qui sert dist/ depuis l'APK) et produit un APK signé en mode débogage.
+#  - à la main (onglet Actions, « Run workflow ») : l'APK est joint à l'exécution (artefact) ;
+#  - à la pose d'une étiquette v* (ex. v0.1.0-prototype) : publié en pré-version dans Releases.
+# Voir android/LISEZMOI.md.
+name: APK Android
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Jeu web (vite build)
+        run: |
+          npm ci
+          npm run build
+          # seul le jeu va dans l'APK : ni catalogue des modèles, ni tableau de bord
+          rm -f dist/catalogue.html dist/dashboard.html
+
+      - name: Fichiers du jeu dans la coque Android
+        run: |
+          rm -rf android/app/src/main/assets/www
+          mkdir -p android/app/src/main/assets/www
+          cp -r dist/. android/app/src/main/assets/www/
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then nom="${GITHUB_REF_NAME#v}"; else nom="0.1.0-dev.${GITHUB_RUN_NUMBER}"; fi
+          echo "nom=$nom" >> "$GITHUB_OUTPUT"
+
+      - name: APK (assembleDebug)
+        run: |
+          gradle -p android assembleDebug --no-daemon \
+            -PversionName="${{ steps.version.outputs.nom }}" -PversionCode="${GITHUB_RUN_NUMBER}"
+          cp android/app/build/outputs/apk/debug/app-debug.apk "archipel-${{ steps.version.outputs.nom }}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: archipel-${{ steps.version.outputs.nom }}
+          path: archipel-*.apk
+
+      - name: Pré-version GitHub (étiquette v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" archipel-*.apk \
+            --prerelease \
+            --title "Archipel ${{ steps.version.outputs.nom }}" \
+            --notes-file android/NOTES-VERSION.md

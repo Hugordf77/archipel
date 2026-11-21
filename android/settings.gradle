@@ -1,0 +1,18 @@
+// Coque Android de l'Archipel : une WebView qui sert le jeu construit (dist/) depuis l'APK.
+// Construite par GitHub Actions (.github/workflows/apk.yml) ; voir android/LISEZMOI.md.
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = 'Archipel'
+include ':app'
