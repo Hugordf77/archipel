@@ -38,5 +38,7 @@ git push origin v0.1.0-prototype
   du dépôt (à faire).
 - Commandes tactiles réduites à celles du jeu (toucher pour aller, glisser pour la caméra).
 - `public/audio/Illumoria.mp3` n'est pas versionné : l'APK joue la boîte à musique de secours en jeu.
-- Non construit ni essayé sur l'ordinateur de développement (ni JDK ni SDK Android installés) : la première
-  construction a lieu sur GitHub.
+- Construit seulement sur GitHub (ni JDK ni SDK Android sur l'ordinateur de développement) : première version
+  `v0.1.0-prototype` publiée le 22/11/2026 (https://github.com/Hugordf77/archipel/releases), pas encore
+  essayée sur un téléphone.
+- Avertissements du workflow à traiter : actions en Node 20 (dépréciées), `setup-java@v4` à passer en v5.

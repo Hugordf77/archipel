@@ -346,13 +346,15 @@ et domaine concerné).
 
 ### Android (APK prototype)
 
-- **Préparé le 22/11/2026** (pas encore construit) : coque Android sans dépendance (`android/`, une
+- **Publié le 22/11/2026** : coque Android sans dépendance (`android/`, une
   WebView plein écran en paysage qui sert `dist/` depuis l'APK sous `https://appassets.androidplatform.net/` ;
   Retour = Échap, arrière-plan = `pagehide` donc sauvegarde) ; workflow `.github/workflows/apk.yml` (npm ci,
   vite build, Gradle 8.10.2, plugin Android 8.7.3, JDK 17, `assembleDebug` ; artefact à chaque exécution,
   pré-version GitHub pour une étiquette `v*`, notes `android/NOTES-VERSION.md`). Détails et limites :
   `android/LISEZMOI.md`.
-- **Reste** : première construction sur GitHub ; APK signé en débogage (clé de
+- **Version** : `v0.1.0-prototype`, pré-version de https://github.com/Hugordf77/archipel/releases (dépôt public,
+  branche par défaut `v3-archipel`), APK de 1,8 Mo construit par le workflow. **Reste** : essai sur un vrai
+  téléphone ; actions du workflow à mettre à jour (Node 20 déprécié, `setup-java@v5`) ; APK signé en débogage (clé de
   signature à mettre dans les secrets pour des mises à jour sans désinstaller) ; commandes tactiles réduites.
 
 ### Ciel nocturne (branche `claude/ciel`)
@@ -377,8 +379,8 @@ et domaine concerné).
 - **Écran-titre** (22/11) : menu de démarrage sur le Plateau venté avec thème au piano (voir
   « Écran-titre »). Non essayé avec une vraie manette (DualSense simulée) ; le chemin « Tout effacer et
   recommencer » est couvert par les tests, pas joué en vrai (la sauvegarde du navigateur n'a pas été effacée).
-- **APK Android** (22/11) : coque et workflow prêts (voir « Android »), première construction sur GitHub
-  à venir ; le build « HEAD + écran-titre » passe (3,3 Mo, sans Illumoria).
+- **APK Android** (22/11) : `v0.1.0-prototype` publiée sur GitHub (voir « Android »), pas encore essayée sur
+  un téléphone ; le build « HEAD + écran-titre » passe (3,3 Mo, sans Illumoria).
 - **Serveur unique** (décision de l'utilisateur, 21/11) : on joue et on travaille sur la copie principale
   seulement, `v3-archipel`, configuration `ile`, port 5174. Les worktrees ne servent plus de version de jeu.
   Fusions du 21/11 : `claude/personnage-2` (avance rapide sur `77c70ac`, travail du worktree `personnage-2`
