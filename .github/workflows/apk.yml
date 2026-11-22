@@ -13,6 +13,11 @@ on:
 permissions:
   contents: write
 
+# une seule construction à la fois par branche ou étiquette
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   apk:
     runs-on: ubuntu-latest
