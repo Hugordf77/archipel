@@ -443,12 +443,14 @@ function rng(seed) {
 function buildClouds() {
   const rand = rng(12);
   const clumps = [];
-  const count = 18;
+  // 24/11/2026 (demande de l'utilisateur : « supprime les nuages encombrants ») : 7 bouffées au lieu de 18,
+  // toutes hautes dans le ciel ; plus aucune posée sur l'horizon, devant les reliefs et les paysages lointains
+  const count = 7;
   const R = 520;
   for (let i = 0; i < count; i++) {
     const a = (i / count) * Math.PI * 2 + rand() * 0.25;
-    // élévation en espace ciel (radians) : bas sur l'horizon, quelques-uns plus hauts
-    const el = 0.03 + Math.pow(rand(), 1.6) * 0.16;
+    // élévation en espace ciel (radians) : au-dessus des reliefs (≥ 0,2 rad, soit ~11°)
+    const el = 0.2 + rand() * 0.14;
     const cx = Math.cos(a) * Math.cos(el) * R;
     const cy = Math.sin(el) * R;
     const cz = Math.sin(a) * Math.cos(el) * R;

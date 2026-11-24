@@ -47,6 +47,7 @@ import { seasonOf, applySeason, seasonSnow } from '../world/env/season.js';
 import { Particules } from '../world/env/particules.js';
 import { Tornade } from '../world/env/tornade.js';
 import { Chateau } from '../world/env/chateau.js';
+import { Lointain } from '../world/env/lointain.js';
 import { Titre, titreAPasser } from './Titre.js';
 
 const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -190,6 +191,8 @@ export class Game {
     this.tornade = new Tornade(this.world.scene);
     // château du Sommet (MON-015) : repère central, dessiné en permanence au sommet du Sommet givré
     this.chateau = new Chateau(this.world.scene);
+    // paysages lointains factices : trois anneaux de reliefs peints à 3,8 – 4,4 km, centrés sur la caméra
+    this.lointain = new Lointain(this.world.scene);
     this.weather.setMode(this.state.settings.weather);
     this.refreshDay();
     this.updateProgressVisuals(false);
@@ -489,6 +492,7 @@ export class Game {
     this.particules?.update(this.pipeline, this.camera, this.pipeline.settings.particules ?? 1);
     this.tornade?.update(dt, this.camera);
     this.chateau?.update(this.islands);
+    this.lointain?.update(this.camera, this.pipeline.settings.lointain);
     this.pipeline.render(this.world.scene, this.camera, this.overlayScene);
 
     // sauvegarde différée

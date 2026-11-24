@@ -28,6 +28,7 @@ export const PASSES = {
   ombres: { reglage: 'ombres', coupe: 0, active: null },
   astre: { reglage: 'astre', coupe: 0, active: null },
   particules: { reglage: 'particules', coupe: 0, active: 1 },
+  lointain: { reglage: 'lointain', coupe: 0, active: null },
   ...Object.fromEntries([...LUMIERE, ...CIEL].map((k) => [k, { reglage: k, coupe: 0, active: null }])),
 };
 
@@ -187,6 +188,8 @@ export class Pipeline {
       astre: null,
       // ombres portées : null = actives, 0 = coupées (bascule A/B du banc de rendu)
       ombres: null,
+      // paysages lointains factices (world/env/lointain.js) : null = actifs, 0 = coupés
+      lointain: null,
     };
     // teinte du rebond visée (biome sous le joueur, Game.updateZone) ; U.uBounceColor la rejoint
     this.rebondCible = U.uBounceColor.value.clone();

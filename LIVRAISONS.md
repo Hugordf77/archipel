@@ -418,6 +418,13 @@ et domaine concerné).
 
 ## État courant (24/11/2026)
 
+- **Nuages dégagés, paysages lointains factices** (24/11) : bouffées de nuages ramenées de 18 à 7 et toutes
+  hautes dans le ciel (`sky.js`, `buildClouds` : plus rien sur l'horizon ni devant les reliefs) ; trois anneaux
+  de reliefs peints centrés sur la caméra, à 3,8 km (îles et collines coupées par la mer), 4,1 km (chaînes) et
+  4,4 km (grands massifs enneigés), fondus dans l'horizon (`world/env/lointain.js`, `Game`), un seul maillage,
+  identifiant 0 du G-buffer ; bascule A/B `pipeline.settings.lointain` (`Pipeline.PASSES`). Captures
+  `captures/banc/lointain-a|b|c/` (planches). Coût GPU non mesuré au banc (≈ 2 200 triangles, shader simple).
+
 - **Château du Sommet givré, version 1** (24/11, MON-015, `src/models/monuments/chateau-sommet/`, voir la FICHE) :
   très grand château original, low poly, sans détail (enceinte de 76 m, huit tours à toit conique, logis,
   grande tour dont la flèche monte à ~170 m) ; dessiné en permanence comme repère central
