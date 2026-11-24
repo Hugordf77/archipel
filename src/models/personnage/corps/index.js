@@ -11,7 +11,7 @@ import { limb, leafGeo } from '../../kit/formes.js';
 import { PAL } from '../../kit/palette.js';
 import { HC, CREAM, B, ID, GABARIT, TETE_K as K, box, tint, mixHex, Parts } from '../commun.js';
 import { HAIR_STYLES, onCap } from '../coupes/index.js';
-import { craneGeometry, MENTON, oreilles } from '../tete.js';
+import { craneGeometry, MENTON, oreilles, sousVisage } from '../tete.js';
 import { buildChibiGeometry } from './chibi.js';
 import { fiche } from '../../kit/fiches.js';
 import { Character } from '../../../entities/character/Character.js';
@@ -282,6 +282,66 @@ function surSac(b, g, color, p, r = [0, 0, 0]) {
 // tube effilé à bout rond (membres, manches) : départ ouvert, enfoui dans la pièce voisine
 const tube = (b, color, pts, radii, sides = 10, rings = 4) => limb(b, color, pts, radii, { sides, rings, end: 'round' });
 
+// Plis modelés (21/11/2026) : déforme un vêtement tourné autour d'un axe vertical (manche, jambe, jupe) avant
+// de le poser dans le Builder b, puis refait ses normales ; rien de peint (DA : les plis viennent des
+// volumes). axe(y) : [x, z] du centre à la hauteur y ; chaque pli { y: [bas, haut], h : profondeur (m, la
+// crête sort de h, le creux rentre de h), n : ondes dans la hauteur de la bande, m : ondes autour (godets),
+// a : angle du milieu (rad, 0 = devant +z, + vers +x), l : demi-largeur angulaire (sans l : tout autour),
+// rampe : le pli grandit vers le bas de la bande (ourlet) au lieu de s'éteindre aux deux bords }
+function plis(b, axe, liste) {
+  return {
+    add(g, color, opts) {
+      const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i);
+        const y = p.getY(i);
+        const z = p.getZ(i);
+        const [cx, cz] = axe(y);
+        const dx = x - cx;
+        const dz = z - cz;
+        const r = Math.hypot(dx, dz);
+        if (r < 1e-6) continue;
+        const th = Math.atan2(dx, dz);
+        let d = 0;
+        for (const f of liste) {
+          const u = (f.y[1] - y) / (f.y[1] - f.y[0]); // 0 en haut de la bande, 1 en bas
+          if (u <= 0 || u >= 1) continue;
+          const w = f.rampe ? u * u * (3 - 2 * u) : Math.sin(Math.PI * u);
+          let A = 1;
+          if (f.l) {
+            const da = Math.atan2(Math.sin(th - f.a), Math.cos(th - f.a));
+            A = Math.exp(-((da / f.l) ** 2));
+          }
+          d += f.h * w * A * Math.cos(2 * Math.PI * (f.n ?? 0) * u + (f.m ?? 0) * th);
+        }
+        const k = (r + d) / r;
+        p.setXYZ(i, cx + dx * k, y, cz + dz * k);
+      }
+      if (g.index) {
+        g.computeVertexNormals();
+        // couture d'un profil tourné (sommets confondus, normales différentes) : normales moyennées
+        const n = g.attributes.normal;
+        const vus = new Map();
+        for (let i = 0; i < p.count; i++) {
+          const cle = `${p.getX(i).toFixed(5)},${p.getY(i).toFixed(5)},${p.getZ(i).toFixed(5)}`;
+          const j = vus.get(cle);
+          if (j === undefined) {
+            vus.set(cle, i);
+            continue;
+          }
+          const nx = n.getX(i) + n.getX(j);
+          const ny = n.getY(i) + n.getY(j);
+          const nz = n.getZ(i) + n.getZ(j);
+          const l = Math.hypot(nx, ny, nz) || 1;
+          n.setXYZ(i, nx / l, ny / l, nz / l);
+          n.setXYZ(j, nx / l, ny / l, nz / l);
+        }
+      }
+      return b.add(g, color, opts);
+    },
+  };
+}
+
 // bourrelet tourné (revers de manche ou de jambe, col de botte) : anneau épais, du rayon intérieur ri
 // (enfoui dans le membre) au rayon extérieur ro, de hauteur h, bords arrondis ; profil montant (faces
 // vers l'extérieur)
@@ -461,7 +521,11 @@ function buildAventurier(av) {
 
   // --- tête : crâne, oreilles rondes (identifiant à part : le trait les détache du crâne), coupe ---
   // (crâne ovale du gabarit, déjà à l'échelle et aux normales réglées : tete.js)
-  P.on(B.HEAD, ID.head).add(craneGeometry(), skin, { p: [0, HC, 0] });
+  // triangles du crâne toujours cachés (sous le visage sculpté, la calotte et la nuque de la coupe) retirés
+  const coupe = HAIR_STYLES[av.hair];
+  const pc = new THREE.Vector3();
+  const cache = (q, a, e) => sousVisage(a, e, FACE) || !!coupe.cache?.(pc.set(q.x, q.y + HC, q.z));
+  P.on(B.HEAD, ID.head).add(craneGeometry(22, 14, cache), skin, { p: [0, HC, 0] });
   if (!HAIR_STYLES[av.hair].hideEars) {
     const E = P.on(B.HEAD, ID.body);
     oreilles(E, skinWarm, HC);
@@ -476,7 +540,7 @@ function buildAventurier(av) {
 
   // --- torse : le haut en tranches du profil (rayures du pull), le bas de la salopette en dessous de la
   // ceinture ---
-  const T = P.on(B.TORSO, ENC.pull);
+  const T = P.on(B.TORSO, ENC.pull, true);
   const y0 = TORSO[0][0];
   const taille = overalls ? TAILLE + 0.015 : y0;
   const bands = overalls ? [[y0, taille, bot]] : [];
@@ -501,20 +565,21 @@ function buildAventurier(av) {
   if (overalls) salopette(P, bot, av.back === 'sac');
 
   // --- bassin, jupe, robe ---
-  band(P.on(B.HIPS, ENC.pull), HIPS, HIPS[0][0], HIPS[HIPS.length - 1][0], dress ? top : bot, ZH);
+  band(P.on(B.HIPS, ENC.pull, true), HIPS, HIPS[0][0], HIPS[HIPS.length - 1][0], dress ? top : bot, ZH);
   // (profils montants : un profil tourné qui descend a ses faces vers l'intérieur ; évasés sous la
   // hauteur des poings, écartés au repos à ±0,25)
   if (dress) {
-    P.on(B.SKIRT, ENC.pull).add(G.lathe([[0.235, 0.42], [0.246, 0.434], [0.243, 0.46], [0.222, 0.52], [0.196, 0.6], [0.183, 0.68], [0.175, 0.76], [0.17, 0.85]], 18), top, { s: [1, 1, 0.84] });
+    // godets : six ondes autour, qui naissent sous la taille et s'ouvrent vers l'ourlet
+    plis(P.on(B.SKIRT, ENC.pull, true), () => [0, 0], [{ y: [0.42, 0.7], h: 0.009, m: 6, rampe: true }]).add(G.lathe([[0.235, 0.42], [0.246, 0.434], [0.243, 0.46], [0.222, 0.52], [0.196, 0.6], [0.183, 0.68], [0.175, 0.76], [0.17, 0.85]], 18), top, { s: [1, 1, 0.84] });
   } else if (av.bottom === 'jupe') {
-    P.on(B.SKIRT, ENC.jupe).add(G.lathe([[0.205, 0.5], [0.216, 0.512], [0.213, 0.54], [0.198, 0.6], [0.185, 0.68], [0.174, 0.77], [0.17, 0.81]], 18), bot, { s: [1, 1, 0.84] });
+    plis(P.on(B.SKIRT, ENC.jupe, true), () => [0, 0], [{ y: [0.5, 0.72], h: 0.008, m: 6, rampe: true }]).add(G.lathe([[0.205, 0.5], [0.216, 0.512], [0.213, 0.54], [0.198, 0.6], [0.185, 0.68], [0.174, 0.77], [0.17, 0.81]], 18), bot, { s: [1, 1, 0.84] });
   }
 
   // --- bras ---
   for (const sx of [-1, 1]) {
     const L = sx < 0;
-    const A = P.on(L ? B.ARM_L : B.ARM_R, ENC.membre);
-    const F = P.on(L ? B.FORE_L : B.FORE_R, ENC.membre);
+    const A = P.on(L ? B.ARM_L : B.ARM_R, ENC.membre, true);
+    const F = P.on(L ? B.FORE_L : B.FORE_R, ENC.membre, true);
     const W = P.on(L ? B.HAND_L : B.HAND_R, ENC.membre);
     const [sx0, sy0] = R[L ? B.ARM_L : B.ARM_R];
     const [ex, ey] = R[L ? B.FORE_L : B.FORE_R];
@@ -532,24 +597,42 @@ function buildAventurier(av) {
         // trois bandes de 5,5 cm (couleur, crème, couleur) au-dessus du revers ; bouffante au milieu
         limb(A, top, [[xm, 0.895, 0], [xm, sy0, 0]], [0.066, 0.062], { sides: 10, rings: 1, end: 'round' });
         limb(A, CREAM, [[xm, 0.895, 0], [xm, 0.84, 0]], [0.066, 0.065], { sides: 10, rings: 1 });
-        limb(A, top, [[xm, 0.84, 0], [xm, yb, 0]], [0.065, 0.054], { sides: 10, rings: 1, end: 'round' });
+        // bande du bas : plis au creux du coude (devant, côté du corps) et fronces au-dessus du revers ; le haut
+        // de la bande, raccordé à la bande crème, ne bouge pas
+        const pM = [
+          { y: [yb, 0.84], h: 0.0035, n: 1.5, a: -sx * 0.5, l: 0.9 },
+          { y: [yb - 0.01, yb + 0.025], h: 0.0025, m: 3, rampe: true },
+        ];
+        limb(plis(A, () => [xm, 0], pM), top, [[xm, 0.84, 0], [xm, yb, 0]], [0.065, 0.054], { sides: 10, rings: 4, end: 'round' });
       }
     } else if (av.top === 'tshirt') {
       // bras nu, manche courte (manchon un peu plus large, bord rond) et épaule de la couleur du haut
-      const S = P.on(L ? B.ARM_L : B.ARM_R, ENC.pull);
+      const S = P.on(L ? B.ARM_L : B.ARM_R, ENC.pull, true);
       S.add(G.sphere(0.06, 10, 7), top, { p: [sx0 - sx * 0.004, sy0 - 0.002, 0], s: [1, 0.95, 1] });
       tube(S, top, [[sx0, sy0, 0], [sx0 + sx * 0.006, sy0 - 0.1, 0]], [0.062, 0.06], 10, 2);
       tube(A, skin, [[sx0, sy0, 0], [sx0 + sx * 0.003, (sy0 + ey) / 2, 0], [ex, ey, 0]], [0.05, 0.048, 0.045], 10, 3);
     } else {
       // robe : manche bouffante courte, bras nu
-      P.on(L ? B.ARM_L : B.ARM_R, ENC.pull).add(G.sphere(0.07, 10, 7), top, { p: [sx0 - sx * 0.006, sy0 - 0.006, 0], s: [1, 0.88, 1] });
+      P.on(L ? B.ARM_L : B.ARM_R, ENC.pull, true).add(G.sphere(0.07, 10, 7), top, { p: [sx0 - sx * 0.006, sy0 - 0.006, 0], s: [1, 0.88, 1] });
       tube(A, skin, [[sx0, sy0, 0], [sx0 + sx * 0.003, (sy0 + ey) / 2, 0], [ex, ey, 0]], [0.05, 0.048, 0.045], 10, 3);
     }
-    // avant-bras : nu (manche retroussée au coude), ou manche longue du gilet
-    const sleeveLong = av.top === 'gilet';
-    tube(F, sleeveLong ? top : skin, [[ex, ey + 0.01, 0], [(ex + hx) / 2, (ey + hy) / 2 + 0.01, 0.002], [hx, hy + 0.03, hz]], sleeveLong ? [0.05, 0.047, 0.042] : [0.044, 0.042, 0.038], 10, 2);
-    if (av.top === 'pull') bourrelet(P.on(L ? B.FORE_L : B.FORE_R, ENC.reversManche), CREAM, [ex, ey - 0.006, 0], 0.04, 0.068, 0.036, 10);
-    if (sleeveLong) bourrelet(P.on(L ? B.FORE_L : B.FORE_R, ENC.reversManche), CREAM, [hx, hy + 0.05, hz * 0.6], 0.036, 0.054, 0.026, 10);
+    // avant-bras : manche longue du gilet et du pull (23/11/2026, demande de l'utilisateur : manches
+    // allongées jusqu'au poignet, revers crème au poignet ; le pull garde ses rayures : une bande crème à
+    // mi-avant-bras), ou bras nu
+    const sleeveLong = av.top === 'gilet' || av.top === 'pull';
+    if (av.top === 'pull') {
+      const mx = (ex + hx) / 2;
+      const my = (ey + hy) / 2 + 0.01;
+      const a1 = [ex + (mx - ex) * 0.42, ey + 0.01 + (my - ey - 0.01) * 0.42, 0.001];
+      const a2 = [ex + (mx - ex) * 1.18, ey + 0.01 + (my - ey - 0.01) * 1.18, 0.002];
+      // (les deux premiers tronçons sans bout rond : il serait caché dans le tronçon suivant)
+      limb(F, top, [[ex, ey + 0.01, 0], a1], [0.054, 0.051], { sides: 10, rings: 1 });
+      limb(F, CREAM, [a1, a2], [0.051, 0.048], { sides: 10, rings: 1 });
+      tube(F, top, [a2, [hx, hy + 0.03, hz]], [0.048, 0.044], 10, 2);
+    } else {
+      tube(F, sleeveLong ? top : skin, [[ex, ey + 0.01, 0], [(ex + hx) / 2, (ey + hy) / 2 + 0.01, 0.002], [hx, hy + 0.03, hz]], sleeveLong ? [0.05, 0.047, 0.042] : [0.044, 0.042, 0.038], 10, 2);
+    }
+    if (sleeveLong) bourrelet(P.on(L ? B.FORE_L : B.FORE_R, ENC.reversManche), CREAM, [hx, hy + 0.05, hz * 0.6], 0.036, 0.056, 0.028, 10);
     W.add(G.sphere(0.06, 10, 6), skin, { p: [hx, hy, hz + 0.004], s: [0.9, 1, 0.95] });
   }
 
@@ -559,8 +642,8 @@ function buildAventurier(av) {
   const pluie = av.shoes === 'bottes';
   for (const sx of [-1, 1]) {
     const L = sx < 0;
-    const Th = P.on(L ? B.THIGH_L : B.THIGH_R, ENC.membre);
-    const Sh = P.on(L ? B.SHIN_L : B.SHIN_R, ENC.membre);
+    const Th = P.on(L ? B.THIGH_L : B.THIGH_R, ENC.membre, true);
+    const Sh = P.on(L ? B.SHIN_L : B.SHIN_R, ENC.membre, true);
     const Fo = P.on(L ? B.FOOT_L : B.FOOT_R, ENC.membre);
     const [tx, ty] = R[L ? B.THIGH_L : B.THIGH_R];
     const [kx, ky] = R[L ? B.SHIN_L : B.SHIN_R];
@@ -570,10 +653,26 @@ function buildAventurier(av) {
     const thighPts = [[tx - sx * 0.01, ty + 0.03, 0], [tx, ty - 0.07, 0.003], [(tx + kx) / 2, (ty + ky) / 2 - 0.04, 0.002], [kx, ky, 0]];
     if (pants || av.bottom === 'short') {
       // jambe large de la salopette (ou du pantalon) : un bourrelet doux à mi-cuisse
-      if (pants) tube(Th, bot, thighPts, [0.08, 0.092, 0.088, 0.085], 12, 3);
+      if (pants) {
+        // plis tirés depuis l'entrejambe, en biais sur le devant côté intérieur
+        const axeCuisse = (y) => {
+          for (let i = 0; i < thighPts.length - 1; i++) {
+            const [x0, y0, z0] = thighPts[i];
+            const [x1, y1, z1] = thighPts[i + 1];
+            if (y <= y0 && y >= y1) {
+              const t = (y0 - y) / (y0 - y1 || 1);
+              return [x0 + (x1 - x0) * t, z0 + (z1 - z0) * t];
+            }
+          }
+          const q = y > thighPts[0][1] ? thighPts[0] : thighPts[thighPts.length - 1];
+          return [q[0], q[2]];
+        };
+        const pC = [{ y: [ty - 0.17, ty + 0.01], h: 0.0045, n: 1.5, m: -sx * 1.5, a: -sx * 0.8, l: 0.6 }];
+        tube(plis(Th, axeCuisse, pC), bot, thighPts, [0.08, 0.092, 0.088, 0.085], 12, 5);
+      }
       else {
         tube(Th, skin, thighPts, [0.07, 0.078, 0.07, 0.064], 10, 5);
-        tube(P.on(L ? B.THIGH_L : B.THIGH_R, ENC.pull), bot, [[tx - sx * 0.01, ty + 0.03, 0], [tx + sx * 0.004, ty - 0.15, 0.002]], [0.085, 0.094], 12, 2);
+        tube(P.on(L ? B.THIGH_L : B.THIGH_R, ENC.pull, true), bot, [[tx - sx * 0.01, ty + 0.03, 0], [tx + sx * 0.004, ty - 0.15, 0.002]], [0.085, 0.094], 12, 2);
       }
     } else {
       tube(Th, skin, thighPts, [0.07, 0.078, 0.07, 0.064], 10, 5);
@@ -584,7 +683,13 @@ function buildAventurier(av) {
       const fin = marche ? 0.15 : pluie ? 0.2 : 0.13;
       const ys = ourlet ? [ky + 0.02, ky - 0.05, ourlet + 0.045, ourlet, fin] : [ky + 0.02, ky - 0.05, 0.3, 0.25, fin];
       const rs = ourlet ? [0.083, 0.087, 0.084, 0.076, 0.064] : [0.083, 0.087, 0.082, 0.078, 0.074];
-      limb(Sh, bot, ys.map((y) => [y > ky ? kx : fx, y, zs(y)]), rs, { sides: 12, rings: 4 });
+      // plis : creux du genou (derrière), pli doux devant le genou, tassement de la jambe au-dessus du revers
+      const pJ = [
+        { y: [ky - 0.07, ky + 0.02], h: 0.005, n: 1, a: Math.PI, l: 0.9 },
+        { y: [ky - 0.05, ky + 0.02], h: 0.003, n: 1, a: 0, l: 0.6 },
+      ];
+      if (ourlet) pJ.push({ y: [ourlet + 0.03, ky - 0.02], h: 0.0035, n: 1, m: 2 });
+      limb(plis(Sh, (y) => [y > ky ? kx : fx, zs(y)], pJ), bot, ys.map((y) => [y > ky ? kx : fx, y, zs(y)]), rs, { sides: 12, rings: 7 });
       // revers de jambe : gros bourrelet plus clair, au-dessus de la chaussure
       if (ourlet) bourrelet(P.on(L ? B.SHIN_L : B.SHIN_R, ENC.reversJambe), mixHex(bot, CREAM, 0.35), [fx, ourlet, zs(ourlet)], 0.066, 0.094, 0.064);
     } else {
@@ -704,6 +809,10 @@ export const VOLUMES = { TORSO, ZT, SAC, NOEUD, PANS, EP_PAN };
 // Butées vérifiées par tests/echarpe-sac.test.js (rien dans le torse, le sac ni la tête).
 export const DYN_PANS = PANS.map(({ os, dir, L }) => ({ os, dir: new THREE.Vector3(...dir).normalize().toArray(), lever: L * 0.55, x: [-0.12, 0.5], z: [-0.1, 0.45] }));
 export const DYN_SAC = { os: B.BAG, dir: [0, -0.954, 0.3], lever: 0.12, x: [-0.03, 0.08], z: [-0.04, 0.04] };
+// Jupe et robe (os SKIRT, pivot au bassin) : cloche qui pend jusqu'à l'ourlet (≈ 0,22 m sous le pivot) ;
+// + : l'ourlet part en arrière (course, vent de face), − : en avant ; roulis de côté (21/11/2026 : même
+// physique que les cheveux, cheveux.js JUPE)
+export const DYN_JUPE = { os: B.SKIRT, dir: [0, -1, 0.04], lever: 0.22, x: [-0.3, 0.5], z: 0.35 };
 
 export default fiche('PER-001', 'corps-visage', 'Corps et visage', perso(() => Character, {}, 'avatar'), {
   variants: [{ label: 'Yeux ovales', params: { eyes: 'ovale' } }, { label: 'Yeux ronds', params: { eyes: 'rond' } }, { label: 'Yeux en amande', params: { eyes: 'amande' } }],

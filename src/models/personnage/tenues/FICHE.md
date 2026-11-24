@@ -24,6 +24,20 @@ Géométrie dessinée avec le corps (`../corps/index.js` pour le gabarit aventur
 pour le chibi). Tenue de départ des planches de l'utilisateur (`docs/personnage-2/references/`), en
 volumes modelés, rien de peint (ombres et plis viennent des volumes) :
 
+- **Plis modelés** (21/11/2026, `plis` de `../corps/index.js`) : le tube du vêtement est déformé autour de son
+  axe avant d'être posé (crêtes et creux de quelques millimètres, normales refaites, couture des profils
+  tournés lissée), rien de peint : manche du pull (plis au creux du coude, fronces au-dessus du revers ;
+  4 anneaux au lieu de 1), cuisse de la salopette et du pantalon (plis tirés en biais depuis l'entrejambe ;
+  5 anneaux au lieu de 3), bas de jambe (creux du genou, pli doux devant, tassement au-dessus du revers ;
+  7 anneaux au lieu de 4), robe et jupe (six godets qui s'ouvrent vers l'ourlet, sans triangle de plus).
+  Coût : +360 triangles (tenue de départ 8 717, pire cas 8 901).
+- **Physique** (21/11/2026) : vent du monde en m/s (brise de 4 m/s, `cheveux.js` `VENT`) ; pans de l'écharpe
+  moins sensibles au vent (`PAN.vent` 4 → 2,2) et battement de 0,25 par m/s : ils flottent dans la brise sans
+  être plaqués contre leurs butées ; robe et jupe sur la même physique que les cheveux (`JUPE`,
+  `DYN_JUPE` : traîne à la course, se soulève au saut, bat au vent, balancement de la marche et roulis du
+  bassin ajoutés, bornés) ; le chibi garde ses ressorts d'origine. Pas d'os pour le bas des jambes de
+  pantalon : il ne descend que de 8 cm sous le genou (le mouvement ne se lirait pas, ou découvrirait la
+  botte).
 - **Pull rayé** (PER-009, couleur du haut, corail par défaut) : rayures horizontales de 5,5 cm en
   tranches du profil du torse (couleur, puis crème `#f6ead2`) ; manches bouffantes (épaule ronde de
   6,4 cm, manche 6,2 → 6,6 → 5,4 cm) en trois tranches raccordées anneau sur anneau (même axe, mêmes
@@ -107,3 +121,4 @@ Règles communes : `docs/DA.md`.
 - 03/11/2026 : étape 5 : deux pans plats qui flottent derrière l'épaule gauche, sur deux os à ressort
   (`SCARF`, `SCARF_B`) ; salopette et bottes allégées pour faire place au sac (voir
   `../accessoires/FICHE.md`) ; rendu logiciel hors jeu (repos, course, saut) ; captures en jeu à faire.
+- 23/11/2026 : pull à manches longues (demande de l'utilisateur) : avant-bras couverts jusqu'au poignet, bande crème à mi-avant-bras, revers crème au poignet (plus de revers au coude) ; matières dessinées par le shader du joueur (`materials.js`, `CHARACTER` et `PLIS`) : tricot côtelé à mailles en V, jean en sergé délavé par plaques, cuir à grain et éraflures, joues rosées. Empreintes du personnage non écrites (déjà en écart).

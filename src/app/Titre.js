@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { U, ORIGIN } from '../core/globals.js';
 import { groundAt, setGroundRef } from '../world/navigation.js';
+import { computeHorizonDip } from '../world/env/sky.js';
 // brise ressentie par les cheveux (VENT.brise) : présente selon la version du personnage ; sans elle,
 // le vent du monde (uWindDir, uWindStrength) suffit à les animer
 import * as CHEVEUX from '../entities/character/cheveux.js';
@@ -22,6 +23,8 @@ import {
   LIEU_TITRE, poseAt, voileAt, versMonde, etatNouvellePartie,
   creerMenu, eveiller, deplacer, choisir, valider, retour, entreesVisibles,
 } from '../ui/titreLogic.js';
+
+const _avant = new THREE.Vector2();
 
 const SANS_TITRE = 'archipel:sans-titre';
 
@@ -244,6 +247,16 @@ export class Titre {
     cam.position.set(c.x - ORIGIN.x, c.y - ORIGIN.y, c.z - ORIGIN.z);
     cam.lookAt(v.x - ORIGIN.x, v.y - ORIGIN.y, v.z - ORIGIN.z);
     cam.updateMatrixWorld();
+    // monde courbé et horizon du ciel, comme la caméra de jeu (CameraRig) : sans cela ils restent à des
+    // valeurs périmées (plongée de l'horizon par défaut : 0,3 rad), et le ciel peint, soleil compris,
+    // se cale 17° trop bas (le soleil d'aube passait sous la mer)
+    const fx = v.x - c.x;
+    const fz = v.z - c.z;
+    const fl = Math.hypot(fx, fz) || 1;
+    _avant.set(fx / fl, fz / fl);
+    U.uCurveOrigin.value.set(P.x - ORIGIN.x, P.y - ORIGIN.y, P.z - ORIGIN.z);
+    U.uCurveDir.value.copy(_avant);
+    U.uHorizonDip.value = computeHorizonDip(cam, U.uCurveOrigin.value, _avant, U.uCurvature.value);
   }
 
   // ---------------------------------------------------------------------------

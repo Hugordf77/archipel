@@ -78,9 +78,13 @@ export class IslandFauna {
     for (const sp of plan.spawners) {
       const def = SPECIES[sp.sp];
       if (!def) continue;
+      // répartis dans le disque (0,6 r) en spirale de tournesol (angle d'or, rayon en racine : densité
+      // uniforme), un peu bougés : pas deux bêtes l'une dans l'autre à l'apparition (elles restent
+      // en place tant que le joueur est à plus de 200 m)
+      const a0 = rng() * Math.PI * 2;
       for (let i = 0; i < sp.count; i++) {
-        const a = rng() * Math.PI * 2;
-        const d = rng() * sp.r * 0.6;
+        const a = a0 + i * 2.39996 + (rng() - 0.5) * 0.5;
+        const d = sp.r * 0.6 * Math.sqrt((i + 0.5 + (rng() - 0.5) * 0.5) / sp.count);
         const hx = entry.desc.x + sp.x;
         const hz = entry.desc.z + sp.z;
         const an = {

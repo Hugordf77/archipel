@@ -1,15 +1,16 @@
 // Plan d'île (Worker) : enchaîne toutes les passes et renvoie une description complète et
 // déterministe — relief, eau douce, zones, végétation ; et, pour une île qui décrit ses lieux
 // (desc.lieux, voir pois.js), lieux, chemins, petites découvertes et faune. Aucune île du jeu n'en
-// décrit encore (étape « bases » : leurs listes restent vides). Le plan garde aussi le biome (B) et
-// la zone de l'île (ZI) de chaque case.
+// décrit encore (étape « bases ») : elles n'ont que ce qui est posé à la main (desc.poses, lieux ;
+// desc.terrassements ; desc.faune, troupeaux). Le plan garde aussi le biome (B) et la zone de l'île
+// (ZI) de chaque case.
 import { buildTerrain } from './terrain.js';
 import { computeZonesForme, zoneColors, Z } from './zones.js';
 import { placePOIs, placeMicro, applyStamps, traitsLieux, poserLieux } from './pois.js';
 import { buildPaths } from './paths.js';
 import { sealLakes } from './hydro.js';
 import { placeFloraForme } from './flora.js';
-import { placeSpawners } from './spawns.js';
+import { placeSpawners, poserTroupeaux } from './spawns.js';
 import { slopeAt } from './grid.js';
 import { terrasser } from './forme.js';
 
@@ -78,7 +79,8 @@ export function buildPlan(desc) {
   const paths = net ? net.paths : [];
   const flora = placeFloraForme(P, pois, paths);
   lap('végétation');
-  const spawners = lieux ? placeSpawners(P, pois) : [];
+  // sans lieux décrits : seulement les troupeaux posés à la main (desc.faune)
+  const spawners = lieux ? placeSpawners(P, pois) : poserTroupeaux(desc);
   lap('faune');
   let flowerCells = 0;
   for (let k = 0; k < P.zone.length; k++) if (P.zone[k] === Z.FLEURS) flowerCells++;

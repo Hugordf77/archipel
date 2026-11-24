@@ -119,7 +119,9 @@ export function cropPlan(P, sec) {
     landing: null,
     items: Float32Array.from(items),
     ids: Uint32Array.from(ids),
-    spawners: [],
+    // troupeaux dont le point d'apparition est dans le carré, recentrés (posés loin des bords :
+    // tests/zones/troupeaux.test.js)
+    spawners: (P.spawners || []).filter((f) => inCore(f.x - cx, f.z - cz)).map((f) => ({ ...f, x: f.x - cx, z: f.z - cz })),
     traits: P.traits,
     wetDist: crop(P.wetDist, Float32Array),
     coastDist: crop(P.coastDist, Float32Array),

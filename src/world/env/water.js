@@ -132,7 +132,7 @@ uniform float uFoamAmt;
 uniform vec3 uWaterShallow;
 uniform vec3 uWaterDeep;
 uniform vec3 uSandColor;
-uniform vec3 uSkyHorizon;
+// uSkyHorizon : déclaré par TOON
 uniform vec3 uSkyTop;
 uniform vec3 uMoonDir;
 uniform float uRain;

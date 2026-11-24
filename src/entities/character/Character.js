@@ -7,8 +7,9 @@ import { FaceAtlas, faceGeometry, EXPRESSIONS, BLINKABLE, EYE, cellUV } from './
 import { locomotionPose, LOCO_FAMILY, FAMILY_HALFLIFE, createArmDynamics, stepArmDynamics, handWeightTarget, climbRootFrame, axisInRoot, climbHandTarget, perchHandTarget, trunkChord, CLIMB, CLIMB_GAP, climbRenderFrame } from '../locomotion/pose.js';
 import { H as MOTOR_STEP } from '../locomotion/motor.js';
 import { applyJoints, reachHand, shoulderInRoot, handInRoot, boneToRoot, HAND_RADIUS, HAND_BRUSH_GAP } from '../locomotion/rig.js';
-import { RESSORT, PAN, SAC, hairSpring, stepHair, hairAngles, stepRebond } from './cheveux.js';
-import { B, PARENT, REST, ID, tint, HAIR_STYLES, buildAvatarGeometry, GABARIT, TETE_K, versReel, DYN_PANS, DYN_SAC } from '../../models/personnage/index.js';
+import { RESSORT, PAN, SAC, JUPE, VENT, GROUPES, hairSpring, stepHair, hairAngles, stepRebond } from './cheveux.js';
+import { EcharpeTissu } from './echarpeTissu.js';
+import { B, PARENT, REST, ID, tint, HAIR_STYLES, buildAvatarGeometry, GABARIT, TETE_K, versReel, DYN_PANS, DYN_SAC, DYN_JUPE } from '../../models/personnage/index.js';
 import { crayonGeometry } from '../../models/personnage/index.js';
 export { HAIR_STYLES };
 
@@ -122,6 +123,22 @@ const BASE = {
 };
 const FIDGETS = ['etire', 'ciel', 'tape', 'gratte'];
 const _crown = new THREE.Vector3();
+// Jointures qui plient le tissu (materials.js, PLIS) : [os, son parent (−1 : pas de pli à son pivot), os
+// suivant le long du membre (axe), enfant dont la jointure plie aussi cet os (−1 : aucun)] ; taille (le bas
+// du buste), coudes, hanches, genoux. Pas l'épaule : sur le dôme de la manche bouffante, les plis se
+// mêlaient aux rayures du pull en hachures
+const PLI_JOINTURES = [
+  [B.TORSO, B.HIPS, B.NECK, -1],
+  [B.ARM_L, -1, B.FORE_L, B.FORE_L],
+  [B.ARM_R, -1, B.FORE_R, B.FORE_R],
+  [B.FORE_L, B.ARM_L, B.HAND_L, -1],
+  [B.FORE_R, B.ARM_R, B.HAND_R, -1],
+  [B.THIGH_L, B.HIPS, B.SHIN_L, B.SHIN_L],
+  [B.THIGH_R, B.HIPS, B.SHIN_R, B.SHIN_R],
+  [B.SHIN_L, B.THIGH_L, B.FOOT_L, -1],
+  [B.SHIN_R, B.THIGH_R, B.FOOT_R, -1],
+];
+const _pliAxe = new THREE.Vector3();
 // point du torse où l'écharpe et le sac mesurent l'accélération (repère de l'os du torse : entre le nœud
 // de l'écharpe et le haut du sac)
 const CLOTH_POINT = new THREE.Vector3(0.06, versReel(B.TORSO, [0, 1.0, 0])[1] - REST[B.TORSO][1], -0.08);
@@ -174,7 +191,7 @@ export class Character {
     pommel.position.set(0, 0.245, 0);
     this.backSword.add(pommel);
     // contour « doux » : l'encre suit les frontières entre masses, pas chaque mèche
-    this.mat = toonMaterial({ vertexColors: true, aId: true, outline: 0.5, rim: 1.25, pigment: 0.35, character: true });
+    this.mat = toonMaterial({ vertexColors: true, aId: true, outline: 0.5, rim: 1.25, pigment: 0.35, character: true, cheveux: true, plis: true });
 
     // squelette
     this.bones = REST.map(() => new THREE.Bone());
@@ -233,14 +250,17 @@ export class Character {
       hairA: hairSpring(),
       hairB: hairSpring(),
       hairC: hairSpring(),
-      skirt: { x: 0, vx: 0, y: 0, vy: 0, z: 0, vz: 0 },
+      hairD: hairSpring(),
+      skirt: hairSpring(),
       scarf: { x: 0, vx: 0, y: 0, vy: 0, z: 0, vz: 0 },
       // pans de l'écharpe (os SCARF, SCARF_B) et sac à dos (os BAG ; ty : rebond vertical)
       panA: hairSpring(),
       panB: hairSpring(),
       sac: hairSpring(),
     };
-    this.springs = [this.clothSprings.hairA, this.clothSprings.hairB, this.clothSprings.hairC];
+    this.springs = [this.clothSprings.hairA, this.clothSprings.hairB, this.clothSprings.hairC, this.clothSprings.hairD];
+    // poussée filtrée de chaque groupe de mèches (retard des pointes sur les racines, cheveux.js GROUPES)
+    this.hairPushF = { a: [0, 0, 0], b: [0, 0, 0], c: [0, 0, 0], d: [0, 0, 0] };
     this.prevHeadY = 0;
     // cheveux (hairPush) : racine et sommet du crâne autour d'elle à l'image précédente, leurs vitesses,
     // accélération lissée (state : 0 = à placer, 1 = vitesses à prendre, 2 = en route), orientation de
@@ -322,16 +342,38 @@ export class Character {
     REST[B.HAIR_A] = versReel(B.HAIR_A, style.a);
     REST[B.HAIR_B] = versReel(B.HAIR_B, style.b);
     REST[B.HAIR_C] = versReel(B.HAIR_C, style.c ?? style.a);
+    REST[B.HAIR_D] = versReel(B.HAIR_D, style.d ?? style.a);
     REST.forEach((p, i) => {
       const parent = PARENT[i] < 0 ? [0, 0, 0] : REST[PARENT[i]];
       this.restLocal[i].set(p[0] - parent[0], p[1] - parent[1], p[2] - parent[2]);
     });
+    // brins et reflet des cheveux : calotte de la coupe (repère de dessin) portée au squelette ; une coupe
+    // sans calotte (gabarit chibi) garde ses cheveux unis
+    const cu = this.mat.uniforms;
+    // plis des vêtements : la peau (sa couleur) n'en a pas ; jointures qui plient le tissu (pivot, parent,
+    // axe vers le bas du membre, enfant : materials.js, PLIS)
+    cu.uPeau.value.set(SKINS[av.skin]);
+    for (const [os, parent, suivant, enfant] of PLI_JOINTURES) {
+      const p = REST[os];
+      const q = REST[suivant];
+      cu.uPliOs.value[os].set(p[0], p[1], p[2], parent);
+      _pliAxe.set(q[0] - p[0], q[1] - p[1], q[2] - p[2]).normalize();
+      cu.uPliAxe.value[os].set(_pliAxe.x, _pliAxe.y, _pliAxe.z, enfant);
+    }
+    cu.uCheveux.value = style.cap ? 1 : 0;
+    if (style.cap) {
+      cu.uCapC.value.fromArray(versReel(B.HEAD, style.cap.c));
+      cu.uCapR.value.fromArray(style.cap.r);
+    }
     const old = this.mesh.geometry;
     this.mesh.geometry = buildAvatarGeometry(av);
     old.dispose();
     this.rebind();
     this.faceMat.uniforms.uColor.value.set(SKINS[av.skin]);
     this.atlas.draw({ eyes: av.eyes, brow: tint(HAIR_COLORS[av.hairColor], 0.78) });
+    // écharpe en vrai tissu (echarpeTissu.js) : ses pans sont des rubans simulés (aventurier)
+    this.echarpe?.dispose();
+    this.echarpe = GABARIT.nom !== 'chibi' && av.accessory === 'echarpe' ? new EcharpeTissu(this, av) : null;
     this.avatar = av;
     this.placeSword(av);
     this.lastBuildMs = performance.now() - t0;
@@ -1071,8 +1113,11 @@ export class Character {
     const microTurb = Math.sin(now * 6.3 + 0.4) * 0.15 + Math.sin(now * 13.5) * 0.08;
     const gustMult = Math.max(0.1, wBase * (1.0 + slowGust + microTurb));
 
-    const worldWindX = wDir.x * gustMult;
-    const worldWindZ = wDir.y * gustMult;
+    // en m/s : brise de VENT.brise par temps calme (cheveux.js), plus en tempête, avec les rafales ; le chibi
+    // (gardé pour comparer) garde l'échelle d'origine (≈ 1 m/s)
+    const brise = GABARIT.nom === 'chibi' ? 1 : VENT.brise;
+    const worldWindX = wDir.x * gustMult * brise;
+    const worldWindZ = wDir.y * gustMult * brise;
 
     // Vent relatif (headwind = opposé au déplacement)
     const headwindX = -estVel.x;
@@ -1102,19 +1147,35 @@ export class Character {
     // pendules raides fixés à la tête (cheveux.js), poussés par l'accélération réelle du crâne et par le
     // vent ressenti, dans le repère de la tête : ils suivent la course, l'appel et la réception d'un saut,
     // la roulade, l'arrêt brusque
+    // Chaque groupe a ses réglages (GROUPES : dessus et épi raides, nuque lourde, frange légère), sa poussée
+    // filtrée (les pointes suivent après les racines) et son battement au vent ressenti, à sa phase
     const hairDyn = HAIR_STYLES[this.avatar?.hair]?.dyn;
     if (hairDyn) {
-      const push = this.hairPush(dt, totalWindX, totalWindY, totalWindZ, motion?.vel);
+      this.hairPush(dt, totalWindX, totalWindY, totalWindZ, motion?.vel);
+      const H = this._hairDyn;
       const yawRate = turnRate + vYaw;
-      for (const [key, bone, d] of [['hairA', B.HAIR_A, hairDyn.a], ['hairB', B.HAIR_B, hairDyn.b], ['hairC', B.HAIR_C, hairDyn.c]]) {
+      for (const [g, key, bone] of [['a', 'hairA', B.HAIR_A], ['b', 'hairB', B.HAIR_B], ['c', 'hairC', B.HAIR_C], ['d', 'hairD', B.HAIR_D]]) {
+        const d = hairDyn[g];
         if (!d) continue;
-        const a = hairAngles(stepHair(this.clothSprings[key], d, push, dt, yawRate), d);
+        const R = GROUPES[g];
+        const pf = this.hairPushF[g];
+        const kf = R.retard > 0 ? 1 - Math.exp(-dt / R.retard) : 1;
+        const bat = Math.min(R.bat.max, airSpeed * R.bat.k);
+        const t = now * R.bat.w + R.bat.ph;
+        const cible = [
+          H.wl.x * R.vent - H.al.x + Math.sin(t) * bat,
+          H.wl.y * R.vent - H.al.y + Math.cos(t * 0.83 + 1.3) * bat * 0.6,
+          H.wl.z * R.vent - H.al.z + Math.sin(t * 0.71 + 2.1) * bat * 0.4,
+        ];
+        for (let i = 0; i < 3; i++) pf[i] += (cible[i] - pf[i]) * kf;
+        const a = hairAngles(stepHair(this.clothSprings[key], d, pf, dt, yawRate, R), d, R);
         bn[bone].rotation.set(a.x, a.y, a.z);
       }
     }
 
-    // 2. VÊTEMENTS : JUPE ET ROBE (B.SKIRT)
-    if (bn[B.SKIRT]) {
+    // 2. VÊTEMENTS : JUPE ET ROBE (B.SKIRT). Chibi : ressort d'origine ; aventurier : plus bas (§ 3), même
+    // physique que les cheveux
+    if (bn[B.SKIRT] && GABARIT.nom === 'chibi') {
       const s = this.clothSprings.skirt;
       const clothFlutter = Math.sin(now * (11 + airSpeed * 0.5)) * Math.min(0.12, 0.01 + airSpeed * 0.015);
       const clothWave = Math.sin(this.phase) * 0.07 * walk;
@@ -1172,15 +1233,33 @@ export class Character {
       // au torse (cheveux.js, réglages PAN et SAC), poussés par l'accélération du torse et par le vent
       // ressenti, dans le repère du torse : les pans traînent derrière à la course et flottent au saut, le
       // sac rebondit un peu à la foulée et à la réception ; tous bornés par leurs butées (DYN_PANS, DYN_SAC)
+      // jupe et robe (SKIRT) : pendule fixé au bassin (cheveux.js, JUPE ; DYN_JUPE de models/personnage/corps/),
+      // poussé de même, avec un battement au vent ; le balancement de la marche et le roulis du bassin s'y
+      // ajoutent, bornés
       const pans = this.avatar?.accessory === 'echarpe';
       const sac = this.avatar?.back === 'sac';
-      if (pans || sac) {
+      const jupe = this.avatar?.top === 'robe' || this.avatar?.bottom === 'jupe';
+      if (pans || sac || jupe) {
         const C = this._clothDyn;
         this.inertia(C, B.TORSO, CLOTH_POINT, dt, totalWindX, totalWindY, totalWindZ, motion?.vel);
         const f = C.push;
-        if (pans) {
-          // le tissu bat au vent ressenti (le long de la face plate des pans, surtout en roulis)
-          const bat = Math.min(5, airSpeed * 0.8);
+        if (jupe) {
+          const bat = Math.min(JUPE.bat.max, airSpeed * JUPE.bat.k);
+          const t = now * JUPE.bat.w + JUPE.bat.ph;
+          f[0] = C.wl.x * JUPE.vent - C.al.x + Math.sin(t) * bat;
+          f[1] = C.wl.y * JUPE.vent - C.al.y;
+          f[2] = C.wl.z * JUPE.vent - C.al.z + Math.cos(t * 0.77) * bat * 0.6;
+          const a = hairAngles(stepHair(this.clothSprings.skirt, DYN_JUPE, f, dt, turnRate, JUPE), DYN_JUPE, JUPE);
+          const roulis = THREE.MathUtils.clamp(a.z + Math.sin(this.phase) * 0.07 * walk - j.hipsZ * 0.4, -DYN_JUPE.z, DYN_JUPE.z);
+          bn[B.SKIRT].rotation.set(a.x, a.y, roulis);
+        }
+        if (pans && this.echarpe) {
+          // pans en vrai tissu : gravité, inertie du nœud, vent du monde avec ses rafales (echarpeTissu.js)
+          this.echarpe.update(dt, now, [worldWindX, 0, worldWindZ]);
+        } else if (pans) {
+          // le tissu bat au vent ressenti (le long de la face plate des pans, surtout en roulis) ; vent en m/s
+          // depuis le 21/11/2026 : battement de 0,25 par m/s (0,8 avant, pour un vent du monde d'≈ 1)
+          const bat = Math.min(5, airSpeed * 0.25);
           DYN_PANS.forEach((d, i) => {
             const ph = i * 1.7;
             f[0] = C.wl.x * PAN.vent - C.al.x + Math.sin(now * (11.3 + i * 1.9) + ph) * bat;

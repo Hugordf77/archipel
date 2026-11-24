@@ -5,13 +5,17 @@
 // La construction passe par une file de travaux plafonnée (4 ms par image).
 import * as THREE from 'three';
 import { U, ORIGIN, LAYER_SHADOW, nextId } from '../../core/globals.js';
-import { toonMaterial, foliageMaterial, grassMaterial } from '../../render/shaders/materials.js';
+import { toonMaterial, foliageMaterial, grassMaterial, feuilleMaterial } from '../../render/shaders/materials.js';
+import { feuillesAtlas, ecorceTexture, grappesAtlas } from '../../render/textures.js';
+import { ArbresProches } from './arbresProches.js';
 import { ISLANDS, islandsInRange } from './regions.js';
 import { KINDS, KIND_RADIUS, STRIDE, TREES } from './gen/kinds.js';
 import { Surface, TILE } from './gen/surface.js';
 import { bloomColorOf } from './gen/zones.js';
 import { BIOMES, PALETTES_HERBE, paletteHerbe } from './biomes.js';
 import { kindModel, CAP_COLORS, ROCKY } from '../../models/vegetation.js';
+// rochers à matière de pierre (les filons et l'obsidienne gardent la leur)
+const ROCHES = new Set(['rocher', 'rocher_mousse']);
 import { GRIMPE } from '../../models/physique.gen.js';
 import { HerbeSystem } from '../../render/herbe/HerbeSystem.js';
 import { partModel, rotY, recolorPart } from '../../models/lieux.js';
@@ -197,7 +201,9 @@ export class IslandManager {
       tile: toonMaterial({ vertexColors: true, terrain: true, paths: false, id: this.terrainId, rim: 0.6 }),
       solid: toonMaterial({ ...MAT.solid }),
       glow: toonMaterial({ ...MAT.glow }),
-      foliage: foliageMaterial({ leafTex, ...MAT.foliage }),
+      // touffes des buissons et des autres végétaux : un peu de translucidité vers le soleil
+      // buissons et autres touffes : grappes de feuilles (bord découpé) plutôt que pompons ronds
+      foliage: foliageMaterial({ leafTex: grappesAtlas(), ...MAT.foliage, vitrail: 0.45 }),
       grass: grassMaterial({ id: this.terrainId, palette: paletteHerbe('prairie') }),
       flower: toonMaterial({ ...MAT.flower }),
       far: toonMaterial({ vertexColors: true, rim: 0.4, outline: 0.6 }),
@@ -206,6 +212,24 @@ export class IslandManager {
       structGlow: toonMaterial({ ...MAT.structGlow }),
       proxy: new THREE.MeshBasicMaterial(),
     };
+    // feuillus (arbre fractal, kit/arbreFractal.js) : écorce peinte ; version forêt (touffes, qui s'effacent
+    // près du joueur) et version proche (feuilles une à une), voir arbresProches.js
+    const ecorce = ecorceTexture();
+    const atlas = feuillesAtlas();
+    this.mats.solidArbre = toonMaterial({ ...MAT.solid, ecorce, lod: 'loin' });
+    // rochers et rochers moussus : matière de pierre (ROCHE, materials.js)
+    this.mats.solidRoche = toonMaterial({ ...MAT.solid, roche: true });
+    this.mats.solidMousse = toonMaterial({ ...MAT.solid, roche: 'mousse' });
+    // version forêt : grappes de feuilles (bord découpé, trouées) au lieu du pompon rond
+    this.mats.foliageArbre = foliageMaterial({ leafTex: grappesAtlas(), ...MAT.foliage, lod: 'loin', vitrail: 0.7 });
+    this.proches = new ArbresProches({
+      root,
+      mats: {
+        bois: toonMaterial({ ...MAT.solid, ecorce, lod: 'proche' }),
+        feuilles: feuilleMaterial({ leafTex: atlas, wind: MAT.solid.wind, vitrail: 0.8 }),
+        chute: feuilleMaterial({ leafTex: atlas, wind: MAT.solid.wind, lod: null, chute: true }),
+      },
+    });
     // herbe en tapis des tuiles au mètre (brins procéduraux, render/herbe/)
     this.herbe = new HerbeSystem({ id: this.terrainId });
     this._focus = new THREE.Vector3();
@@ -239,6 +263,7 @@ export class IslandManager {
     if (!this.depth.pending && Math.hypot(px - this.depth.cx, pz - this.depth.cz) > 220) this.requestDepth(px, pz);
     for (const e of this.entries.values()) if (e.want === 0 && e.plan) this.updateTiles(e, px, pz);
     this.herbe.update(this._focus.set(px - ORIGIN.x, 0, pz - ORIGIN.z));
+    this.proches.update(this.entries, px, pz, dt);
     this.herbe.regrow(dt);
     this.smallT = (this.smallT || 0) - dt;
     if (this.smallT <= 0) {
@@ -687,8 +712,10 @@ export class IslandManager {
       return im;
     };
     st.slot = 0;
-    const solid = model.solid ? add(model.solid, model.glow ? this.mats.glow : this.mats.solid, SHADOW_KINDS.has(kind)) : null;
-    const leaves = model.clumpGeo ? add(model.clumpGeo, this.mats.foliage) : null;
+    // feuillus à version proche : matériaux de la version forêt (effacée près du joueur)
+    const arbre = typeof model.detail === 'function';
+    const solid = model.solid ? add(model.solid, arbre ? this.mats.solidArbre : kind === 'rocher_mousse' ? this.mats.solidMousse : ROCHES.has(kind) ? this.mats.solidRoche : model.glow ? this.mats.glow : this.mats.solid, SHADOW_KINDS.has(kind)) : null;
+    const leaves = model.clumpGeo ? add(model.clumpGeo, arbre ? this.mats.foliageArbre : this.mats.foliage) : null;
     const grass = model.grassGeo ? add(model.grassGeo, this.grassMat(e.desc.biome)) : null;
     const flower = model.flowerGeo ? add(model.flowerGeo, this.mats.flower) : null;
     const rad = KIND_RADIUS[kind] || 0;

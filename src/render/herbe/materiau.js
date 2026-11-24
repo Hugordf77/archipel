@@ -91,8 +91,13 @@ float shadow1(vec3 wp) {
   if (uShadowOn < 0.5) return 1.0;
   vec4 sc = uShadowMatrix * vec4(wp, 1.0);
   vec3 c = sc.xyz / sc.w;
-  if (c.x < 0.0 || c.x > 1.0 || c.y < 0.0 || c.y > 1.0 || c.z > 1.0) return 1.0;
-  return texture(uShadowMap, vec3(c.xy, c.z - 0.0015));
+  if (max(abs(c.x - 0.5), abs(c.y - 0.5)) < 0.47 && c.z <= 1.0) return texture(uShadowMap, vec3(c.xy, c.z - 0.0015));
+  // au-delà : la carte large (SHADOW, chunks.js)
+  sc = uShadowMatrix2 * vec4(wp, 1.0);
+  c = sc.xyz / sc.w;
+  float e = max(abs(c.x - 0.5), abs(c.y - 0.5));
+  if (e > 0.5 || c.z > 1.0) return 1.0;
+  return mix(1.0, texture(uShadowMap2, vec3(c.xy, c.z - 0.0008)), smoothstep(0.5, 0.4, e));
 }
 
 void main() {
@@ -165,6 +170,18 @@ void main() {
   float lod = mix(0.45, 1.0, smoothstep(2.0, 7.0, camD));
   float cut = texture(uCoupe, lt / 64.0 * (128.0 / 129.0) + 0.5 / 129.0).r;
   float hgt = champ.g * 1.45 * (0.85 + 0.3 * r1) * tuftH * keep * lod * mix(1.0, 0.15, cut);
+  // terre découverte sur les pentes (solNu, même masque que le terrain) : les brins s'y effacent
+  hgt *= 1.0 - smoothstep(0.25, 0.75, solNu((base.xyz + uWorldOffset).xz, n0.y));
+  // SILHOUETTES ET RYTHME (23/11) : trois sortes de brins (courant ; plus court ; haut et fin, herbe folle)
+  // et des plaques un peu plus rases de 6 à 14 m (le pré respire, sans trous) ; tapis 10 % plus bas
+  vec2 wB = (base.xyz + uWorldOffset).xz;
+  float sorte = hash12(cellId * 1.71 + i * 0.377 + 9.0);
+  float hS = 1.0;
+  float wS = 1.0;
+  if (sorte < 0.25) hS = 0.72;
+  else if (sorte < 0.37) { hS = 1.3; wS = 0.7; }
+  float ras = smoothstep(0.3, 0.62, vnoise(wB / 9.0 + 5.3) * 0.7 + vnoise(wB / 3.7 - 1.1) * 0.3);
+  hgt *= 0.9 * hS * mix(0.78, 1.0, ras);
   if (hgt < 0.01) {
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
@@ -172,7 +189,10 @@ void main() {
   // moins de brins au loin : plus larges, pour couvrir le sol autant (même calcul que bladeWidth
   // de placement.js : part^−0,72, au plus × 10) ; brin effilé
   float part = max(n / uCounts.w, 1.0 / 24.4);
-  float w = uWidth * pow(part, -0.72) * (1.0 - 0.7 * t);
+  // lame effilée : pointe fine (plus de triangle tronqué à 30 %), un peu plus étroite de près ; au loin,
+  // élargie comme avant pour couvrir le sol
+  float pres = smoothstep(0.5, 1.0, part);
+  float w = uWidth * pow(part, -0.72) * wS * mix(1.0, 0.82, pres) * (1.0 - 0.94 * pow(t, 1.25));
   // pré peigné : brins couchés de 15 à 35° sous le vent, chaque touffe avec son penchant (± 26°)
   // et chaque brin le sien (± 10°), la courbure croissant vers la pointe ; la tige garde sa longueur
   // (hgt). Face du brin tournée au hasard (± 70° autour de la normale au penchant) : vus d'en haut,
@@ -246,7 +266,7 @@ void main() {
   float detail = 1.0 - smoothstep(14.0, 45.0, distance(cameraPosition, base.xyz));
   vAlbedo = mix(mix(mil, pointe, 0.25) * 0.9, vAlbedo, mix(0.4, 1.0, detail));
   // occlusion au pied : le cœur du tapis reste plus sombre (× 0,65 de près)
-  vAlbedo *= mix(1.0 - 0.35 * detail, 1.0, smoothstep(0.0, 0.7, t));
+  vAlbedo *= mix(1.0 - 0.28 * detail, 1.0, smoothstep(0.0, 0.7, t));
   // peint : touches de pinceau en aplats, puis voile pastel (comme le sol sous l'herbe)
   vAlbedo = herbePastel(vAlbedo * herbePinceau(wA.xz), 0.2);
   vT = t;
@@ -279,12 +299,13 @@ void main() {
   vec3 N = normalize(vNormalW);
   vec3 V = normalize(cameraPosition - vWorldPos);
   vec3 col = toonShade(vAlbedo, N, V, vShadow, 0.3);
-  // ombre plus marquée qu'au sol (× 0,45 à 0,55 avec la rampe toon), comme sous les arbres de Genshin
-  col *= mix(0.62, 1.0, vShadow);
+  // ombre un peu plus marquée qu'au sol, sans tomber au noir (toonShade garde déjà un plancher)
+  col *= mix(0.8, 1.0, vShadow);
   // contre-jour : soleil derrière le pré, les pointes s'illuminent (BotW)
   float back = max(dot(-V, uSunDir), 0.0);
   col += uSunColor * vAlbedo * back * back * back * smoothstep(0.4, 1.0, vT) * 0.7 * vShadow * (1.0 - uNight);
   col += vAlbedo * vLantern;
+  col += eclairRouge(vAlbedo, vWorldPos, N);
   col = applyFog(col, vViewDist, vWorldPos);
   writeGBuffer(col, N, uId, 0.0);
 }

@@ -49,6 +49,11 @@ uniform float uStars;
 uniform float uNight;
 uniform float uTime;
 uniform float uRain;
+uniform vec3 uCloudLit;
+uniform vec3 uCloudShade;
+// éclairs rouges de la tornade (tornade.js) : lueur du ciel dans sa direction
+uniform float uEclair;
+uniform vec3 uEclairPos;
 // voûte nocturne (lot « ciel » : voute, vie, nettete)
 uniform float uVoute;
 uniform float uVie;
@@ -113,16 +118,43 @@ void main() {
   float stroke = fbm(vec2(az * 2.5, h * 9.0) + vec2(uTime * 0.004, 0.0));
   float stroke2 = vnoise(vec2(az * 9.0, h * 40.0));
   float hh = h + (stroke - 0.5) * 0.06 + (stroke2 - 0.5) * 0.012;
-  float t = smoothstep(-0.01, 0.22, hh);
-  vec3 col = mix(uSkyHorizon, uSkyTop, pow(t, 0.8));
+  // DÉGRADÉ EN PROFONDEUR (23/11) : horizon lumineux, bleu du milieu, zénith plus profond et plus saturé ;
+  // une bande à peine cyan au-dessus de l'horizon ; le ciel s'éclaircit du côté du soleil et se creuse à
+  // l'opposé (diffusion) ; avant, le bleu du haut était atteint dès 12° et tout le reste était un aplat
+  float jourS = 1.0 - uNight;
+  vec3 zenith = mix(uSkyTop, uSkyTop * uSkyTop * 1.25, 0.45 * jourS);
+  vec3 col = mix(uSkyHorizon, uSkyTop, pow(smoothstep(-0.01, 0.3, hh), 0.75));
+  col = mix(col, zenith, smoothstep(0.22, 0.95, hh));
+  col = mix(col, col * vec3(0.95, 1.03, 1.05), smoothstep(0.02, 0.1, hh) * smoothstep(0.38, 0.12, hh) * 0.7 * jourS);
+  float sd = dot(d, uSunSkyDir);
+  col *= 1.0 + (0.07 * smoothstep(0.2, 1.0, sd) - 0.06 * smoothstep(0.0, -0.9, sd) * smoothstep(0.0, 0.5, hh)) * jourS;
   // bande chaude du côté du soleil près de l'horizon
   float sunAmt = max(dot(d, uSunSkyDir), 0.0);
   float horizonBand = smoothstep(0.16, -0.01, hh);
   col = mix(col, uSunGlow, horizonBand * pow(sunAmt, 1.5) * 0.6 * (1.0 - uNight * 0.8));
-  col += uSunGlow * pow(sunAmt, 12.0) * 0.4 * (1.0 - uNight);
-  // disque solaire doux
-  float sunDisc = smoothstep(0.9985, 0.9991, sunAmt);
-  col = mix(col, vec3(1.0, 0.98, 0.9), sunDisc * (1.0 - uNight) * (1.0 - uRain * 0.8));
+  // L'ASTRE (d'après le ciel de l'utilisateur, ciel.js) : le rendu est en 8 bits, rien ne dépasse le blanc ;
+  // le disque est donc le seul blanc franc du ciel, et tout ce qui l'entoure reste en dessous, plus chaud et
+  // plus saturé (halo serré, puis halo large) : c'est l'écart qui le fait briller. Bas sur l'horizon, il
+  // rougit et ses halos s'élargissent. Les rayons et le voile sont ajoutés après la peinture (post.js).
+  float jour = (1.0 - uNight) * (1.0 - uRain * 0.8);
+  float soleilBas = smoothstep(0.45, 0.0, uSunSkyDir.y);
+  vec3 astre = mix(vec3(1.0, 0.95, 0.84), uSunGlow * vec3(1.05, 0.88, 0.72) + vec3(0.05, 0.02, 0.0), soleilBas * 0.85);
+  // halos : mêlés au ciel (et non ajoutés : ils ne montent jamais au blanc), saturés et plus chauds que le
+  // disque. Large : l'air chargé de lumière sur des dizaines de degrés ; serré : la couronne.
+  vec3 haloCol = mix(uSunGlow, astre, 0.35) * vec3(1.0, 0.94, 0.86);
+  float lhc = dot(haloCol, vec3(0.299, 0.587, 0.114));
+  haloCol *= min(1.0, 0.8 / max(lhc, 1e-3));
+  col = mix(col, haloCol, clamp(pow(sunAmt, mix(12.0, 6.0, soleilBas)) * mix(0.42, 0.6, soleilBas), 0.0, 1.0) * jour);
+  col = mix(col, haloCol * 1.04, clamp(pow(sunAmt, mix(220.0, 130.0, soleilBas)) * 0.9, 0.0, 1.0) * jour);
+  // disque net (bord anticrénelé au pixel près), blanc au cœur, assombri et réchauffé vers le bord
+  float ang = acos(clamp(dot(d, uSunSkyDir), -1.0, 1.0));
+  const float RAYON_SOLEIL = 0.036;
+  float disc = smoothstep(RAYON_SOLEIL + uPxAngle * 1.2, RAYON_SOLEIL - uPxAngle * 1.2, ang) * jour;
+  vec3 coeur = mix(vec3(1.0, 0.995, 0.97), astre, soleilBas * 0.35);
+  vec3 discCol = mix(coeur, coeur * vec3(1.0, 0.93, 0.84), smoothstep(0.45, 1.0, ang / RAYON_SOLEIL) * 0.55);
+  col = mix(col, discCol, disc);
+  // gardé net après la peinture, comme les étoiles (alpha des normales, repris par la composition)
+  masque = max(masque, disc);
   // lune (croissant)
   float moonAmt = dot(d, uMoonDir);
   float moon = smoothstep(0.99955, 0.9997, moonAmt);
@@ -184,8 +216,36 @@ void main() {
       masque = max(masque, min(st, 1.0));
     }
   }
+  // NUAGES PEINTS DANS LE DÔME (23/11), deux couches qui dérivent sous le vent à des vitesses différentes
+  // (les bouffées de nuages restent devant) : voiles d'altitude, longs et fins, et banc bas sur l'horizon,
+  // éclairés comme les bouffées (uCloudLit, uCloudShade), réchauffés du côté du soleil
+  if (h > -0.01) {
+    float pluie = 1.0 - uRain * 0.5;
+    vec3 eclaire = mix(uCloudLit, uSunGlow, pow(sunAmt, 4.0) * 0.55 * jourS);
+    // voiles : plan à 1 de haut vu d'en bas, bruit étiré dans le vent
+    vec2 pv = d.xz / (d.y + 0.12);
+    vec2 vt = vec2(0.82, 0.57);
+    vec2 q = vec2(dot(pv, vt), dot(pv, vec2(-vt.y, vt.x)));
+    q.x += uTime * 0.0035;
+    float vo = fbm(vec2(q.x * 1.3, q.y * 4.5)) * 0.75 + vnoise(vec2(q.x * 5.0, q.y * 16.0) + 3.1) * 0.25;
+    float voile = smoothstep(0.5, 0.78, vo) * smoothstep(0.04, 0.25, h) * smoothstep(1.0, 0.55, h);
+    col = mix(col, eclaire * 1.02, voile * 0.42 * pluie);
+    // banc bas : masses douces posées sur l'horizon, dessous plus froid, sommets éclairés
+    float ba = fbm(vec2(az * 3.2 + uTime * 0.0012, 1.7)) ;
+    float haut = 0.025 + 0.06 * ba * ba + 0.02 * vnoise(vec2(az * 14.0, 4.0));
+    float banc = smoothstep(haut, haut - 0.018, h) * smoothstep(0.3, 0.55, ba);
+    vec3 bancCol = mix(mix(uCloudShade, uSkyHorizon, 0.45), eclaire, smoothstep(haut - 0.04, haut, h));
+    col = mix(col, bancCol, banc * 0.75 * pluie);
+  }
+  // lueur rouge des éclairs de la tornade : large halo dans sa direction, plus fort près de l'horizon
+  if (uEclair > 0.001) {
+    float vE = max(dot(normalize(vDir), normalize(uEclairPos - cameraPosition)), 0.0);
+    col += vec3(1.0, 0.15, 0.1) * uEclair * (pow(vE, 10.0) * 0.45 + pow(vE, 60.0) * 0.5);
+  }
   // sous l'horizon : brume marine
   col = mix(col, uSkyHorizon * vec3(0.94, 0.97, 1.0), smoothstep(0.0, -0.05, h));
+  // tramage d'un quart de niveau : pas de paliers dans les grands dégradés
+  col += (hash12(gl_FragCoord.xy) - 0.5) / 255.0;
   // détails fins marqués dans l'alpha des normales (≤ 0,2 : sous le seuil des contours) ; la composition
   // les reprend nets, après la peinture
   writeGBuffer(col, -normalize(vDir), 0.0, clamp(masque, 0.0, 1.0) * 0.2 * uNettete);
@@ -205,6 +265,7 @@ varying vec2 vUv;
 varying vec3 vNormalW;
 varying float vShade;
 varying float vHeight;
+varying vec3 vVue;
 void main() {
   // position en espace ciel (relative à la caméra), tournée lentement
   float c = cos(uCloudRot);
@@ -214,6 +275,7 @@ void main() {
   vec3 dirW = fromSkySpace(rel / r);
   vHeight = rel.y / r;
   vec4 wp = vec4(cameraPosition + dirW * r, 1.0);
+  vVue = dirW;
   vec4 mv = viewMatrix * wp;
   float ang = aData.y * 6.2831;
   vec2 corner = mat2(cos(ang), sin(ang), -sin(ang), cos(ang)) * aCorner;
@@ -244,14 +306,23 @@ varying vec2 vUv;
 varying vec3 vNormalW;
 varying float vShade;
 varying float vHeight;
+varying vec3 vVue;
 void main() {
   vec4 tex = texture(uLeafTex, vUv);
   if (tex.a < 0.5) discard;
   vec3 N = normalize(vNormalW);
   float ndl = dot(N, uSunDir) * 0.5 + 0.5;
-  float r = smoothstep(0.36, 0.44, ndl) * 0.45 + smoothstep(0.58, 0.66, ndl) * 0.35 + smoothstep(0.78, 0.86, ndl) * 0.2;
-  vec3 col = mix(uCloudShade, uCloudLit, r);
+  // rampe plus douce (volume plutôt qu'aplats durs)
+  float r = smoothstep(0.3, 0.5, ndl) * 0.45 + smoothstep(0.52, 0.72, ndl) * 0.35 + smoothstep(0.72, 0.92, ndl) * 0.2;
+  // dessous froid (ombre teintée de ciel), sommets chauds
+  vec3 ombre = mix(uCloudShade, uCloudShade * vec3(0.94, 0.97, 1.08), smoothstep(0.1, -0.6, N.y));
+  vec3 col = mix(ombre, uCloudLit * mix(vec3(1.0), vec3(1.03, 1.0, 0.95), smoothstep(0.3, 0.9, N.y)), r);
   col = mix(col, col * 0.93, (1.0 - vShade) * 0.4);
+  // liseré argenté : l'astre derrière le nuage allume son bord
+  float jourN = 1.0 - uNight;
+  float dos = pow(max(dot(normalize(vVue), uSunDir), 0.0), 6.0);
+  float bord = smoothstep(0.35, 0.85, 1.0 - abs(dot(N, normalize(vVue))));
+  col += mix(uCloudLit, uSunGlow, 0.5) * dos * bord * 0.45 * jourN;
   col *= 0.97 + 0.06 * tex.g;
   col = mix(col, col * vec3(0.78, 0.8, 0.88), uRain * 0.6);
   // brume vers l'horizon

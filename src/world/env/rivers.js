@@ -29,7 +29,7 @@ ${MRT_OUT}
 uniform float uTime;
 uniform vec3 uWaterShallow;
 uniform vec3 uWaterDeep;
-uniform vec3 uSkyHorizon;
+// uSkyHorizon : déclaré par TOON
 uniform vec3 uWorldOffset;
 varying vec3 vWorldPos;
 varying vec2 vUv;

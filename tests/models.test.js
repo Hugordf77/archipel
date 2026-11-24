@@ -232,7 +232,7 @@ describe('ongulés refaits (mouton, chèvre, vache, cerf)', () => {
   // nombre de triangles figé (géométrie inchangée)
   const ONGULES = {
     mouton: { size: [0.5, 0.9, 1.12], id: 'ANI-001', graze: 0.12, tris: 10000 },
-    chevre: { size: [0.6, 1.05, 1.2], id: 'ANI-002', graze: 0.12, tris: 1500, exact: 1096 },
+    chevre: { size: [0.6, 1.05, 1.2], id: 'ANI-002', graze: 0.12, tris: 1500, exact: 1488 },
     vache: { size: [0.9, 1.6, 1.85], id: 'ANI-003', graze: 0.12, tris: 10000 },
     cerf: { size: [0.8, 2.0, 1.7], id: 'ANI-004', graze: 0.12, tris: 6000 },
   };

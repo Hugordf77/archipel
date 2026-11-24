@@ -10,7 +10,8 @@ describe('empreintes des modèles', () => {
   it('sont identiques à la référence (géométrie, physique, tables du jeu)', async () => {
     const ref = JSON.parse(fs.readFileSync(REFERENCE, 'utf8'));
     const e = JSON.parse(JSON.stringify(await calculer()));
-    expect(Object.keys(e.modeles)).toHaveLength(197);
+    // autant de modèles que la référence : un modèle ajouté ou retiré du registre se voit ici
+    expect(Object.keys(e.modeles)).toHaveLength(Object.keys(ref.modeles).length);
     expect(ecarts(ref, e)).toEqual([]);
   }, 120000);
 });

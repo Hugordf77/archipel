@@ -20,3 +20,4 @@ Aucun relevé pour l’instant.
 ## Historique
 
 - 18/10/2026 : fiche créée.
+- 23/11/2026 : en jeu (îles du monde ouvert), matière de pierre par le shader `ROCHE` de `render/shaders/materials.js` (relief ciselé au pixel, teinte chaude ou froide par rocher, strates, lichen, mousse sur le dessus, pied plus sombre) ; ROC-002 (`MOUSSU`) : le chapeau de mousse du modèle n'est plus dessiné, la mousse est peinte sur la pierre. Géométrie et empreinte inchangées ; catalogue et îles célestes gardent l'ancien rendu.

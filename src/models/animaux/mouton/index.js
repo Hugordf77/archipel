@@ -18,6 +18,10 @@ const EAR = leafGeo(11, 6, 0.55);
 const EAR_IN = leafGeo(9, 5, 0.3);
 const EAR_LITE = leafGeo(7, 4, 0.55);
 const EAR_IN_LITE = leafGeo(6, 3, 0.3);
+// Les boucles du corps sont resserrées dans leur volume, sans ajouter de triangles : le fond de laine
+// reste visible entre les touffes et la robe lit moins comme des écailles à courte distance.
+const CURL_COAT = CURL.clone().scale(0.85, 0.85, 0.85);
+const CURL_COAT_LITE = CURL_LITE.clone().scale(0.85, 0.85, 0.85);
 // lite : version allégée pour les moutons lointains (mêmes pièces et mêmes boucles, moins de facettes,
 // sans la bouche)
 function mouton(lite = false) {
@@ -28,7 +32,7 @@ function mouton(lite = false) {
   const core = surface([0, 0, 0], [0.2, 0.22, 0.36], 2.5);
   const body = part((b) => {
     hull(b, '#ffffff', core, lite ? 10 : 14, lite ? 8 : 10, { p: BODY, tint: 1 });
-    curls(b, core, 0.13, { at: BODY, seed: 1, geo: lite ? CURL_LITE : CURL, keep: (q, n) => n.y > -0.8 });
+    curls(b, core, 0.13, { at: BODY, seed: 1, geo: lite ? CURL_COAT_LITE : CURL_COAT, keep: (q, n) => n.y > -0.8 });
   }, [0, 0, 0]);
   // cou : pivot dans le poitrail, il porte la tête (pièce suivante) ; collier et cloche sous la gorge
   const axis = new THREE.Vector3(0, Math.cos(NECK), Math.sin(NECK));
@@ -120,7 +124,7 @@ function mouton(lite = false) {
     hull(b, '#ffffff', tailCore, lite ? 6 : 8, lite ? 4 : 6, { p: [0, -0.09, -0.05], r: [-0.25, 0, 0], tint: 1 });
     curls(b, tailCore, 0.045, { at: [0, -0.09, -0.05], rot: [-0.25, 0, 0], seed: 4, geo: lite ? CURL_S_LITE : CURL_S });
   }, [0, 0.54, -0.44], 'tail');
-  return [body, neck, head, ...legs({ x: 0.1, zf: 0.15, zb: -0.31, hip: 0.36, color: SKIN, hoof: '#c99d8c', hoofH: 0.045, hoofRound: true, hoofGeo: lite ? HOOF : HOOF_SMOOTH, radii: [0.056, 0.052, 0.047, 0.04], sides: lite ? 6 : 10, rings: lite ? 3 : 5,
+  return [body, neck, head, ...legs({ x: 0.1, zf: 0.15, zb: -0.31, hip: 0.36, color: SKIN, hoof: SKIN, hoofH: 0.045, hoofRound: true, hoofGeo: lite ? HOOF : HOOF_SMOOTH, radii: [0.056, 0.052, 0.047, 0.04], sides: lite ? 6 : 10, rings: lite ? 3 : 5,
     front: [[0, 0, 0], [0, -0.17, 0.006], [0, -0.28, 0], [0, -0.3375, 0]], back: [[0, 0, 0], [0, -0.15, -0.03], [0, -0.28, 0], [0, -0.3375, 0]] }), tail];
 }
 

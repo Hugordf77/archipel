@@ -3,11 +3,11 @@
   "note": "Échecs de la suite complète connus et documentés (LIVRAISONS.md, « État courant »). Le contrôle « suite » de scripts/production/controles.mjs ne bloque que sur un échec absent de cette liste. Retirer une entrée dès que le test repasse ; n'en ajouter une qu'avec sa raison et la décision humaine qui l'accepte.",
   "echecs": [
     {
-      "fichier": "tests/empreintes.test.js",
-      "test": "empreintes des modèles sont identiques à la référence (géométrie, physique, tables du jeu)",
-      "raison": "Sur la branche du monde ouvert : empreintes du personnage (PER-001 à PER-023) et de la grimpe des palmiers de la maison (ileDepart.obstacles.44 à 49) différentes de la fixture (changements antérieurs, dont l’épée, à valider puis npm run modeles:empreinte -- --ecrire) ; constat complété le 25/10/2026",
-      "depuis": "2026-10-21",
-      "accepte_par": "état courant documenté dans LIVRAISONS.md"
+      "fichier": "tests/models.test.js",
+      "test": "registre des modèles a des identifiants uniques, au préfixe de leur catégorie, numérotés sans trou",
+      "raison": "Monuments : MON-012 (grande ruine du plateau) et MON-013 (éléments modulaires des ruines) n'existent que, non commités, dans le worktree claude/plateau-vente-modeles ; MON-014 (nef effondrée) a été commité avant eux, d'où le trou. À trancher : rapatrier MON-012 et MON-013, ou les inscrire au statut « retire ».",
+      "depuis": "2026-10-26",
+      "accepte_par": "chantier rendu 1 (24/11/2026), écart listé dans LIVRAISONS.md en attendant la décision de l'utilisateur"
     }
   ]
 }

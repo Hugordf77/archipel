@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { U, LAYER_SHADOW, CHAR_ID } from '../core/globals.js';
 import { paperTexture } from './textures.js';
 import {
-  FS_VERT, TENSOR_FRAG, BLUR_FRAG, KUWAHARA_ANISO_FRAG, KUWAHARA_SIMPLE_FRAG, COMPOSITE_FRAG,
+  FS_VERT, TENSOR_FRAG, BLUR_FRAG, KUWAHARA_ANISO_FRAG, KUWAHARA_SIMPLE_FRAG, COMPOSITE_FRAG, ASTRE_FRAG,
 } from './shaders/post.js';
 
 // Lot « lumière » (0 à 1, presque gratuit : calcul dans les shaders existants) : relief (paliers,
@@ -27,11 +27,29 @@ export const QUALITY = {
 // ---------------------------------------------------------------------------
 // Ombre portée du soleil / de la lune (carte de profondeur orthographique)
 // ---------------------------------------------------------------------------
+// Deux cartes : la fine (± 34 m autour du joueur, joueur et arbres proches nets) et la large (± 170 m,
+// moins fine), qui prend le relais au-delà : tous les arbres visibles ont leur ombre (SHADOW, chunks.js).
+// Le centre est calé sur la grille des texels de la carte : l'ombre ne scintille pas quand on marche.
+const LARGE = 170;
+function profondeur(size) {
+  const rt = new THREE.WebGLRenderTarget(size, size, { depthBuffer: true });
+  rt.depthTexture = new THREE.DepthTexture(size, size);
+  rt.depthTexture.type = THREE.UnsignedIntType;
+  // comparaison matérielle (PCF 2x2 gratuit à chaque lecture)
+  rt.depthTexture.compareFunction = THREE.LessEqualCompare;
+  rt.depthTexture.minFilter = THREE.LinearFilter;
+  rt.depthTexture.magFilter = THREE.LinearFilter;
+  return rt;
+}
+const _c = new THREE.Vector3();
+
 class SunShadow {
   constructor(size = 2048) {
     this.size = size;
     this.cam = new THREE.OrthographicCamera(-34, 34, 34, -34, 1, 200);
     this.cam.layers.set(LAYER_SHADOW);
+    this.cam2 = new THREE.OrthographicCamera(-LARGE, LARGE, LARGE, -LARGE, 1, 700);
+    this.cam2.layers.set(LAYER_SHADOW);
     this.mat = new THREE.MeshDepthMaterial();
     this.bias = new THREE.Matrix4().set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1);
     this.alloc(size);
@@ -40,33 +58,51 @@ class SunShadow {
 
   alloc(size) {
     if (this.rt) this.rt.dispose();
+    if (this.rt2) this.rt2.dispose();
     this.size = size;
-    this.rt = new THREE.WebGLRenderTarget(size, size, { depthBuffer: true });
-    this.rt.depthTexture = new THREE.DepthTexture(size, size);
-    this.rt.depthTexture.type = THREE.UnsignedIntType;
-    // comparaison matérielle (PCF 2x2 gratuit à chaque lecture)
-    this.rt.depthTexture.compareFunction = THREE.LessEqualCompare;
-    this.rt.depthTexture.minFilter = THREE.LinearFilter;
-    this.rt.depthTexture.magFilter = THREE.LinearFilter;
+    this.rt = profondeur(size);
+    this.rt2 = profondeur(size);
     U.uShadowMap.value = this.rt.depthTexture;
     U.uShadowTexel.value.set(1 / size, 1 / size);
+    U.uShadowMap2.value = this.rt2.depthTexture;
+    U.uShadowTexel2.value.set(1 / size, 1 / size);
   }
 
-  render(renderer, scene, center) {
+  // une carte : caméra de l'astre au-dessus du centre (calé sur la grille de ses texels), rendu des seuls
+  // objets du calque d'ombre en profondeur
+  carte(renderer, scene, center, cam, rt, matrice, recul, demi) {
     const dir = U.uSunDir.value;
-    this.cam.position.set(center.x + dir.x * 90, center.y + dir.y * 90, center.z + dir.z * 90);
-    this.cam.lookAt(center);
-    this.cam.updateMatrixWorld();
-    U.uShadowMatrix.value.copy(this.bias).multiply(this.cam.projectionMatrix).multiply(this.cam.matrixWorldInverse);
-    const prev = scene.overrideMaterial;
-    scene.overrideMaterial = this.mat;
-    renderer.setRenderTarget(this.rt);
+    cam.position.set(center.x + dir.x * recul, center.y + dir.y * recul, center.z + dir.z * recul);
+    cam.lookAt(center);
+    cam.updateMatrixWorld();
+    const texel = (2 * demi) / this.size;
+    _c.copy(center).applyMatrix4(cam.matrixWorldInverse);
+    const dx = Math.round(_c.x / texel) * texel - _c.x;
+    const dy = Math.round(_c.y / texel) * texel - _c.y;
+    cam.position.addScaledVector(_c.set(1, 0, 0).applyQuaternion(cam.quaternion), dx);
+    cam.position.addScaledVector(_c.set(0, 1, 0).applyQuaternion(cam.quaternion), dy);
+    cam.updateMatrixWorld();
+    matrice.copy(this.bias).multiply(cam.projectionMatrix).multiply(cam.matrixWorldInverse);
+    renderer.setRenderTarget(rt);
     renderer.setClearColor(0xffffff, 1);
     renderer.clear();
-    renderer.render(scene, this.cam);
+    renderer.render(scene, cam);
+  }
+
+  // quelles : 1 = carte fine, 2 = carte large, 3 = les deux
+  render(renderer, scene, center, quelles = 3) {
+    const prev = scene.overrideMaterial;
+    scene.overrideMaterial = this.mat;
+    if (quelles & 1) this.carte(renderer, scene, center, this.cam, this.rt, U.uShadowMatrix.value, 90, 34);
+    if (quelles & 2) this.carte(renderer, scene, center, this.cam2, this.rt2, U.uShadowMatrix2.value, 350, LARGE);
     scene.overrideMaterial = prev;
   }
 }
+
+const _dir = new THREE.Vector3();
+const _fwd = new THREE.Vector3();
+const _p = new THREE.Vector3();
+const _uv = new THREE.Vector2();
 
 // ---------------------------------------------------------------------------
 // Passe plein écran
@@ -134,6 +170,8 @@ export class Pipeline {
       voute: null,
       vie: null,
       nettete: null,
+      // lumière de l'astre (rayons occultés, voile) : null = active, 0 = coupée, sinon force (0 à 1,5)
+      astre: null,
     };
     // teinte du rebond visée (biome sous le joueur, Game.updateZone) ; U.uBounceColor la rejoint
     this.rebondCible = U.uBounceColor.value.clone();
@@ -161,7 +199,19 @@ export class Pipeline {
       uTexel: { value: new THREE.Vector2() },
       uRadius: { value: 3 },
     }, { KR: 3 });
+    // rayons de l'astre, au quart de la résolution (post.js, ASTRE_FRAG)
+    this.astrePass = new FSPass(ASTRE_FRAG, {
+      tDepth: { value: null },
+      uSoleil: { value: new THREE.Vector2(0.5, 0.5) },
+      uAspect: { value: 1 },
+      uRayon: { value: 0.3 },
+    });
     this.compPass = new FSPass(COMPOSITE_FRAG, {
+      tAstre: { value: null },
+      uSoleil: { value: new THREE.Vector2(0.5, 0.5) },
+      uAstreCol: { value: new THREE.Color() },
+      uAstre: { value: new THREE.Vector2() },
+      uAspect: { value: 1 },
       tPaint: { value: null },
       tScene: { value: null },
       uCharId: { value: CHAR_ID },
@@ -249,13 +299,45 @@ export class Pipeline {
     const ph = Math.max(1, Math.floor(H * this.q.paintScale));
     this.PW = pw;
     this.PH = ph;
-    for (const k of ['tensorRT', 'blurRT', 'blurRT2', 'paintRT']) if (this[k]) this[k].dispose();
+    for (const k of ['tensorRT', 'blurRT', 'blurRT2', 'paintRT', 'astreRT']) if (this[k]) this[k].dispose();
+    this.astreRT = makeRT(Math.max(1, Math.floor(W / 4)), Math.max(1, Math.floor(H / 4)));
     const half = { type: THREE.HalfFloatType };
     this.tensorRT = makeRT(pw, ph, half);
     this.blurRT = makeRT(pw, ph, half);
     this.blurRT2 = makeRT(pw, ph, half);
     this.paintRT = makeRT(pw, ph);
     this.compPass.u.uResolution.value.set(W, H);
+    this.compPass.u.uAspect.value = W / H;
+    this.astrePass.u.uAspect.value = W / H;
+  }
+
+  // Lumière de l'astre : sa place à l'écran (direction du disque peint : espace ciel relevé de uHorizonDip,
+  // sky.js), sa couleur et la force des rayons et du voile ; rend false si rien n'est à ajouter (nuit,
+  // pluie, astre couché ou dans le dos de la caméra).
+  soleil(camera) {
+    const k = this.settings.astre;
+    if (k === 0) return false;
+    const s = U.uSunSkyDir.value;
+    const el = Math.asin(Math.max(-1, Math.min(1, s.y))) - U.uHorizonDip.value;
+    const h = Math.hypot(s.x, s.z) || 1;
+    const dir = _dir.set((s.x / h) * Math.cos(el), Math.sin(el), (s.z / h) * Math.cos(el));
+    camera.getWorldDirection(_fwd);
+    const face = THREE.MathUtils.smoothstep(dir.dot(_fwd), 0.05, 0.45);
+    const jour = (1 - U.uNight.value) * (1 - U.uRain.value) * THREE.MathUtils.smoothstep(dir.y, -0.03, 0.04);
+    const force = face * jour * (k === null || k === undefined ? 1 : Math.max(0, Math.min(1.5, +k)));
+    if (force < 0.01) return false;
+    _p.copy(camera.position).addScaledVector(dir, 1000).project(camera);
+    const uv = _uv.set(_p.x * 0.5 + 0.5, _p.y * 0.5 + 0.5);
+    // bas sur l'horizon, l'astre est plus chaud et ses rayons plus longs
+    const bas = THREE.MathUtils.smoothstep(0.45 - dir.y, 0, 0.45);
+    const cu = this.compPass.u;
+    cu.uSoleil.value.copy(uv);
+    cu.uAstreCol.value.copy(U.uSunColor.value).lerp(U.uSunGlow.value, 0.35 + bas * 0.4);
+    // voile : faible soleil haut (il blanchissait toute l'image face au soleil le matin), entier au coucher
+    cu.uAstre.value.set(force * (0.5 + bas * 0.35), force * (0.1 + bas * 0.26));
+    this.astrePass.u.uSoleil.value.copy(uv);
+    this.astrePass.u.uRayon.value = 0.3 + bas * 0.2;
+    return true;
   }
 
   // Ajuste la résolution pour tenir ~60 images/s (appelé avec la durée réelle de l'image)
@@ -311,10 +393,15 @@ export class Pipeline {
     r.autoClear = false;
     this.appliqueLumiere();
 
-    // 1. ombres (pas forcément à chaque image : la scène bouge peu)
+    // 1. ombres (pas forcément à chaque image : la scène bouge peu) ; la carte large deux fois moins
+    // souvent que la fine, sur d'autres images
     this.frameNo = (this.frameNo || 0) + 1;
-    if (this.frameNo % (this.q.shadowEvery || 1) === 0 || this.forceShadow) {
-      this.shadow.render(r, scene, this.shadowCenter);
+    const every = this.q.shadowEvery || 1;
+    let quelles = this.frameNo % every === 0 ? 1 : 0;
+    if (this.frameNo % (every * 2) === (every > 1 ? 1 : 0)) quelles |= 2;
+    if (this.forceShadow) quelles = 3;
+    if (quelles) {
+      this.shadow.render(r, scene, this.shadowCenter, quelles);
       this.forceShadow = false;
     }
 
@@ -323,6 +410,14 @@ export class Pipeline {
     r.setClearColor(0x000000, 0);
     r.clear(true, true, true);
     r.render(scene, camera);
+
+    // 2 bis. rayons de l'astre (quart de résolution), d'après la profondeur de la scène
+    const astre = this.soleil(camera);
+    if (astre) {
+      this.astrePass.u.tDepth.value = this.sceneRT.depthTexture;
+      this.astrePass.render(r, this.astreRT);
+    } else this.compPass.u.uAstre.value.set(0, 0);
+    this.compPass.u.tAstre.value = this.astreRT.texture;
 
     // 3. peinture
     let paintTex = this.sceneRT.textures[0];

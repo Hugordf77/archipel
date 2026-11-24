@@ -9,10 +9,10 @@
 // (locomotion/rig.js) ; changer de gabarit demande de recharger la page. Sans navigateur (tests) : aventurier.
 
 // os (indices de commun.js, B) : HIPS, TORSO, HEAD, ARM_L, FORE_L, ARM_R, FORE_R, THIGH_L, SHIN_L,
-// THIGH_R, SHIN_R, HAIR_A, HAIR_B, NECK, HAND_L, HAND_R, FOOT_L, FOOT_R, SKIRT, SCARF, HAIR_C, SCARF_B, BAG ; positions de
-// repos absolues (repère du personnage, pieds en 0, avant = +z). Les os des cheveux (HAIR_A, HAIR_B, HAIR_C)
-// sont posés par la coupe (coupes/, HAIR_STYLES[…].a, .b et .c ; sans .c, HAIR_C rejoint HAIR_A et ne
-// porte rien : la coupe du chibi). Épaule, coude et main d'un même bras sont alignés à la
+// THIGH_R, SHIN_R, HAIR_A, HAIR_B, NECK, HAND_L, HAND_R, FOOT_L, FOOT_R, SKIRT, SCARF, HAIR_C, SCARF_B, BAG, HAIR_D ; positions de
+// repos absolues (repère du personnage, pieds en 0, avant = +z). Les os des cheveux (HAIR_A, HAIR_B, HAIR_C,
+// HAIR_D) sont posés par la coupe (coupes/, HAIR_STYLES[…].a, .b, .c et .d ; sans .c ou .d, l'os rejoint
+// HAIR_A et ne porte rien : la coupe du chibi). Épaule, coude et main d'un même bras sont alignés à la
 // verticale (même x, z = 0) : la cinématique inverse du bras (locomotion/rig.js, reachHand) le suppose.
 const CHIBI = {
   nom: 'chibi',
@@ -30,6 +30,8 @@ const CHIBI = {
     // (SCARF_B et BAG : sans usage pour le chibi, qui ne porte qu'un pan et dessine son sac sur le torse ;
     // posés sur le pivot du torse, ils ne changent pas les poids de peau de ses sommets : Parts.build)
     [0, 0.52, 0], [0, 0.52, 0],
+    // HAIR_D (frange) : sans usage pour le chibi, sur le pivot des cheveux
+    [0, 1.32, -0.2],
   ],
   // rayon de la main (sphère centrée sur l'os de la main)
   main: 0.058 * 1.05,
@@ -59,10 +61,11 @@ const AVENTURIER_DESSIN = {
   tetes: 4,
   hauteur: 1.5,
   HC: 1.3,
-  // forme : visage ovale de manga (tete.js) ; sous la ligne des yeux (yeux, part de la demi-hauteur), joues
-  // pleines, mâchoire affinée vers un menton doux qui descend (menton · R), devant un peu aplati, nuque qui
-  // rentre ; lumiere : normales du visage tournées vers l'avant (pas de bande d'ombre sur les joues)
-  FACE: { R: 0.19, SX: 1.06, SY: 0.98, forme: { yeux: -0.22, joues: 0.08, machoire: 0.2, menton: 0.01, aplat: 0.05, nuque: 0.3, lumiere: 1.3, oreille: { r: 0.042, y: -0.035, x: 0.985, z: -0.012, ouvre: 0.3 } } },
+  // forme : visage ovale (tete.js) ; sous la ligne des yeux (yeux, part de la demi-hauteur), joues à peine
+  // pleines, mâchoire affinée vers un menton marqué qui descend (menton · R), devant un peu aplati, nuque qui
+  // rentre ; lumiere : normales du visage tournées vers l'avant (pas de bande d'ombre sur les joues).
+  // 21/11/2026 : visage moins poupon (joues 0,08 → 0,04, mâchoire 0,2 → 0,26, menton 0,01 → 0,04)
+  FACE: { R: 0.19, SX: 1.06, SY: 0.98, forme: { yeux: -0.22, joues: 0.04, machoire: 0.26, menton: 0.04, aplat: 0.05, nuque: 0.3, lumiere: 1.3, oreille: { r: 0.042, y: -0.035, x: 0.985, z: -0.012, ouvre: 0.3 } } },
   REST: [
     [0, 0.66, 0], [0, 0.72, 0], [0, 1.11, 0],
     [-0.165, 0.96, 0], [-0.165, 0.775, 0], [0.165, 0.96, 0], [0.165, 0.775, 0],
@@ -73,6 +76,8 @@ const AVENTURIER_DESSIN = {
     // pans de l'écharpe (SCARF, SCARF_B) : pivots dans le nœud, sur le côté gauche du cou ; sac (BAG) :
     // pivot au haut du sac, dans son volume (corps/index.js, NOEUD et SAC)
     [0.124, 1.072, -0.018], [0, 1.0, -0.218],
+    // frange (HAIR_D) : posée par la coupe (coupes/, HAIR_STYLES[…].d), comme les autres os des cheveux
+    [0, 1.436, -0.136],
   ],
   main: 0.06 * 1.05,
   visee: 0.85,
@@ -104,7 +109,7 @@ const AVENTURIER_DESSIN = {
 };
 
 // Os de la tête : ils suivent le cou sans changer de taille quand le corps est réduit
-export const OS_TETE = [2, 11, 12, 20]; // HEAD, HAIR_A, HAIR_B, HAIR_C
+export const OS_TETE = [2, 11, 12, 20, 23]; // HEAD, HAIR_A, HAIR_B, HAIR_C, HAIR_D
 
 // Gabarit réduit : le corps sous le cou mis à l'échelle k depuis les pieds (buste, bras, jambes,
 // bottes, en largeur comme en hauteur), la tête et les cheveux descendus avec le cou, à leur taille.

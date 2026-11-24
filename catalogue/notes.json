@@ -2,14 +2,14 @@
   "version": 1,
   "notes": {
     "ANI-001": {
-      "status": "valide",
-      "note": "Repris le 18/10/2026 : laine en boucles rondes (dômes lisses à 12 côtés posés à intervalle régulier), visage rose d'un seul tenant (museau tiré du visage, joues pleines), nez en triangle et bouche en Y, frange de boucles sur le front, oreilles en feuille creusée, yeux et sabots plus lisses. 9 898 triangles de près ; au-delà de 20 m du joueur, version allégée aux mêmes pièces (3 334 triangles).",
-      "updatedAt": "2026-10-18T14:10:00.000Z"
+      "status": "a-retravailler",
+      "note": "Repris le 19/10/2026 : touffes du manteau resserrées de 15 % pour casser l'effet d'écailles, sans ajout de triangles ; sabots harmonisés avec la peau rose des pattes. Mesures OK, 9 898 triangles de près et 3 334 allégé. Référence générale conservée : visage rose d'un seul tenant, nez triangulaire et bouche en Y, oreilles creusées, collier bleu et cloche. Reprise initiale le 18/10/2026.",
+      "updatedAt": "2026-10-19T12:45:04.094Z"
     },
     "ANI-002": {
-      "status": "valide",
-      "note": "Refait le 17/10/2026 : dos droit, cornes recourbées vers l'arrière, barbichette, oreilles tombantes, sabots, robes crème, alpine brune et noire.",
-      "updatedAt": "2026-10-17T21:57:40.956Z"
+      "status": "a-retravailler",
+      "note": "Refonte du 19/10/2026 après contrôle visuel : corps remplacé par un volume unique arrondi à dos droit (suppression de la double masse), cornes espacées et courbées, barbichette affinée, queue réancrée dans la croupe. Pattes 29 % du garrot, sabots à 0 cm, facettes conformes. 1 488 triangles / budget 1 500. Gabarit 0,57 × 0,96 × 1,20 m. Aucune référence visuelle locale.",
+      "updatedAt": "2026-10-19T12:45:09.396Z"
     },
     "ANI-003": {
       "note": "Reprise du 19/10/2026, tour 1, d'après la planche (en attente du verdict d'Evis-critique). Corps et tête d'un seul tenant (union lisse du kit, maillée en grille) : plus de bosse d'épaule ni de pli crâne / museau. Museau rose à bord net sur un parallèle, naseaux creusés, ligne de bouche, yeux detail 2, tache de l'œil gauche jusqu'à l'oreille. Oreilles creusées, cornes annelées à 10 côtés. Collier rond à boucle et cloche suisse (tronc de pyramide arrondi, bord ourlé, battant). Pattes au tiers de G (34 %), genoux et jarrets marqués, onglons fendus, ergots. Pis en quatre quartiers, trayons et queue à 10 côtés, houppe en mèches. Pie noire éclaircie (#4d4453). Troupeau de 3 vaches au pré de Pommeraie. 9 785 triangles (budget 10 000), allégé 3 104 au-delà de 20 m (budget 3 500) ; mesure.mjs tout en ✓ ; proportions de la planche à ±4 %. Reste : velours (forme seule), cloche qui suit le cou en broutant, léger pli d'ombrage tête / cou, dessous du ventre un peu polygonal vu d'en bas.",
@@ -190,6 +190,10 @@
       "status": "a-retravailler",
       "note": "Épis en cônes isolés, se lit mal : grouper en gerbe, épis plus fournis.",
       "updatedAt": "2026-10-17T20:53:39.260Z"
+    },
+    "PLA-015": {
+      "note": "Champ de fleurs des îles renforcé le 19/10/2026 : densité mesurée de 2,94 fleurs/m² en zones florales, tailles variées et bandes ondulées en cinq teintes plus vives. Génération déterministe ; modèle unitaire inchangé.",
+      "updatedAt": "2026-10-19T14:26:02.000Z"
     },
     "PLA-016": {
       "note": "Vignette peu parlante : le matériau d'herbe prend sa teinte du terrain. À juger en jeu.",

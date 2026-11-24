@@ -189,7 +189,7 @@ describe('archipel des souvenirs (open world)', () => {
     }
   }, 30000);
 
-  it('pose relief, eau douce, arbres et décor naturel (ni lieux tirés, ni chemins, ni faune, ni ressources), Lac céleste', async () => {
+  it('pose relief, eau douce, arbres et décor naturel (ni lieux tirés, ni chemins, ni faune tirée, ni ressources), Lac céleste', async () => {
     const { ILE_BY_ID } = await import('../src/world/islands/regions.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');
     const { TREES, KINDS, STRIDE } = await import('../src/world/islands/gen/kinds.js');
@@ -199,7 +199,8 @@ describe('archipel des souvenirs (open world)', () => {
     // seuls lieux : ceux posés à la main (desc.poses, tests/zones/plateau-vente-poses.test.js)
     expect(p.pois.map((q) => q.type)).toEqual(d.poses.map((q) => q.t));
     expect(p.paths).toEqual([]);
-    expect(p.spawners).toEqual([]);
+    // seule faune : les troupeaux posés à la main (desc.faune, tests/zones/troupeaux.test.js)
+    expect(p.spawners.map((q) => [q.sp, q.x, q.z])).toEqual(d.faune.map((q) => [q.sp, q.x, q.z]));
     expect(p.micro).toEqual([]);
     const { DECOR } = await import('../src/world/islands/gen/flora.js');
     let trees = 0;

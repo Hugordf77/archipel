@@ -22,7 +22,7 @@ export const BUDGETS = {
 
 // identifiant → triangles mesurés au relevé (version fine, variante la plus lourde)
 export const ECARTS = {
-  'ARB-008': 3600, 'ARB-014': 3582, 'ARB-015': 2708,
+  'ARB-014': 3582, 'ARB-015': 2708,
   'PLA-004': 1228, 'PLA-014': 1696, 'PLA-018': 7088, 'PLA-019': 2710,
   'BAT-002': 6776, 'BAT-003': 9328, 'BAT-009': 4244, 'BAT-012': 8264,
   'STR-002': 20428, 'STR-021': 5404, 'STR-022': 7872, 'STR-023': 4960,

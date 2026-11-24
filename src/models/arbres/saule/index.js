@@ -1,17 +1,20 @@
-// Saule (ARB-009) : tronc épais et rideau de feuillage retombant, au bord de l'eau.
-import { Builder } from '../../../render/builder.js';
-import { treeTrunk, col } from '../../kit/vegetal.js';
+// Saule (ARB-009) : l'arbre fractal de l'utilisateur (kit/arbreFractal.js), courbure retournée (chaque
+// segment plie vers l'extérieur : les branches retombent), ramené à 4,4 m ; touffes étirées en rideau,
+// au bord de l'eau.
+import { arbreFeuillu } from '../../kit/arbreFractal.js';
 import { fiche, kind } from '../../kit/fiches.js';
 
+export const TEINTE = { h: [0.27, 0.2], s: [0.34, 0.5], l: [0.46, 0.76] };
+
 export function saule() {
-  const b = new Builder();
-  const top = treeTrunk(b, 2.2, 0.34, 0.22, 0.4);
-  const clumps = [{ x: top.x, y: 2.9, z: top.z, r: 1.6, squash: 0.62, color: col('#9bd18c') }];
-  for (let k = 0; k < 10; k++) {
-    const a = (k / 10) * Math.PI * 2;
-    clumps.push({ x: top.x + Math.cos(a) * 1.5, y: 1.9, z: top.z + Math.sin(a) * 1.5, r: 0.62, squash: 1.9, color: col(k % 2 ? '#a9d98e' : '#b6df96'), density: 1.5 });
-  }
-  return { solid: b.build(), clumps, crowns: [[top.x, 2.4, top.z, 1.9, 0.75]] };
+  return arbreFeuillu({
+    recette: { graine: 9, courbure: 0.06, retombee: 0.45, ouverture: 44, hasard: 0.3, rayonTronc: 0.5, longueurTronc: 4.4 },
+    hauteur: 4.4,
+    teinte: TEINTE,
+    squash: 1.6,
+    seed: 53,
+    forme: 3,
+  });
 }
 
 export default fiche('ARB-009', 'saule', 'Saule', kind('saule'), { tags: ['abattable', 'bord de l\'eau'] });

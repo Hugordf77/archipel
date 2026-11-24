@@ -141,6 +141,29 @@ et domaine concerné).
   rotors, linge, tonneaux, ancres, lanternes), sans revue Evis-critique. L'escalier BAT-019 n'est plus
   utilisé par le navire volant.
 
+### Personnage (tête, cheveux, visage)
+
+- **Où** : coupe PER-026 `src/models/personnage/coupes/index.js` ; tête, crâne et visage sculpté
+  `src/models/personnage/tete.js` ; forme du gabarit `gabarit.js` (`FACE.forme`) ; traits peints et
+  expressions `src/entities/character/face.js` ; physique des cheveux `src/entities/character/cheveux.js`
+  et `Character.js` ; fiches `coupes/FICHE.md` et `corps/FICHE.md`.
+- **Cheveux, lot 1** (21/11/2026, non commité) : mèches en lame (racine épaisse, pointe nulle, courbe en
+  S ; 60 triangles par mèche), implantation inchangée.
+- **Visage** (21/11/2026, non commité) : visage sculpté d'un seul tenant (nez, arcades, pommettes, lèvres,
+  menton ; grille 22 × 20), normales relevées sans perdre leur direction gauche-droite (plus de visage
+  blanc de profil), crâne caché retiré ; yeux peints en amande, grands mais sobres ; sourcils fins. Un
+  essai d'yeux en volume (globes et paupières sur os) a été retiré à la demande de l'utilisateur.
+- **Vent, cheveux et vêtements** (21/11/2026, non commité) : vent du monde en m/s (brise de 4 m/s) ; frange
+  sur son os à ressort `HAIR_D` ; réglages par groupe (dessus et épi raides, nuque lourde, frange légère),
+  retard des pointes, battement au vent ; roulis du dessus et de la nuque ouverts ; robe et jupe sur la
+  physique des cheveux ; écharpe réglée pour la brise ; plis modelés (manches, salopette, robe, jupe).
+  Mesures par geste dans `coupes/FICHE.md`.
+- **Budget** : 9 500 triangles pour les fiches de l'avatar (hausse accordée le 21/11/2026,
+  `src/models/personnage/fiche.js`, `BUDGET_PERSO`) ; lames de cheveux au bout en ogive, épi à 8 côtés.
+- **Vérifier** : `node scripts/modeles/mesure.mjs PER-026 --json` (9 137 triangles, pire cas 9 321, budget
+  9 500) ; `npx vitest run tests/cheveux.test.js tests/echarpe-sac.test.js` ; captures `S.serie` de
+  `scripts/rendu/personnage.js` (vues et expressions) et planche du catalogue.
+
 ### Îles et monde
 
 - **Lieux posés à la main** (26/10/2026, branche `claude/ruine-alternative`) : champ `poses` d'une île
@@ -161,6 +184,25 @@ et domaine concerné).
   Mesures : pente max 0,192, dévers 0,061, virages de 11,6 m de rayon au moins, aucune roche sur la route ;
   l'escarpement frontal REP-03 reste infranchissable. Test `tests/zones/plateau-corniche.test.js` (7). En jeu
   (serveur `corniche`, port 5183) : marche réelle de P0 à A, touche avant seule, sans chute.
+- **Vaches et moutons dans le monde ouvert** (23/11/2026, non commité) : champ `faune` d'une île
+  (`archipel.js`, repère de l'île, m : `{ sp, x, z, count, r, robes, nom }`), posé sans tirage par
+  `poserTroupeaux` (`gen/spawns.js`), même pour une île qui ne décrit pas ses lieux ; `cropPlan`
+  (`gen/sections.js`) garde chaque troupeau dans la section de son point, recentré. Grande Île, cinq
+  troupeaux (coordonnées du monde) :
+  - moutons ANI-001 sur le haut du Plateau venté : « de la Corniche », 6 dont un noir, en (468, −780),
+    sous le Moulin de la Corniche ; « du Large », 5, en (684, −884) ;
+  - vaches ANI-003 aux robes mêlées : « de la Côte », 4, en (−32, −532), et « du Bocage », 3, en
+    (−196, −420), sur la Côte aux villages ; « du Lac céleste », 3, en (668, −1388).
+  Comportement de faune existant (`IslandFauna` : errance dans le rayon r, broutage, fuite, sommeil la
+  nuit, caresse, herbe couchée). À l'apparition, les bêtes sont réparties en spirale de tournesol (avant,
+  plusieurs naissaient l'une dans l'autre et restaient ainsi tant que le joueur était à plus de 200 m) ;
+  la caresse note l'espèce dans le journal de l'île entière (`Game.petAnimal` : section → île). Modèles
+  du catalogue inchangés. Test `tests/zones/troupeaux.test.js` (5 : nombre et robes ; pré de prairie ou de
+  fleurs, pente ≤ 0,22, hors de l'eau, dans sa zone ; ni arbre ni obstacle dans le rayon d'errance, loin
+  des lieux et de la corniche ; une seule section, loin de ses bords ; reste du plan inchangé) ;
+  `tests/world.test.js` adapté (la Grande Île n'a pour faune que ses troupeaux). En jeu : 21 bêtes chargées
+  sur leurs sections, caresse « Vache » notée sous `grande-ile` ; captures
+  `captures/troupeaux-moutons-corniche.png`, `troupeaux-vaches-cote.png`, `troupeaux-vaches-lac.png`.
 - **Le Navire-forteresse vole autour du Plateau venté** (01/11/2026, commit `4867f67`) : décor, on ne
   monte pas à bord (choix de l'utilisateur ; la pose au sol de `27fd499` est retirée). Éléments et
   trajectoire dans `src/world/plateau/forteresse-navire.js` (`ELEMENTS`, `VOL`, `vol(t)` : cercle de 190 m
@@ -374,8 +416,256 @@ et domaine concerné).
   await S.ciel(__ile, 'apres')` puis `python3 scripts/rendu/planche.py --ciel avant apres`. Plan et mesures :
   `docs/ciel/plan.md` (étoiles au zénith à 23 h : 0 → 2 843 px en medium ; +0,2 ms en medium).
 
-## État courant (21/11/2026)
+## État courant (24/11/2026)
 
+- **Chantier rendu 1 : suite remise au vert, existant commité** (24/11) : 407 tests sur 408 ; seul échec, accepté
+  et listé dans `production/echecs-connus.json` : le trou MON-012 / MON-013 du registre (modèles restés non
+  commités dans le worktree `claude/plateau-vente-modeles`, décision de l'utilisateur). Relevés des tailles
+  et empreintes régénérés (seuls changent les modèles retravaillés : ARB-001, 002, 003, 008, 009, 010,
+  PLA-001 à 003, PLA-015, PER-*, NAV-012 qui n'avait pas de référence, obstacles de l'île de départ) ;
+  ARB-008 sort des écarts de budget (490 triangles) ; fleur des champs PLA-015 ramenée de 216 à 120
+  triangles (tige ouverte, une feuille par tige, quatre pétales élargis : 1,36 M → 0,76 M triangles de
+  fleurs dans la tuile la plus fleurie, plafond 0,8 M) ; manches du pull : les deux premiers tronçons de
+  l'avant-bras sans bout rond caché (9 641 → 9 401 triangles au pire cas, budget 9 500) ; test des
+  empreintes : nombre de modèles lu dans la référence au lieu de 197. Non commités exprès :
+  `.claude/launch.json` (serveurs de worktree, contraire au serveur unique), `public/audio/Illumoria.mp3`
+  (licence à confirmer), `src/graphify-out/` (sortie générée).
+
+- **Refonte visuelle de l'environnement, passe 1** (23/11, non commité ; brief « ultra visual overhaul »
+  de l'utilisateur, à mener par phases) : GLSL seulement, aucun réglage ni gameplay changé.
+  - Ombres jamais noires (`toonShade`, `shaders/chunks.js`) : lumière du ciel dans l'ombre (`uSkyAmbient`,
+    × 0,14) et plancher (une ombre garde au moins 44 % de la valeur de la même surface au soleil, le jour),
+    les deux sous le réglage « rebond » ; herbe : ombre × 0,8 au lieu de × 0,62, occlusion au pied 0,28 au
+    lieu de 0,35 (`herbe/materiau.js`). Mesure (Grande Île, 9 h) : ombre d'arbre sur l'herbe 40 % → 49 % de
+    la valeur au soleil avec un plancher de 38 % (relevé à 44 % ensuite), bleutée au lieu de bleu nuit.
+  - Herbe et sol herbeux (`HERBE`) : étendues de 70 à 150 m plus dorées ou plus fraîches (`herbePlaque`),
+    saturation retenue à 90 % (`herbeVarie`) ; brins et sol lisent la même fonction, donc pas de raccord.
+  - Terre découverte (`solNu`, `HERBE`) : passé 20° de pente, plaques de terre chaude sourde (bruits de 3
+    et 9 m), entière vers 39° ; brins effacés au même masque (`materiau.js`) ; terrain : branche `TERRAIN`
+    de `materials.js` (sol vert seulement, lisière un peu sombre). Contredit en partie « pentes herbues
+    jusqu'à 1 » de la carte d'herbe : à trancher par l'utilisateur.
+  - Roche des falaises et montagnes (`TERRAIN`) : grès chaud en bas, pierre claire lavande en altitude
+    (50 → 180 m, limite brouillée de ± 25 m), veines rose poussiéreux, à 40 % sur la couleur peinte, neige
+    épargnée.
+  - Captures : `captures/ultra-avant-*`, `ultra-apres3-*`, planches `captures/ultra-planche-9.png`,
+    `ultra-planche-17h5.png`, `ultra-planche-pente.png`. Coût GPU non mesuré au banc (quelques bruits de
+    plus par pixel de terrain et par brin).
+  - Tests : 7 échecs, tous connus (empreintes, registre ×2, budgets, champs de fleurs, temps de la carte
+    d'herbe et budget du Worker sous charge).
+  - Suite du brief : rochers, composition des forêts, profondeur atmosphérique ; silhouettes des arbres
+    (géométrie, donc empreintes) non touchées ; l'étalonnage par heure (`daycycle.js`, validé) non plus.
+- **Buissons refaits, personnage : manches longues et matières** (23/11, non commité) :
+  - Buissons PLA-001 à 003 (`plantes/buissons/index.js`, voir la FICHE) : 4 à 5 masses inégales, tiges
+    de bois, baies en grappes, fleurs à cœur jaune ; feuillage de toutes les touffes non arbres en
+    grappes de feuilles (`IslandManager.js`, matériau `foliage` : `grappesAtlas`). 320, 886, 814
+    triangles (budget 1 000). « Physique / forme » toujours en échec sur PLA-002 et 003 (déjà avant).
+    Empreintes : seuls PLA-001 à 003 s'ajoutent aux écarts connus (non écrites).
+  - Personnage : pull à manches longues jusqu'au poignet (`corps/index.js` : bande crème à
+    mi-avant-bras, revers au poignet) ; matières dans le shader du joueur (`materials.js`, bloc
+    `CHARACTER` et `PLIS`, motifs dans le repère de la pose de dessin, `vPosP`, `vNorP`) : tricot côtelé
+    à mailles en V, jean en sergé délavé par plaques, cuir à grain et éraflures aux arêtes, joues rosées.
+  - Captures `captures/perso-avant-*`, `perso-apres-*` (la fenêtre a changé de taille entre les deux),
+    planche `captures/perso-planche.png` ; `captures/buisson-apres-*`, planche `captures/buissons-planche.png`.
+  - Tests des modèles et du monde : seuls les échecs connus.
+- **Refonte visuelle, passe 5 : touffes des arbres lointains, montagnes** (23/11, non commité ; demande de
+  l'utilisateur : « les chunks des feuilles arbre loin et travaille davantage les montagnes ») :
+  - Touffes de la version forêt : nouvelle texture `grappesAtlas()` (`render/textures.js` : 60 à 80
+    feuilles pointues dans une enveloppe à lobes, sous-couche sombre trouée, valeur claire en haut et au
+    bord), à la place du pompon festonné (`leafAtlas`, gardé pour les buissons) ; `foliageArbre`
+    (`IslandManager.js`) ; dans `foliageMaterial` (`LOD_LOIN`) bombé de chaque touffe réduit (0,45 → 0,22)
+    et valeur peinte de chaque feuille plus marquée. Géométrie et empreintes inchangées.
+  - Montagnes (`TERRAIN`) : cause trouvée du peu d'effet des passes 1 et 3 : le test de neige (trois
+    canaux au-dessus de 0,72) prenait les parois claires du biome givré (`#c9d8e8`) pour de la neige et y
+    coupait roche, coulées, ravines et maquis ; désormais 0,86 à 0,95. Seconde octave fixe dans le monde,
+    qui prend le relais de 250 à 700 m (là où la fine fait moins d'un pixel sous la peinture) : ravines de
+    40 × 300 m, massifs boisés de 110 m. Ravines larges, maquis et bosquets sur les flancs (20 à 150 m),
+    poudre claire sur les replats au-dessus de 170 m ; roche des parois à 55 %. Brouillard classique à
+    moitié quand la perspective aérienne est active (il blanchissait les montagnes le matin).
+  - Captures `captures/mont-b-*` (avant), `mont-c-*` à `mont-f-*` ; planche
+    `captures/montagnes-arbres-planche.png` (montagnes à 9 h et 17 h 30, puis arbres de la Grande Île).
+  - Reste : buissons (toujours des boules), silhouettes des montagnes (relief) et des arbres (géométrie).
+- **Refonte visuelle, passe 4 : ciel, air, particules, herbe** (23/11, non commité ; second brief de
+  l'utilisateur, « la passe précédente ne se voit pas assez ») :
+  - Audit : la peinture Kuwahara (0,55 de la résolution) efface les détails fins du sol et de la roche ; le
+    ciel atteignait son bleu final dès 12° (aplat sur 80 % du ciel) ; perspective aérienne plafonnée à 16 % ;
+    aucune particule d'ambiance ; voile de l'astre (`ASTRE`) qui blanchissait toute l'image face au soleil
+    le matin.
+  - Ciel (`sky.js`) : dégradé à plusieurs étages (zénith plus profond, bande à peine cyan, ciel plus clair
+    côté soleil, creusé à l'opposé), tramage d'un quart de niveau ; deux couches de nuages peintes dans le
+    dôme (voiles d'altitude étirés dans le vent, banc bas sur l'horizon), dérives différentes ; bouffées :
+    rampe plus douce, dessous froids, sommets chauds, liseré argenté à contre-jour.
+  - Air (`applyFog`, `TOON`) : passé 70 m, contraste et saturation baissent et la couleur glisse vers
+    l'horizon du ciel (`uSkyHorizon`, désormais déclaré par `TOON` ; doublons retirés de `water.js`,
+    `rivers.js` et de la branche `CHARACTER`) ; moins en altitude (sommets lisibles). Voile de l'astre
+    (`Pipeline.soleil`) : 0,1 soleil haut, entier au coucher.
+  - Particules (`src/world/env/particules.js`, nouveau ; `Game` : création, `update` avant le rendu ;
+    réglage `pipeline.settings.particules`, 0 à 1) : poussière dorée proche (900, couche de 9 m autour des
+    yeux), poussière lointaine (260, vers l'horizon), lucioles (48, crépuscule, nuit, sous-bois à l'ombre).
+    Tout le mouvement dans le shader (vent, errance par bruit, montée et descente), boîtes posées sur le
+    monde ; dessinées après la peinture mais cachées par le décor (profondeur de la scène) ; éclairées par
+    le soleil, éteintes à l'ombre portée (`sampleShadow`), plus visibles face au soleil ; zones par bruit.
+    Coût mesuré 0,05 ms (banc, Haut).
+  - Herbe (`herbe/materiau.js`) : lames effilées (plus de triangle tronqué), un peu plus étroites de près ;
+    trois sortes de brins (courant, plus court, haut et fin) ; plaques un peu plus rases de 6 à 14 m ; tapis
+    10 % plus bas. Un premier essai (brins larges et courts) faisait des copeaux : retiré.
+  - Feuillages : translucidité baissée (× 0,6) et plafond doux de la valeur (0,86, teinte gardée) : plus
+    de jaune fluo face au soleil ; or des familles moins poussé (`FAMILLE`).
+  - Coût de l'image (banc, Haut, Grande Île, 16 h) : 10,15 ms dont G-buffer 7,25 ms (pas de mesure
+    « avant » dans la même vue).
+  - Captures `captures/ciel-a-*`, `part-*`, `herbe-c-*` (essai retiré), `herbe-d-*`, `final-*` ; planche
+    `captures/aurelia-planche.png` (état d'origine | maintenant).
+  - Tests : 8 échecs dans la suite complète lancée pendant que le jeu tournait : les 5 connus plus trois
+    chronos sous charge ; relancés seuls, seul le chrono de la carte d'herbe (Worker, non touché) échoue.
+  - Pas fait : silhouettes des arbres et des montagnes (géométrie : empreintes, relief) ; transitions
+    feuilles mortes et mousse au sol.
+- **Refonte visuelle, passe 3 : rochers et montagnes** (23/11, non commité) : shaders seulement.
+  - Rochers des îles (`rocher`, `rocher_mousse` ; `ROCHE` dans `toonFrag`, `materials.js` ; matériaux
+    `solidRoche` et `solidMousse` d'`IslandManager.js`) : relief ciselé en relief d'ombrage (bruits du repère
+    du modèle), teinte chaude ou froide et valeur par rocher, strates inclinées, lichen ocre rare, mousse sur
+    le dessus, pied plus sombre et plus froid. ROC-002 (`MOUSSU`) : le chapeau de mousse (un couvercle plat
+    qui ne dépassait que de 7 cm) n'est plus dessiné, la mousse est peinte sur la pierre et coule un peu sur
+    les flancs. Filons et obsidienne inchangés ; rochers des îles célestes (`IlesCelestes.js`) non plus.
+  - Falaises et montagnes (`TERRAIN`) : coulées d'érosion verticales (bruit étiré dans la paroi, creux plus
+    froids, arêtes plus claires), en plus du grès et de la pierre lavande de la passe 1. Peu visibles de très
+    loin (brume et peinture) : voulu discret.
+  - Non fait : silhouettes des montagnes (relief du Worker : changerait le terrain, les plans et leurs
+    empreintes) et forme des rochers (`G.rock`, aide partagée du kit : accord nécessaire).
+  - Captures `captures/roches-avant-*`, `roches-apres2-*` (gros plans d'un rocher et d'un rocher moussu à
+    10 h et 17 h 30, pente et plateau) ; planche `captures/roches-planche.png`. Fiche `rochers/blocs/FICHE.md`.
+  - Tests : 6 échecs, tous connus.
+- **Refonte visuelle, passe 2 : familles de couleur des feuillus** (23/11, non commité) : shaders seulement,
+  aucun modèle ni empreinte changé.
+  - `FAMILLE` (`shaders/chunks.js`, `familleArbre`) : une famille par arbre, calculée dans le shader d'après
+    son origine (version forêt `foliageFrag`, version proche et feuilles qui tombent `feuilleFrag` : même
+    couleur aux deux distances). Part chaude surtout par zone (bosquets de 50 à 110 m qui roussissent
+    ensemble), un peu par arbre ; famille or, ambre ou rouille (teinte tournée de 32 à 72° depuis le vert ;
+    or réchauffé et un peu saturé, rouille plus sourde) ; les arbres restés verts ont des accents d'un côté de
+    la couronne, dans les zones chaudes seulement. Seules les couleurs vertes tournent (érable et cerisier
+    gardent les leurs).
+  - Saison : `U.uAutomne` (`globals.js`), réglé dans `Game.applySettings` d'après `seasonOf` (automne 1,
+    hiver 0,4, printemps et été 0,2 : quelques arbres dorés toute l'année).
+  - Feuilles qui tombent : `iSol` passe à 4 composantes (`arbresProches.js` : + origine xz de l'arbre).
+  - Captures `captures/arbres-apres*-grande-ile-*`, planche `captures/arbres-planche.png` (passe 1 | passe 2,
+    9 h et 17 h 30).
+  - Tests : 5 échecs, tous connus (empreintes non écrites des arbres fractals, registre ×2, budgets, champs
+    de fleurs). Constat : juste après un rechargement et une téléportation, `serie.js` capture parfois sans
+    brins d'herbe (tuiles d'herbe pas encore prêtes) ; en jeu, l'herbe revient.
+
+- **Vaches et moutons dans le monde ouvert** (23/11, non commité ; détail dans « Îles et monde ») :
+  `archipel.js` (champ `faune` de la Grande Île), `gen/spawns.js`, `gen/plan.js`, `gen/sections.js`,
+  `entities/fauna/islandFauna.js` (répartition à l'apparition), `Game.petAnimal` (une ligne),
+  `tests/zones/troupeaux.test.js`, `tests/world.test.js`. `npm test` : 7 échecs, tous connus (empreintes,
+  numérotation MON, champs de fleurs, budgets ARB-008, tailles du registre, temps de la carte d'herbe et
+  d'une mise à jour de l'herbe sous charge ; `herbe.test.js` passe seul). Graphe mis à jour
+  (`graphify update src`, copié de `src/graphify-out/` vers `graphify-out/`).
+
+- **Arbres fractals de l'utilisateur** (22/11, non commité) : tous les feuillus des îles (pompon ARB-001,
+  fruitier ARB-002, cerisier ARB-003, bouleau ARB-008, saule ARB-009, érable ARB-010) sont l'arbre de
+  l'utilisateur (« Jeux vidéo aprentissage/src/arbre.js ») porté dans `src/models/kit/arbreFractal.js`
+  (nouveau fichier : `squelette` identique feuille par feuille à l'original, vérifié sur les 20 412 feuilles ;
+  ajout `retombee` pour le saule), une recette par espèce dans son `index.js`.
+  - Deux versions, bascule par instance dans les shaders (`LOD_ARBRES`, `render/shaders/materials.js`) :
+    version forêt au-delà d'environ 30 m (bois jusqu'à la 4e génération, réindexé ; neuf touffes peintes
+    tirées vers l'enveloppe du houppier ; 386 à 396 triangles, 778 pour le fruitier) et version proche
+    (`world/islands/arbresProches.js`, au plus 40 arbres par espèce, rayon 30 m en Haut, 24 m en Moyen,
+    aucun en Bas, `Game.applySettings`) : une feuille de l'original sur huit (2 552), cartes pliées sur la
+    nervure, atlas peint (`feuillesAtlas`, `render/textures.js` : ovale, érable, fleurs, lancéolée), bois
+    jusqu'à la 2e génération, écorce peinte (`ecorceTexture`, aussi sur la version forêt), teinte
+    d'exposition, translucidité vers le soleil (`feuilleMaterial`, aussi `vitrail` sur les touffes).
+  - Vent : ramure balancée (bois et feuilles par la même formule, à l'attache), frémissement des feuilles ;
+    160 feuilles tombent en spirale des arbres proches (tout le mouvement dans le shader, `CHUTE`).
+  - Formes lointaines (`farveg.js`) recalées sur l'enveloppe des nouveaux houppiers (plus larges : 2,4 m
+    de rayon pour le pompon).
+  - Coût (banc synchrone `scripts/rendu/gpu.js`, Haut, cœur de la Forêt des souvenirs, caméra derrière le
+    joueur) : forêt seule ≈ 2,0 ms de G-buffer, version proche + 0,6 ms (54 arbres, 12 400 triangles
+    chacun) ; à la vue « grande-ile » de `serie.js` : G-buffer 5,6 ms (5,55 ms avant le changement).
+  - Captures : `captures/fractal-a3-especes.png` (catalogue, six espèces), `captures/fractal-b2-*`
+    (forêt de près, de loin, le soir ; Grande Île et Plateau venté à 11 h et 18 h 30).
+  - Tests : `npm test` : 6 échecs. Les connus : empreintes (non écrites), numérotation MON, champs de
+    fleurs, et sous charge le temps de la carte d'herbe (0,92 ms pour 0,9 ; passe seul, marge réduite par
+    les couronnes plus larges). Deux attendent l'utilisateur : tailles du registre (`releves.gen.js` à
+    régénérer, il porte du travail non commité) et `ARB-008` à retirer de `ECARTS` (`kit/budgets.js` :
+    le bouleau tient désormais son budget ; retouche refusée à l'agent).
+  - Reste : catalogue (montre la version forêt seule : la version proche demanderait de toucher
+    `kit/assemble.js`) ; encombrement des troncs (`physique.js`) plus large que leur pied visible (décision
+    de l'utilisateur : changerait le placement des arbres) ; arbres de l'île de départ, Arbre géant
+    ARB-015.
+- **Joueur : cheveux, écharpe en vrai tissu, plis animés** (22/11, non commité ; fichiers du personnage
+  touchés avec l'accord de l'utilisateur, en plus de leur travail non commité) :
+  - Cheveux (`materials.js`, `CHEVEUX`) : brins en reflets clairs le long de chaque mèche (environ cinq à
+    six par mèche), paquets, racines plus sombres, pointes plus claires, reflet en bande (Kajiya-Kay) qui
+    se casse sur les brins, plus de pastille ronde. Les mèches sont marquées à la construction
+    (`coupes/index.js` : `sway` 1 à 2 et `tint` = sens de la mèche ; `cap: CAP` dans la coupe) ;
+    `Character.setAvatar` passe la calotte au shader (`uCapC`, `uCapR`, `uCheveux`). Planche
+    `captures/cheveux-planche.png`.
+  - Écharpe : les deux pans sont des rubans simulés (`entities/character/tissu.js`, pur : Verlet à pas fixe
+    de 1/120 s, contraintes de longueur, de cisaillement et de pli, gravité, pression du vent sur la face
+    avec battement, collisions avec des sphères ; `echarpeTissu.js` : forme de repos des pans dessinés,
+    épinglés au nœud, sphères torse, épaules, tête et sac, os SCARF et SCARF_B repliés). Ils tombent le long
+    du dos au calme, se soulèvent et claquent au vent. Tests `tests/tissu.test.js` (5) ;
+    `tests/echarpe-sac.test.js` adapté (le bout du pan ondule de 4 à 13 cm dans la brise, reste à sa
+    longueur du nœud). Captures `captures/echarpe-a1-planche.png`, `echarpe-a2-planche.png` (calme et tempête).
+  - Plis du pull et de la salopette (`materials.js`, `PLIS`), repris le 22/11 au soir à la demande de
+    l'utilisateur (« corrige les plis ») : la première version donnait un aspect de plastique mouillé (bruit
+    fixe en diagonale et vaguelettes de vent permanentes, sur tout ce qui n'est pas la peau, sac, bottes et
+    ceinture compris ; ses plis d'articulation ne sortaient presque jamais : les sommets de la salopette au
+    genou sont hors du rayon de mélange des os). Désormais : seuls les tissus souples sont marqués
+    (`Parts.on(os, id, true)`, `commun.js` : `aSway` −1 ; torse et bassin, manches, avant-bras, cuisses,
+    tibias, jupe et robe ; pas la bavette, la poche, les bretelles, la ceinture, le sac, les bottes) ; aux
+    jointures qui se plient (taille, coudes, hanches, genoux : `PLI_JOINTURES` de `Character.js`, pivots et
+    axes passés par `uPliOs`, `uPliAxe`), trois ou quatre plis en arcs du côté intérieur du pli (le sens où
+    l'axe de l'os enfant tourne par rapport au parent), d'autant plus marqués que le membre se plie, creux
+    un peu plus sombres ; membres droits : rien (restent les plis modelés). Pas de pli à l'épaule (hachures
+    sur les rayures du pull), plus de vent dans ce relief (le vent reste aux cheveux et à l'écharpe).
+    Captures `captures/plis-avant-face.png` (avant), `plis-apres-face.png`, `plis-apres-34.png`,
+    `plis-apres-dos.png` (repos), `plis-apres-marche.png`, `plis-apres-course.png`, planche
+    `plis-apres-planche.png`.
+  - Lot 4 (jupe et robe en vrai tissu) abandonné : l'utilisateur ne veut pas de robe (22/11). La jupe et
+    la robe gardent leur pendule (`cheveux.js`, `JUPE`). Captures de l'ancien pendule prises avant l'arrêt :
+    `captures/jupe-avant-*.png`. Revue Evis-critique non faite.
+- **Ombres, lumière du joueur, troncs** (22/11, non commité) :
+  - Ombres : la ligne qui recentrait la carte d'ombre sur le joueur avait disparu le 22/10 (commit
+    `ace1d3f`, remplacée par un second `islands.update`, qui tournait donc deux fois par image) : les ombres
+    restaient centrées sur l'origine flottante, jusqu'à 2 km du joueur (ni ombre des arbres, ni ombre du
+    joueur). Rétablie dans `Game.update`, à la hauteur de la cible (Plateau venté), doublon retiré.
+    Seconde carte d'ombre, large (± 170 m, `Pipeline.js`, `SunShadow`), qui prend le relais de la fine
+    (± 34 m) en fondu (`SHADOW`, `chunks.js` ; herbe : `shadow1`, `render/herbe/materiau.js`) ; centre calé
+    sur les texels (pas de scintillement) ; la carte large une image sur deux. Coût des deux cartes
+    0,5 à 0,8 ms (banc), environ 0,5 ms par image en Haut.
+  - Feuillus : ombre portée en trois lobes (`lobesCouronne`) ; les feuillages lisent l'ombre un peu en
+    avant de la couronne (plus d'assombrissement par leur propre volume d'ombre).
+  - Joueur (`toonFrag`, branche `CHARACTER`, réglage `U.uJoueur`, 0 à 1) : reflet franc et lustre côté
+    soleil, liseré chaud à contre-jour du côté éclairé, ciel sur le dessus et rebond du sol dessous,
+    bande chaude de diffusion au terminateur, reflet du ciel en incidence rasante ; tout passe sous les
+    ombres portées. Planche `captures/joueur-planche.png` (avant | après, face, contre-jour, ombre d'arbre).
+  - Troncs (`troncFractal`, `kit/arbreFractal.js`) : × 1,6 (les grosses branches de moins en moins, via
+    `grossit`), cinq contreforts qui se prolongent en racines rondes plongeant dans le sol, fût cannelé à
+    16 côtés de près ; 490 à 500 triangles en version forêt (882 pour le fruitier), 2 676 de bois de près.
+    Écart encombrement / pied visible réduit (pompon : 135 % → 89 %). Captures `captures/arbres-d2-tronc-*`.
+- **Soleil et lumière de l'astre** (22/11, non commité) :
+  - Ciel (`sky.js`) : le rendu est en 8 bits (rien ne dépasse le blanc), donc le disque est le seul blanc
+    franc du ciel ; net (bord anticrénelé au pixel, rayon 0,036 rad), assombri et réchauffé vers le bord,
+    gardé net après la peinture (masque des détails, comme les étoiles) ; halo serré (couronne) et halo
+    large mêlés au ciel sous le blanc, saturés et plus chauds ; bas sur l'horizon, l'astre rougit et ses
+    halos s'élargissent.
+  - Rayons (`post.js`, `ASTRE_FRAG` ; `Pipeline.js`, `astrePass`, quart de résolution) : flou radial vers
+    l'astre d'une source « fond de ciel autour de l'astre » tirée de la profondeur : les rayons sont coupés
+    par les troncs, feuillages, reliefs et nuages. Composition : rayons et voile en fondu « écran », discrets
+    sur le ciel, plus forts sur ce qui se dresse devant l'astre ; voile réglé sur la part visible de l'astre ;
+    le disque n'est pas voilé. Coupé la nuit, sous la pluie, astre couché ou dans le dos (réglage
+    `pipeline.settings.astre` : null actif, 0 coupé, jusqu'à 1,5).
+  - Translucidité vers le soleil : feuilles une à une (0,8), touffes des arbres (0,7), touffes des autres
+    végétaux (0,45).
+  - Écran-titre : `Titre.cadrer()` recalcule maintenant la courbure et la plongée de l'horizon comme
+    `CameraRig` ; elle restait à 0,3 rad (valeur par défaut) : le ciel peint se calait 17° trop bas et le
+    soleil d'aube passait sous la mer (d'où le disque « presque invisible »). Le ciel du titre change donc
+    aussi (nuages et horizon chaud visibles).
+  - Coût : passe des rayons 0,027 ms (409 × 307, Haut) ; image entière inchangée au bruit de mesure près
+    (≈ 11,1 ms avec ou sans, vue « grande-ile », 18 h 12).
+  - Captures : `captures/soleil-b0-*` (avant), `soleil-b2-*`, `soleil-b4-arbre-contre-jour-*`,
+    `soleil-b5-titre-aube.png`, planche `captures/soleil-planche.png`.
+  - Non fait : étalonnage en split-tone par heure laissé tel quel (palette `daycycle.js` validée) ; rayons
+    invisibles quand l'astre est hors du cadre (effet d'écran).
 - **Écran-titre** (22/11) : menu de démarrage sur le Plateau venté avec thème au piano (voir
   « Écran-titre »). Non essayé avec une vraie manette (DualSense simulée) ; le chemin « Tout effacer et
   recommencer » est couvert par les tests, pas joué en vrai (la sauvegarde du navigateur n'a pas été effacée).
@@ -463,8 +753,19 @@ et domaine concerné).
   quatre racines, houppier plus ovale, voir sa `FICHE.md`) ; branches effilées en pointe dans
   `troncRameux` (pompon inchangé en triangles) ; forêt à 4,89 M triangles. Pas de revue Evis-critique de
   l'érable. Suite : D (variantes et version allégée au loin, budget de la forêt), E (bouleau).
-- Échecs connus seulement : empreintes, numérotation MON, champs de fleurs (PLA-015 en cours) ;
-  `tests/cheveux.test.js` (« restent calmes et bornées… ») est instable (un échec sur trois passages).
+- **Personnage** (21/11/2026, non commité) : cheveux lot 1 (mèches en lame), visage sculpté aux yeux peints
+  sobres, vent et physique des cheveux (frange mobile), physique de la robe et de la jupe, plis des
+  vêtements, lames de cheveux en ogive (voir « Personnage ») ; 8 688 → 9 137 triangles (pire cas 9 321),
+  budget de l'avatar porté à 9 500 (accord de l'utilisateur). Revue Evis-critique : ses trois défauts
+  traités (nez, mâchoire, lames), sans second tour de revue. Empreintes : seul le personnage change (fiches PER et table du personnage, nouvel os `HAIR_D` ;
+  non écrites, `empreintes.json` porte le travail non commité de l'utilisateur). Test « restent calmes… »
+  de `tests/cheveux.test.js` : vert à chaque passage le 21/11 (deux suites complètes, huit passages
+  seuls), résidu ramené de 0,032 à 0,012 rad sous un seuil de 0,03 et vent du monde coupé dans ce test ;
+  l'échec d'un passage sur trois n'a pas été reproduit. Constat à vérifier : à la grimpe, la peau devant
+  les yeux entre jusqu'à 7 à 8 cm dans l'écorce au pire moment du scénario de `tests/grimpe-pose.test.js`.
+- Échecs connus seulement : empreintes, numérotation MON, champs de fleurs (PLA-015 en cours). Sous forte
+  charge (jeu et agents en parallèle), les tests de temps de l'herbe et du Worker peuvent échouer ; ils
+  passent au calme.
 
 ## État au 02/11/2026
 

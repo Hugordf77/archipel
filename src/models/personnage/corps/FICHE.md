@@ -4,7 +4,7 @@ Dossier `src/models/personnage/corps/` · Personnage · modèle vedette
 
 | Identifiant | Nom | Statut | Référence du jeu | Taille (m) | Budget |
 | --- | --- | --- | --- | --- | --- |
-| PER-001 | Corps et visage | Validé | `avatar` | 0,56 × 1,66 × 0,53 (coiffé) | 9 000 (personnage) |
+| PER-001 | Corps et visage | Validé | `avatar` | 0,56 × 1,66 × 0,53 (coiffé) | 9 500 (avatar, 21/11/2026) |
 
 ## DA retenue
 
@@ -44,17 +44,33 @@ Dossier `src/models/personnage/corps/` · Personnage · modèle vedette
   de la hauteur.
 - Un seul maillage à liaison rigide (une pièce = un os), animation procédurale
   (`entities/character/Character.js`).
-- **Visage peint** sur une calotte posée sur l'os de la tête (`entities/character/face.js`, atlas
-  1024 × 1024 de 4 × 4 cases : yeux en haut, bouches en bas, superposés par le shader).
-- **Yeux à la manière des films d'animation peints** (21/10/2026) : petits, à l'emprise de l'ancien œil
-  d'encre réduite de 8 % (`SIZE` 0,92 : le blanc se lit comme une partie de l'œil) ; blanc crème
-  `#fdf8f0` ; iris marron (anneau `#5c3a2b`, cœur `#8a5a3c`) de 44 % de la largeur de l'œil, allongé
-  comme l'œil, placé haut sous la paupière (un liseré de blanc sur les côtés, un croissant dessous) ;
-  pupille d'encre `#3d3049`, un reflet blanc ; trait de cils épais en haut (11 → 13 mm), contour fin
-  ailleurs, ombre douce de la paupière. Trois formes au choix du joueur (ovales, ronds, en amande).
-- Expressions : paupière baissée (endormi, concentré, effort) = l'iris descend pour qu'on en voie la
-  moitié basse ; surprise = œil 12 % plus grand et iris à 82 % (plus de blanc) ; clignement et joie
-  restent des traits.
+- **Visage sculpté** (21/11/2026, `../tete.js`, `visageGeometry`) : la calotte du visage est une grille
+  22 × 20 (880 triangles), plus serrée au centre, déformée comme le crâne puis bosselée le long de sa
+  normale par des volumes doux (`VOLUMES`) : nez (arête et pointe ronde, larges d'au moins deux mailles de
+  la grille ; pointe à ≈ 1,2 cm), arcades, front, pommettes, creux et lèvre du haut, pli et coins de la
+  bouche, lèvre du bas, creux sous la lèvre, menton ; diagonales de la grille en miroir de part et d'autre
+  du nez (symétrique). Le masque descend jusque sous le menton (`FACE.BOT` 1,15 rad, au lieu de 0,7).
+  Normales (`redresse`) : relevées (pente de 0,3 vers le haut) en gardant leur direction gauche-droite
+  (avant, toutes tournées vers l'avant : visage blanc de profil sous le reflet de bord) ; plein sur le
+  visage, doux sur le crâne (part au plus 0,8, écart au plus 35°), éteint sous le menton (il garde son
+  ombre) ; relief ajouté × 1,2, écart au plus 25° (pas de paliers serrés sur le nez). Même identifiant que
+  le crâne : aucun trait d'encre sur le nez ni les lèvres. Visage moins poupon : joues 0,04, mâchoire 0,26,
+  menton 0,04 (`../gabarit.js`, `FACE.forme`).
+- **Crâne allégé** : `craneGeometry(22, 14, cache)` retire les triangles toujours cachés (sous le visage, à
+  0,12 rad de ses bords, et dans la calotte des cheveux à sa taille sous le bob ou la masse de la nuque :
+  `sousCalotte` de `../coupes/`) : −267 triangles.
+- **Traits peints** sur le visage (`entities/character/face.js`, atlas de 4 × 5 cases : yeux en haut,
+  bouches en bas, superposés par le shader, un seul appel de dessin) :
+  - **yeux grands mais sobres** (21/11/2026, retours de l'utilisateur) : en amande, coin extérieur relevé,
+    ovale 0,102 × 0,12 m du crâne de référence (planches : 0,112 × 0,152), ronds 0,108 × 0,112, en amande
+    0,112 × 0,096 ; blanc crème `#fdf8f0`, iris brun en dégradé doux (`#4f3027` → `#c9925f`) dont le haut
+    passe sous la paupière, pupille d'encre `#3d3049`, un seul reflet, trait de cils net en haut, rien en
+    bas ;
+  - sourcils fins et longs, en fuseau, 3 cm au-dessus de l'œil, réglés par expression ;
+  - bouche sur le pli entre les lèvres (`MOUTH_Y` −0,176), sourire fin avec la lèvre du bas suggérée ;
+    joues rosées plus petites et légères (0,3 ; 0,45 à la joie) ; plus de nez peint (il est modelé).
+- Expressions (inchangées dans leur principe) : paupière baissée (endormi, concentré, effort) = l'iris
+  descend ; surprise = œil 10 % plus grand et iris à 72 % ; clignement et joie restent des traits.
 - Bob : dôme calé sur la calotte de la coupe en pics (centre en z −0,085, échelle 1,2 × 0,74 × 1,24),
   ruban suivi ; plus rien ne le traverse.
 
@@ -62,10 +78,16 @@ Règles communes : `docs/DA.md`.
 
 ## Écarts restants
 
-- Triangles (`mesure.mjs`, visage 440 et épée 160 compris, étape 5) : 8 688 par défaut, écharpe et sac
-  portés (géométrie 8 088 : tête, oreilles et cheveux 3 360 ; torse, salopette et cou 1 728 avec le sac,
-  1 824 sans, au lieu de 2 004 ; écharpe 536 ; sac 380 ; bras 860 ; jambes et bottes 1 416 au lieu de
-  1 548) ; pire cas : lunettes 8 872 ; budget 9 000.
+- Triangles (`mesure.mjs`, 21/11/2026) : 9 137 par défaut, pire cas 9 321 (PER-022) ; budget propre des
+  fiches de l'avatar 9 500 (`../fiche.js`, hausse accordée par l'utilisateur le 21/11/2026 ; catégorie
+  personnage 9 000). Le matin 8 688 : mèches en lame −504, visage sculpté +440, crâne caché −267, plis des
+  vêtements +360, lames en ogive +420.
+- Yeux plus petits et moins hauts que sur la planche (demande de l'utilisateur : style moins poupon).
+- Nez discret de face (style voulu) ; il se lit de 3/4 et de profil.
+- Grimpe : la peau devant les yeux entre jusqu'à 7 à 8 cm dans l'écorce au pire moment du scénario de
+  `tests/grimpe-pose.test.js` (mesure du 21/11/2026) : position de la tête, à faire vérifier
+  (locomotion-physique).
+- Le chibi partage le dessin des yeux de `face.js` (yeux en amande de l'aventurier).
 - Gabarit du registre relevé le 03/11/2026 (coupe volumineuse) : 0,68 × 1,68 × 0,62 m.
 - Bras à 10 côtés : facettes discrètes de près sur la manche (12 côtés avant).
 - L'épée de dos est posée sur le sac quand il est porté (`GABARIT.epeeSac`, `../accessoires/FICHE.md`).
@@ -76,6 +98,10 @@ Règles communes : `docs/DA.md`.
 ## Historique
 
 - 18/10/2026 : fiche créée.
+- 21/11/2026 : visage sculpté (nez, arcades, pommettes, lèvres, menton), visage moins poupon, crâne caché
+  retiré ; yeux peints en amande, grands mais sobres ; sourcils fins ; bouche plus bas. Essai d'yeux en
+  volume (globes, paupières sur os) retiré à la demande de l'utilisateur. Captures
+  `captures/visage-avant-*`, `sculpt2-planche.png`, `visage-yeux4-planche-visage.png`.
 - 03/11/2026 : personnage 2.0, étape 5 : os à ressort `SCARF_B` et `BAG` ; écharpe à deux pans flottants,
   sac au dos (emplacement « dos »), épée sur le sac ; torse, bassin, cuisses et bottes allégés
   (−312 triangles). Voir `../tenues/FICHE.md` et `../accessoires/FICHE.md`.
@@ -89,3 +115,7 @@ Règles communes : `docs/DA.md`.
   `chibi.js` sans changement (`captures/p2-e1-cat-*.png`, `captures/p2-e1-<tenue>-*.png`,
   `captures/p2-e1-chibi-*.png`).
 - 21/10/2026 : yeux repris (blanc visible, iris marron, pupille, trait de cils), même taille apparente ; expressions vérifiées sur l'atlas et en jeu (`captures/atlas-yeux-v2.png`, `captures/yeux-v2-*.png`).
+- 21/11/2026 : revue Evis-critique (à reprendre) : tache du nez (volumes plus fins que la grille, normales
+  qui sautaient) et mâchoire en dents de scie corrigés (volumes du nez élargis, diagonales en miroir,
+  relief borné, `redresse` doux sur le crâne et éteint sous le menton) ; plis des vêtements (voir
+  `../tenues/FICHE.md`). Captures `captures/revue4-planche.png`, `captures/vent-plis-planche.png`.

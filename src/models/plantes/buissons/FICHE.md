@@ -10,14 +10,26 @@ Dossier `src/models/plantes/buissons/` · Plantes, fleurs et cultures · famille
 
 ## DA retenue
 
-À écrire : forme, proportions, couleurs et détails retenus pour ce modèle.
+Refonte du 23/11/2026 (demande de l'utilisateur : « les buissons, refonds-les en détail ») : un buisson
+composé et planté, plus une boule posée au sol.
+
+- 4 à 5 masses de feuillage inégales et décalées (une haute, une basse en avant), plusieurs verts ;
+  l'arbuste a une masse roussie (`#c7b56e`).
+- Tiges de bois (`#8f6a50`) qui sortent du sol et filent vers le cœur de chaque masse.
+- Baies (PLA-002) en cinq grappes de trois sur la surface haute, rouges et une grappe bleue ; fleurs
+  (PLA-003) à corolle aplatie rose ou crème et cœur jaune, sur le dessus et les flancs hauts.
+- Feuillage en grappes de feuilles (`grappesAtlas`, `render/textures.js`), plus de pompons ronds.
+- Triangles : 320, 886, 814 (budget 1 000).
 
 Règles communes : `docs/DA.md`.
 
 ## Écarts restants
 
-Aucun relevé pour l’instant.
+- « Physique / forme » (déjà en échec avant la refonte) : encombrement plus petit que le pied visible,
+  PLA-002 −31 % (−41 % avant), PLA-003 −45 % (−35 % avant). Non corrigé : changer l'encombrement
+  changerait les collisions en jeu.
 
 ## Historique
 
 - 18/10/2026 : fiche créée.
+- 23/11/2026 : refonte des trois buissons (masses, tiges, grappes de baies, fleurs à cœur, feuillage en grappes) ; empreintes PLA-001 à 003 non écrites (le fichier porte du travail non commité).

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GABARIT } from '../../models/personnage/gabarit.js';
-import { deformeTete } from '../../models/personnage/tete.js';
+import { deformeTete, visageGeometry } from '../../models/personnage/tete.js';
 
 // Visage du joueur peint dans un canvas (aucune image externe).
 // L'atlas 1024×1024 contient 4×4 cases de 256 px : les deux premières rangées
@@ -15,7 +15,8 @@ export const FACE = {
   SY: GABARIT.FACE.SY,
   PHI: 1.7, // largeur angulaire du masque facial
   TOP: 0.45, // au-dessus de l'équateur (rad)
-  BOT: 0.7, // en dessous
+  // en dessous : visage sculpté (gabarit à `forme`), jusque sous le menton ; sinon, sous la bouche
+  BOT: GABARIT.FACE.forme ? 1.15 : 0.7,
 };
 
 // L'atlas se dessine en mètres d'un crâne de référence (le chibi, R = 0,28) : la calotte du visage est
@@ -65,8 +66,10 @@ export function cellUV(i, out = new THREE.Vector4()) {
   return out.set(col / COLS, 1 - (row + 1) / ROWS, 1 / COLS, 1 / ROWS);
 }
 
-// Calotte sphérique posée sur l'avant du crâne, déformée comme lui (visage ovale du gabarit, tete.js)
+// Calotte posée sur l'avant du crâne, déformée comme lui : visage sculpté du gabarit à `forme` (nez,
+// lèvres, menton : tete.js, visageGeometry) ; sinon, calotte sphérique
 export function faceGeometry() {
+  if (GABARIT.FACE.forme) return visageGeometry({ PHI: FACE.PHI, TOP: FACE.TOP, BOT: FACE.BOT, ATLAS_R });
   const g = new THREE.SphereGeometry(FACE.R * 1.012, 20, 11, Math.PI / 2 - FACE.PHI / 2, FACE.PHI, Math.PI / 2 - FACE.TOP, FACE.TOP + FACE.BOT);
   g.scale(FACE.SX, FACE.SY, 1);
   return deformeTete(g);
@@ -74,23 +77,29 @@ export function faceGeometry() {
 
 const INK = '#3d3049';
 const MOUTH_INK = '#7b4f5e';
-// Œil d'aventurier des planches : grand, placé au milieu du visage ; blanc crème (jamais blanc pur), iris
-// brun chaud en dégradé (foncé en haut, clair en bas) qui remplit presque l'œil, pupille d'encre, deux
-// reflets blancs (un grand en haut, un petit en bas), trait de cils épais en haut, pas de cils en bas.
+// Œil d'aventurier (21/11/2026, grand mais sobre : un peu moins haut que sur les planches) : en amande, le
+// coin extérieur relevé ; blanc crème (jamais blanc pur) ; iris brun chaud en dégradé doux (foncé en haut,
+// clair en bas), dont le haut passe sous la paupière ; pupille d'encre, un seul reflet ; un trait de cils net
+// en haut, rien en bas.
 // Mesures en mètres du crâne de référence (le chibi, R = 0,28) : elles suivent l'échelle de la tête.
 const SCLERA = '#fdf8f0';
-const IRIS = { rx: 0.4, ry: 0.4, dy: 0.02, haut: '#4f3027', milieu: '#7a4a33', bas: '#c08a5a' };
-const EYE_X = 0.116;
-const EYE_Y = -0.05;
+const IRIS = { rx: 0.37, ry: 0.47, dy: 0.07, haut: '#4f3027', milieu: '#7a4a33', bas: '#c9925f' };
+const EYE_X = 0.11;
+const EYE_Y = -0.04;
+// 21/11/2026, retours de l'utilisateur (« corrige les petits yeux », « yeux gros mais plus sobres », puis
+// « un peu plus petit ») : 0,102 × 0,12 en ovale (planches : 0,112 × 0,152), en amande
 const SHAPES = {
-  ovale: { w: 0.112, h: 0.152, lid: 0 },
-  rond: { w: 0.12, h: 0.136, lid: 0 },
-  amande: { w: 0.12, h: 0.118, lid: 0.16 },
+  ovale: { w: 0.102, h: 0.12, lid: 0 },
+  rond: { w: 0.108, h: 0.112, lid: 0 },
+  amande: { w: 0.112, h: 0.096, lid: 0.1 },
 };
-// hauteur de la bouche et du nez (sous les yeux, vers le bas du visage ovale) ; joues rosées
-const MOUTH_Y = -0.138;
-const NOSE_Y = -0.1;
-const CHEEK = { x: 0.172, y: -0.12, rx: 0.058, ry: 0.036 };
+// hauteur de la bouche et du nez (sous les yeux, vers le bas du visage ovale) ; joues rosées. Avec le
+// visage sculpté (gabarit à `forme`, tete.js : VOLUMES), la bouche est peinte sur le pli entre les lèvres et
+// le nez n'est pas peint (il est modelé) ; sans lui (chibi), bouche plus haute et nez en point rosé (NOSE_Y)
+const NEZ_MODELE = !!GABARIT.FACE.forme;
+const MOUTH_Y = NEZ_MODELE ? -0.176 : -0.138;
+const NOSE_Y = NEZ_MODELE ? -0.132 : -0.1;
+const CHEEK = { x: 0.16, y: -0.12, rx: 0.046, ry: 0.028 };
 
 export class FaceAtlas {
   constructor() {
@@ -163,26 +172,27 @@ export class FaceAtlas {
     }
   }
 
-  // sourcils épais et courts, en fuseau (plus épais vers l'intérieur) ; dy : hauteur, tilt > 0 : bout
-  // intérieur plus bas (froncé), < 0 : relevé ; arch : bombé ; side : le sourcil droit plus haut de tant
-  brows(color, { dy = 0, tilt = 0, arch = 0.008, side = 0 } = {}) {
+  // sourcils fins et longs, en fuseau (épais vers l'intérieur, effilés dehors), à 3 cm au-dessus de l'œil ;
+  // dy : hauteur, tilt > 0 : bout intérieur plus bas (froncé), < 0 : relevé ; arch : bombé ; side : le
+  // sourcil droit plus haut de tant
+  brows(color, shape, { dy = 0, tilt = 0, arch = 0.008, side = 0 } = {}) {
     const ctx = this.ctx;
     ctx.fillStyle = color;
     for (const sx of [-1, 1]) {
-      const cx = sx * (EYE_X + 0.004);
-      const y = EYE_Y + 0.112 + dy + (sx > 0 ? side : 0);
-      const xi = cx - sx * 0.036; // bout intérieur
-      const xo = cx + sx * 0.036; // bout extérieur
+      const cx = sx * (EYE_X + 0.006);
+      const y = EYE_Y + shape.h / 2 + 0.03 + dy + (sx > 0 ? side : 0);
+      const xi = cx - sx * 0.04; // bout intérieur
+      const xo = cx + sx * 0.046; // bout extérieur
       const yi = y - tilt;
-      const yo = y + tilt * 0.35 - 0.004;
+      const yo = y + tilt * 0.35 - 0.007;
       ctx.beginPath();
-      ctx.moveTo(xi, yi + 0.011);
-      ctx.quadraticCurveTo(cx, y + arch + 0.011, xo, yo + 0.003);
-      ctx.quadraticCurveTo(cx, y + arch - 0.008, xi, yi - 0.01);
+      ctx.moveTo(xi, yi + 0.0065);
+      ctx.quadraticCurveTo(cx, y + arch + 0.0062, xo, yo + 0.0012);
+      ctx.quadraticCurveTo(cx, y + arch - 0.0042, xi, yi - 0.0055);
       ctx.closePath();
       ctx.fill();
       ctx.beginPath();
-      ctx.arc(xi, yi + 0.0005, 0.0105, 0, Math.PI * 2);
+      ctx.arc(xi, yi + 0.0005, 0.006, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -195,14 +205,20 @@ export class FaceAtlas {
     const h = shape.h * scale;
     const cut = Math.max(cutTop, shape.lid);
     const lidY = EYE_Y + h / 2 - h * cut;
-    // contour : haut un peu aplati, bas bien rond
+    // coins : l'intérieur un peu bas, l'extérieur relevé (amande)
+    const xi = cx - (sx * w) / 2;
+    const yi = EYE_Y - h * 0.06;
+    const xo = cx + (sx * w) / 2;
+    const yo = EYE_Y + h * 0.1;
+    // contour : paupière du haut qui monte vite côté intérieur et redescend en pente douce vers le coin
+    // extérieur ; bas plein, plus bas vers le milieu
     const outline = () => {
       ctx.beginPath();
-      ctx.moveTo(cx - w / 2, EYE_Y + h * 0.08);
-      ctx.bezierCurveTo(cx - w / 2, EYE_Y + h * 0.42, cx - w * 0.3, EYE_Y + h / 2, cx, EYE_Y + h / 2);
-      ctx.bezierCurveTo(cx + w * 0.3, EYE_Y + h / 2, cx + w / 2, EYE_Y + h * 0.42, cx + w / 2, EYE_Y + h * 0.08);
-      ctx.bezierCurveTo(cx + w / 2, EYE_Y - h * 0.36, cx + w * 0.28, EYE_Y - h / 2, cx, EYE_Y - h / 2);
-      ctx.bezierCurveTo(cx - w * 0.28, EYE_Y - h / 2, cx - w / 2, EYE_Y - h * 0.36, cx - w / 2, EYE_Y + h * 0.08);
+      ctx.moveTo(xi, yi);
+      ctx.bezierCurveTo(xi + sx * w * 0.04, EYE_Y + h * 0.42, cx - sx * w * 0.2, EYE_Y + h / 2, cx + sx * w * 0.06, EYE_Y + h / 2);
+      ctx.bezierCurveTo(cx + sx * w * 0.32, EYE_Y + h / 2, xo - sx * w * 0.04, EYE_Y + h * 0.36, xo, yo);
+      ctx.bezierCurveTo(xo - sx * w * 0.02, EYE_Y - h * 0.3, cx + sx * w * 0.24, EYE_Y - h / 2, cx, EYE_Y - h / 2);
+      ctx.bezierCurveTo(cx - sx * w * 0.3, EYE_Y - h / 2, xi + sx * w * 0.02, EYE_Y - h * 0.36, xi, yi);
       ctx.closePath();
     };
     const underLid = () => {
@@ -216,7 +232,8 @@ export class FaceAtlas {
     if (cut > 0) underLid();
     ctx.fillStyle = SCLERA;
     ctx.fillRect(cx - w, EYE_Y - h, w * 2, h * 2);
-    // iris : presque toute la hauteur de l'œil, un liseré de blanc sur les côtés ; le regard le déplace
+    // iris : presque toute la hauteur de l'œil, le haut sous la paupière, un croissant de blanc dessous et
+    // un liseré sur les côtés ; le regard le déplace
     const irx = w * IRIS.rx * iris;
     const iry = h * IRIS.ry * iris;
     const ix = cx + look[0] * (w / 2 - irx) * 0.9;
@@ -229,49 +246,32 @@ export class FaceAtlas {
     ctx.beginPath();
     ctx.ellipse(ix, iy, irx, iry, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(61, 48, 73, 0.55)';
-    ctx.lineWidth = 0.004;
-    ctx.stroke();
     // pupille d'encre
     ctx.fillStyle = INK;
     ctx.beginPath();
-    ctx.ellipse(ix, iy + iry * 0.04, irx * 0.46, iry * 0.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(ix, iy + iry * 0.06, irx * 0.42, iry * 0.44, 0, 0, Math.PI * 2);
     ctx.fill();
-    // deux reflets : un grand en haut, côté extérieur ; un petit en bas, côté intérieur
+    // un seul reflet, en haut côté extérieur
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.ellipse(ix + sx * irx * 0.32, iy + iry * 0.36, irx * 0.34, iry * 0.28, sx * 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(ix - sx * irx * 0.36, iy - iry * 0.46, irx * 0.14, iry * 0.12, 0, 0, Math.PI * 2);
+    ctx.ellipse(ix + sx * irx * 0.34, iy + iry * 0.36, irx * 0.28, iry * 0.2, sx * 0.4, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
-    // bas de l'œil : trait fin et léger (pas de cils)
-    ctx.save();
-    underLid();
-    ctx.strokeStyle = 'rgba(61, 48, 73, 0.45)';
-    ctx.lineWidth = 0.0035;
-    ctx.beginPath();
-    ctx.moveTo(cx - w * 0.36, EYE_Y - h * 0.4);
-    ctx.quadraticCurveTo(cx, EYE_Y - h * 0.56, cx + w * 0.36, EYE_Y - h * 0.4);
-    ctx.stroke();
-    ctx.restore();
-    // trait de cils épais en haut, simple, qui déborde à peine vers l'extérieur
+    // trait de cils net en haut, qui suit la paupière et dépasse à peine le coin extérieur
     ctx.strokeStyle = INK;
-    ctx.lineWidth = 0.014;
+    ctx.lineWidth = 0.011;
     ctx.beginPath();
     if (cut > 0) {
       const t = Math.min(1, Math.abs(lidY - EYE_Y) / (h / 2));
-      const hw = (w / 2) * Math.sqrt(1 - t * t) * 1.15;
-      ctx.moveTo(cx - sx * hw, lidY - 0.004);
-      ctx.quadraticCurveTo(cx, lidY + 0.009, cx + sx * hw * 1.1, lidY);
-      ctx.stroke();
+      const hw = (w / 2) * Math.sqrt(1 - t * t) * 1.12;
+      ctx.moveTo(cx - sx * hw, lidY - 0.003);
+      ctx.quadraticCurveTo(cx, lidY + 0.006, cx + sx * hw * 1.08, lidY + 0.001);
     } else {
-      ctx.moveTo(cx - sx * w * 0.5, EYE_Y + h * 0.14);
-      ctx.bezierCurveTo(cx - sx * w * 0.46, EYE_Y + h * 0.44, cx - sx * w * 0.22, EYE_Y + h * 0.53, cx, EYE_Y + h * 0.52);
-      ctx.bezierCurveTo(cx + sx * w * 0.26, EYE_Y + h * 0.51, cx + sx * w * 0.48, EYE_Y + h * 0.42, cx + sx * w * 0.54, EYE_Y + h * 0.2);
-      ctx.stroke();
+      ctx.moveTo(xi + sx * w * 0.02, yi + h * 0.12);
+      ctx.bezierCurveTo(xi + sx * w * 0.06, EYE_Y + h * 0.44, cx - sx * w * 0.2, EYE_Y + h * 0.52, cx + sx * w * 0.06, EYE_Y + h * 0.52);
+      ctx.bezierCurveTo(cx + sx * w * 0.32, EYE_Y + h * 0.52, xo - sx * w * 0.02, EYE_Y + h * 0.36, xo + sx * w * 0.06, yo + h * 0.04);
     }
+    ctx.stroke();
   }
 
   drawEyes(name, shape, brow) {
@@ -286,65 +286,76 @@ export class FaceAtlas {
       else if (name === 'effort') this.openEye(cx, sx, shape, { cutTop: 0.42, scale: 0.94 });
       else if (name === 'pensif') this.openEye(cx, sx, shape, { cutTop: 0.06, look: [0.85, 0.85] });
       else if (name === 'fermes') {
-        // paupières closes : arc doux vers le bas
+        // paupières closes : arc doux vers le bas, petite aile au coin extérieur
         ctx.strokeStyle = INK;
-        ctx.lineWidth = 0.013;
+        ctx.lineWidth = 0.011;
         ctx.beginPath();
-        ctx.moveTo(cx - w * 0.55, EYE_Y - 0.006);
-        ctx.quadraticCurveTo(cx, EYE_Y - 0.034, cx + w * 0.55, EYE_Y - 0.006);
+        ctx.moveTo(cx - sx * w * 0.55, EYE_Y - 0.008);
+        ctx.quadraticCurveTo(cx, EYE_Y - 0.03, cx + sx * w * 0.58, EYE_Y - 0.002);
         ctx.stroke();
       } else if (name === 'joie') {
         // yeux fermés de joie, en arcs (^ ^)
         ctx.strokeStyle = INK;
-        ctx.lineWidth = 0.015;
+        ctx.lineWidth = 0.012;
         ctx.beginPath();
-        ctx.moveTo(cx - w * 0.58, EYE_Y - 0.02);
-        ctx.quadraticCurveTo(cx, EYE_Y + 0.052, cx + w * 0.58, EYE_Y - 0.02);
+        ctx.moveTo(cx - w * 0.58, EYE_Y - 0.016);
+        ctx.quadraticCurveTo(cx, EYE_Y + 0.042, cx + w * 0.58, EYE_Y - 0.016);
         ctx.stroke();
       }
     }
-    if (name === 'grands') this.brows(brow, { dy: 0.024, arch: 0.016 });
-    else if (name === 'concentre') this.brows(brow, { dy: -0.022, tilt: 0.026, arch: -0.002 });
-    else if (name === 'effort') this.brows(brow, { dy: -0.03, tilt: 0.034, arch: -0.004 });
-    else if (name === 'micl') this.brows(brow, { dy: -0.006, tilt: -0.008, arch: 0.004 });
-    else if (name === 'fermes') this.brows(brow, { dy: -0.004, arch: 0.006 });
-    else if (name === 'joie') this.brows(brow, { dy: 0.016, arch: 0.014 });
-    else if (name === 'pensif') this.brows(brow, { dy: 0.006, tilt: -0.006, arch: 0.01, side: 0.012 });
-    else this.brows(brow);
-    this.cheeks(name === 'joie' ? 0.68 : 0.5);
+    const B = (o) => this.brows(brow, shape, o);
+    if (name === 'grands') B({ dy: 0.02, arch: 0.014 });
+    else if (name === 'concentre') B({ dy: -0.014, tilt: 0.02, arch: -0.002 });
+    else if (name === 'effort') B({ dy: -0.02, tilt: 0.026, arch: -0.004 });
+    else if (name === 'micl') B({ dy: -0.006, tilt: -0.006, arch: 0.004 });
+    else if (name === 'fermes') B({ dy: -0.004, arch: 0.006 });
+    else if (name === 'joie') B({ dy: 0.014, arch: 0.012 });
+    else if (name === 'pensif') B({ dy: 0.006, tilt: -0.006, arch: 0.01, side: 0.012 });
+    else B();
+    this.cheeks(name === 'joie' ? 0.45 : 0.3);
   }
 
   drawMouth(name) {
     const ctx = this.ctx;
-    // nez minuscule : un point rosé
-    ctx.fillStyle = 'rgba(222, 128, 116, 0.5)';
-    ctx.beginPath();
-    ctx.ellipse(0, NOSE_Y, 0.008, 0.0055, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // visage sculpté : le nez est modelé, son ombre suffit (aucun trait peint)
+    if (!NEZ_MODELE) {
+      // nez minuscule : un point rosé
+      ctx.fillStyle = 'rgba(222, 128, 116, 0.5)';
+      ctx.beginPath();
+      ctx.ellipse(0, NOSE_Y, 0.008, 0.0055, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.strokeStyle = MOUTH_INK;
     ctx.fillStyle = MOUTH_INK;
     const y = MOUTH_Y;
     if (name === 'sourire' || name === 'petite' || name === 'grandSourire') {
-      const half = name === 'grandSourire' ? 0.03 : name === 'petite' ? 0.012 : 0.019;
-      const depth = name === 'grandSourire' ? 0.03 : name === 'petite' ? 0.01 : 0.017;
-      ctx.lineWidth = 0.009;
+      // sourire dessiné : trait plus long et plus fin, coins un peu relevés, lèvre du bas suggérée
+      const half = name === 'grandSourire' ? 0.03 : name === 'petite' ? 0.013 : 0.021;
+      const depth = name === 'grandSourire' ? 0.024 : name === 'petite' ? 0.008 : 0.012;
+      ctx.lineWidth = 0.0075;
       ctx.beginPath();
-      ctx.moveTo(-half, y + 0.004);
-      ctx.quadraticCurveTo(0, y - depth, half, y + 0.004);
+      ctx.moveTo(-half, y + 0.005);
+      ctx.quadraticCurveTo(0, y - depth, half, y + 0.005);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(123, 79, 94, 0.3)';
+      ctx.lineWidth = 0.004;
+      ctx.beginPath();
+      ctx.moveTo(-half * 0.4, y - depth * 0.6 - 0.012);
+      ctx.quadraticCurveTo(0, y - depth * 0.6 - 0.016, half * 0.4, y - depth * 0.6 - 0.012);
       ctx.stroke();
     } else if (name === 'ouverte') {
-      // grande bouche ouverte de joie : haut presque droit, bas bien rond, langue rose au fond
+      // bouche ouverte de joie : haut presque droit, bas bien rond, langue rose au fond
       ctx.beginPath();
-      ctx.moveTo(-0.04, y + 0.01);
-      ctx.quadraticCurveTo(0, y + 0.016, 0.04, y + 0.01);
-      ctx.bezierCurveTo(0.038, y - 0.04, 0.016, y - 0.066, 0, y - 0.066);
-      ctx.bezierCurveTo(-0.016, y - 0.066, -0.038, y - 0.04, -0.04, y + 0.01);
+      ctx.moveTo(-0.034, y + 0.008);
+      ctx.quadraticCurveTo(0, y + 0.014, 0.034, y + 0.008);
+      ctx.bezierCurveTo(0.032, y - 0.034, 0.014, y - 0.056, 0, y - 0.056);
+      ctx.bezierCurveTo(-0.014, y - 0.056, -0.032, y - 0.034, -0.034, y + 0.008);
       ctx.fill();
       ctx.save();
       ctx.clip();
       ctx.fillStyle = '#ef8f8c';
       ctx.beginPath();
-      ctx.ellipse(0.003, y - 0.058, 0.024, 0.017, 0, 0, Math.PI * 2);
+      ctx.ellipse(0.003, y - 0.05, 0.02, 0.014, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     } else if (name === 'o') {

@@ -8,27 +8,40 @@ Dossier `src/models/arbres/arbre-pompon/` · Arbres · modèle vedette
 
 ## DA retenue
 
-- **Tronc** : un seul tube lisse (`troncRameux` de `kit/vegetal.js`), courbe, évasé au pied (1,5 × r0 sous
-  le sol), effilé de 0,24 à 0,15 m jusqu'à la fourche à 1,9 m ; trois racines rondes qui naissent bas
-  dans le pied et s'enfoncent à 2 à 2,6 × r0 ; quatre branches maîtresses, une par masse, qui partent
-  10 cm sous la fourche et s'arrêtent dans la masse (on les voit dans les trouées).
-- **Houppier** : quatre masses franches (`couronneMasses`, sans touffes satellites), trois autour à 2,15
-  à 2,3 m et une au sommet à 3,25 m, rayons 1,0 à 1,05 m, écartées pour laisser des trouées de ciel ;
-  verts `#8fd08a`, `#86c884` (masse à l'ombre), `#a6dc92` (sommet).
-- **Enveloppe** calée sur la forme lointaine (`farveg.js`, `SHAPES.arbre_pompon` : 1,25 à 4,1 m de haut,
-  1,5 m de rayon) : pas de saut au changement de LOD ; ombre portée : une couronne de 1,5 m.
-- 374 triangles (210 avant).
+- **Espèce** : la recette de l'original telle quelle (graine 42), ramenée à 4,7 m ; feuilles ovales, vert
+  sombre au cœur, vert-jaune clair en périphérie (`TEINTE`).
+- **Arbre fractal de l'utilisateur** (portage de « Jeux vidéo aprentissage/src/arbre.js », `kit/arbreFractal.js`,
+  identique feuille par feuille à l'original pour la même recette) : une branche est une chaîne de segments
+  courbés qui porte trois branches filles ; six générations, tronc évasé au pied (contrefort), feuilles sur
+  les deux dernières générations, teinte des feuilles par exposition (cœur sombre et froid, périphérie
+  claire).
+- **Deux versions**, bascule par instance dans les shaders (`LOD_ARBRES`, `world/islands/arbresProches.js`) :
+  version proche à moins d'environ 30 m du joueur (au plus 40 arbres par espèce) : une feuille de l'original
+  sur huit (2 552), agrandie, en carte pliée sur la nervure (atlas peint `feuillesAtlas`), bois jusqu'à la
+  2e génération, écorce peinte (`ecorceTexture`), translucidité vers le soleil et liseré ; version forêt
+  au-delà : bois jusqu'à la 4e génération, neuf touffes peintes (une par sous-arbre), normales tirées vers
+  l'enveloppe du houppier (la couronne s'éclaire d'un bloc).
+- **Vent** : la ramure se balance (bois et feuilles, même formule à l'attache), chaque feuille frémit, et
+  des feuilles se détachent des arbres proches et tombent en spirale (`arbresProches.js`, 160 feuilles).
+- **Tronc** (`troncFractal`) : celui de l'original grossi × 1,6 (les grosses branches de moins en moins,
+  les rameaux restent fins), cinq contreforts au pied, creusés entre eux, qui se prolongent en racines
+  basses et rondes plongeant dans le sol ; de près, fût à 16 côtés cannelé (peau de vieux tronc).
+- **Forme lointaine** (`farveg.js`) : l'enveloppe du houppier (`couronneFractal`) ; ombre portée : trois
+  lobes, un par tiers de la couronne (`lobesCouronne`).
+- 498 triangles en version forêt (374 avant) ; version proche : 2 676 triangles de bois et 10 208
+  de feuilles.
 
 Règles communes : `docs/DA.md`.
 
 ## Écarts restants
 
-- **Physique / forme** en échec : encombrement 0,55 m pour un pied visible de 0,33 m (68 % d'écart, 117 %
-  avant). Ramener l'encombrement vers 0,40 m (`physique.js`) change le placement des arbres dans tout le
-  monde : décision de l'utilisateur.
-- Coût en forêt : la Forêt des souvenirs passe de 4,17 à 4,94 M triangles par image (5 752 pompons
-  dessinés) ; version allégée au loin prévue (lot D du chantier arbres).
-- Même forme pour tous les individus (taille et orientation seules) ; variantes prévues (lot D).
+- **Gabarit** : le registre (`releves.gen.js`) garde la taille de l'ancien modèle ; à régénérer
+  (`npm run modeles:releve`), non lancé car le fichier porte du travail non commité de l'utilisateur.
+- **Physique / forme** en échec : l'encombrement (`physique.js`) dépasse le pied visible du tronc de
+  l'arbre fractal ; le ramener change le placement des arbres dans tout le monde : décision de
+  l'utilisateur.
+- Empreinte changée (non écrite : `empreintes.json` porte le travail non commité de l'utilisateur).
+- Tous les individus d'une espèce ont la même ramure (taille et orientation seules changent).
 
 ## Historique
 
@@ -39,3 +52,8 @@ Règles communes : `docs/DA.md`.
   `captures/arbres-lotB-planche.png`.
 - 21/11/2026 : lot C (aide partagée) : branches effilées en pointe et plus avant dans les masses (plus de
   bout coupé) ; toujours 374 triangles. Planche `captures/arbres-c2-pompon-6vues.png`.
+- 22/11/2026 : remplacé par l'arbre fractal de l'utilisateur (version forêt, version proche aux feuilles
+  une à une, écorce et feuilles peintes, vent, feuilles qui tombent). Captures `captures/fractal-a3-especes.png`,
+  `captures/fractal-b2-*`.
+- 22/11/2026 : troncs plus épais et sculptés (contreforts, racines, cannelures de près), ombre portée en
+  trois lobes ; captures `captures/arbres-d2-tronc-*`, `captures/ombres-apres2-*`.

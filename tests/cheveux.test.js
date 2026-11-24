@@ -29,11 +29,11 @@ describe('coupe unique en pics', () => {
 
 describe('physique des pics', async () => {
   const THREE = await import('three');
-  const { RESSORT, hairSpring, stepHair, hairAngles } = await import('../src/entities/character/cheveux.js');
-  const { MECHES, ZONES, FORMES, mechePoint, CAP, NUQUE } = await import('../src/models/personnage/coupes/index.js');
+  const { RESSORT, GROUPES, hairSpring, stepHair, hairAngles } = await import('../src/entities/character/cheveux.js');
+  const { MECHES, ZONES, FORMES, mechePoint, largeur, CAP, NUQUE } = await import('../src/models/personnage/coupes/index.js');
   const { FACE } = await import('../src/entities/character/face.js');
   const { HC, B, ID, GABARIT } = await import('../src/models/personnage/index.js');
-  const { a: A, b: Bd, c: C } = HAIR_STYLES.pics.dyn;
+  const { a: A, b: Bd, c: C, d: Dd } = HAIR_STYLES.pics.dyn;
   // rayon réduit d'un point dans l'ellipsoïde du crâne, de la calotte et de la masse de la nuque (< 1 : dedans)
   // crâne du gabarit : ellipsoïde déformé sous la ligne des yeux (tete.js, deformeTete : joues, mâchoire,
   // devant aplati, nuque qui rentre) ; on ramène le point dans la sphère d'origine
@@ -64,21 +64,28 @@ describe('physique des pics', async () => {
     ['dessus', HAIR_STYLES.pics.a, A, [...MECHES.dessus, ...MECHES.epi]],
     ['nuque', HAIR_STYLES.pics.b, Bd, MECHES.nuque],
     ['cotes', HAIR_STYLES.pics.c, C, MECHES.cotes],
+    ['frange', HAIR_STYLES.pics.d, Dd, MECHES.frange],
   ];
 
   it('gardent leurs pointes hors de la tête, des oreilles et de la calotte, même aux butées', () => {
     const e = new THREE.Euler();
     const pire = { crane: Infinity, oreille: Infinity, calotte: Infinity };
-    for (const [, pivot, d, list] of groupes) {
+    // frange : couchée sur le front, ses pointes y touchent presque au repos (1,005) ; elle ne doit jamais y
+    // entrer (> 1), roulis permis en proportion du soulèvement, sans vrille (cheveux.js, hairAngles)
+    let frange = Infinity;
+    for (const [nom, pivot, d, list] of groupes) {
       const P = new THREE.Vector3(...pivot);
-      for (const x of [d.x[0], 0, d.x[1]]) for (const y of [-RESSORT.vrilleMax, 0, RESSORT.vrilleMax]) for (const z of [-d.z, 0, d.z]) {
+      const vm = nom === 'frange' ? GROUPES.d.vrilleMax : RESSORT.vrilleMax;
+      for (const x of [d.x[0], d.x[0] / 2, 0, d.x[1]]) for (const y of [-vm, 0, vm]) for (const zz of [-d.z, 0, d.z]) {
+        const z = hairAngles({ x, y, z: zz }, d, nom === 'frange' ? GROUPES.d : RESSORT).z;
         e.set(x, y, z);
         const bouge = (q) => q.sub(P).applyEuler(e).add(P);
         for (const s of list) {
           // pointe et point aux deux tiers de la mèche
           for (const t of [1, 0.66]) {
             const q = bouge(mechePoint(s, t));
-            pire.crane = Math.min(pire.crane, crane(q));
+            if (nom === 'frange') frange = Math.min(frange, crane(q));
+            else pire.crane = Math.min(pire.crane, crane(q));
             pire.oreille = Math.min(pire.oreille, oreille(q));
           }
           const tip = bouge(mechePoint(s, 1));
@@ -86,8 +93,9 @@ describe('physique des pics', async () => {
         }
       }
     }
-    console.info(`pics aux butées : rayon réduit mini ${pire.crane.toFixed(3)} (crâne), ${pire.oreille.toFixed(3)} (oreilles), ${pire.calotte.toFixed(3)} (calotte)`);
+    console.info(`pics aux butées : rayon réduit mini ${pire.crane.toFixed(3)} (crâne), ${frange.toFixed(3)} (frange sur le front), ${pire.oreille.toFixed(3)} (oreilles), ${pire.calotte.toFixed(3)} (calotte)`);
     expect(pire.crane).toBeGreaterThan(1.05);
+    expect(frange).toBeGreaterThan(1);
     expect(pire.oreille).toBeGreaterThan(1.05);
     expect(pire.calotte).toBeGreaterThan(1.02);
   });
@@ -105,11 +113,8 @@ describe('physique des pics', async () => {
     // deux mèches qui se touchent (axes à moins de 1,5 fois la somme des rayons) : identifiants différents
     const ts = [0.25, 0.4, 0.55, 0.7, 0.85, 1];
     const pts = toutes.map(({ s }) => {
-      const { profile, flat } = FORMES[s[9]];
-      return ts.map((t) => {
-        const k = Math.min(2, Math.floor(t * 3));
-        return { p: mechePoint(s, t), r: (profile[k] + (profile[k + 1] - profile[k]) * (t * 3 - k)) * s[3] * ((1 + flat) / 2) };
-      });
+      const { flat } = FORMES[s[9]];
+      return ts.map((t) => ({ p: mechePoint(s, t), r: largeur(s[9], t) * s[3] * ((1 + flat) / 2) }));
     });
     let contacts = 0;
     for (let i = 0; i < toutes.length; i++) for (let j = i + 1; j < toutes.length; j++) {
@@ -186,6 +191,29 @@ describe('physique des pics', async () => {
     for (const fps of [30, 60, 144]) expect(Math.abs(rejoue(elan, 0.5, fps).x - ref.x)).toBeLessThan(0.02);
   });
 
+  it('jupe et robe : traînent derrière à la course, se soulèvent au saut, restent dans leurs butées', async () => {
+    const { JUPE } = await import('../src/entities/character/cheveux.js');
+    const { DYN_JUPE } = await import('../src/models/personnage/index.js');
+    const pas = (f, n = 90) => {
+      const s = hairSpring();
+      let pire = 0;
+      for (let i = 0; i < n; i++) {
+        stepHair(s, DYN_JUPE, typeof f === 'function' ? f(i / 60) : f, 1 / 60, 0, JUPE);
+        const a = hairAngles(s, DYN_JUPE, JUPE);
+        pire = Math.max(pire, Math.abs(s.x - a.x));
+      }
+      expect(pire).toBeLessThan(0.05);
+      return hairAngles(s, DYN_JUPE, JUPE);
+    };
+    // course à 5 m/s dans une brise de face : l'ourlet part en arrière
+    expect(pas([0, 0, -9 * JUPE.vent]).x).toBeGreaterThan(0.05);
+    // saut (l'air monte, 0,4 s) : la cloche se soulève, l'ourlet s'écarte des jambes sans dépasser la butée
+    const saut = pas([0, 9.8 * JUPE.vent, -3 * JUPE.vent], 24);
+    expect(saut.x).toBeLessThanOrEqual(DYN_JUPE.x[1] + 1e-9);
+    // roulade : bornée
+    pas((t) => [60 * Math.cos(t * 10.5), 60 * Math.sin(t * 10.5), 0], 60);
+  });
+
   afterEach(() => vi.restoreAllMocks());
 
   it('restent calmes et bornées sur un personnage immobile qu’on fait tourner (miroir, aperçu de l’inventaire)', async () => {
@@ -195,9 +223,13 @@ describe('physique des pics', async () => {
     vi.spyOn(Math, 'random').mockImplementation(() => (graine = (graine * 16807) % 2147483647) / 2147483647);
     let ms = 0;
     vi.spyOn(performance, 'now').mockImplementation(() => ms);
+    // sans vent du monde : on juge le tour sur place, le vent a son propre test
+    const { U } = await import('../src/core/globals.js');
+    const force = U.uWindStrength.value;
+    U.uWindStrength.value = 0;
     const { Character } = await import('../src/entities/character/Character.js');
     const c = new Character(defaultAvatar());
-    const os = [[B.HAIR_A, A, 'hairA'], [B.HAIR_B, Bd, 'hairB'], [B.HAIR_C, C, 'hairC']];
+    const os = [[B.HAIR_A, A, 'hairA'], [B.HAIR_B, Bd, 'hairB'], [B.HAIR_C, C, 'hairC'], [B.HAIR_D, Dd, 'hairD']];
     for (let i = 0; i < 120; i++) {
       c.root.rotation.y = i < 60 ? i * 0.1 : 6; // glissé rapide (6 rad/s), puis lâché
       ms += 1000 / 60;
@@ -215,7 +247,37 @@ describe('physique des pics', async () => {
     }
     const residu = os.reduce((m, [, , k]) => m + Math.abs(c.clothSprings[k].x), 0);
     console.info(`résidu après le tour : ${residu.toFixed(4)} rad`);
+    U.uWindStrength.value = force;
     expect(Math.abs(c.clothSprings.hairA.x) + Math.abs(c.clothSprings.hairB.x)).toBeLessThan(0.03);
     expect(Math.abs(c.clothSprings.hairC.x)).toBeLessThan(0.03);
+    expect(Math.abs(c.clothSprings.hairD.x)).toBeLessThan(0.03);
+  });
+
+  it('prennent le vent, chaque groupe à sa façon : épi raide, nuque lourde, frange qui part soulevée', () => {
+    // brise de côté de 4 m/s (vers +x), poussée du vent de chaque groupe, 2 s à 60 images par seconde
+    const pas = (d, R, f) => {
+      const t = hairSpring();
+      for (let i = 0; i < 120; i++) stepHair(t, d, f, 1 / 60, 0, R);
+      return hairAngles(t, d, R);
+    };
+    const part = {};
+    for (const [g, d] of [['a', A], ['b', Bd], ['c', C]]) {
+      const a = pas(d, GROUPES[g], [4 * GROUPES[g].vent, 0, 0]);
+      const zs = Array.isArray(d.z) ? d.z : [-d.z, d.z];
+      expect(a.z).toBeGreaterThanOrEqual(zs[0] - 1e-9);
+      expect(a.z).toBeLessThanOrEqual(zs[1] + 1e-9);
+      part[g] = Math.abs(a.z) / zs[1];
+    }
+    console.info(`roulis à 4 m/s de côté, en part de la butée : ${Object.entries(part).map(([g, v]) => `${g} ${v.toFixed(2)}`).join(', ')}`);
+    expect(part.a).toBeGreaterThan(0.2);
+    expect(part.b).toBeLessThan(part.a);
+    // frange : couchée, elle ne glisse pas de côté ; soulevée (l'air monte), elle part sous le vent
+    const D = GROUPES.d;
+    expect(Math.abs(pas(Dd, D, [4 * D.vent, 0, 0]).z)).toBeLessThan(1e-9);
+    const leve = pas(Dd, D, [4 * D.vent, 6 * D.vent, 0]);
+    expect(leve.x).toBeLessThan(-0.05);
+    expect(Math.abs(leve.z)).toBeGreaterThan(0.02);
+    // vent de face : elle ne se plaque jamais contre le front (butée 0)
+    expect(pas(Dd, D, [0, 0, -6 * D.vent]).x).toBeLessThanOrEqual(1e-9);
   });
 });

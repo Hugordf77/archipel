@@ -1,117 +1,122 @@
-# Graph Report - src  (2026-11-21)
+# Graph Report - src  (2026-11-23)
 
 ## Corpus Check
-- 456 files · ~488,239 words
+- 465 files · ~524,848 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3256 nodes · 8726 edges · 202 communities (192 shown, 10 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 173 edges (avg confidence: 0.77)
+- 3437 nodes · 9131 edges · 208 communities (193 shown, 15 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 184 edges (avg confidence: 0.77)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `31dc49dc`
+- Built from commit: `12871655`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- models/lieux.js
-- motor.js
 - .add
-- etat.js
+- motor.js
+- Builder
 - fiches.js
-- props.js
-- navigation.js
-- mulberry32
+- pose.js
 - Game
+- etat.js
 - AudioEngine
-- navire-coque/index.js
+- mulberry32
 - moulin-tour/index.js
 - ruines-alternative/index.js
-- Character.js
-- inventoryScreen.js
-- pose.js
 - GamepadInput
-- globals.js
-- Gather.js
-- heightAt
-- surface.js
-- Game.js
-- coupes/chibi.js
-- cerf/index.js
 - corps/index.js
+- heightAt
+- gen/forme.js
+- avatar.js
+- cerf/index.js
+- globals.js
+- herbe.js
+- Game.js
+- nextId
+- navire-machinerie/index.js
 - navire-fort/index.js
 - HerbeSystem.js
-- groundAt
+- inventoryScreen.js
 - navire-maison/index.js
-- state.js
-- gen/forme.js
-- mapPanel.js
-- ciel/relief.js
-- avatar.js
-- toonMaterial
-- IslandManager
-- vache/index.js
-- navire-moulin/index.js
-- .x
-- Pipeline.js
-- LocoFeedback
-- gen/terrain.js
-- archipel.js
-- rig.js
-- builder.js
-- navire-mat/index.js
-- navire-machinerie/index.js
-- flowers.js
-- coupes/index.js
-- homeFauna.js
-- physique.gen.js
-- herbe.js
+- Character.js
 - h
-- mouton/index.js
-- IslandManager.js
-- Sailing
+- Player.js
+- Sailing.js
+- props.js
+- navire-coque/index.js
+- IslandManager
+- archipel.js
+- Gather
+- flowers.js
+- surface.js
+- Gather.js
 - Character
-- gabarit.js
+- rig.js
+- vache/index.js
+- decor/index.js
+- Pipeline.js
+- face.js
+- builder.js
+- navire-moulin/index.js
+- IslandManager.js
+- navigation.js
+- ciel/relief.js
+- coupes/index.js
+- physique.gen.js
+- arche-basse/index.js
+- mouton/index.js
+- IlesCelestes.js
+- navire-tourelle/index.js
+- assemble.js
+- coupes/chibi.js
+- gen/terrain.js
+- groundAt
 - Inventory
 - daycycle.js
-- dirigeable/index.js
+- toonMaterial
 - formes.js
-- .push
 - CameraRig
+- vache
+- .push
 - IslandFauna
 - registry.js
-- .queueLod1
-- nextId
-- accessoires.js
-- mer/index.js
-- vache
-- Interactions
+- settingsPanel.js
+- homeFauna.js
+- archipel.js
+- Decor
+- dirigeable/index.js
+- .push
+- arbresProches.js
 - NavireVolant.js
+- Input
+- navire-escalier/physique.js
 - FaceAtlas
 - Coque et berceau du navire-forteresse — BAT-014
 - Escalier et passerelle du navire-forteresse — BAT-019
-- voute.js
 - Moulin-tour du plateau — BAT-013
 - Maison de pont du navire-forteresse — BAT-015
 - Mât et voile du navire-forteresse — BAT-018
 - Tour-moulin centrale du navire-forteresse — BAT-017
 - Tourelle du navire-forteresse — BAT-016
 - Nef effondrée du plateau — MON-014
+- .buildKind
+- .setTileItemVisible
+- .constructor
 - Habillage de forteresse du navire — BAT-020
 - Hélices et encombrement du navire — BAT-021
-- partModel
-- textures.js
-- Weather
-- Surface
+- Decor
+- season.js
 - Cerf — ANI-004
 - Dirigeable — NAV-012
 - Moulin à vent — BAT-004
-- moulin/index.js
 - Arche basse — MON-011
 - Cercle de pierres — MON-004
 - Menhir — MON-009
 - Muret effondré — MON-010
+- main.js
 - Abeille — ANI-018
 - Grand albatros (monture) — ANI-028
 - Canard — ANI-014
@@ -211,823 +216,827 @@
 - Blocs — ROC-001 à ROC-002
 - Bois — ROC-007 à ROC-010
 - Mineraux — ROC-003 à ROC-006
-- noise.js
 - budgets.js
-- Grid
 - GRADE_KEYS
+- weather.js
+- hibou/index.js
 
 ## God Nodes (most connected - your core abstractions)
 1. `fiche()` - 117 edges
-2. `G` - 117 edges
-3. `lire()` - 116 edges
-4. `Builder` - 96 edges
+2. `lire()` - 116 edges
+3. `G` - 116 edges
+4. `Builder` - 92 edges
 5. `nextId()` - 70 edges
-6. `Game` - 61 edges
-7. `bx()` - 56 edges
-8. `AudioEngine` - 55 edges
+6. `Game` - 62 edges
+7. `AudioEngine` - 59 edges
+8. `bx()` - 56 edges
 9. `prisme()` - 54 edges
-10. `part()` - 49 edges
+10. `mulberry32()` - 53 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `buildRig()` --indirect_call--> `bone()`  [INFERRED]
   src/entities/locomotion/rig.js → src/models/kit/formes.js
+- `buildCliff()` --indirect_call--> `hz()`  [INFERRED]
+  src/world/home/details.js → src/audio/pianoTitre.js
 - `bilanZone()` --indirect_call--> `def()`  [INFERRED]
   src/production/completude.js → src/data/items.js
 - `buildAlbatros()` --indirect_call--> `geo()`  [INFERRED]
   src/models/animaux/albatros/index.js → src/entities/locomotion/trunk.js
 - `mouton()` --indirect_call--> `geo()`  [INFERRED]
   src/models/animaux/mouton/index.js → src/entities/locomotion/trunk.js
-- `champsMaison()` --indirect_call--> `geo()`  [INFERRED]
-  src/render/grass.js → src/entities/locomotion/trunk.js
 
 ## Import Cycles
 - 3-file cycle: `src/entities/character/Character.js -> src/models/personnage/index.js -> src/models/personnage/corps/index.js -> src/entities/character/Character.js`
 - 3-file cycle: `src/entities/character/Character.js -> src/models/personnage/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
+- 4-file cycle: `src/entities/character/Character.js -> src/entities/character/echarpeTissu.js -> src/models/personnage/index.js -> src/models/personnage/corps/index.js -> src/entities/character/Character.js`
+- 4-file cycle: `src/entities/character/Character.js -> src/entities/character/echarpeTissu.js -> src/models/personnage/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
 - 4-file cycle: `src/entities/character/Character.js -> src/models/personnage/index.js -> src/models/personnage/corps/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
 - 4-file cycle: `src/entities/character/Character.js -> src/models/personnage/index.js -> src/models/personnage/crayon/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
+- 5-file cycle: `src/entities/character/Character.js -> src/entities/character/echarpeTissu.js -> src/models/personnage/index.js -> src/models/personnage/corps/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
+- 5-file cycle: `src/entities/character/Character.js -> src/entities/character/echarpeTissu.js -> src/models/personnage/index.js -> src/models/personnage/crayon/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
 - 5-file cycle: `src/entities/character/Character.js -> src/models/personnage/index.js -> src/models/personnage/corps/index.js -> src/models/personnage/corps/chibi.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
 
-## Communities (202 total, 10 thin omitted)
+## Communities (208 total, 15 thin omitted)
 
-### Community 0 - "models/lieux.js"
-Cohesion: 0.05
-Nodes (60): arbreGeant(), epave(), cabane(), etal(), maison(), moulinEau(), navireEscalier(), observatoire() (+52 more)
+### Community 0 - ".add"
+Cohesion: 0.07
+Nodes (69): arbreGeant(), barque(), barqueAmarree(), barqueEchouee(), ballonNavire(), dirigeable(), helice(), epave() (+61 more)
 
 ### Community 1 - "motor.js"
 Cohesion: 0.07
 Nodes (83): AIR, airStep(), approach(), BANKING, bankStep(), BASE, bonk(), bonkStep() (+75 more)
 
-### Community 2 - ".add"
-Cohesion: 0.08
-Nodes (61): arbreFruitier(), arbrePompon(), bambou(), bouleau(), arbreCerisier(), champiGeant(), pin(), pine() (+53 more)
+### Community 2 - "Builder"
+Cohesion: 0.07
+Nodes (56): bambou(), champiGeant(), pin(), pine(), pinGivre(), sapinNeige(), fougereArbo(), palmier() (+48 more)
 
-### Community 3 - "etat.js"
+### Community 3 - "fiches.js"
+Cohesion: 0.09
+Nodes (37): espece, espece, espece, espece, espece, BUTTERFLY_PIVOTS, butterflyGeometry(), CRAB_LEG_PIVOTS (+29 more)
+
+### Community 4 - "pose.js"
+Cohesion: 0.05
+Nodes (58): CLIMB_STATES, LocoFeedback, airPose(), ARM_DYN, _ax, bankAngle(), bankDrop(), blendGait() (+50 more)
+
+### Community 6 - "etat.js"
 Cohesion: 0.06
 Nodes (64): def(), itemId(), itemsDeZone(), MODELE, MODELE_CHECKLIST, MODELE_PAR_CLE, SECTIONS, actives (+56 more)
 
-### Community 4 - "fiches.js"
+### Community 7 - "AudioEngine"
+Cohesion: 0.15
+Nodes (10): BUGS, FISH, FLOWER_COLORS, itemIcon(), ITEMS, SHAPES, STATION_NAMES, TIERS (+2 more)
+
+### Community 8 - "mulberry32"
 Cohesion: 0.12
-Nodes (32): espece, espece, espece, espece, espece, espece, espece, espece (+24 more)
+Nodes (32): weighted(), bilinear(), distanceField(), slopeAt(), stableId(), sealLakes(), buildPaths(), costGrid() (+24 more)
 
-### Community 5 - "props.js"
-Cohesion: 0.08
-Nodes (42): grandArbre(), grandArbreClumps(), trunkAlong(), bibliotheque(), chaumiere(), echoppe(), chantier, couture (+34 more)
-
-### Community 6 - "navigation.js"
-Cohesion: 0.06
-Nodes (36): arriveIntent(), climbable(), stepMotor(), advanceGaitPhase(), strideLength(), angleDelta(), damp(), lerpAngle() (+28 more)
-
-### Community 7 - "mulberry32"
-Cohesion: 0.09
-Nodes (52): makeNoise(), mulberry32(), weighted(), densiteHerbeBiome(), BLOQUANTS, DECOR, FOREST_TREES, LOURDS (+44 more)
-
-### Community 8 - "Game"
-Cohesion: 0.08
-Nodes (4): Game, openCartographerPanel(), setBridge(), setWaterProvider()
-
-### Community 9 - "AudioEngine"
-Cohesion: 0.09
-Nodes (3): AudioEngine, midiToHz(), rand()
-
-### Community 10 - "navire-coque/index.js"
-Cohesion: 0.06
-Nodes (53): _a, autres(), _b, bloc(), CACHE, cadre(), chanfrein(), coinsBoite() (+45 more)
-
-### Community 11 - "moulin-tour/index.js"
+### Community 9 - "moulin-tour/index.js"
 Cohesion: 0.11
 Nodes (52): ailes(), angles(), ANNEXE, archivolte(), AVANCEE, barre(), CACHE, cadre() (+44 more)
 
-### Community 12 - "ruines-alternative/index.js"
+### Community 10 - "ruines-alternative/index.js"
 Cohesion: 0.09
 Nodes (51): _a, autres(), _b, baieOgivale(), bloc(), blocLibre(), chanfrein(), claveaux() (+43 more)
 
-### Community 13 - "Character.js"
-Cohesion: 0.07
-Nodes (39): ARM_BONES, BASE, buildDust(), CLOTH_POINT, _crown, damp(), FIDGETS, PuffPool (+31 more)
-
-### Community 14 - "inventoryScreen.js"
-Cohesion: 0.08
-Nodes (39): BUGS, FISH, FLOWER_COLORS, itemIcon(), ITEMS, SHAPES, STATION_NAMES, TIERS (+31 more)
-
-### Community 15 - "pose.js"
-Cohesion: 0.08
-Nodes (47): airPose(), ARM_DYN, _ax, bankAngle(), bankDrop(), blendGait(), bodyBank(), bonkPose() (+39 more)
-
-### Community 16 - "GamepadInput"
+### Community 11 - "GamepadInput"
 Cohesion: 0.08
 Nodes (13): _aim, BTN, center(), GamepadInput, identifyController(), PAD_DEFAULTS, padName(), pickFocus() (+5 more)
 
-### Community 17 - "globals.js"
-Cohesion: 0.10
-Nodes (23): ORIGIN, U, buildClumpGeometry(), buildShadowProxies(), rng(), buildLake(), buildClouds(), computeHorizonDip() (+15 more)
-
-### Community 18 - "Gather.js"
-Cohesion: 0.09
-Nodes (15): flowerItemFor(), HARVEST, rollBug(), rollDrops(), rollFish(), strikeTime(), TIER_NAMES, TOOL_NAMES (+7 more)
-
-### Community 19 - "heightAt"
-Cohesion: 0.12
-Nodes (37): parasolPlage(), transat(), blocked(), buildGrass(), champsMaison(), rng(), slopeAt(), smooth() (+29 more)
-
-### Community 20 - "surface.js"
-Cohesion: 0.09
-Nodes (35): BIOMES, buildFarVeg(), hex(), SHAPES, KIND_INDEX, KIND_RADIUS, KINDS, SMALL (+27 more)
-
-### Community 21 - "Game.js"
-Cohesion: 0.06
-Nodes (23): JOURS, MOIS, game, Input, MOVE, legacyHours(), damp(), Owl (+15 more)
-
-### Community 22 - "coupes/chibi.js"
-Cohesion: 0.07
-Nodes (35): CHAR_IDS, HAIR_COLORS, SKINS, FACE, SH, _h, B, box() (+27 more)
-
-### Community 23 - "cerf/index.js"
-Cohesion: 0.06
-Nodes (39): ANDOUILLERS, ARRIERE, AVANT, avec(), AXE_TETE, axis, C0, CC (+31 more)
-
-### Community 24 - "corps/index.js"
+### Community 12 - "corps/index.js"
 Cohesion: 0.10
 Nodes (37): COL, leafGeo(), angle(), AXE_Z, band(), BAVETTE, boule(), bourrelet() (+29 more)
 
-### Community 25 - "navire-fort/index.js"
-Cohesion: 0.13
-Nodes (33): demiPont(), pavois(), colonne(), CRETE, demiLargeur(), demiPont(), FOND, LARGEUR (+25 more)
+### Community 13 - "heightAt"
+Cohesion: 0.08
+Nodes (50): parasolPlage(), transat(), buildClumpGeometry(), buildShadowProxies(), rng(), blocked(), buildGrass(), champsMaison() (+42 more)
 
-### Community 26 - "HerbeSystem.js"
+### Community 14 - "gen/forme.js"
+Cohesion: 0.12
+Nodes (32): ZONE_BY_ID, alpine(), arrondir(), BIOME_INDEX, coastDist(), coastGrid(), COLLINES, collinesZone() (+24 more)
+
+### Community 15 - "avatar.js"
+Cohesion: 0.14
+Nodes (24): CLOTH_COLORS, CLOTH_NAMES, CUIR, EYES, HAIR_COLORS, PIECES, piecesOf(), SHOE_COLORS (+16 more)
+
+### Community 16 - "cerf/index.js"
+Cohesion: 0.06
+Nodes (41): ANDOUILLERS, ARRIERE, AVANT, avec(), AXE_TETE, axis, C0, CC (+33 more)
+
+### Community 17 - "globals.js"
+Cohesion: 0.08
+Nodes (17): _c, CIEL, CIEL_ON, _dir, fsCam, fsGeo, FSPass, _fwd (+9 more)
+
+### Community 18 - "herbe.js"
+Cohesion: 0.08
+Nodes (37): MURS, BIOMES, couleurRebond(), densiteHerbeBiome(), paletteHerbe(), PALETTES_HERBE, rgb(), BIOME_IDS (+29 more)
+
+### Community 19 - "Game.js"
+Cohesion: 0.14
+Nodes (17): CURL_COAT, CURL_COAT_LITE, EAR, EAR_IN, EAR_IN_LITE, EAR_LITE, espece, _up (+9 more)
+
+### Community 20 - "nextId"
+Cohesion: 0.10
+Nodes (29): attendre(), _avant, BAS, HAUT, MODIFS, RETOUR, Titre, titreAPasser() (+21 more)
+
+### Community 21 - "navire-machinerie/index.js"
+Cohesion: 0.15
+Nodes (29): barre(), loft(), rect(), ponts(), poupe(), rambarde(), chevalet(), escalier() (+21 more)
+
+### Community 22 - "navire-fort/index.js"
+Cohesion: 0.07
+Nodes (39): JOURS, MOIS, ORIGIN, Collectibles, KINDS, seeded(), nearbyStations(), Interactions (+31 more)
+
+### Community 23 - "HerbeSystem.js"
 Cohesion: 0.10
 Nodes (18): champDeSecours(), dataTexture(), HerbeSystem, NO_CUT, patchGeometry(), PRESET_ORDER, herbeMaterial(), bladesAt() (+10 more)
 
-### Community 27 - "groundAt"
+### Community 24 - "inventoryScreen.js"
+Cohesion: 0.11
+Nodes (32): actionsFor(), badgeOf(), byName(), CAT_LABEL, CAT_ORDER, clampCursor(), collator, entries() (+24 more)
+
+### Community 25 - "navire-maison/index.js"
 Cohesion: 0.12
-Nodes (9): uid(), AirRide, damp(), Decor, build(), buildAlbatros(), bridgeY(), groundAt() (+1 more)
+Nodes (38): BEAUPRE, demiPont(), pavois(), colonne(), CRETE, demiLargeur(), demiPont(), FOND (+30 more)
 
-### Community 28 - "navire-maison/index.js"
-Cohesion: 0.15
-Nodes (33): fenetre(), panX(), panZ(), pignonZ(), planche(), poser(), poteau(), prisme() (+25 more)
+### Community 26 - "Character.js"
+Cohesion: 0.08
+Nodes (17): CameraRig, damp(), lerpAngle(), wrapAngle(), cloudAtlas(), buildClouds(), computeHorizonDip(), preparerVoute() (+9 more)
 
-### Community 29 - "state.js"
-Cohesion: 0.11
-Nodes (28): CHANNEL_LABELS, CHANNELS, PENTA, exportSave(), loadSave(), openDB(), readImportFile(), writeSave() (+20 more)
-
-### Community 30 - "gen/forme.js"
-Cohesion: 0.13
-Nodes (30): ZONE_BY_ID, alpine(), arrondir(), BIOME_INDEX, coastDist(), coastGrid(), COLLINES, collinesZone() (+22 more)
-
-### Community 31 - "mapPanel.js"
-Cohesion: 0.11
-Nodes (25): KINDS, CARNET, fmtKm(), openLogbookPanel(), hex(), islandShape(), openMapPanel(), palOf() (+17 more)
-
-### Community 32 - "ciel/relief.js"
-Cohesion: 0.13
-Nodes (27): fbm(), _c, cascadeTexture(), IlesCelestes, _m, _p, _q, _s (+19 more)
-
-### Community 33 - "avatar.js"
-Cohesion: 0.12
-Nodes (28): CLOTH_COLORS, CLOTH_NAMES, CUIR, EYES, HAIRS, index(), pick(), piecesOf() (+20 more)
-
-### Community 34 - "toonMaterial"
-Cohesion: 0.14
-Nodes (20): _zero, Collectibles, seeded(), halo(), mesh(), assembleBuilder(), assembleCreature(), assembleKind() (+12 more)
-
-### Community 35 - "IslandManager"
-Cohesion: 0.11
-Nodes (5): kindModel(), composeItem(), IslandManager, islandsInRange(), setGroundProvider()
-
-### Community 36 - "vache/index.js"
-Cohesion: 0.07
-Nodes (30): ARRIERE, AVANT, AXE_TETE, axis, CC, CORPS, CR, EAR (+22 more)
-
-### Community 37 - "navire-moulin/index.js"
-Cohesion: 0.13
-Nodes (28): angles(), archivolte(), coque(), facesTronc(), octo(), panDeBois(), plaque(), segmentDisque() (+20 more)
-
-### Community 38 - ".x"
-Cohesion: 0.18
-Nodes (25): barre(), loft(), rect(), ponts(), poupe(), rambarde(), chevalet(), escalier() (+17 more)
-
-### Community 39 - "Pipeline.js"
+### Community 27 - "h"
 Cohesion: 0.10
-Nodes (11): CIEL, CIEL_ON, fsCam, fsGeo, FSPass, LUMIERE, LUMIERE_ON, makeRT() (+3 more)
+Nodes (4): h(), replay(), EcranTitre, UI
 
-### Community 40 - "LocoFeedback"
+### Community 28 - "Player.js"
+Cohesion: 0.14
+Nodes (25): exportSave(), loadSave(), openDB(), readImportFile(), writeSave(), createDefaultState(), dayKeyOf(), LEGACY_KEYS (+17 more)
+
+### Community 29 - "Sailing.js"
 Cohesion: 0.13
-Nodes (12): CLIMB_STATES, LocoFeedback, BASE_TUNING, bras(), cache, epauleX(), epauleY(), lateralAt() (+4 more)
+Nodes (13): damp(), idealTrim(), lerpAngle(), pointOfSail(), Sailing, smoothDamp(), BOAT_ORDER, BOATS (+5 more)
 
-### Community 41 - "gen/terrain.js"
+### Community 30 - "props.js"
 Cohesion: 0.15
-Nodes (20): hydraulic(), thermal(), MinHeap, accumulate(), carveRivers(), chaikin(), DI, DJ (+12 more)
+Nodes (21): grandArbre(), grandArbreClumps(), trunkAlong(), bibliotheque(), chaumiere(), echoppe(), ile(), PAL (+13 more)
 
-### Community 42 - "archipel.js"
+### Community 31 - "navire-coque/index.js"
+Cohesion: 0.06
+Nodes (52): _a, autres(), _b, bloc(), CACHE, chanfrein(), coinsBoite(), _d (+44 more)
+
+### Community 32 - "IslandManager"
 Cohesion: 0.12
-Nodes (18): hashString(), ARCHIPEL, CIEL_PX, ileM(), ILES_PX, m(), nearestZone(), ORIGINE (+10 more)
+Nodes (6): buildFallFoam(), buildRivers(), riverMaterial(), composeItem(), IslandManager, meshGeometry()
 
-### Community 43 - "rig.js"
+### Community 33 - "archipel.js"
+Cohesion: 0.32
+Nodes (6): AVENTURIER, AVENTURIER_DESSIN, CHIBI, OS_TETE, reduit(), versDessin()
+
+### Community 34 - "Gather"
 Cohesion: 0.09
-Nodes (25): applyJoints(), ARM, _ax, buildRig(), _c, _chain, clamp(), _d (+17 more)
+Nodes (14): flowerItemFor(), HARVEST, rollBug(), rollDrops(), rollFish(), strikeTime(), TIER_NAMES, TOOL_NAMES (+6 more)
+
+### Community 35 - "flowers.js"
+Cohesion: 0.12
+Nodes (21): chantier, couture, etabli, four, article(), decor(), arche, fontaine (+13 more)
+
+### Community 36 - "surface.js"
+Cohesion: 0.10
+Nodes (29): makeNoise(), bicubic(), cr(), smooth(), baseHeight(), BLOOM_RGB, buildDepthWindow(), buildLOD1() (+21 more)
+
+### Community 38 - "Character"
+Cohesion: 0.07
+Nodes (33): ARM_BONES, BASE, Character, CLOTH_POINT, _crown, damp(), FIDGETS, PLI_JOINTURES (+25 more)
+
+### Community 39 - "rig.js"
+Cohesion: 0.08
+Nodes (28): applyJoints(), ARM, _ax, boneToRoot(), buildRig(), _c, _chain, clamp() (+20 more)
+
+### Community 40 - "vache/index.js"
+Cohesion: 0.07
+Nodes (38): queue(), rejoue(), ARRIERE, AVANT, AXE_TETE, axis, CC, CORPS (+30 more)
+
+### Community 41 - "decor/index.js"
+Cohesion: 0.08
+Nodes (24): assembleBuilder(), assembleCreature(), assembleKind(), assembleMesh(), assemblePart(), flat(), _id, materiaux() (+16 more)
+
+### Community 43 - "face.js"
+Cohesion: 0.12
+Nodes (26): BLINKABLE, cellUV(), CHEEK, EXPRESSIONS, EYE, faceGeometry(), IRIS, MOUTH (+18 more)
 
 ### Community 44 - "builder.js"
-Cohesion: 0.14
-Nodes (19): caracteristiques, boat(), construire(), hull(), materials(), sailGeometry(), caracteristiques, dessin() (+11 more)
+Cohesion: 0.18
+Nodes (14): caracteristiques, dessin(), boat(), construire(), hull(), materials(), sailGeometry(), caracteristiques (+6 more)
 
-### Community 45 - "navire-mat/index.js"
-Cohesion: 0.11
-Nodes (17): barque(), barqueAmarree(), barqueEchouee(), flamme(), F, navireMat(), forme(), FORMES (+9 more)
+### Community 45 - "navire-moulin/index.js"
+Cohesion: 0.18
+Nodes (31): oc(), octo(), panX(), panZ(), pignonZ(), planche(), poteau(), prisme() (+23 more)
 
-### Community 46 - "navire-machinerie/index.js"
-Cohesion: 0.17
-Nodes (24): oc(), BEAUPRE, hausse(), pont(), ancre(), ANCRES, cotes(), etagere() (+16 more)
-
-### Community 47 - "flowers.js"
-Cohesion: 0.12
-Nodes (11): archeGlycine(), lavandeGeante(), C, Flowers, Grid, pickWeighted(), rng(), rosetteBase() (+3 more)
-
-### Community 48 - "coupes/index.js"
-Cohesion: 0.11
-Nodes (19): PIECES, CAP, FORMES, HERO, _m, meche(), mechePoint(), MECHES (+11 more)
-
-### Community 49 - "homeFauna.js"
-Cohesion: 0.14
-Nodes (15): Fauna, makeButterfly(), makeCrab(), makeGull(), Parts, rand(), skeleton(), _zero (+7 more)
-
-### Community 51 - "herbe.js"
-Cohesion: 0.12
-Nodes (23): MURS, BIOME_IDS, B_NONE, BIOME_DRY, BIOME_TALL, biomesTuile(), BUILT, CONIFERS (+15 more)
-
-### Community 52 - "h"
-Cohesion: 0.15
-Nodes (3): h(), replay(), UI
-
-### Community 53 - "mouton/index.js"
-Cohesion: 0.12
-Nodes (20): CURL_COAT, CURL_COAT_LITE, EAR, EAR_IN, EAR_IN_LITE, EAR_LITE, espece, mouton() (+12 more)
-
-### Community 54 - "IslandManager.js"
+### Community 46 - "IslandManager.js"
 Cohesion: 0.10
-Nodes (21): CAP_COLORS, ROCKY, PALETTES_HERBE, bloomColorOf(), ACC_ATTRS, bloomColor(), BLOOMS, _bp (+13 more)
+Nodes (22): CAP_COLORS, ROCKY, bloomColorOf(), ACC_ATTRS, bloomColor(), BLOOMS, _bp, _c (+14 more)
 
-### Community 55 - "Sailing"
-Cohesion: 0.15
-Nodes (8): damp(), idealTrim(), lerpAngle(), pointOfSail(), Sailing, smoothDamp(), setSeaConditions(), waveHeightAt()
+### Community 47 - "navigation.js"
+Cohesion: 0.08
+Nodes (35): arbreFruitier(), fruits(), TEINTE, arbrePompon(), TEINTE, bouleau(), TEINTE, arbreCerisier() (+27 more)
 
-### Community 56 - "Character"
-Cohesion: 0.15
-Nodes (6): Character, REST, buildAvatarGeometry(), build(), characterPreview(), STUDIO_SUN
+### Community 48 - "ciel/relief.js"
+Cohesion: 0.18
+Nodes (21): fbm(), GX, GY, buildCielMesh(), cache, cielAt(), cielContext(), DECOR (+13 more)
 
-### Community 57 - "gabarit.js"
-Cohesion: 0.16
-Nodes (15): AVENTURIER, AVENTURIER_DESSIN, CHIBI, OS_TETE, reduit(), versDessin(), versReel(), AVANT (+7 more)
+### Community 49 - "coupes/index.js"
+Cohesion: 0.08
+Nodes (25): HAIRS, AXE, CAP, DYN_D, FORMES, HERO, LAME, _m (+17 more)
 
-### Community 59 - "daycycle.js"
+### Community 51 - "arche-basse/index.js"
+Cohesion: 0.23
+Nodes (15): affine(), patch(), surface(), union(), _up, archeBasse(), MONTANT, moellon() (+7 more)
+
+### Community 52 - "mouton/index.js"
+Cohesion: 0.14
+Nodes (27): angles(), archivolte(), coque(), facesTronc(), panDeBois(), poser(), segmentDisque(), socle() (+19 more)
+
+### Community 53 - "IlesCelestes.js"
+Cohesion: 0.26
+Nodes (10): AILE, ballon(), BANDE, CREME, F, rayon(), troncon(), BALLON (+2 more)
+
+### Community 54 - "navire-tourelle/index.js"
+Cohesion: 0.11
+Nodes (28): nextId(), mulberry32(), cadre(), fenetre(), flamme(), plaque(), porte(), toile() (+20 more)
+
+### Community 55 - "assemble.js"
+Cohesion: 0.07
+Nodes (28): U, Fauna, makeButterfly(), makeCrab(), makeGull(), rand(), skeleton(), _zero (+20 more)
+
+### Community 56 - "coupes/chibi.js"
+Cohesion: 0.31
+Nodes (11): feuilleMaterial(), canvas(), contourFeuille(), ecorceTexture(), feuillesAtlas(), grappesAtlas(), leafAtlas(), paperTexture() (+3 more)
+
+### Community 57 - "gen/terrain.js"
+Cohesion: 0.20
+Nodes (15): hydraulic(), thermal(), MinHeap, accumulate(), carveRivers(), chaikin(), DI, DJ (+7 more)
+
+### Community 58 - "groundAt"
+Cohesion: 0.23
+Nodes (4): AirRide, damp(), build(), buildAlbatros()
+
+### Community 60 - "daycycle.js"
 Cohesion: 0.15
 Nodes (14): BERGER, canonicalHour(), COLOR_FIELDS, DayCycle, etoileDuBerger(), GRADE_FIELDS, grey, KEYS (+6 more)
 
-### Community 60 - "dirigeable/index.js"
-Cohesion: 0.23
-Nodes (13): AILE, ballon(), ballonNavire(), BANDE, CREME, dirigeable(), F, helice() (+5 more)
+### Community 61 - "toonMaterial"
+Cohesion: 0.13
+Nodes (16): CAP_C, COUCHEE, DRESSEE, FRANGE, HAIR_STYLES, _m, _n, NUQUE (+8 more)
 
-### Community 61 - "formes.js"
-Cohesion: 0.30
-Nodes (11): affine(), patch(), surface(), _up, moellon(), mousse(), profil(), muretEffondre() (+3 more)
-
-### Community 62 - ".push"
-Cohesion: 0.17
-Nodes (8): DIRX, DIRZ, RECOLOR, recolorPart(), rotY(), flat(), GeoAcc, partGeometries()
+### Community 62 - "formes.js"
+Cohesion: 0.28
+Nodes (14): chevre(), espece, mouton(), anneauGeo(), BELL, clocheSuisse(), collar(), collier() (+6 more)
 
 ### Community 63 - "CameraRig"
-Cohesion: 0.15
-Nodes (4): CameraRig, damp(), lerpAngle(), wrapAngle()
+Cohesion: 0.11
+Nodes (12): MAT, archeGlycine(), lavandeGeante(), C, Flowers, Grid, pickWeighted(), rng() (+4 more)
 
-### Community 65 - "registry.js"
+### Community 64 - "vache"
+Cohesion: 0.17
+Nodes (10): relinkDiscoveries(), buildFarVeg(), hex(), SHAPES, cropPlan(), ILE_BY_ID, keyOf(), parents (+2 more)
+
+### Community 67 - "registry.js"
 Cohesion: 0.18
 Nodes (9): FICHES, BY_ID, CATEGORIES, categoryOf(), MODELS, ORDRE, STATUTS, TAILLES (+1 more)
 
-### Community 66 - ".queueLod1"
-Cohesion: 0.22
-Nodes (6): buildFallFoam(), buildRivers(), riverMaterial(), isAncestor(), meshGeometry(), partCacheHas()
+### Community 69 - "settingsPanel.js"
+Cohesion: 0.11
+Nodes (23): _c, cascadeTexture(), IlesCelestes, _m, _p, _q, _s, _up (+15 more)
 
-### Community 67 - "nextId"
+### Community 70 - "homeFauna.js"
+Cohesion: 0.11
+Nodes (24): hex(), islandShape(), palOf(), shapeCache, shapeExt(), contexts, MiniMap, terrainColor() (+16 more)
+
+### Community 71 - "archipel.js"
+Cohesion: 0.16
+Nodes (10): CHANNEL_LABELS, CHANNELS, PENTA, ACCORDS, clamp(), GAMME, hz(), MESURES (+2 more)
+
+### Community 72 - "Decor"
+Cohesion: 0.11
+Nodes (14): arriveIntent(), climbable(), stepMotor(), advanceGaitPhase(), strideLength(), angleDelta(), damp(), lerpAngle() (+6 more)
+
+### Community 73 - "dirigeable/index.js"
+Cohesion: 0.21
+Nodes (12): ANCRES, cotes(), ETAGERES, F, HELICES, LANTERNES, LINGES, nacelle() (+4 more)
+
+### Community 74 - ".push"
+Cohesion: 0.17
+Nodes (8): DIRX, DIRZ, RECOLOR, recolorPart(), rotY(), flat(), GeoAcc, partGeometries()
+
+### Community 76 - "NavireVolant.js"
+Cohesion: 0.20
+Nodes (7): partModel(), cap(), Dirigeables, ELEMENTS, sur(), vol, NavireVolant
+
+### Community 78 - "navire-escalier/physique.js"
 Cohesion: 0.29
-Nodes (11): nextId(), porte(), anneau(), corps(), cotes(), coupole(), F, navireTourelle() (+3 more)
+Nodes (4): evenements(), Parts, m(), zoneM()
 
-### Community 68 - "accessoires.js"
-Cohesion: 0.35
-Nodes (11): chevre(), anneauGeo(), BELL, clocheSuisse(), collier(), eye(), legs(), profilCarre() (+3 more)
-
-### Community 69 - "mer/index.js"
-Cohesion: 0.27
-Nodes (8): ancre(), boueeEchouee(), assembleMesh(), marine(), MARINE_TYPES, marineMesh(), collect(), collectibleMesh()
-
-### Community 70 - "vache"
-Cohesion: 0.26
-Nodes (11): queue(), rejoue(), rejoue(), surTete(), T(), vache(), versCorps(), versTete() (+3 more)
-
-### Community 72 - "NavireVolant.js"
-Cohesion: 0.29
-Nodes (4): ELEMENTS, sur(), vol, NavireVolant
-
-### Community 74 - "Coque et berceau du navire-forteresse — BAT-014"
+### Community 80 - "Coque et berceau du navire-forteresse — BAT-014"
 Cohesion: 0.22
 Nodes (8): Captures (27/10/2026, catalogue), Coque et berceau du navire-forteresse — BAT-014, DA retenue, Historique, Mesures, Physique (`physique.js`), Proportions face à la référence, Écarts restants
 
-### Community 75 - "Escalier et passerelle du navire-forteresse — BAT-019"
+### Community 81 - "Escalier et passerelle du navire-forteresse — BAT-019"
 Cohesion: 0.22
 Nodes (8): Captures (01/11/2026, catalogue), DA retenue, Escalier et passerelle du navire-forteresse — BAT-019, Historique, Mesures, Physique (`physique.js`), Écarts au cahier des charges (§6.6), voulus, Écarts restants et notes pour la pose (E8)
 
-### Community 76 - "voute.js"
-Cohesion: 0.31
-Nodes (7): direction(), ETOILES_COULEURS, genererVoute(), NEBULEUSES_COULEURS, POLE, rng(), unitaire()
-
-### Community 77 - "Moulin-tour du plateau — BAT-013"
+### Community 82 - "Moulin-tour du plateau — BAT-013"
 Cohesion: 0.25
 Nodes (7): Captures (26/10/2026, catalogue, rendu « jeu »), DA retenue, Historique, Mesures (26/10/2026, après la revue d'Evis-critique), Moulin-tour du plateau — BAT-013, Proportions face à la référence, Écarts restants
 
-### Community 78 - "Maison de pont du navire-forteresse — BAT-015"
+### Community 83 - "Maison de pont du navire-forteresse — BAT-015"
 Cohesion: 0.25
 Nodes (7): Captures (27/10/2026, catalogue), DA retenue, Historique, Maison de pont du navire-forteresse — BAT-015, Mesures, Physique (`physique.js`), Écarts restants et notes pour la pose (E8)
 
-### Community 79 - "Mât et voile du navire-forteresse — BAT-018"
+### Community 84 - "Mât et voile du navire-forteresse — BAT-018"
 Cohesion: 0.25
 Nodes (7): Captures (31/10/2026, catalogue), DA retenue, Historique, Mesures, Mât et voile du navire-forteresse — BAT-018, Physique (`physique.js`), Écarts restants et notes pour la pose (E8)
 
-### Community 80 - "Tour-moulin centrale du navire-forteresse — BAT-017"
+### Community 85 - "Tour-moulin centrale du navire-forteresse — BAT-017"
 Cohesion: 0.25
 Nodes (7): Captures (27/10/2026, catalogue), DA retenue, Historique, Mesures, Physique (`physique.js`), Tour-moulin centrale du navire-forteresse — BAT-017, Écarts restants et notes pour la pose (E8)
 
-### Community 81 - "Tourelle du navire-forteresse — BAT-016"
+### Community 86 - "Tourelle du navire-forteresse — BAT-016"
 Cohesion: 0.25
 Nodes (7): Captures (27/10/2026, catalogue), DA retenue, Historique, Mesures, Physique (`physique.js`), Tourelle du navire-forteresse — BAT-016, Écarts restants et notes pour la pose (E8)
 
-### Community 82 - "Nef effondrée du plateau — MON-014"
+### Community 87 - "Nef effondrée du plateau — MON-014"
 Cohesion: 0.25
 Nodes (7): Captures (26/10/2026, catalogue, rendu « jeu »), DA retenue, Historique, Mesures (26/10/2026, après le 1er tour de revue), Nef effondrée du plateau — MON-014, Physique, Écarts restants
 
-### Community 83 - "Habillage de forteresse du navire — BAT-020"
+### Community 88 - ".buildKind"
+Cohesion: 0.40
+Nodes (4): domeDe(), menhir(), MENHIRS, R
+
+### Community 89 - ".setTileItemVisible"
+Cohesion: 0.23
+Nodes (7): hashString(), MARINE_TYPES, marineMesh(), DRIFTING, LABELS, MarineManager, markerFor()
+
+### Community 90 - ".constructor"
+Cohesion: 0.09
+Nodes (31): CHAR_IDS, EcharpeTissu, reposPan(), _v, FACE, creerRuban(), normales(), pasTissu() (+23 more)
+
+### Community 91 - "Habillage de forteresse du navire — BAT-020"
 Cohesion: 0.29
 Nodes (6): DA retenue, Habillage de forteresse du navire — BAT-020, Historique, Mesures, Physique (`physique.js`), Écarts restants
 
-### Community 84 - "Hélices et encombrement du navire — BAT-021"
+### Community 92 - "Hélices et encombrement du navire — BAT-021"
 Cohesion: 0.29
 Nodes (6): DA retenue, Historique, Hélices et encombrement du navire — BAT-021, Mesures, Physique (`physique.js`), Écarts restants
 
-### Community 85 - "partModel"
-Cohesion: 0.48
-Nodes (3): partModel(), cap(), Dirigeables
+### Community 94 - "season.js"
+Cohesion: 0.24
+Nodes (9): applySeason(), AUTUMN, BLOSSOM, cellHash(), seasonOf(), SEASONS, seasonSnow(), WARM (+1 more)
 
-### Community 86 - "textures.js"
-Cohesion: 0.67
-Nodes (6): canvas(), cloudAtlas(), leafAtlas(), paperTexture(), rng(), tileNoise()
-
-### Community 87 - "Weather"
-Cohesion: 0.38
-Nodes (3): makePrecip(), seeded(), Weather
-
-### Community 89 - "Cerf — ANI-004"
+### Community 95 - "Cerf — ANI-004"
 Cohesion: 0.33
 Nodes (5): Cerf — ANI-004, DA retenue, Exceptions accordées par l'utilisateur (19/10/2026), Historique, Écarts restants
 
-### Community 90 - "Dirigeable — NAV-012"
+### Community 96 - "Dirigeable — NAV-012"
 Cohesion: 0.33
 Nodes (5): DA retenue, Dirigeable — NAV-012, Historique, Mesures (`node scripts/modeles/mesure.mjs NAV-012 --json`), Écarts restants
 
-### Community 91 - "Moulin à vent — BAT-004"
+### Community 97 - "Moulin à vent — BAT-004"
 Cohesion: 0.33
 Nodes (5): DA retenue, Historique, Mesures (25/10/2026), Moulin à vent — BAT-004, Écarts restants
 
-### Community 92 - "moulin/index.js"
-Cohesion: 0.47
-Nodes (4): MOELLONS, moulin(), rTour(), tourPierre()
-
-### Community 93 - "Arche basse — MON-011"
+### Community 98 - "Arche basse — MON-011"
 Cohesion: 0.33
 Nodes (5): Arche basse — MON-011, DA retenue, Historique, Mesures (25/10/2026), Écarts restants
 
-### Community 94 - "Cercle de pierres — MON-004"
+### Community 99 - "Cercle de pierres — MON-004"
 Cohesion: 0.33
 Nodes (5): Cercle de pierres — MON-004, Constat pour le Plateau venté (BRF-PV-07, 25/10/2026), DA retenue, Historique, Écarts restants
 
-### Community 95 - "Menhir — MON-009"
+### Community 100 - "Menhir — MON-009"
 Cohesion: 0.33
 Nodes (5): DA retenue, Historique, Menhir — MON-009, Mesures (25/10/2026), Écarts restants
 
-### Community 96 - "Muret effondré — MON-010"
+### Community 101 - "Muret effondré — MON-010"
 Cohesion: 0.33
 Nodes (5): DA retenue, Historique, Mesures (25/10/2026), Muret effondré — MON-010, Écarts restants
 
-### Community 97 - "Abeille — ANI-018"
+### Community 103 - "Abeille — ANI-018"
 Cohesion: 0.40
 Nodes (4): Abeille — ANI-018, DA retenue, Historique, Écarts restants
 
-### Community 98 - "Grand albatros (monture) — ANI-028"
+### Community 104 - "Grand albatros (monture) — ANI-028"
 Cohesion: 0.40
 Nodes (4): DA retenue, Grand albatros (monture) — ANI-028, Historique, Écarts restants
 
-### Community 99 - "Canard — ANI-014"
+### Community 105 - "Canard — ANI-014"
 Cohesion: 0.40
 Nodes (4): Canard — ANI-014, DA retenue, Historique, Écarts restants
 
-### Community 100 - "Chèvre — ANI-002"
+### Community 106 - "Chèvre — ANI-002"
 Cohesion: 0.40
 Nodes (4): Chèvre — ANI-002, DA retenue, Historique, Écarts restants
 
-### Community 101 - "Crabe — ANI-010"
+### Community 107 - "Crabe — ANI-010"
 Cohesion: 0.40
 Nodes (4): Crabe — ANI-010, DA retenue, Historique, Écarts restants
 
-### Community 102 - "Écureuil — ANI-008"
+### Community 108 - "Écureuil — ANI-008"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Écarts restants, Écureuil — ANI-008
 
-### Community 103 - "Escargot géant — ANI-023"
+### Community 109 - "Escargot géant — ANI-023"
 Cohesion: 0.40
 Nodes (4): DA retenue, Escargot géant — ANI-023, Historique, Écarts restants
 
-### Community 104 - "Faune depart — ANI-024 à ANI-026"
+### Community 110 - "Faune depart — ANI-024 à ANI-026"
 Cohesion: 0.40
 Nodes (4): DA retenue, Faune depart — ANI-024 à ANI-026, Historique, Écarts restants
 
-### Community 105 - "Flamant rose — ANI-013"
+### Community 111 - "Flamant rose — ANI-013"
 Cohesion: 0.40
 Nodes (4): DA retenue, Flamant rose — ANI-013, Historique, Écarts restants
 
-### Community 106 - "Grenouille — ANI-015"
+### Community 112 - "Grenouille — ANI-015"
 Cohesion: 0.40
 Nodes (4): DA retenue, Grenouille — ANI-015, Historique, Écarts restants
 
-### Community 107 - "Hérisson — ANI-007"
+### Community 113 - "Hérisson — ANI-007"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Hérisson — ANI-007, Écarts restants
 
-### Community 108 - "Hibou cartographe — ANI-027"
+### Community 114 - "Hibou cartographe — ANI-027"
 Cohesion: 0.40
 Nodes (4): DA retenue, Hibou cartographe — ANI-027, Historique, Écarts restants
 
-### Community 109 - "Lapin — ANI-006"
+### Community 115 - "Lapin — ANI-006"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Lapin — ANI-006, Écarts restants
 
-### Community 110 - "Lézard — ANI-022"
+### Community 116 - "Lézard — ANI-022"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Lézard — ANI-022, Écarts restants
 
-### Community 111 - "Luciole — ANI-019"
+### Community 117 - "Luciole — ANI-019"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Luciole — ANI-019, Écarts restants
 
-### Community 112 - "Mouette — ANI-011"
+### Community 118 - "Mouette — ANI-011"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Mouette — ANI-011, Écarts restants
 
-### Community 113 - "Mouton — ANI-001"
+### Community 119 - "Mouton — ANI-001"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Mouton — ANI-001, Écarts restants
 
-### Community 114 - "Papillon — ANI-017"
+### Community 120 - "Papillon — ANI-017"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Papillon — ANI-017, Écarts restants
 
-### Community 115 - "Perroquet — ANI-012"
+### Community 121 - "Perroquet — ANI-012"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Perroquet — ANI-012, Écarts restants
 
-### Community 116 - "Phoque — ANI-020"
+### Community 122 - "Phoque — ANI-020"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Phoque — ANI-020, Écarts restants
 
-### Community 117 - "Pingouin — ANI-021"
+### Community 123 - "Pingouin — ANI-021"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Pingouin — ANI-021, Écarts restants
 
-### Community 118 - "Poisson — ANI-016"
+### Community 124 - "Poisson — ANI-016"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Poisson — ANI-016, Écarts restants
 
-### Community 119 - "Renard — ANI-005"
+### Community 125 - "Renard — ANI-005"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Renard — ANI-005, Écarts restants
 
-### Community 120 - "Tortue — ANI-009"
+### Community 126 - "Tortue — ANI-009"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Tortue — ANI-009, Écarts restants
 
-### Community 121 - "Vache — ANI-003"
+### Community 127 - "Vache — ANI-003"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Vache — ANI-003, Écarts restants
 
-### Community 122 - "Arbre fruitier — ARB-002"
+### Community 128 - "Arbre fruitier — ARB-002"
 Cohesion: 0.40
 Nodes (4): Arbre fruitier — ARB-002, DA retenue, Historique, Écarts restants
 
-### Community 123 - "Arbre géant (lieu) — ARB-015"
+### Community 129 - "Arbre géant (lieu) — ARB-015"
 Cohesion: 0.40
 Nodes (4): Arbre géant (lieu) — ARB-015, DA retenue, Historique, Écarts restants
 
-### Community 124 - "Arbre pompon — ARB-001"
+### Community 130 - "Arbre pompon — ARB-001"
 Cohesion: 0.40
 Nodes (4): Arbre pompon — ARB-001, DA retenue, Historique, Écarts restants
 
-### Community 125 - "Bambou — ARB-011"
+### Community 131 - "Bambou — ARB-011"
 Cohesion: 0.40
 Nodes (4): Bambou — ARB-011, DA retenue, Historique, Écarts restants
 
-### Community 126 - "Bouleau — ARB-008"
+### Community 132 - "Bouleau — ARB-008"
 Cohesion: 0.40
 Nodes (4): Bouleau — ARB-008, DA retenue, Historique, Écarts restants
 
-### Community 127 - "Cerisier — ARB-003"
+### Community 133 - "Cerisier — ARB-003"
 Cohesion: 0.40
 Nodes (4): Cerisier — ARB-003, DA retenue, Historique, Écarts restants
 
-### Community 128 - "Champignon géant — ARB-013"
+### Community 134 - "Champignon géant — ARB-013"
 Cohesion: 0.40
 Nodes (4): Champignon géant — ARB-013, DA retenue, Historique, Écarts restants
 
-### Community 129 - "Coniferes — ARB-004 à ARB-006"
+### Community 135 - "Coniferes — ARB-004 à ARB-006"
 Cohesion: 0.40
 Nodes (4): Coniferes — ARB-004 à ARB-006, DA retenue, Historique, Écarts restants
 
-### Community 130 - "Érable — ARB-010"
+### Community 136 - "Érable — ARB-010"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Écarts restants, Érable — ARB-010
 
-### Community 131 - "Fougère arborescente — ARB-012"
+### Community 137 - "Fougère arborescente — ARB-012"
 Cohesion: 0.40
 Nodes (4): DA retenue, Fougère arborescente — ARB-012, Historique, Écarts restants
 
-### Community 132 - "Grand arbre de l'île de départ — ARB-014"
+### Community 138 - "Grand arbre de l'île de départ — ARB-014"
 Cohesion: 0.40
 Nodes (4): DA retenue, Grand arbre de l'île de départ — ARB-014, Historique, Écarts restants
 
-### Community 133 - "Palmier — ARB-007"
+### Community 139 - "Palmier — ARB-007"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Palmier — ARB-007, Écarts restants
 
-### Community 134 - "Saule — ARB-009"
+### Community 140 - "Saule — ARB-009"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Saule — ARB-009, Écarts restants
 
-### Community 135 - "Barque — NAV-002"
+### Community 141 - "Barque — NAV-002"
 Cohesion: 0.40
 Nodes (4): Barque — NAV-002, DA retenue, Historique, Écarts restants
 
-### Community 136 - "Canots — NAV-005 à NAV-006"
+### Community 142 - "Canots — NAV-005 à NAV-006"
 Cohesion: 0.40
 Nodes (4): Canots — NAV-005 à NAV-006, DA retenue, Historique, Écarts restants
 
-### Community 137 - "Epaves — NAV-007 à NAV-008"
+### Community 143 - "Epaves — NAV-007 à NAV-008"
 Cohesion: 0.40
 Nodes (4): DA retenue, Epaves — NAV-007 à NAV-008, Historique, Écarts restants
 
-### Community 138 - "Goélette — NAV-004"
+### Community 144 - "Goélette — NAV-004"
 Cohesion: 0.40
 Nodes (4): DA retenue, Goélette — NAV-004, Historique, Écarts restants
 
-### Community 139 - "Mouillage — NAV-009 à NAV-011"
+### Community 145 - "Mouillage — NAV-009 à NAV-011"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Mouillage — NAV-009 à NAV-011, Écarts restants
 
-### Community 140 - "Radeau — NAV-001"
+### Community 146 - "Radeau — NAV-001"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Radeau — NAV-001, Écarts restants
 
-### Community 141 - "Voilier — NAV-003"
+### Community 147 - "Voilier — NAV-003"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Voilier — NAV-003, Écarts restants
 
-### Community 142 - "Bibliothèque-souche du hibou — BAT-003"
+### Community 148 - "Bibliothèque-souche du hibou — BAT-003"
 Cohesion: 0.40
 Nodes (4): Bibliothèque-souche du hibou — BAT-003, DA retenue, Historique, Écarts restants
 
-### Community 143 - "Cabane d'ermite — BAT-009"
+### Community 149 - "Cabane d'ermite — BAT-009"
 Cohesion: 0.40
 Nodes (4): Cabane d'ermite — BAT-009, DA retenue, Historique, Écarts restants
 
-### Community 144 - "Chaumière du joueur — BAT-002"
+### Community 150 - "Chaumière du joueur — BAT-002"
 Cohesion: 0.40
 Nodes (4): Chaumière du joueur — BAT-002, DA retenue, Historique, Écarts restants
 
-### Community 145 - "Échoppe — BAT-012"
+### Community 151 - "Échoppe — BAT-012"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Écarts restants, Échoppe — BAT-012
 
-### Community 146 - "Étal du marché — BAT-011"
+### Community 152 - "Étal du marché — BAT-011"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Écarts restants, Étal du marché — BAT-011
 
-### Community 147 - "Maison de village — BAT-001"
+### Community 153 - "Maison de village — BAT-001"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Maison de village — BAT-001, Écarts restants
 
-### Community 148 - "Moulin à eau — BAT-005"
+### Community 154 - "Moulin à eau — BAT-005"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Moulin à eau — BAT-005, Écarts restants
 
-### Community 149 - "Observatoire — BAT-010"
+### Community 155 - "Observatoire — BAT-010"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Observatoire — BAT-010, Écarts restants
 
-### Community 150 - "Phare — BAT-006"
+### Community 156 - "Phare — BAT-006"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Phare — BAT-006, Écarts restants
 
-### Community 151 - "Temple — BAT-008"
+### Community 157 - "Temple — BAT-008"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Temple — BAT-008, Écarts restants
 
-### Community 152 - "Tour de guet — BAT-007"
+### Community 158 - "Tour de guet — BAT-007"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Tour de guet — BAT-007, Écarts restants
 
-### Community 153 - "Ateliers — DEC-014 à DEC-017"
+### Community 159 - "Ateliers — DEC-014 à DEC-017"
 Cohesion: 0.40
 Nodes (4): Ateliers — DEC-014 à DEC-017, DA retenue, Historique, Écarts restants
 
-### Community 154 - "Curiosites — DEC-010 à DEC-018"
+### Community 160 - "Curiosites — DEC-010 à DEC-018"
 Cohesion: 0.40
 Nodes (4): Curiosites — DEC-010 à DEC-018, DA retenue, Historique, Écarts restants
 
-### Community 155 - "Jardin — DEC-001 à DEC-009"
+### Community 161 - "Jardin — DEC-001 à DEC-009"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Jardin — DEC-001 à DEC-009, Écarts restants
 
-### Community 156 - "Curiosites — MON-006 à MON-008"
+### Community 162 - "Curiosites — MON-006 à MON-008"
 Cohesion: 0.40
 Nodes (4): Curiosites — MON-006 à MON-008, DA retenue, Historique, Écarts restants
 
-### Community 157 - "Grotte — MON-003"
+### Community 163 - "Grotte — MON-003"
 Cohesion: 0.40
 Nodes (4): DA retenue, Grotte — MON-003, Historique, Écarts restants
 
-### Community 158 - "Ruines — MON-001 à MON-002"
+### Community 164 - "Ruines — MON-001 à MON-002"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Ruines — MON-001 à MON-002, Écarts restants
 
-### Community 159 - "Statue géante — MON-005"
+### Community 165 - "Statue géante — MON-005"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Statue géante — MON-005, Écarts restants
 
-### Community 160 - "Campement — OBJ-005 à OBJ-006"
+### Community 166 - "Campement — OBJ-005 à OBJ-006"
 Cohesion: 0.40
 Nodes (4): Campement — OBJ-005 à OBJ-006, DA retenue, Historique, Écarts restants
 
-### Community 161 - "Coffre — OBJ-001 à OBJ-002"
+### Community 167 - "Coffre — OBJ-001 à OBJ-002"
 Cohesion: 0.40
 Nodes (4): Coffre — OBJ-001 à OBJ-002, DA retenue, Historique, Écarts restants
 
-### Community 162 - "Curiosites — OBJ-003 à OBJ-023"
+### Community 168 - "Curiosites — OBJ-003 à OBJ-023"
 Cohesion: 0.40
 Nodes (4): Curiosites — OBJ-003 à OBJ-023, DA retenue, Historique, Écarts restants
 
-### Community 163 - "Flotteur de pêche — OBJ-020"
+### Community 169 - "Flotteur de pêche — OBJ-020"
 Cohesion: 0.40
 Nodes (4): DA retenue, Flotteur de pêche — OBJ-020, Historique, Écarts restants
 
-### Community 164 - "Lagon — OBJ-010 à OBJ-011"
+### Community 170 - "Lagon — OBJ-010 à OBJ-011"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Lagon — OBJ-010 à OBJ-011, Écarts restants
 
-### Community 165 - "Mer — OBJ-017 à OBJ-022"
+### Community 171 - "Mer — OBJ-017 à OBJ-022"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Mer — OBJ-017 à OBJ-022, Écarts restants
 
-### Community 166 - "Ruche — OBJ-007"
+### Community 172 - "Ruche — OBJ-007"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Ruche — OBJ-007, Écarts restants
 
-### Community 167 - "Tresors — OBJ-012 à OBJ-016"
+### Community 173 - "Tresors — OBJ-012 à OBJ-016"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Tresors — OBJ-012 à OBJ-016, Écarts restants
 
-### Community 168 - "Arche — STR-011"
+### Community 174 - "Arche — STR-011"
 Cohesion: 0.40
 Nodes (4): Arche — STR-011, DA retenue, Historique, Écarts restants
 
-### Community 169 - "Bassin chaud — STR-010"
+### Community 175 - "Bassin chaud — STR-010"
 Cohesion: 0.40
 Nodes (4): Bassin chaud — STR-010, DA retenue, Historique, Écarts restants
 
-### Community 170 - "Cascade — STR-027"
+### Community 176 - "Cascade — STR-027"
 Cohesion: 0.40
 Nodes (4): Cascade — STR-027, DA retenue, Historique, Écarts restants
 
-### Community 171 - "Champs — STR-007 à STR-012"
+### Community 177 - "Champs — STR-007 à STR-012"
 Cohesion: 0.40
 Nodes (4): Champs — STR-007 à STR-012, DA retenue, Historique, Écarts restants
 
-### Community 172 - "Chemins — STR-003 à STR-013"
+### Community 178 - "Chemins — STR-003 à STR-013"
 Cohesion: 0.40
 Nodes (4): Chemins — STR-003 à STR-013, DA retenue, Historique, Écarts restants
 
-### Community 173 - "Jetée — STR-001"
+### Community 179 - "Jetée — STR-001"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Jetée — STR-001, Écarts restants
 
-### Community 174 - "Mobilier depart — STR-020 à STR-026"
+### Community 180 - "Mobilier depart — STR-020 à STR-026"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Mobilier depart — STR-020 à STR-026, Écarts restants
 
-### Community 175 - "Mobilier — STR-014 à STR-019"
+### Community 181 - "Mobilier — STR-014 à STR-019"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Mobilier — STR-014 à STR-019, Écarts restants
 
-### Community 176 - "Ponton — STR-002"
+### Community 182 - "Ponton — STR-002"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Ponton — STR-002, Écarts restants
 
-### Community 177 - "Puits — STR-006"
+### Community 183 - "Puits — STR-006"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Puits — STR-006, Écarts restants
 
-### Community 178 - "Accessoires — PER-020 à PER-023"
+### Community 184 - "Accessoires — PER-020 à PER-023"
 Cohesion: 0.40
 Nodes (4): Accessoires — PER-020 à PER-023, DA retenue, Historique, Écarts restants
 
-### Community 179 - "Corps et visage — PER-001"
+### Community 185 - "Corps et visage — PER-001"
 Cohesion: 0.40
 Nodes (4): Corps et visage — PER-001, DA retenue, Historique, Écarts restants
 
-### Community 180 - "Coupes — PER-026 (PER-002 à PER-007 retirées)"
+### Community 186 - "Coupes — PER-026 (PER-002 à PER-007 retirées)"
 Cohesion: 0.40
 Nodes (4): Coupes — PER-026 (PER-002 à PER-007 retirées), DA retenue, Historique, Écarts restants
 
-### Community 181 - "Crayon d'étude — PER-024"
+### Community 187 - "Crayon d'étude — PER-024"
 Cohesion: 0.40
 Nodes (4): Crayon d'étude — PER-024, DA retenue, Historique, Écarts restants
 
-### Community 182 - "Outils — PER-025"
+### Community 188 - "Outils — PER-025"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Outils — PER-025, Écarts restants
 
-### Community 183 - "Tenues — PER-008 à PER-019, PER-027"
+### Community 189 - "Tenues — PER-008 à PER-019, PER-027"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Tenues — PER-008 à PER-019, PER-027, Écarts restants
 
-### Community 184 - "Bord de l eau — PLA-010 à PLA-011"
+### Community 190 - "Bord de l eau — PLA-010 à PLA-011"
 Cohesion: 0.40
 Nodes (4): Bord de l eau — PLA-010 à PLA-011, DA retenue, Historique, Écarts restants
 
-### Community 185 - "Buissons — PLA-001 à PLA-003"
+### Community 191 - "Buissons — PLA-001 à PLA-003"
 Cohesion: 0.40
 Nodes (4): Buissons — PLA-001 à PLA-003, DA retenue, Historique, Écarts restants
 
-### Community 186 - "Cactus — PLA-004 à PLA-005"
+### Community 192 - "Cactus — PLA-004 à PLA-005"
 Cohesion: 0.40
 Nodes (4): Cactus — PLA-004 à PLA-005, DA retenue, Historique, Écarts restants
 
-### Community 187 - "Champs — PLA-007 à PLA-012"
+### Community 193 - "Champs — PLA-007 à PLA-012"
 Cohesion: 0.40
 Nodes (4): Champs — PLA-007 à PLA-012, DA retenue, Historique, Écarts restants
 
-### Community 188 - "Fleur géante — PLA-017"
+### Community 194 - "Fleur géante — PLA-017"
 Cohesion: 0.40
 Nodes (4): DA retenue, Fleur géante — PLA-017, Historique, Écarts restants
 
-### Community 189 - "Fleurs — PLA-014 à PLA-015"
+### Community 195 - "Fleurs — PLA-014 à PLA-015"
 Cohesion: 0.40
 Nodes (4): DA retenue, Fleurs — PLA-014 à PLA-015, Historique, Écarts restants
 
-### Community 190 - "Herbe — PLA-016"
+### Community 196 - "Herbe — PLA-016"
 Cohesion: 0.40
 Nodes (4): DA retenue, Herbe — PLA-016, Historique, Écarts restants
 
-### Community 191 - "Raretes — PLA-018 à PLA-019"
+### Community 197 - "Raretes — PLA-018 à PLA-019"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Raretes — PLA-018 à PLA-019, Écarts restants
 
-### Community 192 - "Sous bois — PLA-006 à PLA-013"
+### Community 198 - "Sous bois — PLA-006 à PLA-013"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Sous bois — PLA-006 à PLA-013, Écarts restants
 
-### Community 193 - "Blocs — ROC-001 à ROC-002"
+### Community 199 - "Blocs — ROC-001 à ROC-002"
 Cohesion: 0.40
 Nodes (4): Blocs — ROC-001 à ROC-002, DA retenue, Historique, Écarts restants
 
-### Community 194 - "Bois — ROC-007 à ROC-010"
+### Community 200 - "Bois — ROC-007 à ROC-010"
 Cohesion: 0.40
 Nodes (4): Bois — ROC-007 à ROC-010, DA retenue, Historique, Écarts restants
 
-### Community 195 - "Mineraux — ROC-003 à ROC-006"
+### Community 201 - "Mineraux — ROC-003 à ROC-006"
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Mineraux — ROC-003 à ROC-006, Écarts restants
 
+### Community 207 - "hibou/index.js"
+Cohesion: 0.16
+Nodes (13): CARNET, fmtKm(), openCartographerPanel(), openLogbookPanel(), openMapPanel(), boundFog(), FOG_TOTAL, fogShare() (+5 more)
+
 ## Knowledge Gaps
-- **826 isolated node(s):** `JOURS`, `MOIS`, `game`, `PENTA`, `_aim` (+821 more)
+- **869 isolated node(s):** `JOURS`, `MOIS`, `_avant`, `HAUT`, `game` (+864 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **15 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `AudioEngine` connect `AudioEngine` to `state.js`, `Game.js`?**
-  _High betweenness centrality (0.044) - this node is a cross-community bridge._
-- **Why does `def()` connect `etat.js` to `inventoryScreen.js`?**
-  _High betweenness centrality (0.040) - this node is a cross-community bridge._
-- **What connects `JOURS`, `MOIS`, `game` to the rest of the system?**
-  _826 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `models/lieux.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.05128205128205128 - nodes in this community are weakly interconnected._
+- **Why does `mulberry32()` connect `navire-tourelle/index.js` to `.add`, `Builder`, `Game`, `mulberry32`, `ruines-alternative/index.js`, `navire-fort/index.js`, `navire-maison/index.js`, `props.js`, `navire-coque/index.js`, `surface.js`, `decor/index.js`, `navire-moulin/index.js`, `navigation.js`, `ciel/relief.js`, `mouton/index.js`, `assemble.js`, `gen/terrain.js`, `IslandFauna`, `settingsPanel.js`, `archipel.js`, `dirigeable/index.js`, `NavireVolant.js`, `navire-escalier/physique.js`, `.setTileItemVisible`?**
+  _High betweenness centrality (0.037) - this node is a cross-community bridge._
+- **Why does `AudioEngine` connect `Gather.js` to `Pipeline.js`, `worldWorker.js`, `navire-fort/index.js`, `archipel.js`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Why does `nextId()` connect `navire-tourelle/index.js` to `.add`, `fiches.js`, `moulin-tour/index.js`, `ruines-alternative/index.js`, `heightAt`, `cerf/index.js`, `navire-machinerie/index.js`, `navire-fort/index.js`, `navire-maison/index.js`, `Character.js`, `props.js`, `navire-coque/index.js`, `vache/index.js`, `decor/index.js`, `navire-moulin/index.js`, `IslandManager.js`, `mouton/index.js`, `IlesCelestes.js`, `assemble.js`, `coupes/chibi.js`, `dirigeable/index.js`, `.setTileItemVisible`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **What connects `JOURS`, `MOIS`, `_avant` to the rest of the system?**
+  _869 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `.add` be split into smaller, more focused modules?**
+  _Cohesion score 0.07431052093973442 - nodes in this community are weakly interconnected._
 - **Should `motor.js` be split into smaller, more focused modules?**
   _Cohesion score 0.07394957983193277 - nodes in this community are weakly interconnected._
-- **Should `.add` be split into smaller, more focused modules?**
-  _Cohesion score 0.07759103641456583 - nodes in this community are weakly interconnected._
-- **Should `etat.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.06398390342052314 - nodes in this community are weakly interconnected._
+- **Should `Builder` be split into smaller, more focused modules?**
+  _Cohesion score 0.06692242114236999 - nodes in this community are weakly interconnected._

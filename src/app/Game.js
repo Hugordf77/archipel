@@ -44,6 +44,8 @@ import { Hotbar } from '../ui/inventoryUI.js';
 import { openInventoryScreen } from '../ui/inventoryScreen.js';
 import { openMirrorPanel } from '../ui/mirrorPanel.js';
 import { seasonOf, applySeason, seasonSnow } from '../world/env/season.js';
+import { Particules } from '../world/env/particules.js';
+import { Tornade } from '../world/env/tornade.js';
 import { Titre, titreAPasser } from './Titre.js';
 
 const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -181,6 +183,10 @@ export class Game {
     this.decor = new Decor(this);
     this.decor.sync();
     this.weather = new Weather(this.overlayScene);
+    // poussière dorée et lucioles (par-dessus la peinture, cachées par le décor)
+    this.particules = new Particules(this.overlayScene);
+    // tornade noire à éclairs rouges, au loin en pleine mer (prototype, décor seul)
+    this.tornade = new Tornade(this.world.scene);
     this.weather.setMode(this.state.settings.weather);
     this.refreshDay();
     this.updateProgressVisuals(false);
@@ -428,9 +434,12 @@ export class Game {
     this.rig.update(dt);
     const f = this.rig.focus;
     const lf = this._lf.set(f.x - ORIGIN.x, f.y, f.z - ORIGIN.z);
-    // ombres : autour de l'île de départ on garde le cadrage d'origine, ailleurs on suit
+    // ombres : autour de l'île de départ on garde le cadrage d'origine, ailleurs on suit, à la hauteur
+    // de la cible (sur le Plateau venté, à 60 m, un centre à y = 1 laissait le sol hors du volume d'ombre).
+    // Cette ligne avait disparu le 22/10 (commit ace1d3f, remplacée par un second islands.update) : les
+    // ombres restaient centrées sur l'origine flottante, jusqu'à 2 km du joueur.
     const home = Math.hypot(f.x, f.z) < 40 ? 0.6 : 1;
-    this.islands.update(dt, P.x, P.z);
+    this.pipeline.shadowCenter.set(f.x * home - ORIGIN.x, lf.y, f.z * home - ORIGIN.z);
     this.ciel.update(dt);
 
     // archipel
@@ -474,6 +483,8 @@ export class Game {
     }
 
     // rendu
+    this.particules?.update(this.pipeline, this.camera, this.pipeline.settings.particules ?? 1);
+    this.tornade?.update(dt, this.camera);
     this.pipeline.render(this.world.scene, this.camera, this.overlayScene);
 
     // sauvegarde différée
@@ -1087,7 +1098,8 @@ export class Game {
     ex.animals ||= {};
     const first = !ex.animals[an.sp];
     ex.animals[an.sp] = (ex.animals[an.sp] || 0) + 1;
-    const isl = ex.islands[an.entry.desc.id];
+    // une section compte pour son île entière (discoverIsland)
+    const isl = ex.islands[an.entry.desc.parent || an.entry.desc.id];
     if (isl && !(isl.animals ||= []).includes(an.sp)) isl.animals.push(an.sp);
     if (first) this.ui.toast(`Nouvelle rencontre : ${f.label(an).toLowerCase()} !`, { icon: 'sparkle', duration: 3000 });
     this.markDirty();
@@ -1393,6 +1405,8 @@ export class Game {
     // herbe : densité selon la qualité ; « touffes » garde l'ancienne herbe seule (comparaison)
     this.islands?.herbe.setPreset(s.quality);
     this.islands?.herbe.setEnabled(s.herbe !== 'touffes');
+    // arbres proches (feuilles une à une, arbresProches.js) : rayon selon la qualité, aucun en « Bas »
+    if (this.islands?.proches) this.islands.proches.rayon = s.quality === 'low' ? 0 : s.quality === 'medium' ? 24 : 30;
     if (this.world?.grass) this.world.grass.visible = s.herbe === 'touffes';
     this.pipeline.settings.paint = s.paint > 0;
     this.pipeline.settings.paintStrength = Math.max(0.4, s.paint || 1);
@@ -1400,6 +1414,8 @@ export class Game {
     this.pipeline.settings.paper = s.paper;
     U.uCurvature.value = 0.000002 * s.curvature;
     const season = seasonOf(new Date(), s.season);
+    // feuillus des îles : familles chaudes à l'automne, quelques arbres dorés le reste de l'année
+    U.uAutomne.value = season === 'automne' ? 1 : season === 'hiver' ? 0.4 : 0.2;
     if (season !== this.season) {
       this.season = season;
       applySeason(this.world.foliage, season);

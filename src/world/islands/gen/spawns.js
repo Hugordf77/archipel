@@ -64,8 +64,14 @@ export function placeSpawners(P, pois) {
     const k = land[Math.floor(land.length / 2)];
     add('crabe', -ext + (k % n) * s, -ext + Math.floor(k / n) * s, 2, k);
   }
-  // troupeaux posés à la main (lieux.faune de l'île), après tout tirage : le reste ne bouge pas ;
-  // robes : robe de chaque bête, dans l'ordre
-  for (const f of desc.lieux?.faune || []) out.push({ sp: f.sp, x: f.x, z: f.z, count: f.count, r: f.r ?? SPREAD[f.sp] ?? 8, zone: -1, ...(f.robes ? { robes: f.robes } : {}) });
+  // troupeaux posés à la main, après tout tirage : le reste ne bouge pas
+  out.push(...poserTroupeaux(desc));
   return out;
+}
+
+// Troupeaux posés à la main (repère de l'île, m), sans tirage : ceux de l'île (desc.faune : îles du
+// monde ouvert, qui ne décrivent pas leurs lieux) puis ceux de ses lieux (desc.lieux.faune : île
+// d'essai). robes : robe de chaque bête, dans l'ordre.
+export function poserTroupeaux(desc) {
+  return [...(desc.faune || []), ...(desc.lieux?.faune || [])].map((f) => ({ sp: f.sp, x: f.x, z: f.z, count: f.count, r: f.r ?? SPREAD[f.sp] ?? 8, zone: -1, ...(f.robes ? { robes: f.robes } : {}) }));
 }

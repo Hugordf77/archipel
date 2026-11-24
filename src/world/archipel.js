@@ -7,7 +7,8 @@
 // plateaux, cuvettes, volcans, pitons, dunes), et zones nommées (étiquettes de la carte, de la minicarte
 // et du bandeau d'entrée ; biome, part de forêt et arbres de chaque zone). Le relief détaillé, l'eau
 // douce et les arbres sont produits par la chaîne de génération (islands/gen/forme.js, plan.js).
-// Étape « bases » : ni lieux, ni villages, ni faune, ni ressources.
+// Étape « bases » : ni lieux tirés, ni villages, ni ressources ; seuls des lieux, des terrassements et
+// des troupeaux posés à la main (poses, terrassements, faune).
 // Les identifiants sont stables : ils servent aux sauvegardes, aux récoltes et au journal.
 
 export const PX = 4; // mètres par pixel de la carte de référence
@@ -100,6 +101,19 @@ const ILES_PX = [
         h: [20.9, 66.3],
         pts: [[354, 228], [370, 230], [378, 242], [371, 256], [361, 272], [350, 284], [346, 300], [351, 316], [365, 332], [377, 344], [389, 360], [393, 376], [398, 392], [411, 408], [420, 424], [436, 436]],
       },
+    ],
+    // troupeaux posés à la main (repère de l'île, m ; gen/spawns.js, poserTroupeaux) : moutons ANI-001 sur
+    // le haut du Plateau venté, vaches ANI-003 sur la Côte aux villages et au bord du Lac céleste. Chacun
+    // sur un pré (prairie ou fleurs, pente ≤ 0,22) sans arbre, rocher ni buisson dans son rayon
+    // d'errance r, loin de l'eau, de la côte, des lieux, de la corniche et des bords de section
+    // (tests/zones/troupeaux.test.js) ; robes : robe de chaque bête, dans l'ordre (mouton : 0 crème,
+    // 1 blanc, 2 noir ; vache : 0 pie brune, 1 pie noire, 2 pie rouge)
+    faune: [
+      { sp: 'mouton', x: 472, z: 384, count: 6, r: 10, robes: [1, 0, 1, 1, 0, 2], nom: 'Moutons de la Corniche' },
+      { sp: 'mouton', x: 688, z: 280, count: 5, r: 10, robes: [0, 1, 1, 0, 1], nom: 'Moutons du Large' },
+      { sp: 'vache', x: -28, z: 632, count: 4, r: 12, robes: [0, 1, 2, 0], nom: 'Vaches de la Côte' },
+      { sp: 'vache', x: -192, z: 744, count: 3, r: 12, robes: [1, 2, 0], nom: 'Vaches du Bocage' },
+      { sp: 'vache', x: 672, z: -224, count: 3, r: 12, robes: [2, 0, 1], nom: 'Vaches du Lac céleste' },
     ],
   },
   {
@@ -307,6 +321,7 @@ function ileM(isl) {
     zone,
     ...(isl.poses ? { poses: isl.poses } : {}),
     ...(isl.terrassements ? { terrassements: isl.terrassements } : {}),
+    ...(isl.faune ? { faune: isl.faune } : {}),
     forme: {
       cote: local,
       rEq,

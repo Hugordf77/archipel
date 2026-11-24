@@ -9,9 +9,11 @@ function hex(c) {
 
 // formes : [type, cx, cy, cz, r, squash | haut, couleur] (aussi lues par gen/herbe.js : couronnes)
 export const SHAPES = {
-  arbre_pompon: [['ball', 0, 2.55, 0, 1.45, 0.9, '#8fd08a'], ['ball', 0.45, 3.25, -0.25, 0.95, 0.9, '#a9dc96']],
-  arbre_fruitier: [['ball', 0, 2.55, 0, 1.45, 0.9, '#93d28c']],
-  arbre_cerisier: [['ball', 0, 2.55, 0, 1.45, 0.9, '#f6bfcb'], ['ball', 0.45, 3.25, -0.25, 0.95, 0.9, '#f9d3dc']],
+  // feuillus : l'enveloppe du houppier de l'arbre fractal (kit/arbreFractal.js, couronneFractal), un peu
+  // resserrée (la couronne a des trouées)
+  arbre_pompon: [['ball', 0.09, 3.28, -0.16, 2.4, 0.62, '#86c27a']],
+  arbre_fruitier: [['ball', 0.58, 3.04, 0.07, 2.0, 0.64, '#8fc884']],
+  arbre_cerisier: [['ball', 0.47, 3.41, -0.02, 1.25, 0.78, '#f2b3c4']],
   pin: [['cone', 0, 0.9, 0, 1.35, 4.3, '#68b994']],
   pin_givre: [['cone', 0, 0.9, 0, 1.35, 4.3, '#c2dcd8']],
   palmier: [['ball', 0.55, 4.25, 0, 1.7, 0.3, '#7fc98a']],
@@ -25,9 +27,9 @@ export const SHAPES = {
   filon_cuivre: [['ball', 0, 0.3, 0, 0.85, 0.7, 'rock']],
   filon_fer: [['ball', 0, 0.3, 0, 0.85, 0.7, 'rock']],
   obsidienne: [['cone', 0, 0, 0, 0.5, 0.95, '#6c5a80']],
-  bouleau: [['ball', 0, 3.0, 0, 1.1, 1.2, '#b8e0a0']],
-  saule: [['ball', 0, 2.3, 0, 1.9, 0.75, '#a9d98e']],
-  erable: [['ball', 0, 2.8, 0, 1.45, 0.9, '#f2a07a'], ['ball', 0.4, 3.5, 0.2, 0.9, 0.9, '#f6c08a']],
+  bouleau: [['ball', 0.35, 4.21, 0.04, 2.0, 0.5, '#b7d99a']],
+  saule: [['ball', 0.39, 2.74, -0.04, 2.2, 0.9, '#a3cf86']],
+  erable: [['ball', 0.83, 3.15, -0.02, 2.5, 0.62, '#ef9a6a']],
   sapin_neige: [['cone', 0, 0.8, 0, 1.3, 4.6, '#dcebe8']],
   bambou: [['cone', 0, 0, 0, 0.7, 4.6, '#9fd08a']],
   fougere_arbo: [['ball', 0, 2.5, 0, 1.4, 0.45, '#7fc48b']],

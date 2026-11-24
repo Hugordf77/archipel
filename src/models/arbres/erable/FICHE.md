@@ -8,25 +8,40 @@ Dossier `src/models/arbres/erable/` · Arbres · modèle vedette
 
 ## DA retenue
 
-- **Tronc** (`troncRameux` de `kit/vegetal.js`) : courbe (0,3), évasé au pied, effilé de 0,26 à 0,16 m
-  jusqu'à la fourche à 2,1 m ; quatre racines (le pompon en a trois) ; une branche maîtresse par masse,
-  effilée en pointe dans la masse.
-- **Houppier d'automne** en quatre masses franches (`couronneMasses`, sans satellites) : trois autour à 2,3
-  à 2,45 m (orange `#f2a07a`, rouille `#ee8f78`) et une au sommet à 3,2 m, plus claire (abricot `#f6c08a`),
-  qui couvre la branche montante ; plus ovale et plus haut que le pompon ; trouées de ciel entre les
-  masses.
-- **Enveloppe** dans la forme lointaine (`farveg.js`, `SHAPES.erable` : 1,5 à 4,3 m) ; ombre portée : une
-  couronne de 1,5 m.
-- 410 triangles (226 avant).
+- **Espèce** : graine 7, ouverture 40° ; 4,7 m ; feuilles d'érable lobées, rouille au cœur, abricot en
+  périphérie ; écorce `#a9806a`.
+- **Arbre fractal de l'utilisateur** (portage de « Jeux vidéo aprentissage/src/arbre.js », `kit/arbreFractal.js`,
+  identique feuille par feuille à l'original pour la même recette) : une branche est une chaîne de segments
+  courbés qui porte trois branches filles ; six générations, tronc évasé au pied (contrefort), feuilles sur
+  les deux dernières générations, teinte des feuilles par exposition (cœur sombre et froid, périphérie
+  claire).
+- **Deux versions**, bascule par instance dans les shaders (`LOD_ARBRES`, `world/islands/arbresProches.js`) :
+  version proche à moins d'environ 30 m du joueur (au plus 40 arbres par espèce) : une feuille de l'original
+  sur huit (2 552), agrandie, en carte pliée sur la nervure (atlas peint `feuillesAtlas`), bois jusqu'à la
+  2e génération, écorce peinte (`ecorceTexture`), translucidité vers le soleil et liseré ; version forêt
+  au-delà : bois jusqu'à la 4e génération, neuf touffes peintes (une par sous-arbre), normales tirées vers
+  l'enveloppe du houppier (la couronne s'éclaire d'un bloc).
+- **Vent** : la ramure se balance (bois et feuilles, même formule à l'attache), chaque feuille frémit, et
+  des feuilles se détachent des arbres proches et tombent en spirale (`arbresProches.js`, 160 feuilles).
+- **Tronc** (`troncFractal`) : celui de l'original grossi × 1,6 (les grosses branches de moins en moins,
+  les rameaux restent fins), cinq contreforts au pied, creusés entre eux, qui se prolongent en racines
+  basses et rondes plongeant dans le sol ; de près, fût à 16 côtés cannelé (peau de vieux tronc).
+- **Forme lointaine** (`farveg.js`) : l'enveloppe du houppier (`couronneFractal`) ; ombre portée : trois
+  lobes, un par tiers de la couronne (`lobesCouronne`).
+- 500 triangles en version forêt (410 avant) ; version proche : 2 676 triangles de bois et 10 208
+  de feuilles.
 
 Règles communes : `docs/DA.md`.
 
 ## Écarts restants
 
-- **Physique / forme** en échec : encombrement 0,55 m pour un pied visible de 0,38 m (44 % d'écart, 134 %
-  avant) ; même décision que pour l'arbre pompon (placement des arbres dans tout le monde).
-- Coût en forêt et variantes : lot D du chantier arbres.
-- Pas de revue Evis-critique pour ce modèle (corrections de la revue du pompon appliquées).
+- **Gabarit** : le registre (`releves.gen.js`) garde la taille de l'ancien modèle ; à régénérer
+  (`npm run modeles:releve`), non lancé car le fichier porte du travail non commité de l'utilisateur.
+- **Physique / forme** en échec : l'encombrement (`physique.js`) dépasse le pied visible du tronc de
+  l'arbre fractal ; le ramener change le placement des arbres dans tout le monde : décision de
+  l'utilisateur.
+- Empreinte changée (non écrite : `empreintes.json` porte le travail non commité de l'utilisateur).
+- Tous les individus d'une espèce ont la même ramure (taille et orientation seules changent).
 
 ## Historique
 
@@ -34,3 +49,8 @@ Règles communes : `docs/DA.md`.
 - 21/11/2026 : arbres en détail, lot C : tronc évasé, quatre racines, branches maîtresses, houppier en
   quatre masses avec trouées ; masse du sommet descendue pour cacher la branche montante. Captures
   `captures/arbres-c3-erable-*`, planche `captures/arbres-lotC-planche.png`.
+- 22/11/2026 : remplacé par l'arbre fractal de l'utilisateur (version forêt, version proche aux feuilles
+  une à une, écorce et feuilles peintes, vent, feuilles qui tombent). Captures `captures/fractal-a3-especes.png`,
+  `captures/fractal-b2-*`.
+- 22/11/2026 : troncs plus épais et sculptés (contreforts, racines, cannelures de près), ombre portée en
+  trois lobes ; captures `captures/arbres-d2-tronc-*`, `captures/ombres-apres2-*`.

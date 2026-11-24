@@ -30,6 +30,11 @@ export const U = {
   uBounceColor: { value: new THREE.Color(0.66, 0.87, 0.68) },
   uRimBoost: { value: 0 },
   uAerial: { value: 0 },
+  // part d'automne des feuillus des îles (0 à 1, FAMILLE de chunks.js ; réglé par la saison, Game)
+  uAutomne: { value: 1 },
+  // éclairs rouges de la tornade (world/env/tornade.js) : éclat (0 à 1) et point d'où part la lumière (scène)
+  uEclair: { value: 0 },
+  uEclairPos: { value: new THREE.Vector3(0, -9999, 0) },
   // étalonnage par heure (cycle jour-nuit) : ombres, hautes lumières, plancher teinté,
   // contraste (x) et saturation (y)
   uGradeLow: { value: new THREE.Color(1, 1, 1) },
@@ -51,6 +56,12 @@ export const U = {
   uShadowMatrix: { value: new THREE.Matrix4() },
   uShadowOn: { value: 0 },
   uShadowTexel: { value: new THREE.Vector2(1 / 2048, 1 / 2048) },
+  // lumière détaillée du joueur (toonFrag, CHARACTER) : 0 = éclairage toon seul, 1 = complet
+  uJoueur: { value: 1 },
+  // seconde carte d'ombre, large et moins fine : prend le relais au-delà de la première (Pipeline, SunShadow)
+  uShadowMap2: { value: null },
+  uShadowMatrix2: { value: new THREE.Matrix4() },
+  uShadowTexel2: { value: new THREE.Vector2(1 / 2048, 1 / 2048) },
   // joueur (pour plier l'herbe)
   uPlayerPos: { value: new THREE.Vector3(0, -99, 0) },
   // terrain (hauteurs) pour l'eau

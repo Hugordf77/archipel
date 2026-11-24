@@ -15,9 +15,9 @@ export const HC = GABARIT.dessin.HC;
 export const CREAM = '#f6ead2';
 const JOINT_BLEND_RADIUS = 0.055;
 
-export const B = { HIPS: 0, TORSO: 1, HEAD: 2, ARM_L: 3, FORE_L: 4, ARM_R: 5, FORE_R: 6, THIGH_L: 7, SHIN_L: 8, THIGH_R: 9, SHIN_R: 10, HAIR_A: 11, HAIR_B: 12, NECK: 13, HAND_L: 14, HAND_R: 15, FOOT_L: 16, FOOT_R: 17, SKIRT: 18, SCARF: 19, HAIR_C: 20, SCARF_B: 21, BAG: 22 };
-// (SCARF et SCARF_B : les deux pans de l'écharpe ; BAG : le sac à dos, sur le torse)
-export const PARENT = [-1, 0, B.NECK, 1, 3, 1, 5, 0, 7, 0, 9, 2, 2, 1, B.FORE_L, B.FORE_R, B.SHIN_L, B.SHIN_R, B.HIPS, B.TORSO, B.HEAD, B.TORSO, B.TORSO];
+export const B = { HIPS: 0, TORSO: 1, HEAD: 2, ARM_L: 3, FORE_L: 4, ARM_R: 5, FORE_R: 6, THIGH_L: 7, SHIN_L: 8, THIGH_R: 9, SHIN_R: 10, HAIR_A: 11, HAIR_B: 12, NECK: 13, HAND_L: 14, HAND_R: 15, FOOT_L: 16, FOOT_R: 17, SKIRT: 18, SCARF: 19, HAIR_C: 20, SCARF_B: 21, BAG: 22, HAIR_D: 23 };
+// (SCARF et SCARF_B : les deux pans de l'écharpe ; BAG : le sac à dos, sur le torse ; HAIR_D : la frange)
+export const PARENT = [-1, 0, B.NECK, 1, 3, 1, 5, 0, 7, 0, 9, 2, 2, 1, B.FORE_L, B.FORE_R, B.SHIN_L, B.SHIN_R, B.HIPS, B.TORSO, B.HEAD, B.TORSO, B.TORSO, B.HEAD];
 // positions de repos absolues du squelette (repère du personnage, pieds en 0 ; corps réduit du gabarit,
 // gabarit.js) ; copie modifiable : la coupe pose les os des cheveux (Character.setAvatar, versReel)
 export const REST = GABARIT.REST.map((p) => [...p]);
@@ -35,13 +35,16 @@ export class Parts {
     this.by = new Map();
   }
 
-  // un Builder par (os, masse) : l'id de contour suit la masse
-  on(bone, id = ID.body) {
-    const key = `${bone}|${id}`;
+  // un Builder par (os, masse) : l'id de contour suit la masse. tissu : pièces de tissu souple (pull,
+  // manches, salopette, jupe), qui se plient aux jointures (materials.js, PLIS ; marquées aSway −1, que les
+  // cheveux n'utilisent pas sous 0,5) ; le sac, les bottes, la ceinture, la bavette restent lisses
+  on(bone, id = ID.body, tissu = false) {
+    const key = `${bone}|${id}${tissu ? '|tissu' : ''}`;
     let b = this.by.get(key);
     if (!b) {
       b = new Builder(id);
       b.bone = bone;
+      b.tissu = tissu;
       this.by.set(key, b);
     }
     return b;
@@ -53,6 +56,7 @@ export class Parts {
       const bone = builder.bone;
       const g = builder.build();
       if (!g.attributes.position) continue;
+      if (builder.tissu) g.attributes.aSway.array.fill(-1);
       const n = g.attributes.position.count;
       const si = new Uint16Array(n * 4);
       const sw = new Float32Array(n * 4);

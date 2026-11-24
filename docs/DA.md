@@ -106,7 +106,8 @@ Plafonds de triangles de la version fine, par catégorie (`src/models/kit/budget
 - **Au-delà de 4 000 triangles, version allégée obligatoire** (`lod`), aux mêmes pièces (pivots,
   animations, parents), vue au-delà de 20 m.
 - **Toute hausse de budget se demande à l'utilisateur** ; une fiche peut alors porter son propre budget
-  (`budget: { triangles, lod }`, comme le mouton : 10 000 et 3 400).
+  (`budget: { triangles, lod }`, comme le mouton : 10 000 et 3 400 ; les fiches de l'avatar : 9 500,
+  accordé le 21/11/2026, `src/models/personnage/fiche.js`).
 - **Écarts connus** (relevés le 18/10/2026, liste `ECARTS`) : 18 modèles, surtout les pièces uniques de
   l'île de départ (ponton : 20 428 triangles). Un modèle repris doit sortir de la liste.
 

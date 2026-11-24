@@ -258,30 +258,50 @@ describe('écharpe à deux pans et sac à dos : mouvement', () => {
         expect(Math.abs(r.y)).toBeLessThanOrEqual(R.vrilleMax + 1e-9);
       }
     };
-    // repos : 3 s, le vent du monde seul ; les pans ondulent à peine
-    const ecart = { x: [Infinity, -Infinity], z: [Infinity, -Infinity] };
+    // repos : 3 s, le vent du monde seul (brise de 4 m/s depuis le 21/11/2026). Depuis le 22/11/2026 les
+    // pans sont du vrai tissu (echarpeTissu.js) : leur bout ondule, sans s'emballer, et reste à sa longueur
+    // du nœud
+    const pan = c.echarpe.pans[0].ruban;
+    const bout = () => [pan.p[(pan.n - 2) * 3], pan.p[(pan.n - 2) * 3 + 1], pan.p[(pan.n - 2) * 3 + 2]];
+    const noeud = () => [pan.p[3], pan.p[4], pan.p[5]];
+    const ecart = [[Infinity, -Infinity], [Infinity, -Infinity], [Infinity, -Infinity]];
     for (let i = 0; i < 180; i++) {
       ms += 1000 / 60;
       c.update(1 / 60, 0, null);
       borne();
+      expect(pan.p.every(Number.isFinite)).toBe(true);
       if (i > 60) {
-        const r = c.bones[B.SCARF].rotation;
-        ecart.x = [Math.min(ecart.x[0], r.x), Math.max(ecart.x[1], r.x)];
-        ecart.z = [Math.min(ecart.z[0], r.z), Math.max(ecart.z[1], r.z)];
+        const b = bout();
+        const n = noeud();
+        b.forEach((v, k) => (ecart[k] = [Math.min(ecart[k][0], v - n[k]), Math.max(ecart[k][1], v - n[k])]));
+        expect(Math.hypot(b[0] - n[0], b[1] - n[1], b[2] - n[2])).toBeLessThan(0.36);
       }
     }
-    console.info(`repos : pan haut entre ${ecart.x.map((v) => v.toFixed(3)).join(' et ')} (x), ${ecart.z.map((v) => v.toFixed(3)).join(' et ')} (z)`);
-    expect(ecart.x[1] - ecart.x[0]).toBeLessThan(0.2);
-    expect(ecart.z[1] - ecart.z[0]).toBeLessThan(0.2);
+    const course = ecart.map(([a, b]) => b - a);
+    console.info(`repos : bout du pan haut, course ${course.map((v) => v.toFixed(3)).join(' / ')} m`);
+    expect(Math.max(...course)).toBeLessThan(0.2);
+    expect(course.reduce((a, b) => a + b)).toBeGreaterThan(0.005);
     expect(Math.abs(c.bones[B.BAG].position.y - c.restLocal[B.BAG].y)).toBeLessThan(0.003);
-    // tour sur place (glissé à 6 rad/s, puis lâché) : bornés, et pas d'à-coup au-delà de l'ondulation
-    const avant = c.bones[B.SCARF].rotation.x;
+    // tour sur place (glissé à 6 rad/s, puis lâché) : bornés, et pas d'à-coup au-delà de l'ondulation ; sans
+    // vent du monde (dans la brise, les pans passent normalement d'un côté à l'autre quand on tourne)
+    const { U } = await import('../src/core/globals.js');
+    const force = U.uWindStrength.value;
+    U.uWindStrength.value = 0;
+    for (let i = 0; i < 90; i++) {
+      ms += 1000 / 60;
+      c.update(1 / 60, 0, null);
+    }
     for (let i = 0; i < 120; i++) {
       c.root.rotation.y = i < 60 ? i * 0.1 : 6;
       ms += 1000 / 60;
       c.update(1 / 60, 0, null);
       borne();
-      expect(Math.abs(c.bones[B.SCARF].rotation.x - avant)).toBeLessThan(0.3);
+      // le tissu suit le tour sans s'étirer ni s'échapper
+      const b = bout();
+      const n = noeud();
+      expect(pan.p.every(Number.isFinite)).toBe(true);
+      expect(Math.hypot(b[0] - n[0], b[1] - n[1], b[2] - n[2])).toBeLessThan(0.36);
     }
+    U.uWindStrength.value = force;
   });
 });

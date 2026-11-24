@@ -185,8 +185,51 @@ void main() {
 }
 `;
 
+// Passe « astre » (quart de résolution) : les rayons du soleil, en flou radial vers l'astre (d'après les
+// rayons de l'utilisateur, moteur.js). La source est le fond de ciel (là où rien n'a écrit la profondeur)
+// autour de l'astre ; marcher vers lui depuis chaque pixel et moyenner cette source fait des traînées
+// lumineuses, coupées par tout ce qui se tient entre les deux (troncs, feuillages, relief, nuages) : les
+// rayons passent entre les feuilles. R : rayons ; G : source au pixel (sert à mesurer la part visible de
+// l'astre, lue à sa place par la composition) ; B : fond de ciel au pixel.
+export const ASTRE_FRAG = /* glsl */ `
+${NOISE}
+uniform sampler2D tDepth;
+uniform vec2 uSoleil;   // place de l'astre à l'écran (uv), éventuellement hors du cadre
+uniform float uAspect;  // largeur / hauteur
+uniform float uRayon;   // étendue de la source autour de l'astre (en hauteur d'écran)
+varying vec2 vUv;
+float source(vec2 uv) {
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 0.0;
+  float ciel = step(0.99999, texture2D(tDepth, uv).r);
+  vec2 dv = (uv - uSoleil) * vec2(uAspect, 1.0);
+  return ciel * exp(-dot(dv, dv) / (uRayon * uRayon));
+}
+void main() {
+  const int N = 28;
+  vec2 pas = (uSoleil - vUv) / float(N);
+  // départ décalé d'une fraction de pas par pixel : pas de marches dans les rayons
+  vec2 uv = vUv + pas * hash12(gl_FragCoord.xy);
+  float acc = 0.0;
+  float w = 1.0;
+  float ws = 0.0;
+  for (int i = 0; i < N; i++) {
+    acc += source(uv) * w;
+    ws += w;
+    w *= 0.975;
+    uv += pas;
+  }
+  // exposition : la moyenne le long du trajet est faible loin de l'astre ; les traînées doivent porter
+  gl_FragColor = vec4(min(acc / ws * 2.4, 1.0), source(vUv), step(0.99999, texture2D(tDepth, vUv).r), 1.0);
+}
+`;
+
 export const COMPOSITE_FRAG = /* glsl */ `
 ${NOISE}
+uniform sampler2D tAstre;
+uniform vec2 uSoleil;
+uniform vec3 uAstreCol;
+uniform vec2 uAstre;    // force des rayons, force du voile (0 : astre hors de vue, nuit, pluie)
+uniform float uAspect;
 uniform sampler2D tPaint;
 uniform sampler2D tScene;
 uniform sampler2D tNormal;
@@ -334,6 +377,21 @@ void main() {
       float fade = smoothstep(260.0, 70.0, d0);
       col = mix(col, ink, e * uOutline * mix(0.45, 0.88, fade));
     }
+  }
+
+  // ---- lumière de l'astre : rayons (occultés) et voile autour de lui ----
+  // fondu « écran » (jamais au-delà du blanc) ; le disque lui-même, gardé net, n'est pas voilé : il reste
+  // le seul blanc franc. Le voile se règle sur la part visible de l'astre (derrière un tronc, il s'éteint).
+  // Le ciel a déjà ses halos (sky.js) : rayons et voile y sont discrets, et pèsent surtout sur ce qui se
+  // dresse devant l'astre (feuillages, troncs, relief), où ils font les traînées et le contre-jour.
+  if (uAstre.x + uAstre.y > 0.0) {
+    vec3 a = texture2D(tAstre, vUv).rgb;
+    float vis = texture2D(tAstre, clamp(uSoleil, 0.0, 1.0)).g;
+    float r = length((vUv - uSoleil) * vec2(uAspect, 1.0));
+    float voile = (exp(-r * 4.0) * 0.6 + exp(-r * 14.0) * 0.4) * vis;
+    float surCiel = mix(1.0, 0.3, a.b);
+    vec3 lum = uAstreCol * (a.r * uAstre.x + voile * uAstre.y) * surCiel * (1.0 - cielNet);
+    col = 1.0 - (1.0 - col) * (1.0 - clamp(lum, 0.0, 1.0));
   }
 
   // ---- grain de papier & granulation ----

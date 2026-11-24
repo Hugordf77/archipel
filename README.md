@@ -166,27 +166,9 @@ ce que le jeu construit, dossiers et index générés, chargement sans cycle d'i
 
 ## Créer ou reprendre un modèle avec Evis
 
-Evis est l'agent de modélisation du projet (`.claude/agents/evis.md`) ; son regard critique, en lecture
-seule, est `.claude/agents/evis-critique.md`. Les règles qu'ils appliquent sont dans `docs/DA.md`, la méthode
-dans la skill `modele-3d` (`.claude/skills/modele-3d/SKILL.md`).
+Evis (`.claude/agents/evis.md`) modélise ; Evis-critique (`.claude/agents/evis-critique.md`) examine en lecture seule. La procédure de référence est `.claude/skills/modele-3d/SKILL.md` : elle définit le contexte minimal par modèle, les mesures JSON, les contrôles visuels sélectifs et les garde-fous. Pour une tâche, les agents consultent la fiche, le constructeur, la référence et les règles de DA nécessaires au modèle concerné, sans charger le README, le catalogue ni les fiches sans lien.
 
-- **Appel** : « Evis, reprends ANI-002 d'après cette planche » (avec l'image), « Evis, modélise un ours
-  d'après cette description », ou la skill `/modele-3d`.
-- **Méthode** : planche 6 vues, écarts chiffrés, construction dans le dossier du modèle, mesures, captures
-  comparées, note du catalogue, un commit par modèle.
-- **Boucle** : Evis construit, Evis-critique analyse (proportions mesurées face à la référence, défauts
-  classés avec leur `fichier:ligne`, verdict « valide » ou « à reprendre »), Evis corrige ; trois tours au
-  plus, puis validation par l'utilisateur.
-- **Outils** :
-  - `npm run modeles:mesure -- <id>` : chaque règle chiffrée de la DA, ✓ ou ✗ ;
-  - dans le catalogue, `await (await import('/scripts/modeles/planche.js')).planche({ id })` : planche 6 vues,
-    broutage, gros plans, référence / modèle, dans `captures/` ;
-  - dans le jeu, `await (await import('/scripts/modeles/jeu.js')).jeu({ espece })` : captures de près et de
-    loin, coût en triangles de chaque espèce, sauvegarde verrouillée ;
-  - l'aide « Collisions » de la fiche.
-- **Garde-fous** : toute hausse de budget (`src/models/kit/budgets.js`) ou tout changement d'une aide du
-  `kit/` employée ailleurs se demande ; les empreintes des autres modèles restent identiques ; `git add`
-  avec des chemins explicites.
+La boucle reste limitée à trois tours de critique. La commande de mesure structurée est `node scripts/modeles/mesure.mjs <id> --json` ; les défauts visuels reçoivent au plus trois corrections prioritaires par tour. Les captures ne sont demandées que si le changement peut influer sur l'apparence ou le rendu en jeu, et seules les vues utiles sont produites. Les échecs des mesures et les contrôles non exécutés restent explicitement rapportés.
 
 ## Production de l’open world
 
@@ -235,6 +217,7 @@ src/
   audio/      moteur audio procédural
   data/       objets, recettes
 catalogue/    site du catalogue des modèles (catalogue.html à la racine), notes.json
+production/   suivi de production de l’open world : zones.json, agents.json, journal.jsonl, fiches/, assets/, integration/, rapports/
 scripts/      modèles : index, relevés (tailles, usage), empreintes, fiches
 docs/         arborescence des modèles
 tests/        Vitest
