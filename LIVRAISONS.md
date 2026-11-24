@@ -418,6 +418,18 @@ et domaine concerné).
 
 ## État courant (24/11/2026)
 
+- **Chantier rendu 2 : outillage de la phase 0** (24/11) : méthode `docs/RENDU.md`. Banc de captures
+  déterministe `scripts/rendu/banc/` (7 cadrages nommés, 1600 × 900 fixe, qualité Haut, attente du chargement
+  réel, origine lue dans le jeu, temps, vent, nuages et météo figés, rejet automatique des captures vides ou
+  à caméra enterrée, paires A/B), bascules `Pipeline.PASSES` (nouveau réglage `ombres`), métriques Python
+  (`metriques.py`, SSIM par zone), planche, budgets GPU par poste (`budgets.js`, trois passes, médiane),
+  machine à états des chantiers dans le journal (`src/production/rendu.js`, événements `rendu.*`, CLI
+  `chantier.mjs`), section `/dashboard.html#rendu`, agent `rendu-critique` ; tests `tests/rendu-banc.test.js`
+  (10) ; tests chronométrés à part (`npm run test:chronos`). Référence `captures/banc/r0-reference/` :
+  aucun noir pur ni blanc brûlé ; ombre/soleil 0,53 à 0,71 (hors cible 0,40–0,60 sur 6 cadrages sur 7) ;
+  image de la vue de jeu 18,2 ms en Haut (G-buffer 12,4 à 13,2 ms ; budget 12 ms) : les deux premiers
+  constats du chantier 3.
+
 - **Chantier rendu 1 : suite remise au vert, existant commité** (24/11) : 407 tests sur 408 ; seul échec, accepté
   et listé dans `production/echecs-connus.json` : le trou MON-012 / MON-013 du registre (modèles restés non
   commités dans le worktree `claude/plateau-vente-modeles`, décision de l'utilisateur). Relevés des tailles

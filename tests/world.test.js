@@ -651,7 +651,8 @@ describe('champs de fleurs', () => {
   }, 30000);
 });
 
-describe('budget du Worker', () => {
+// chronométré : suite à part (npm run test:chronos), la mesure dépend de la charge de la machine
+describe.runIf(process.env.CHRONOS === '1')('[chrono] budget du Worker', () => {
   it('construit plan + LOD1 d’une île en moins de 60 ms en moyenne, le plan de la Grande Île en moins de 3 s, une section en moins de 30 ms, une tuile en moins de 15 ms', async () => {
     const { ILES, ISLANDS } = await import('../src/world/islands/regions.js');
     const { buildPlan } = await import('../src/world/islands/gen/plan.js');

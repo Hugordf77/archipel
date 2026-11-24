@@ -10,6 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:chronos": "CHRONOS=1 vitest run -t chrono tests/herbe-champ.test.js tests/world.test.js",
     "modeles:releve": "node scripts/modeles/releve.mjs",
     "modeles:empreinte": "node scripts/modeles/empreinte.mjs",
     "modeles:index": "node scripts/modeles/index.mjs",

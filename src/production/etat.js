@@ -8,6 +8,7 @@
 import { transitionPermise, TENTATIVES_MAX } from './statuts.js';
 import { itemsDeZone } from './checklist.js';
 import { verifierTache, verifierRapport, verifierControle } from './contrats.js';
+import { gestionnairesRendu } from './rendu.js';
 
 export class ErreurWorkflow extends Error {}
 const refuse = (msg) => { throw new ErreurWorkflow(msg); };
@@ -32,6 +33,8 @@ export function etatInitial() {
   return {
     objectifs: new Map(), taches: new Map(), livrables: new Map(), validations: new Map(),
     integrations: new Map(), items: new Map(), approbations: new Map(), evenements: [], cles: new Set(),
+    // chantiers de rendu (rendu.js) : REN-000 → état de la machine, mesures, portes
+    rendu: new Map(),
   };
 }
 
@@ -355,6 +358,9 @@ function finIntegration(etat, ctx, evt, resultat) {
   Object.assign(integ, { resultat, fin: evt.at, controles, preuves: evt.donnees.preuves || [], version: evt.donnees.version || integ.version });
   if (resultat === 'integrated') propager(etat, ctx, t, { integration: 'integrated' }, evt);
 }
+
+// chantiers de rendu : machine à états et portes (rendu.js)
+Object.assign(HANDLERS, gestionnairesRendu({ refuse, estHumain }));
 
 export const TYPES = Object.keys(HANDLERS);
 

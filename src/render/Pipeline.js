@@ -18,6 +18,19 @@ const LUMIERE_ON = { relief: 1, rebond: 1, rim: 1, brume: 1, etalonnage: 1 };
 export const CIEL = ['voute', 'vie', 'nettete'];
 const CIEL_ON = { voute: 1, vie: 1, nettete: 1 };
 
+// Bascules A/B du banc de rendu (scripts/rendu/banc/) : chaque passe derrière un réglage de
+// Pipeline.settings, la valeur « coupée » puis la valeur « active » ; une capture avant / après se fait
+// dans le même état, sans rechargement. Une passe nouvelle s'ajoute ici avec son réglage.
+export const PASSES = {
+  peinture: { reglage: 'paint', coupe: false, active: true },
+  contour: { reglage: 'outline', coupe: 0, active: 1 },
+  papier: { reglage: 'paper', coupe: 0, active: 0.85 },
+  ombres: { reglage: 'ombres', coupe: 0, active: null },
+  astre: { reglage: 'astre', coupe: 0, active: null },
+  particules: { reglage: 'particules', coupe: 0, active: 1 },
+  ...Object.fromEntries([...LUMIERE, ...CIEL].map((k) => [k, { reglage: k, coupe: 0, active: null }])),
+};
+
 export const QUALITY = {
   low: { pixelRatio: 1, paintScale: 0.5, aniso: false, radius: 3, shadow: 1024, shadowEvery: 3, lumiere: LUMIERE_ON, ciel: { voute: 1, vie: 0, nettete: 1 }, label: 'Bas' },
   medium: { pixelRatio: 1.25, paintScale: 0.5, aniso: true, radius: 3, shadow: 2048, shadowEvery: 2, lumiere: LUMIERE_ON, ciel: CIEL_ON, label: 'Moyen' },
@@ -172,6 +185,8 @@ export class Pipeline {
       nettete: null,
       // lumière de l'astre (rayons occultés, voile) : null = active, 0 = coupée, sinon force (0 à 1,5)
       astre: null,
+      // ombres portées : null = actives, 0 = coupées (bascule A/B du banc de rendu)
+      ombres: null,
     };
     // teinte du rebond visée (biome sous le joueur, Game.updateZone) ; U.uBounceColor la rejoint
     this.rebondCible = U.uBounceColor.value.clone();
@@ -400,6 +415,8 @@ export class Pipeline {
     let quelles = this.frameNo % every === 0 ? 1 : 0;
     if (this.frameNo % (every * 2) === (every > 1 ? 1 : 0)) quelles |= 2;
     if (this.forceShadow) quelles = 3;
+    U.uShadowOn.value = s.ombres === 0 ? 0 : 1;
+    if (s.ombres === 0) quelles = 0;
     if (quelles) {
       this.shadow.render(r, scene, this.shadowCenter, quelles);
       this.forceShadow = false;

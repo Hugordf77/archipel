@@ -1,16 +1,16 @@
-# Graph Report - src  (2026-11-23)
+# Graph Report - src  (2026-11-24)
 
 ## Corpus Check
-- 465 files · ~524,848 words
+- 467 files · ~528,749 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3437 nodes · 9131 edges · 208 communities (193 shown, 15 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 184 edges (avg confidence: 0.77)
+- 3455 nodes · 9160 edges · 204 communities (190 shown, 14 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 187 edges (avg confidence: 0.76)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `12871655`
+- Built from commit: `4599105c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -83,6 +83,7 @@
 - .push
 - IslandFauna
 - registry.js
+- worldWorker.js
 - settingsPanel.js
 - homeFauna.js
 - archipel.js
@@ -107,8 +108,6 @@
 - .constructor
 - Habillage de forteresse du navire — BAT-020
 - Hélices et encombrement du navire — BAT-021
-- Decor
-- season.js
 - Cerf — ANI-004
 - Dirigeable — NAV-012
 - Moulin à vent — BAT-004
@@ -218,15 +217,13 @@
 - Mineraux — ROC-003 à ROC-006
 - budgets.js
 - GRADE_KEYS
-- weather.js
-- hibou/index.js
 
 ## God Nodes (most connected - your core abstractions)
 1. `fiche()` - 117 edges
 2. `lire()` - 116 edges
 3. `G` - 116 edges
 4. `Builder` - 92 edges
-5. `nextId()` - 70 edges
+5. `nextId()` - 72 edges
 6. `Game` - 62 edges
 7. `AudioEngine` - 59 edges
 8. `bx()` - 56 edges
@@ -236,175 +233,179 @@
 ## Surprising Connections (you probably didn't know these)
 - `buildRig()` --indirect_call--> `bone()`  [INFERRED]
   src/entities/locomotion/rig.js → src/models/kit/formes.js
+- `ruinesAlternative()` --indirect_call--> `cap()`  [INFERRED]
+  src/models/monuments/ruines-alternative/index.js → src/models/personnage/coupes/chibi.js
 - `buildCliff()` --indirect_call--> `hz()`  [INFERRED]
   src/world/home/details.js → src/audio/pianoTitre.js
+- `evenements()` --indirect_call--> `m()`  [INFERRED]
+  src/audio/pianoTitre.js → src/world/archipel.js
 - `bilanZone()` --indirect_call--> `def()`  [INFERRED]
   src/production/completude.js → src/data/items.js
-- `buildAlbatros()` --indirect_call--> `geo()`  [INFERRED]
-  src/models/animaux/albatros/index.js → src/entities/locomotion/trunk.js
-- `mouton()` --indirect_call--> `geo()`  [INFERRED]
-  src/models/animaux/mouton/index.js → src/entities/locomotion/trunk.js
 
 ## Import Cycles
 - 3-file cycle: `src/entities/character/Character.js -> src/models/personnage/index.js -> src/models/personnage/corps/index.js -> src/entities/character/Character.js`
 - 3-file cycle: `src/entities/character/Character.js -> src/models/personnage/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
 - 4-file cycle: `src/entities/character/Character.js -> src/entities/character/echarpeTissu.js -> src/models/personnage/index.js -> src/models/personnage/corps/index.js -> src/entities/character/Character.js`
-- 4-file cycle: `src/entities/character/Character.js -> src/entities/character/echarpeTissu.js -> src/models/personnage/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
 - 4-file cycle: `src/entities/character/Character.js -> src/models/personnage/index.js -> src/models/personnage/corps/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
+- 4-file cycle: `src/entities/character/Character.js -> src/entities/character/echarpeTissu.js -> src/models/personnage/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
 - 4-file cycle: `src/entities/character/Character.js -> src/models/personnage/index.js -> src/models/personnage/crayon/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
+- 5-file cycle: `src/entities/character/Character.js -> src/models/personnage/index.js -> src/models/personnage/corps/index.js -> src/models/personnage/corps/chibi.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
 - 5-file cycle: `src/entities/character/Character.js -> src/entities/character/echarpeTissu.js -> src/models/personnage/index.js -> src/models/personnage/corps/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
 - 5-file cycle: `src/entities/character/Character.js -> src/entities/character/echarpeTissu.js -> src/models/personnage/index.js -> src/models/personnage/crayon/index.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
-- 5-file cycle: `src/entities/character/Character.js -> src/models/personnage/index.js -> src/models/personnage/corps/index.js -> src/models/personnage/corps/chibi.js -> src/models/personnage/coupes/index.js -> src/entities/character/Character.js`
 
-## Communities (208 total, 15 thin omitted)
+## Communities (204 total, 14 thin omitted)
 
 ### Community 0 - ".add"
-Cohesion: 0.07
-Nodes (69): arbreGeant(), barque(), barqueAmarree(), barqueEchouee(), ballonNavire(), dirigeable(), helice(), epave() (+61 more)
+Cohesion: 0.05
+Nodes (69): arbreGeant(), barque(), barqueAmarree(), barqueEchouee(), epave(), ancre(), boueeEchouee(), cabane() (+61 more)
 
 ### Community 1 - "motor.js"
 Cohesion: 0.07
 Nodes (83): AIR, airStep(), approach(), BANKING, bankStep(), BASE, bonk(), bonkStep() (+75 more)
 
 ### Community 2 - "Builder"
-Cohesion: 0.07
-Nodes (56): bambou(), champiGeant(), pin(), pine(), pinGivre(), sapinNeige(), fougereArbo(), palmier() (+48 more)
+Cohesion: 0.08
+Nodes (58): bambou(), champiGeant(), pin(), pine(), pinGivre(), sapinNeige(), fougereArbo(), palmier() (+50 more)
 
 ### Community 3 - "fiches.js"
-Cohesion: 0.09
-Nodes (37): espece, espece, espece, espece, espece, BUTTERFLY_PIVOTS, butterflyGeometry(), CRAB_LEG_PIVOTS (+29 more)
+Cohesion: 0.08
+Nodes (50): espece, espece, espece, espece, espece, BUTTERFLY_PIVOTS, butterflyGeometry(), CRAB_LEG_PIVOTS (+42 more)
 
 ### Community 4 - "pose.js"
-Cohesion: 0.05
-Nodes (58): CLIMB_STATES, LocoFeedback, airPose(), ARM_DYN, _ax, bankAngle(), bankDrop(), blendGait() (+50 more)
+Cohesion: 0.09
+Nodes (44): airPose(), ARM_DYN, _ax, bankAngle(), bankDrop(), blendGait(), bodyBank(), bonkPose() (+36 more)
+
+### Community 5 - "Game"
+Cohesion: 0.06
+Nodes (11): Game, game, applySeason(), AUTUMN, BLOSSOM, cellHash(), seasonOf(), SEASONS (+3 more)
 
 ### Community 6 - "etat.js"
-Cohesion: 0.06
-Nodes (64): def(), itemId(), itemsDeZone(), MODELE, MODELE_CHECKLIST, MODELE_PAR_CLE, SECTIONS, actives (+56 more)
+Cohesion: 0.05
+Nodes (71): def(), itemId(), itemsDeZone(), MODELE, MODELE_CHECKLIST, MODELE_PAR_CLE, SECTIONS, actives (+63 more)
 
 ### Community 7 - "AudioEngine"
-Cohesion: 0.15
-Nodes (10): BUGS, FISH, FLOWER_COLORS, itemIcon(), ITEMS, SHAPES, STATION_NAMES, TIERS (+2 more)
+Cohesion: 0.12
+Nodes (21): flowerItemFor(), HARVEST, rollBug(), rollDrops(), rollFish(), strikeTime(), TIER_NAMES, TOOL_NAMES (+13 more)
 
 ### Community 8 - "mulberry32"
-Cohesion: 0.12
-Nodes (32): weighted(), bilinear(), distanceField(), slopeAt(), stableId(), sealLakes(), buildPaths(), costGrid() (+24 more)
+Cohesion: 0.09
+Nodes (43): mulberry32(), weighted(), BLOQUANTS, DECOR, FOREST_TREES, LOURDS, OUVERT, placeFloraForme() (+35 more)
 
 ### Community 9 - "moulin-tour/index.js"
 Cohesion: 0.11
 Nodes (52): ailes(), angles(), ANNEXE, archivolte(), AVANCEE, barre(), CACHE, cadre() (+44 more)
 
 ### Community 10 - "ruines-alternative/index.js"
-Cohesion: 0.09
-Nodes (51): _a, autres(), _b, baieOgivale(), bloc(), blocLibre(), chanfrein(), claveaux() (+43 more)
+Cohesion: 0.10
+Nodes (50): _a, autres(), _b, baieOgivale(), bloc(), blocLibre(), chanfrein(), claveaux() (+42 more)
 
 ### Community 11 - "GamepadInput"
 Cohesion: 0.08
 Nodes (13): _aim, BTN, center(), GamepadInput, identifyController(), PAD_DEFAULTS, padName(), pickFocus() (+5 more)
 
 ### Community 12 - "corps/index.js"
-Cohesion: 0.10
-Nodes (37): COL, leafGeo(), angle(), AXE_Z, band(), BAVETTE, boule(), bourrelet() (+29 more)
+Cohesion: 0.08
+Nodes (47): CHAR_IDS, SH, _h, queue(), COL, grilleZones(), leafGeo(), box() (+39 more)
 
 ### Community 13 - "heightAt"
-Cohesion: 0.08
-Nodes (50): parasolPlage(), transat(), buildClumpGeometry(), buildShadowProxies(), rng(), blocked(), buildGrass(), champsMaison() (+42 more)
+Cohesion: 0.09
+Nodes (35): archeGlycine(), lavandeGeante(), blocked(), buildGrass(), champsMaison(), rng(), slopeAt(), smooth() (+27 more)
 
 ### Community 14 - "gen/forme.js"
-Cohesion: 0.12
-Nodes (32): ZONE_BY_ID, alpine(), arrondir(), BIOME_INDEX, coastDist(), coastGrid(), COLLINES, collinesZone() (+24 more)
+Cohesion: 0.16
+Nodes (23): alpine(), arrondir(), BIOME_INDEX, coastDist(), coastGrid(), COLLINES, collinesZone(), formeContext() (+15 more)
 
 ### Community 15 - "avatar.js"
-Cohesion: 0.14
-Nodes (24): CLOTH_COLORS, CLOTH_NAMES, CUIR, EYES, HAIR_COLORS, PIECES, piecesOf(), SHOE_COLORS (+16 more)
+Cohesion: 0.10
+Nodes (33): CLOTH_COLORS, CLOTH_NAMES, CUIR, EYES, HAIR_COLORS, index(), pick(), PIECES (+25 more)
 
 ### Community 16 - "cerf/index.js"
 Cohesion: 0.06
 Nodes (41): ANDOUILLERS, ARRIERE, AVANT, avec(), AXE_TETE, axis, C0, CC (+33 more)
 
 ### Community 17 - "globals.js"
-Cohesion: 0.08
-Nodes (17): _c, CIEL, CIEL_ON, _dir, fsCam, fsGeo, FSPass, _fwd (+9 more)
+Cohesion: 0.12
+Nodes (15): _c, CIEL, CIEL_ON, _dir, fsCam, fsGeo, _fwd, LUMIERE (+7 more)
 
 ### Community 18 - "herbe.js"
 Cohesion: 0.08
-Nodes (37): MURS, BIOMES, couleurRebond(), densiteHerbeBiome(), paletteHerbe(), PALETTES_HERBE, rgb(), BIOME_IDS (+29 more)
+Nodes (34): GX, GY, MURS, densiteHerbeBiome(), BIOME_IDS, B_NONE, BIOME_DRY, BIOME_TALL (+26 more)
 
 ### Community 19 - "Game.js"
-Cohesion: 0.14
-Nodes (17): CURL_COAT, CURL_COAT_LITE, EAR, EAR_IN, EAR_IN_LITE, EAR_LITE, espece, _up (+9 more)
+Cohesion: 0.12
+Nodes (20): CURL_COAT, CURL_COAT_LITE, EAR, EAR_IN, EAR_IN_LITE, EAR_LITE, espece, mouton() (+12 more)
 
 ### Community 20 - "nextId"
-Cohesion: 0.10
-Nodes (29): attendre(), _avant, BAS, HAUT, MODIFS, RETOUR, Titre, titreAPasser() (+21 more)
+Cohesion: 0.08
+Nodes (30): attendre(), _avant, BAS, HAUT, MODIFS, RETOUR, Titre, titreAPasser() (+22 more)
 
 ### Community 21 - "navire-machinerie/index.js"
-Cohesion: 0.15
-Nodes (29): barre(), loft(), rect(), ponts(), poupe(), rambarde(), chevalet(), escalier() (+21 more)
+Cohesion: 0.18
+Nodes (25): barre(), loft(), rect(), ponts(), poupe(), rambarde(), chevalet(), escalier() (+17 more)
 
 ### Community 22 - "navire-fort/index.js"
-Cohesion: 0.07
-Nodes (39): JOURS, MOIS, ORIGIN, Collectibles, KINDS, seeded(), nearbyStations(), Interactions (+31 more)
+Cohesion: 0.06
+Nodes (40): arriveIntent(), climbable(), stepMotor(), advanceGaitPhase(), strideLength(), angleDelta(), damp(), lerpAngle() (+32 more)
 
 ### Community 23 - "HerbeSystem.js"
-Cohesion: 0.10
-Nodes (18): champDeSecours(), dataTexture(), HerbeSystem, NO_CUT, patchGeometry(), PRESET_ORDER, herbeMaterial(), bladesAt() (+10 more)
+Cohesion: 0.11
+Nodes (14): HerbeSystem, patchGeometry(), PRESET_ORDER, bladesAt(), bladeWidth(), cellsForTile(), couverture(), fract() (+6 more)
 
 ### Community 24 - "inventoryScreen.js"
 Cohesion: 0.11
 Nodes (32): actionsFor(), badgeOf(), byName(), CAT_LABEL, CAT_ORDER, clampCursor(), collator, entries() (+24 more)
 
 ### Community 25 - "navire-maison/index.js"
-Cohesion: 0.12
-Nodes (38): BEAUPRE, demiPont(), pavois(), colonne(), CRETE, demiLargeur(), demiPont(), FOND (+30 more)
+Cohesion: 0.13
+Nodes (34): BEAUPRE, pavois(), colonne(), CRETE, demiLargeur(), demiPont(), FOND, hausse() (+26 more)
 
 ### Community 26 - "Character.js"
-Cohesion: 0.08
-Nodes (17): CameraRig, damp(), lerpAngle(), wrapAngle(), cloudAtlas(), buildClouds(), computeHorizonDip(), preparerVoute() (+9 more)
+Cohesion: 0.11
+Nodes (23): feuilleMaterial(), canvas(), cloudAtlas(), contourFeuille(), ecorceTexture(), feuillesAtlas(), grappesAtlas(), leafAtlas() (+15 more)
 
 ### Community 27 - "h"
-Cohesion: 0.10
-Nodes (4): h(), replay(), EcranTitre, UI
+Cohesion: 0.14
+Nodes (4): h(), replay(), openCartographerPanel(), UI
 
 ### Community 28 - "Player.js"
-Cohesion: 0.14
-Nodes (25): exportSave(), loadSave(), openDB(), readImportFile(), writeSave(), createDefaultState(), dayKeyOf(), LEGACY_KEYS (+17 more)
+Cohesion: 0.13
+Nodes (24): exportSave(), loadSave(), openDB(), readImportFile(), writeSave(), createDefaultState(), dayKeyOf(), LEGACY_KEYS (+16 more)
 
 ### Community 29 - "Sailing.js"
 Cohesion: 0.13
-Nodes (13): damp(), idealTrim(), lerpAngle(), pointOfSail(), Sailing, smoothDamp(), BOAT_ORDER, BOATS (+5 more)
+Nodes (9): damp(), idealTrim(), lerpAngle(), pointOfSail(), Sailing, smoothDamp(), setSeaConditions(), waveHeightAt() (+1 more)
 
 ### Community 30 - "props.js"
-Cohesion: 0.15
-Nodes (21): grandArbre(), grandArbreClumps(), trunkAlong(), bibliotheque(), chaumiere(), echoppe(), ile(), PAL (+13 more)
+Cohesion: 0.08
+Nodes (42): grandArbre(), grandArbreClumps(), trunkAlong(), bibliotheque(), chaumiere(), echoppe(), chantier, couture (+34 more)
 
 ### Community 31 - "navire-coque/index.js"
 Cohesion: 0.06
-Nodes (52): _a, autres(), _b, bloc(), CACHE, chanfrein(), coinsBoite(), _d (+44 more)
+Nodes (54): nextId(), _a, autres(), _b, bloc(), CACHE, chanfrein(), coinsBoite() (+46 more)
 
 ### Community 32 - "IslandManager"
-Cohesion: 0.12
-Nodes (6): buildFallFoam(), buildRivers(), riverMaterial(), composeItem(), IslandManager, meshGeometry()
+Cohesion: 0.14
+Nodes (3): buildFallFoam(), IslandManager, meshGeometry()
 
 ### Community 33 - "archipel.js"
-Cohesion: 0.32
-Nodes (6): AVENTURIER, AVENTURIER_DESSIN, CHIBI, OS_TETE, reduit(), versDessin()
-
-### Community 34 - "Gather"
-Cohesion: 0.09
-Nodes (14): flowerItemFor(), HARVEST, rollBug(), rollDrops(), rollFish(), strikeTime(), TIER_NAMES, TOOL_NAMES (+6 more)
+Cohesion: 0.13
+Nodes (17): BASE_TUNING, bras(), cache, epauleX(), epauleY(), lateralAt(), os(), REACTIF (+9 more)
 
 ### Community 35 - "flowers.js"
-Cohesion: 0.12
-Nodes (21): chantier, couture, etabli, four, article(), decor(), arche, fontaine (+13 more)
+Cohesion: 0.18
+Nodes (3): FSPass, makeRT(), Pipeline
 
 ### Community 36 - "surface.js"
-Cohesion: 0.10
-Nodes (29): makeNoise(), bicubic(), cr(), smooth(), baseHeight(), BLOOM_RGB, buildDepthWindow(), buildLOD1() (+21 more)
+Cohesion: 0.08
+Nodes (43): makeNoise(), BIOMES, rgb(), buildFarVeg(), hex(), SHAPES, smooth(), KIND_INDEX (+35 more)
+
+### Community 37 - "Gather.js"
+Cohesion: 0.06
+Nodes (14): AudioEngine, CHANNEL_LABELS, CHANNELS, midiToHz(), PENTA, rand(), ACCORDS, clamp() (+6 more)
 
 ### Community 38 - "Character"
-Cohesion: 0.07
-Nodes (33): ARM_BONES, BASE, Character, CLOTH_POINT, _crown, damp(), FIDGETS, PLI_JOINTURES (+25 more)
+Cohesion: 0.06
+Nodes (38): ARM_BONES, BASE, buildDust(), Character, CLOTH_POINT, _crown, damp(), FIDGETS (+30 more)
 
 ### Community 39 - "rig.js"
 Cohesion: 0.08
@@ -412,63 +413,63 @@ Nodes (28): applyJoints(), ARM, _ax, boneToRoot(), buildRig(), _c, _chain, clamp
 
 ### Community 40 - "vache/index.js"
 Cohesion: 0.07
-Nodes (38): queue(), rejoue(), ARRIERE, AVANT, AXE_TETE, axis, CC, CORPS (+30 more)
+Nodes (36): ARRIERE, AVANT, AXE_TETE, axis, CC, CORPS, CR, EAR (+28 more)
 
 ### Community 41 - "decor/index.js"
 Cohesion: 0.08
-Nodes (24): assembleBuilder(), assembleCreature(), assembleKind(), assembleMesh(), assemblePart(), flat(), _id, materiaux() (+16 more)
+Nodes (39): _zero, Collectibles, seeded(), build(), buildHibou(), halo(), mesh(), assembleBuilder() (+31 more)
+
+### Community 42 - "Pipeline.js"
+Cohesion: 0.19
+Nodes (9): buildLake(), buildOcean(), buildPond(), buildRiver(), buildWaterfall(), WATER_PHYSICS, waterMaterial(), animateDetails() (+1 more)
 
 ### Community 43 - "face.js"
 Cohesion: 0.12
 Nodes (26): BLINKABLE, cellUV(), CHEEK, EXPRESSIONS, EYE, faceGeometry(), IRIS, MOUTH (+18 more)
 
 ### Community 44 - "builder.js"
-Cohesion: 0.18
-Nodes (14): caracteristiques, dessin(), boat(), construire(), hull(), materials(), sailGeometry(), caracteristiques (+6 more)
+Cohesion: 0.19
+Nodes (13): caracteristiques, boat(), construire(), hull(), materials(), sailGeometry(), caracteristiques, dessin() (+5 more)
 
 ### Community 45 - "navire-moulin/index.js"
-Cohesion: 0.18
-Nodes (31): oc(), octo(), panX(), panZ(), pignonZ(), planche(), poteau(), prisme() (+23 more)
+Cohesion: 0.13
+Nodes (37): cadre(), fenetre(), panDeBois(), panX(), panZ(), pignonZ(), planche(), plaque() (+29 more)
 
 ### Community 46 - "IslandManager.js"
-Cohesion: 0.10
-Nodes (22): CAP_COLORS, ROCKY, bloomColorOf(), ACC_ATTRS, bloomColor(), BLOOMS, _bp, _c (+14 more)
+Cohesion: 0.08
+Nodes (27): CAP_COLORS, ROCKY, buildRivers(), riverMaterial(), PALETTES_HERBE, bloomColorOf(), ACC_ATTRS, bloomColor() (+19 more)
 
 ### Community 47 - "navigation.js"
-Cohesion: 0.08
-Nodes (35): arbreFruitier(), fruits(), TEINTE, arbrePompon(), TEINTE, bouleau(), TEINTE, arbreCerisier() (+27 more)
+Cohesion: 0.09
+Nodes (33): arbreFruitier(), fruits(), TEINTE, arbrePompon(), TEINTE, bouleau(), TEINTE, arbreCerisier() (+25 more)
 
 ### Community 48 - "ciel/relief.js"
-Cohesion: 0.18
-Nodes (21): fbm(), GX, GY, buildCielMesh(), cache, cielAt(), cielContext(), DECOR (+13 more)
+Cohesion: 0.13
+Nodes (27): fbm(), _c, cascadeTexture(), IlesCelestes, _m, _p, _q, _s (+19 more)
 
 ### Community 49 - "coupes/index.js"
-Cohesion: 0.08
-Nodes (25): HAIRS, AXE, CAP, DYN_D, FORMES, HERO, LAME, _m (+17 more)
+Cohesion: 0.09
+Nodes (22): HAIRS, AXE, CAP, DYN_D, FORMES, HERO, LAME, _m (+14 more)
 
 ### Community 51 - "arche-basse/index.js"
-Cohesion: 0.23
-Nodes (15): affine(), patch(), surface(), union(), _up, archeBasse(), MONTANT, moellon() (+7 more)
+Cohesion: 0.19
+Nodes (17): patch(), surface(), archeBasse(), MONTANT, domeDe(), moellon(), mousse(), pierreLevee() (+9 more)
 
 ### Community 52 - "mouton/index.js"
 Cohesion: 0.14
-Nodes (27): angles(), archivolte(), coque(), facesTronc(), panDeBois(), poser(), segmentDisque(), socle() (+19 more)
+Nodes (28): angles(), archivolte(), coque(), facesTronc(), octo(), poser(), segmentDisque(), socle() (+20 more)
 
 ### Community 53 - "IlesCelestes.js"
-Cohesion: 0.26
-Nodes (10): AILE, ballon(), BANDE, CREME, F, rayon(), troncon(), BALLON (+2 more)
+Cohesion: 0.23
+Nodes (13): AILE, ballon(), ballonNavire(), BANDE, CREME, dirigeable(), F, helice() (+5 more)
 
 ### Community 54 - "navire-tourelle/index.js"
-Cohesion: 0.11
-Nodes (28): nextId(), mulberry32(), cadre(), fenetre(), flamme(), plaque(), porte(), toile() (+20 more)
+Cohesion: 0.24
+Nodes (13): flamme(), PIERRES, anneau(), corps(), cotes(), coupole(), F, navireTourelle() (+5 more)
 
 ### Community 55 - "assemble.js"
 Cohesion: 0.07
-Nodes (28): U, Fauna, makeButterfly(), makeCrab(), makeGull(), rand(), skeleton(), _zero (+20 more)
-
-### Community 56 - "coupes/chibi.js"
-Cohesion: 0.31
-Nodes (11): feuilleMaterial(), canvas(), contourFeuille(), ecorceTexture(), feuillesAtlas(), grappesAtlas(), leafAtlas(), paperTexture() (+3 more)
+Nodes (27): JOURS, MOIS, ORIGIN, U, damp(), Owl, nearbyStations(), BOAT_ORDER (+19 more)
 
 ### Community 57 - "gen/terrain.js"
 Cohesion: 0.20
@@ -483,56 +484,56 @@ Cohesion: 0.15
 Nodes (14): BERGER, canonicalHour(), COLOR_FIELDS, DayCycle, etoileDuBerger(), GRADE_FIELDS, grey, KEYS (+6 more)
 
 ### Community 61 - "toonMaterial"
-Cohesion: 0.13
-Nodes (16): CAP_C, COUCHEE, DRESSEE, FRANGE, HAIR_STYLES, _m, _n, NUQUE (+8 more)
+Cohesion: 0.12
+Nodes (17): cap(), CAP_C, COUCHEE, DRESSEE, FRANGE, HAIR_STYLES, _m, _n (+9 more)
 
 ### Community 62 - "formes.js"
-Cohesion: 0.28
-Nodes (14): chevre(), espece, mouton(), anneauGeo(), BELL, clocheSuisse(), collar(), collier() (+6 more)
+Cohesion: 0.26
+Nodes (14): chevre(), espece, anneauGeo(), BELL, clocheSuisse(), collier(), eye(), legs() (+6 more)
 
 ### Community 63 - "CameraRig"
-Cohesion: 0.11
-Nodes (12): MAT, archeGlycine(), lavandeGeante(), C, Flowers, Grid, pickWeighted(), rng() (+4 more)
+Cohesion: 0.15
+Nodes (4): CameraRig, damp(), lerpAngle(), wrapAngle()
 
 ### Community 64 - "vache"
-Cohesion: 0.17
-Nodes (10): relinkDiscoveries(), buildFarVeg(), hex(), SHAPES, cropPlan(), ILE_BY_ID, keyOf(), parents (+2 more)
+Cohesion: 0.29
+Nodes (7): Fauna, makeButterfly(), makeCrab(), makeGull(), rand(), skeleton(), _zero
+
+### Community 65 - ".push"
+Cohesion: 0.23
+Nodes (4): uid(), Decor, removeObstacle(), removeObstacles()
 
 ### Community 67 - "registry.js"
 Cohesion: 0.18
 Nodes (9): FICHES, BY_ID, CATEGORIES, categoryOf(), MODELS, ORDRE, STATUTS, TAILLES (+1 more)
 
 ### Community 69 - "settingsPanel.js"
-Cohesion: 0.11
-Nodes (23): _c, cascadeTexture(), IlesCelestes, _m, _p, _q, _s, _up (+15 more)
+Cohesion: 0.31
+Nodes (3): bicubic(), cr(), Surface
 
 ### Community 70 - "homeFauna.js"
-Cohesion: 0.11
-Nodes (24): hex(), islandShape(), palOf(), shapeCache, shapeExt(), contexts, MiniMap, terrainColor() (+16 more)
+Cohesion: 0.08
+Nodes (41): CARNET, fmtKm(), openLogbookPanel(), hex(), islandShape(), openMapPanel(), palOf(), shapeCache (+33 more)
 
 ### Community 71 - "archipel.js"
-Cohesion: 0.16
-Nodes (10): CHANNEL_LABELS, CHANNELS, PENTA, ACCORDS, clamp(), GAMME, hz(), MESURES (+2 more)
-
-### Community 72 - "Decor"
-Cohesion: 0.11
-Nodes (14): arriveIntent(), climbable(), stepMotor(), advanceGaitPhase(), strideLength(), angleDelta(), damp(), lerpAngle() (+6 more)
+Cohesion: 0.47
+Nodes (4): F, forme(), FORMES, HAUBANS
 
 ### Community 73 - "dirigeable/index.js"
-Cohesion: 0.21
-Nodes (12): ANCRES, cotes(), ETAGERES, F, HELICES, LANTERNES, LINGES, nacelle() (+4 more)
+Cohesion: 0.19
+Nodes (21): oc(), ancre(), ANCRES, cotes(), etagere(), ETAGERES, F, flanc() (+13 more)
 
 ### Community 74 - ".push"
 Cohesion: 0.17
 Nodes (8): DIRX, DIRZ, RECOLOR, recolorPart(), rotY(), flat(), GeoAcc, partGeometries()
 
-### Community 76 - "NavireVolant.js"
-Cohesion: 0.20
-Nodes (7): partModel(), cap(), Dirigeables, ELEMENTS, sur(), vol, NavireVolant
+### Community 75 - "arbresProches.js"
+Cohesion: 0.23
+Nodes (7): kindModel(), LOD_ARBRES, ArbresProches, _c, carteChute(), _m, _v
 
-### Community 78 - "navire-escalier/physique.js"
-Cohesion: 0.29
-Nodes (4): evenements(), Parts, m(), zoneM()
+### Community 76 - "NavireVolant.js"
+Cohesion: 0.18
+Nodes (7): partModel(), cap(), Dirigeables, ELEMENTS, sur(), vol, NavireVolant
 
 ### Community 80 - "Coque et berceau du navire-forteresse — BAT-014"
 Cohesion: 0.22
@@ -566,17 +567,13 @@ Nodes (7): Captures (27/10/2026, catalogue), DA retenue, Historique, Mesures, Ph
 Cohesion: 0.25
 Nodes (7): Captures (26/10/2026, catalogue, rendu « jeu »), DA retenue, Historique, Mesures (26/10/2026, après le 1er tour de revue), Nef effondrée du plateau — MON-014, Physique, Écarts restants
 
-### Community 88 - ".buildKind"
-Cohesion: 0.40
-Nodes (4): domeDe(), menhir(), MENHIRS, R
-
 ### Community 89 - ".setTileItemVisible"
-Cohesion: 0.23
-Nodes (7): hashString(), MARINE_TYPES, marineMesh(), DRIFTING, LABELS, MarineManager, markerFor()
+Cohesion: 0.21
+Nodes (8): hashString(), gestionnairesRendu(), m(), zoneM(), DRIFTING, LABELS, MarineManager, markerFor()
 
 ### Community 90 - ".constructor"
-Cohesion: 0.09
-Nodes (31): CHAR_IDS, EcharpeTissu, reposPan(), _v, FACE, creerRuban(), normales(), pasTissu() (+23 more)
+Cohesion: 0.11
+Nodes (20): EcharpeTissu, reposPan(), _v, FACE, creerRuban(), normales(), pasTissu(), placer() (+12 more)
 
 ### Community 91 - "Habillage de forteresse du navire — BAT-020"
 Cohesion: 0.29
@@ -585,10 +582,6 @@ Nodes (6): DA retenue, Habillage de forteresse du navire — BAT-020, Historique
 ### Community 92 - "Hélices et encombrement du navire — BAT-021"
 Cohesion: 0.29
 Nodes (6): DA retenue, Historique, Hélices et encombrement du navire — BAT-021, Mesures, Physique (`physique.js`), Écarts restants
-
-### Community 94 - "season.js"
-Cohesion: 0.24
-Nodes (9): applySeason(), AUTUMN, BLOSSOM, cellHash(), seasonOf(), SEASONS, seasonSnow(), WARM (+1 more)
 
 ### Community 95 - "Cerf — ANI-004"
 Cohesion: 0.33
@@ -1014,29 +1007,25 @@ Nodes (4): Bois — ROC-007 à ROC-010, DA retenue, Historique, Écarts restants
 Cohesion: 0.40
 Nodes (4): DA retenue, Historique, Mineraux — ROC-003 à ROC-006, Écarts restants
 
-### Community 207 - "hibou/index.js"
-Cohesion: 0.16
-Nodes (13): CARNET, fmtKm(), openCartographerPanel(), openLogbookPanel(), openMapPanel(), boundFog(), FOG_TOTAL, fogShare() (+5 more)
-
 ## Knowledge Gaps
-- **869 isolated node(s):** `JOURS`, `MOIS`, `_avant`, `HAUT`, `game` (+864 more)
+- **876 isolated node(s):** `JOURS`, `MOIS`, `_avant`, `HAUT`, `game` (+871 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **15 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **14 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `mulberry32()` connect `navire-tourelle/index.js` to `.add`, `Builder`, `Game`, `mulberry32`, `ruines-alternative/index.js`, `navire-fort/index.js`, `navire-maison/index.js`, `props.js`, `navire-coque/index.js`, `surface.js`, `decor/index.js`, `navire-moulin/index.js`, `navigation.js`, `ciel/relief.js`, `mouton/index.js`, `assemble.js`, `gen/terrain.js`, `IslandFauna`, `settingsPanel.js`, `archipel.js`, `dirigeable/index.js`, `NavireVolant.js`, `navire-escalier/physique.js`, `.setTileItemVisible`?**
-  _High betweenness centrality (0.037) - this node is a cross-community bridge._
-- **Why does `AudioEngine` connect `Gather.js` to `Pipeline.js`, `worldWorker.js`, `navire-fort/index.js`, `archipel.js`?**
-  _High betweenness centrality (0.030) - this node is a cross-community bridge._
-- **Why does `nextId()` connect `navire-tourelle/index.js` to `.add`, `fiches.js`, `moulin-tour/index.js`, `ruines-alternative/index.js`, `heightAt`, `cerf/index.js`, `navire-machinerie/index.js`, `navire-fort/index.js`, `navire-maison/index.js`, `Character.js`, `props.js`, `navire-coque/index.js`, `vache/index.js`, `decor/index.js`, `navire-moulin/index.js`, `IslandManager.js`, `mouton/index.js`, `IlesCelestes.js`, `assemble.js`, `coupes/chibi.js`, `dirigeable/index.js`, `.setTileItemVisible`?**
-  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Why does `mulberry32()` connect `mulberry32` to `.add`, `Builder`, `fiches.js`, `Game`, `ruines-alternative/index.js`, `herbe.js`, `navire-machinerie/index.js`, `navire-maison/index.js`, `navire-coque/index.js`, `surface.js`, `Gather.js`, `decor/index.js`, `navire-moulin/index.js`, `navigation.js`, `ciel/relief.js`, `mouton/index.js`, `navire-tourelle/index.js`, `assemble.js`, `gen/terrain.js`, `IslandFauna`, `archipel.js`, `dirigeable/index.js`, `NavireVolant.js`, `.setTileItemVisible`?**
+  _High betweenness centrality (0.038) - this node is a cross-community bridge._
+- **Why does `AudioEngine` connect `Gather.js` to `assemble.js`?**
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
+- **Why does `G` connect `fiches.js` to `.add`, `Builder`, `moulin-tour/index.js`, `ruines-alternative/index.js`, `corps/index.js`, `heightAt`, `avatar.js`, `cerf/index.js`, `Game.js`, `navire-maison/index.js`, `props.js`, `navire-coque/index.js`, `vache/index.js`, `decor/index.js`, `builder.js`, `navire-moulin/index.js`, `navigation.js`, `coupes/index.js`, `arche-basse/index.js`, `mouton/index.js`, `IlesCelestes.js`, `navire-tourelle/index.js`, `toonMaterial`, `formes.js`, `archipel.js`, `dirigeable/index.js`?**
+  _High betweenness centrality (0.025) - this node is a cross-community bridge._
 - **What connects `JOURS`, `MOIS`, `_avant` to the rest of the system?**
-  _869 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _876 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `.add` be split into smaller, more focused modules?**
-  _Cohesion score 0.07431052093973442 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.04568586629655332 - nodes in this community are weakly interconnected._
 - **Should `motor.js` be split into smaller, more focused modules?**
   _Cohesion score 0.07394957983193277 - nodes in this community are weakly interconnected._
 - **Should `Builder` be split into smaller, more focused modules?**
-  _Cohesion score 0.06692242114236999 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07672634271099744 - nodes in this community are weakly interconnected._

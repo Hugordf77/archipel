@@ -4,6 +4,7 @@ import * as registry from '../src/models/registry.js';
 import notesSnapshot from '../catalogue/notes.json';
 import management from './management.json';
 import { monterChantier } from './chantier.js';
+import { monterRendu } from './rendu.js';
 
 const agentFiles = import.meta.glob('../.claude/agents/*.md', { eager: true, query: '?raw', import: 'default' });
 const root = document.querySelector('#dashboard');
@@ -38,7 +39,7 @@ const plural = (n, one, many = `${one}s`) => `${n} ${n > 1 ? many : one}`;
 root.innerHTML = `
   <header class="dash-head">
     <a class="dash-brand" href="/dashboard.html" aria-label="Archipel, tableau de bord"><span class="brand-mark">A</span><span><b>ARCHIPEL</b><small>Production · tableau de bord</small></span></a>
-    <nav aria-label="Navigation principale"><a href="#overview">Synthèse</a><a href="#chantier">Chantier</a><a href="#production">Production</a><a href="#validation">Validation</a><a href="#agents">Agents</a><a href="#rework">À retravailler</a><a href="#team">Équipe</a><a href="#pipeline">Pipeline</a></nav>
+    <nav aria-label="Navigation principale"><a href="#overview">Synthèse</a><a href="#chantier">Chantier</a><a href="#rendu">Rendu</a><a href="#production">Production</a><a href="#validation">Validation</a><a href="#agents">Agents</a><a href="#rework">À retravailler</a><a href="#team">Équipe</a><a href="#pipeline">Pipeline</a></nav>
     <div class="head-links"><a class="btn" href="/catalogue.html">Catalogue</a><a class="btn primary" href="/">Ouvrir le jeu</a></div>
   </header>
   <main class="dash-main">
@@ -54,6 +55,7 @@ root.innerHTML = `
       <article class="panel focus-panel"><p class="eyebrow">POINT D’ATTENTION</p><h2>${rework.length ? `${rework.length} modèles demandent une reprise` : 'Aucune reprise signalée'}</h2><p>${rework.length ? 'Les modèles ci-dessous ont le statut « À retravailler ». Les remarques proviennent des notes du catalogue.' : 'Le registre ne contient actuellement aucun modèle au statut « À retravailler ». '}</p><a class="btn primary" href="#rework">Consulter la liste →</a></article>
     </section>
     <section class="section-block chantier" id="chantier" aria-busy="true"><p class="empty-panel">Chargement du chantier…</p></section>
+    <section class="section-block rendu" id="rendu" aria-busy="true"><p class="empty-panel">Chargement du banc de rendu…</p></section>
     <section class="section-block" id="rework"><div class="section-heading"><div><p class="eyebrow">PRIORITÉS DU CATALOGUE</p><h2>À retravailler</h2><p>${rework.length} modèles signalés · triés par mise à jour récente</p></div><a class="text-link" href="/catalogue.html">Ouvrir le catalogue →</a></div>
       ${rework.length ? `<div class="table-wrap"><table class="work-table"><thead><tr><th>Modèle</th><th>Catégorie</th><th>Dernière note</th><th>Mise à jour</th><th></th></tr></thead><tbody>${rework.map((model) => { const cat = registry.CATEGORIES.find((item) => item.id === model.category); return `<tr><td><span class="model-id">${esc(model.id)}</span><b>${esc(model.name)}</b></td><td>${esc(cat?.label || model.category)}</td><td class="work-note">${esc(excerpt(model.work.note || 'Aucune note de reprise.'))}</td><td class="date-cell">${formatDate(model.work.updatedAt)}</td><td><a class="row-link" href="/catalogue.html" aria-label="Ouvrir le catalogue pour ${esc(model.id)}">↗</a></td></tr>`; }).join('')}</tbody></table></div>` : '<div class="empty-panel">Aucun élément à retravailler.</div>'}
     </section>
@@ -75,3 +77,5 @@ root.innerHTML = `
 
 const chantier = document.querySelector('#chantier');
 monterChantier(chantier).then(() => chantier.removeAttribute('aria-busy')).catch((err) => { chantier.innerHTML = `<div class="alerte">Chantier indisponible : ${esc(err.message)}</div>`; });
+const rendu = document.querySelector('#rendu');
+monterRendu(rendu).then(() => rendu.removeAttribute('aria-busy')).catch((err) => { rendu.innerHTML = `<div class="alerte">Banc de rendu indisponible : ${esc(err.message)}</div>`; });

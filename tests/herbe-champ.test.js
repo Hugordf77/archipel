@@ -298,7 +298,8 @@ describe('carte d’herbe des tuiles', () => {
   // de 0,79 ms seule, 0,92 à 0,94 ms sous la suite complète ; bruits sur réseaux de 2 et 4 m, eau, côte
   // et fissures sautées quand la tuile n'en a pas : 0,62 ms seule, 0,68 ms sous la suite complète.
   // Plafond de 0,9 ms (marge pour la charge).
-  it('coûte au plus 0,9 ms de plus par tuile au Worker (Forêt des souvenirs)', () => {
+  // chronométré : suite à part (npm run test:chronos), la mesure dépend de la charge de la machine
+  it.runIf(process.env.CHRONOS === '1')('[chrono] coûte au plus 0,9 ms de plus par tuile au Worker (Forêt des souvenirs)', () => {
     const { p, surf } = island(FORET);
     const tiles = allTiles(FORET);
     const grounds = tiles.map(([tx, tz]) => [tx, tz, tileGround(p, surf, tx, tz)]);

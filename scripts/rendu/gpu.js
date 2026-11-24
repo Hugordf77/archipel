@@ -144,6 +144,8 @@ export function banc(ile, n = 20) {
     out.kuwahara = temps(() => P.kuwaSimplePass.render(R, P.paintRT), P.paintRT);
   }
   out.composition = temps(() => P.compPass.render(R, null));
+  // calque superposé (particules, pluie) dessiné après la composition
+  if (game.overlayScene) out.calque = temps(() => { R.setRenderTarget(null); R.render(game.overlayScene, cam); });
   out.image = temps(() => P.render(scene, cam, game.overlayScene));
   out.ombreParImage = +(out.ombre / (P.q.shadowEvery || 1)).toFixed(2);
   return out;

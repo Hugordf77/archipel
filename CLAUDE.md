@@ -17,6 +17,8 @@ documents sont en français.
    d’agents : Evis, Evis-critique, archipel-calibrateur, archipel-critique, locomotion-physique,
    archipel-integrateur), `docs/PRODUCTION.md` (workflow des 19 zones : journal `production/journal.jsonl`,
    `npm run prod`, carte de chantier `/dashboard.html#chantier`).
+   Rendu : `docs/RENDU.md` (banc de captures, métriques, portes, machine à états des chantiers de rendu,
+   `/dashboard.html#rendu`).
 
 ## Règles essentielles
 
