@@ -18,7 +18,25 @@ android {
         versionName nomVersion
     }
 
+    // Signature FIXE (sinon chaque construction a sa clé de débogage et Android refuse la mise à jour :
+    // « conflit de package ») : clé PKCS12 déposée par le workflow depuis les secrets du dépôt
+    // (ARCHIPEL_SIGNATURE_P12, ARCHIPEL_SIGNATURE_MDP) dans android/signature.p12, jamais versionnée
+    def cle = rootProject.file('signature.p12')
+    def mdp = System.getenv('ARCHIPEL_SIGNATURE_MDP')
+    signingConfigs {
+        archipel {
+            storeFile cle
+            storeType 'pkcs12'
+            storePassword mdp
+            keyAlias 'archipel'
+            keyPassword mdp
+        }
+    }
+
     buildTypes {
+        debug {
+            if (cle.exists() && mdp) signingConfig signingConfigs.archipel
+        }
         release {
             minifyEnabled false
         }

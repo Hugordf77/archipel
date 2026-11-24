@@ -57,7 +57,16 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then nom="${GITHUB_REF_NAME#v}"; else nom="0.1.0-dev.${GITHUB_RUN_NUMBER}"; fi
           echo "nom=$nom" >> "$GITHUB_OUTPUT"
 
+      # clé de signature fixe (secrets du dépôt) : les versions s'installent les unes par-dessus les autres
+      - name: Clé de signature
+        env:
+          P12: ${{ secrets.ARCHIPEL_SIGNATURE_P12 }}
+        run: |
+          if [ -n "$P12" ]; then echo "$P12" | base64 -d > android/signature.p12; else echo "::warning::secret ARCHIPEL_SIGNATURE_P12 absent : clé de débogage (mise à jour impossible)"; fi
+
       - name: APK (assembleDebug)
+        env:
+          ARCHIPEL_SIGNATURE_MDP: ${{ secrets.ARCHIPEL_SIGNATURE_MDP }}
         run: |
           gradle -p android assembleDebug --no-daemon \
             -PversionName="${{ steps.version.outputs.nom }}" -PversionCode="${GITHUB_RUN_NUMBER}"
