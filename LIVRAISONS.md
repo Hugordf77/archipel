@@ -418,6 +418,11 @@ et domaine concerné).
 
 ## État courant (24/11/2026)
 
+- **APK Android 0.2.0-prototype, couleurs fidèles** (24/11) : coque en thème clair, assombrissement forcé
+  interdit (`forceDarkAllowed`, `setAlgorithmicDarkeningAllowed(false)` / `FORCE_DARK_OFF`), fenêtre sRGB
+  (`colorMode`), page en `color-scheme: only light` ; notes `android/NOTES-VERSION.md`. Construit et publié
+  par le workflow sur l'étiquette `v0.2.0-prototype` ; pas essayé sur un téléphone.
+
 - **Nuages dégagés, paysages lointains factices** (24/11) : bouffées de nuages ramenées de 18 à 7 et toutes
   hautes dans le ciel (`sky.js`, `buildClouds` : plus rien sur l'horizon ni devant les reliefs) ; trois anneaux
   de reliefs peints centrés sur la caméra, à 3,8 km (îles et collines coupées par la mer), 4,1 km (chaînes) et

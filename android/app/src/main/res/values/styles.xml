@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- plein écran, fond du ciel de l'écran de chargement (pas d'éclair blanc au lancement) -->
-    <style name="Theme.Archipel" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
+    <!-- plein écran, fond du ciel de l'écran de chargement (pas d'éclair blanc au lancement). Thème CLAIR et
+         assombrissement forcé interdit : sous un thème sombre ou le « mode sombre des applis » du téléphone,
+         Android assombrissait / annonçait prefers-color-scheme: dark à la WebView et faussait les couleurs -->
+    <style name="Theme.Archipel" parent="@android:style/Theme.Material.Light.NoActionBar.Fullscreen">
+        <item name="android:forceDarkAllowed">false</item>
         <item name="android:windowBackground">@color/ciel</item>
         <item name="android:statusBarColor">@color/ciel</item>
         <item name="android:navigationBarColor">@color/ciel</item>

@@ -59,6 +59,12 @@ public class MainActivity extends Activity {
         s.setSupportZoom(false);
         s.setBuiltInZoomControls(false);
         s.setTextZoom(100);
+        // couleurs fidèles : jamais d'assombrissement automatique du contenu (mode sombre du téléphone)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            s.setAlgorithmicDarkeningAllowed(false);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            s.setForceDark(WebSettings.FORCE_DARK_OFF);
+        }
 
         web.setWebViewClient(new WebViewClient() {
             @Override

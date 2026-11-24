@@ -28,6 +28,9 @@ git push origin v0.1.0-prototype
   comme sur le serveur de développement, les chemins absolus du jeu (`/audio/…`) compris.
 - La sauvegarde (IndexedDB) reste attachée à cette adresse ; une désinstallation l'efface.
 - Retour = Échap ; passage en arrière-plan = `pagehide` (le jeu enregistre la partie).
+- Couleurs : thème clair, `forceDarkAllowed=false`, `colorMode` sRGB par défaut, assombrissement de la
+  WebView coupé (`setAlgorithmicDarkeningAllowed(false)` dès Android 13, `FORCE_DARK_OFF` sur 10 à 12), page
+  en `color-scheme: only light` (`index.html`) : le mode sombre du téléphone ne touche plus au jeu.
 - Version de débogage : la page s'inspecte depuis `chrome://inspect` sur l'ordinateur (câble USB, débogage
   USB activé sur le téléphone).
 
@@ -37,7 +40,6 @@ git push origin v0.1.0-prototype
   désinstaller l'ancienne. Pour des mises à jour sans perte : une clé de signature gardée dans les secrets
   du dépôt (à faire).
 - Commandes tactiles réduites à celles du jeu (toucher pour aller, glisser pour la caméra).
-- `public/audio/Illumoria.mp3` n'est pas versionné : l'APK joue la boîte à musique de secours en jeu.
 - Construit seulement sur GitHub (ni JDK ni SDK Android sur l'ordinateur de développement) : première version
   `v0.1.0-prototype` publiée le 22/11/2026 (https://github.com/Hugordf77/archipel/releases), pas encore
   essayée sur un téléphone.

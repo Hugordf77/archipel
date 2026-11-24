@@ -218,7 +218,8 @@ describe('usage des modèles', () => {
 
   it('couvre chaque élément de lieu que sait construire le jeu', async () => {
     const { TYPES_DE_LIEUX } = await import('../src/models/lieux.js');
-    expect(TYPES_DE_LIEUX).toHaveLength(70);
+    // 71 depuis le château du Sommet (chateau_fondations, MON-015, 24/11/2026)
+    expect(TYPES_DE_LIEUX).toHaveLength(71);
     const known = refs();
     expect(TYPES_DE_LIEUX.map((t) => `part:${t}`).filter((r) => !known.has(r))).toEqual([]);
   });
