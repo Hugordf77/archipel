@@ -68,10 +68,12 @@ const ILES_PX = [
     id: 'grande-ile', name: 'La Grande Île', zone: 'foret-des-souvenirs', biome: 'prairie', base: { h: 16, larg: 320 }, plage: 20, falaise: 0.25,
     cote: [[705, 148], [760, 158], [820, 182], [880, 213], [925, 252], [962, 283], [1012, 298], [1060, 322], [1096, 360], [1106, 410], [1093, 455], [1071, 500], [1040, 535], [985, 556], [930, 566], [882, 590], [842, 624], [792, 646], [738, 650], [682, 640], [630, 628], [590, 600], [566, 560], [548, 516], [520, 480], [490, 440], [470, 395], [450, 346], [431, 300], [441, 262], [470, 232], [520, 218], [575, 204], [620, 180], [664, 158]],
     reliefs: [
-      { t: 'mont', at: [700, 232, 105, 255] },
-      { t: 'chaine', pts: [[612, 205, 150], [662, 222, 205], [700, 232, 250], [752, 220, 205], [812, 236, 150]], l: 26 },
-      { t: 'chaine', pts: [[700, 240, 220], [672, 290, 140], [640, 340, 90]], l: 24 },
-      { t: 'chaine', pts: [[715, 245, 210], [770, 300, 120], [835, 330, 70]], l: 26 },
+      { t: 'mont', at: [700, 232, 105, 195] },
+      // massif abaissé le 24/11/2026 (demande de l'utilisateur, deux fois : « que ça soit vraiment visible ») :
+      // le château du sommet (MON-015) se voit du bas ; mont 255 → 195 m, chaînes à 30-60 % de leur hauteur
+      { t: 'chaine', pts: [[612, 205, 60], [662, 222, 85], [700, 232, 190], [752, 220, 85], [812, 236, 60]], l: 26 },
+      { t: 'chaine', pts: [[700, 240, 140], [672, 290, 50], [640, 340, 35]], l: 24 },
+      { t: 'chaine', pts: [[715, 245, 130], [770, 300, 40], [835, 330, 25]], l: 26 },
       { t: 'colline', at: [520, 300, 55, 42] },
       { t: 'colline', at: [600, 420, 65, 50] },
       { t: 'colline', at: [505, 420, 45, 34] },
@@ -90,6 +92,11 @@ const ILES_PX = [
       { t: 'moulin_tour', at: [380, 296], rot: 3.68, r: 7.5, nom: 'Moulin du Bord' },
       { t: 'moulin_tour', at: [868, 292], rot: 3.68, r: 7.5, nom: 'Moulin du Large' },
       { t: 'ruines_alternative', at: [756, 312], rot: 3.39, r: 9.5, nom: 'Nef effondrée' },
+      // château du Sommet (MON-015, version 1) au sommet du Sommet givré (pic à 238 m, monde −264, −1852) :
+      // la plate-forme aplanie (r 46 m) arase le pic ; portail tourné vers le cœur de l'île. v: 1 : la pose ne
+      // porte que la physique ; le château est dessiné en permanence (world/env/chateau.js, CHATEAU)
+      // haut : butte de 45 m (raccord de 60 m) pour que le château domine les pics voisins
+      { t: 'chateau_fondations', at: [-260, -688], rot: 1.21, r: 46, haut: 45, chute: 60, v: 1, nom: 'Château du Sommet' },
     ],
     // retouches de relief (repère de l'île, m ; gen/forme.js, terrasser) : montée de la corniche du Vent
     // (PV-T1 et palier PV-T2 du plan du Plateau venté, BRF-PV-02) le long de la face ouest de l'escarpement,

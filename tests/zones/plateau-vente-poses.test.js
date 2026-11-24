@@ -26,15 +26,20 @@ const cell = (Q, x, z) => Math.round((z + Q.ext) / Q.s) * Q.n + Math.round((x + 
 describe('lieux posés sur le Plateau venté', () => {
   it('pose trois moulins-tours et la nef effondrée, dans la zone du plateau', () => {
     const ZPL = P.zones.indexOf('plateau-vente');
-    expect(P.pois.map((p) => p.type).sort()).toEqual(['moulin_tour', 'moulin_tour', 'moulin_tour', 'ruines_alternative']);
-    for (const p of P.pois) {
+    // (et, au sommet du Sommet givré, la pose du château MON-015 : physique seule, dessin permanent)
+    expect(P.pois.map((p) => p.type).sort()).toEqual(['chateau_fondations', 'moulin_tour', 'moulin_tour', 'moulin_tour', 'ruines_alternative']);
+    const chateau = P.pois.find((p) => p.type === 'chateau_fondations');
+    expect(P.ZI[cell(P, chateau.x, chateau.z)]).toBe(P.zones.indexOf('sommet-givre'));
+    expect(partModel(chateau.parts[0]).solid.parts).toHaveLength(0);
+    expect(partModel(chateau.parts[0]).obstacles.length).toBeGreaterThan(0);
+    for (const p of P.pois.filter((q) => q !== chateau)) {
       expect(d.poses.some((q) => q.at[0] === p.x && q.at[1] === p.z), p.label).toBe(true);
       expect(P.ZI[cell(P, p.x, p.z)], p.label).toBe(ZPL);
       expect(p.parts).toHaveLength(1);
       // chaque élément sait se construire, avec ses obstacles
       expect(partModel(p.parts[0]).obstacles.length, p.label).toBeGreaterThan(0);
     }
-    expect(new Set(P.pois.map((p) => p.id)).size).toBe(4);
+    expect(new Set(P.pois.map((p) => p.id)).size).toBe(5);
   });
 
   it('aplanit le site de chaque lieu à sa hauteur, sans arbre dessus', () => {
@@ -53,12 +58,14 @@ describe('lieux posés sur le Plateau venté', () => {
   });
 
   it('ne change le relief que sous les lieux (r + chute + une case)', () => {
+    // chute : raccord de la plate-forme au relief (6 m, ou celui de la pose : butte du château)
+    const chute = (p) => d.poses.find((q) => q.at[0] === p.x && q.at[1] === p.z)?.chute ?? 6;
     let ecarts = 0;
     for (let k = 0; k < P.H.length; k++) {
       if (P.H[k] === sans.H[k]) continue;
       const x = -P.ext + (k % P.n) * P.s;
       const z = -P.ext + Math.floor(k / P.n) * P.s;
-      if (!P.pois.some((p) => Math.hypot(x - p.x, z - p.z) <= p.r + 6 + P.s)) ecarts++;
+      if (!P.pois.some((p) => Math.hypot(x - p.x, z - p.z) <= p.r + chute(p) + P.s)) ecarts++;
     }
     expect(ecarts).toBe(0);
   });

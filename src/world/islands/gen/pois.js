@@ -691,13 +691,16 @@ export function poserLieux(P) {
   const hAt = (x, z) => bilinear(H, n, (x + ext) / s, (z + ext) / s);
   P.stamps ||= [];
   P.placed ||= [];
-  return desc.poses.map(({ t, at: [x, z], rot = 0, r = 4, nom }) => {
+  // haut : plate-forme surélevée de haut m au-dessus de la hauteur moyenne du site (butte) ; chute : largeur
+  // du raccord au relief (m, 6 par défaut)
+  return desc.poses.map(({ t, at: [x, z], rot = 0, r = 4, nom, v, haut = 0, chute = 6 }) => {
     let y = hAt(x, z);
     for (let a = 0; a < 8; a++) y += hAt(x + Math.cos(a * 0.785) * r * 0.7, z + Math.sin(a * 0.785) * r * 0.7);
-    y /= 9;
-    P.stamps.push({ x, z, r, y, fall: 6 });
+    y = y / 9 + haut;
+    P.stamps.push({ x, z, r, y, fall: chute });
     P.placed.push({ x, z, r });
-    return { id: stableId(desc.seed, TYPE_ID[t] ?? 99, x, z), type: t, label: nom || POI_LABELS[t] || t, x, z, y, r, parts: [{ t, x, z, y, rot }] };
+    // v : variante de la pièce (chateau_fondations : 1 = physique seule, le dessin est un repère du monde)
+    return { id: stableId(desc.seed, TYPE_ID[t] ?? 99, x, z), type: t, label: nom || POI_LABELS[t] || t, x, z, y, r, parts: [{ t, x, z, y, rot, ...(v !== undefined ? { v } : {}) }] };
   });
 }
 

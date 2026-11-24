@@ -98,7 +98,11 @@ describe('archipel des souvenirs (open world)', () => {
       for (let z = -c.ext; z <= c.ext; z += 8) for (let x = -c.ext; x <= c.ext; x += 8) h = Math.max(h, baseHeight(c, x, z));
       return h;
     };
-    expect(top('grande-ile')).toBeGreaterThan(220);
+    // massif abaissé le 24/11/2026 (demande de l'utilisateur) : le repère du Sommet givré est désormais le
+    // château (MON-015), dont la flèche monte à plus de 150 m au-dessus de la plate-forme du sommet
+    expect(top('grande-ile')).toBeGreaterThan(170);
+    const { GRANDE_TOUR } = await import('../src/models/monuments/chateau-sommet/physique.js');
+    expect(GRANDE_TOUR.etages.at(-1)[1] + GRANDE_TOUR.t).toBeGreaterThan(150);
     expect(top('volcan-endormi')).toBeGreaterThan(150);
     const { ARCHIPEL } = await import('../src/world/archipel.js');
     expect(ARCHIPEL.ciel.length).toBeGreaterThanOrEqual(5);

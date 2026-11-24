@@ -274,10 +274,11 @@ describe('carte d’herbe des tuiles', () => {
 
   it('ne change ni les éléments, ni les identifiants, ni le relief des tuiles (flux aléatoire propre)', () => {
     // empreintes relevées sans la carte d'herbe (la couleur du sol, réglée avec la palette, n'y est pas),
-    // le 25/10/2026 sur l'île d'essai et la section de la Forêt des souvenirs
+    // le 25/10/2026 sur l'île d'essai et la section de la Forêt des souvenirs ; relief de la forêt relevé de
+    // nouveau le 24/11/2026 (massif du Sommet givré abaissé : mêmes éléments, mêmes identifiants)
     const ref = {
       [ESSAI]: '56c7ea8c:244153a3:50fc1413,7b013a60:d5f237d:41f18723,7ddb541:42270523:e12f695a',
-      [FORET]: '811c9dc5:811c9dc5:ed36cdde,811c9dc5:811c9dc5:828aa8b9,811c9dc5:811c9dc5:9d10a05d',
+      [FORET]: '811c9dc5:811c9dc5:37503e13,811c9dc5:811c9dc5:a037bcb7,811c9dc5:811c9dc5:6044a768',
     };
     const hash = (a) => {
       let h = 2166136261;

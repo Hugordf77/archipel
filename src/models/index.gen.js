@@ -58,6 +58,7 @@ import ouvrages_ponton from './ouvrages/ponton/index.js';
 import ouvrages_puits from './ouvrages/puits/index.js';
 import monuments_arche_basse from './monuments/arche-basse/index.js';
 import monuments_cercle_pierres from './monuments/cercle-pierres/index.js';
+import monuments_chateau_sommet from './monuments/chateau-sommet/index.js';
 import monuments_curiosites from './monuments/curiosites/index.js';
 import monuments_grotte from './monuments/grotte/index.js';
 import monuments_menhir from './monuments/menhir/index.js';
@@ -179,6 +180,7 @@ export const FICHES = [
   ...avec(ouvrages_puits, 'src/models/ouvrages/puits/index.js', 'src/models/ouvrages/puits/physique.js'),
   ...avec(monuments_arche_basse, 'src/models/monuments/arche-basse/index.js', 'src/models/monuments/arche-basse/physique.js'),
   ...avec(monuments_cercle_pierres, 'src/models/monuments/cercle-pierres/index.js', 'src/models/monuments/cercle-pierres/physique.js'),
+  ...avec(monuments_chateau_sommet, 'src/models/monuments/chateau-sommet/index.js', 'src/models/monuments/chateau-sommet/physique.js'),
   ...avec(monuments_curiosites, 'src/models/monuments/curiosites/index.js', 'src/models/monuments/curiosites/physique.js'),
   ...avec(monuments_grotte, 'src/models/monuments/grotte/index.js', 'src/models/monuments/grotte/physique.js'),
   ...avec(monuments_menhir, 'src/models/monuments/menhir/index.js', 'src/models/monuments/menhir/physique.js'),

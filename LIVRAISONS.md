@@ -418,6 +418,15 @@ et domaine concerné).
 
 ## État courant (24/11/2026)
 
+- **Château du Sommet givré, version 1** (24/11, MON-015, `src/models/monuments/chateau-sommet/`, voir la FICHE) :
+  très grand château original, low poly, sans détail (enceinte de 76 m, huit tours à toit conique, logis,
+  grande tour dont la flèche monte à ~170 m) ; dessiné en permanence comme repère central
+  (`world/env/chateau.js`, `Game`), la pose de la Grande Île ne portant que la physique (`v: 1`) ; plate-forme
+  surélevée en butte (`haut`, `chute` des poses, `gen/pois.js`) ; massif du Sommet givré abaissé (mont 255 →
+  195 m, chaînes à 30–60 %). Tests ajustés à ces choix voulus (repères, poses du plateau, relief des tuiles de
+  la forêt). Non vérifié en jeu après le dernier réglage de la butte ; tests de registre (trou MON-012/013,
+  accepté) et chrono de l'herbe (sous la charge du jeu) non relancés seuls.
+
 - **Chantier rendu 2 : outillage de la phase 0** (24/11) : méthode `docs/RENDU.md`. Banc de captures
   déterministe `scripts/rendu/banc/` (7 cadrages nommés, 1600 × 900 fixe, qualité Haut, attente du chargement
   réel, origine lue dans le jeu, temps, vent, nuages et météo figés, rejet automatique des captures vides ou

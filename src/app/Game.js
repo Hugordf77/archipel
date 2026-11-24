@@ -46,6 +46,7 @@ import { openMirrorPanel } from '../ui/mirrorPanel.js';
 import { seasonOf, applySeason, seasonSnow } from '../world/env/season.js';
 import { Particules } from '../world/env/particules.js';
 import { Tornade } from '../world/env/tornade.js';
+import { Chateau } from '../world/env/chateau.js';
 import { Titre, titreAPasser } from './Titre.js';
 
 const JOURS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
@@ -187,6 +188,8 @@ export class Game {
     this.particules = new Particules(this.overlayScene);
     // tornade noire à éclairs rouges, au loin en pleine mer (prototype, décor seul)
     this.tornade = new Tornade(this.world.scene);
+    // château du Sommet (MON-015) : repère central, dessiné en permanence au sommet du Sommet givré
+    this.chateau = new Chateau(this.world.scene);
     this.weather.setMode(this.state.settings.weather);
     this.refreshDay();
     this.updateProgressVisuals(false);
@@ -485,6 +488,7 @@ export class Game {
     // rendu
     this.particules?.update(this.pipeline, this.camera, this.pipeline.settings.particules ?? 1);
     this.tornade?.update(dt, this.camera);
+    this.chateau?.update(this.islands);
     this.pipeline.render(this.world.scene, this.camera, this.overlayScene);
 
     // sauvegarde différée
